@@ -12,3 +12,5 @@ t = Template(;
         Develop(),
     ],
 )
+
+import Pkg; Pkg.add("IICGP")
