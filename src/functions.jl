@@ -1,6 +1,8 @@
-export CGPFunctions
+export IPCGPFunctions
 
-module CGPFunctions
+module IPCGPFunctions
+
+using OpenCV
 
 global arity = Dict()
 
@@ -15,7 +17,7 @@ end
 
 function fgen(name::Symbol, ar::Int, s1::SorX; safe::Bool=false)
     if safe
-        @eval function $name(x::Float64, y::Float64)::Float64
+        @eval function $name(x::OpenCV.InputArray, y::OpenCV.InputArray)::OpenCV.InputArray
             try
                 return $s1
             catch
@@ -23,15 +25,20 @@ function fgen(name::Symbol, ar::Int, s1::SorX; safe::Bool=false)
             end
         end
     else
-        @eval function $name(x::Float64, y::Float64)::Float64
+        @eval function $name(x::OpenCV.InputArray, y::OpenCV.InputArray)::OpenCV.InputArray
             $s1
         end
     end
     arity[String(name)] = ar
 end
 
+# OpenCV
+fgen(:f_add_img, 2, :(OpenCV.add(x, y)))
+fgen(:f_subtract_img, 2, :(OpenCV.subtract(x, y)))
+
+"""
 # Mathematical
-fgen(:f_add, 2, :((x + y) / 2.0))
+fgen(:f_add, 2, Int64, :((x + y) / 2.0))
 fgen(:f_subtract, 2, :(abs(x - y) / 2.0))
 fgen(:f_mult, 2, :(x * y))
 fgen(:f_div, 2, :(scaled(x / y)))
@@ -51,5 +58,6 @@ fgen(:f_and, 2, :(Float64((&)(Int(round(x)), Int(round(y))))))
 fgen(:f_or, 2, :(Float64((|)(Int(round(x)), Int(round(y))))))
 fgen(:f_xor, 2, :(Float64(xor(Int(abs(round(x))), Int(abs(round(y)))))))
 fgen(:f_not, 1, :(1 - abs(round(x))))
+"""
 
 end

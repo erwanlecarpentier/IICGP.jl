@@ -1,16 +1,21 @@
-t = Template(;
-    user="erwanlecarpentier",
-    license="MIT",
-    authors="Erwan Lecarpentier",
-    julia=v"1.5",
-    plugins=[
-        License(; name="MPL"),
-        Git(; manifest=true, ssh=true),
-        GitHubActions(; x86=true),
-        Codecov(),
-        Documenter{GitHubActions}(),
-        Develop(),
-    ],
-)
 
-import Pkg; Pkg.add("IICGP")
+SorX = Union{Symbol, Expr}
+
+function fgen(name::Symbol, s1::SorX)
+    @eval function $name(x::Int64, y::Int64)::Int64
+        $s1
+    end
+end
+
+fgen(:f_add_int, :(x + y))
+
+
+# fgen(:f_dilate, 1, :(x), :(ImageMorphology.dilate(x)))
+
+function custom_fgen(name::Symbol, iotype::Type, s1::SorX)
+    @eval function $name(x::iotype, y::iotype)::iotype
+        $s1
+    end
+end
+
+custom_fgen(:f_add_float, Float64, :(x + y))
