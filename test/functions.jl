@@ -1,43 +1,62 @@
 using IICGP
 using Test
+using OpenCV
+using Combinatorics
 
-function test_functions(functions::Array{Function})
+function generate_white_img(sz::Tuple{Int64,Int64,Int64}=(3, 320, 210))
+    convert(UInt8, 255) * ones(UInt8, sz)
+end
+
+function generate_black_img(sz::Tuple{Int64,Int64,Int64}=(3, 320, 210))
+    zeros(UInt8, sz)
+end
+
+function generate_noisy_img(sz::Tuple{Int64,Int64,Int64}=(3, 320, 210))
+    rand(collect(UInt8, 0:255), sz)
+end
+
+function test_inputs(f::Function, inps::AbstractArray)
+    out = copy(f(inps...))
+    @test typeof(out) == OpenCV.Mat{UInt8}
+    @test all(out == f(inps...)) # functions are idempotent
+    @test all(out .>= 0)
+    @test all(out .<= 255)
+end
+
+function test_functions(functions::Array{Function}, img_pairs)
     for f in functions
-        println(f)
+        for pair in img_pairs
+            test_inputs(f, pair)
+        end
     end
 end
 
 @testset "OpenCV functions" begin
+    # Load / generate images
+    image_name = "centipede_frame_0"
+    filename = string(@__DIR__, "/", image_name, ".png")
+    atari_img = OpenCV.imread(filename)
+    noisy_img = generate_noisy_img()
+    white_img = generate_white_img()
+    black_img = generate_black_img()
+
+    img_set = [atari_img, noisy_img, white_img, black_img]
+    img_pairs = Combinatorics.combinations(img_set, 2)
+
+    """
+    for i in [noisy_img, white_img, black_img]
+        OpenCV.imshow("Image", i)
+        OpenCV.waitKey(Int32(0))
+        @test size(i) == (3, 320, 210)
+    end
+    """
+
+    # Fetch functions
     functions = [
-        IPCGPFunctions.f_add_img
+        IPCGPFunctions.f_add_img,
+        IPCGPFunctions.f_subtract_img
     ]
-    test_functions(functions)
+
+    # Test functions
+    test_functions(functions, img_pairs)
 end
-
-
-# Load image
-image_name = "centipede_frame_0"
-filename = string(@__DIR__, "/", image_name, ".png")
-img = OpenCV.imread(filename)
-@test size(img) == (3, 320, 210)
-
-# Show image
-OpenCV.imshow(image_name, img)
-OpenCV.waitKey(Int32(0))
-
-
-rand_img = rand(1:256, (3, 320, 210), d=Int32)
-test_img = AbstractArray{UInt8, 3}
-
-OpenCV.imshow("rand", rand_img)
-OpenCV.waitKey(Int32(0))
-
-
-
-const dtypes = Union{UInt8, Int8, UInt16, Int16, Int32, Float32, Float64}
-function testprint(m::AbstractArray{T, 3} where {T <: dtypes})
-    println(m[1][1])
-end
-
-println(rand_img[1][1])
-testprint(rand_img)
