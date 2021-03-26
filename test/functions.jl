@@ -17,6 +17,8 @@ end
 
 function test_inputs(f::Function, inps::AbstractArray)
     out = copy(f(inps...))
+    @test size(out) == size(inps[1])
+    @test size(out) == size(inps[2])
     @test typeof(out) == OpenCV.Mat{UInt8}
     @test all(out == f(inps...)) # functions are idempotent
     @test all(out .>= 0)
@@ -60,3 +62,40 @@ end
     # Test functions
     test_functions(functions, img_pairs)
 end
+
+
+
+
+
+
+# Load / generate images
+image_name = "centipede_frame_0"
+filename = string(@__DIR__, "/", image_name, ".png")
+atari_img = OpenCV.imread(filename)
+noisy_img = generate_noisy_img()
+white_img = generate_white_img()
+black_img = generate_black_img()
+
+img_set = [atari_img, noisy_img, white_img, black_img]
+img_pairs = Combinatorics.combinations(img_set, 2)
+
+for i in [noisy_img, white_img, black_img]
+    OpenCV.imshow("Image", i[1,:,:])
+    OpenCV.waitKey(Int32(0))
+    @test size(i) == (3, 320, 210)
+end
+
+test_img = Array{UInt8,2}[atari_img[1,:,:]]
+
+# split(m::InputArray, mv::Array{InputArray, 1})
+out = Array{OpenCV.InputArray,1}
+out = Any
+OpenCV.split(atari_img, out)
+
+
+test_img = cat(atari_img[1,:,:], dims=3)
+println(typeof(atari_img[1,:,:]))
+println(size(test_img))
+
+OpenCV.imshow("Image", test_img)
+OpenCV.waitKey(Int32(0))
