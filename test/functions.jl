@@ -67,7 +67,6 @@ end
 
 
 
-
 # Load / generate images
 image_name = "centipede_frame_0"
 filename = string(@__DIR__, "/", image_name, ".png")
@@ -79,8 +78,8 @@ black_img = generate_black_img()
 img_set = [atari_img, noisy_img, white_img, black_img]
 img_pairs = Combinatorics.combinations(img_set, 2)
 
-for i in [noisy_img, white_img, black_img]
-    OpenCV.imshow("Image", i[1,:,:])
+for i in [noisy_img, white_img, black_img, atari_img]
+    OpenCV.imshow("Image", i)
     OpenCV.waitKey(Int32(0))
     @test size(i) == (3, 320, 210)
 end
@@ -88,14 +87,34 @@ end
 test_img = Array{UInt8,2}[atari_img[1,:,:]]
 
 # split(m::InputArray, mv::Array{InputArray, 1})
-out = Array{OpenCV.InputArray,1}
-out = Any
+out = Array{OpenCV.InputArray}[]
+out = Array{OpenCV.Mat{UInt8}, 1}[]
+out = Array{Array{UInt8,1}, 1}[]
+
+out = OpenCV.InputArray[]
+out = OpenCV.CxxMat[]
+out = AbstractArray{UInt8,3}[]
+out = OpenCV.Mat{UInt8}[]
+out = Array{UInt8,1}[]
+
+out = Array{Array{UInt8,1}}(undef, 3)
+out = Array{OpenCV.InputArray}(undef, 3)
+
+OpenCV.split(noisy_img, out)
 OpenCV.split(atari_img, out)
 
+typeof(noisy_img) <: OpenCV.InputArray
+typeof(out) <: Array{OpenCV.InputArray, 1}
 
-test_img = cat(atari_img[1,:,:], dims=3)
-println(typeof(atari_img[1,:,:]))
-println(size(test_img))
+clearconsole()
+println(atari_img[1, 150, 140:150])
+layer_i = reshape(atari_img[1,:,:], (1, 320, 210))
+println(layer_i[:, 150, 140:150])
 
-OpenCV.imshow("Image", test_img)
-OpenCV.waitKey(Int32(0))
+
+for i in 1:3
+    layer_i = reshape(atari_img[i,:,:], (1, 320, 210))
+    println(layer_i[1, 150, 140:150])
+    OpenCV.imshow("Layer $i", layer)
+    OpenCV.waitKey(Int32(0))
+end
