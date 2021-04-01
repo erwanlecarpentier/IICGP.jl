@@ -32,9 +32,10 @@ function fgen(name::Symbol, ar::Int, s1::SorX; safe::Bool=false)
     arity[String(name)] = ar
 end
 
-# OpenCV
+# OpenCV functions
 fgen(:f_add_img, 2, :(OpenCV.add(x, y)))
 fgen(:f_subtract_img, 2, :(OpenCV.subtract(x, y)))
+fgen(:f_absdiff_img, 2, :(OpenCV.absdiff(x, y)))
 
 """
 # Mathematical
