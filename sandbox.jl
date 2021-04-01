@@ -53,3 +53,7 @@ for i in myset
     OpenCV.waitKey(Int32(0))
     println(size(i))
 end
+
+test_img = IPCGPFunctions.f_min_img(img_set[1], img_set[2])
+OpenCV.imshow("Image", test_img)
+OpenCV.waitKey(Int32(0))

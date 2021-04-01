@@ -79,15 +79,18 @@ functions = [
     IPCGPFunctions.f_add_img,
     IPCGPFunctions.f_subtract_img,
     IPCGPFunctions.f_absdiff_img,
-    IPCGPFunctions.f_addweighted_img
+    IPCGPFunctions.f_addweighted_img,
+    IPCGPFunctions.f_bitwise_and_img,
+    IPCGPFunctions.f_bitwise_not_img,
+    IPCGPFunctions.f_bitwise_or_img,
+    IPCGPFunctions.f_bitwise_xor_img,
+    IPCGPFunctions.f_compare_eq_img,
+    IPCGPFunctions.f_compare_ge_img,
+    IPCGPFunctions.f_max_img,
+    IPCGPFunctions.f_min_img,
+    IPCGPFunctions.f_dilate_img
 ]
-time_functions(functions, [img_set[1], noisy_img])
 
-inps = [img_set[1], noisy_img]
 
-test_functions([IPCGPFunctions.f_add_img, IPCGPFunctions.f_addweighted_img], img_pairs)
-@btime IPCGPFunctions.f_addweighted_img(inps...)
-@btime IPCGPFunctions.f_bitwise_or_img(inps...)
-@btime IPCGPFunctions.f_bitwise_and_img(inps...)
-@btime IPCGPFunctions.f_bitwise_not_img(img_set[1])
-@btime IPCGPFunctions.f_bitwise_xor_img(inps...)
+@btime IPCGPFunctions.f_dilate_img(img_set[1])
+@btime IPCGPFunctions.f_erode_img(img_set[1])
