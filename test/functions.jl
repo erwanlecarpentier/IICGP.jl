@@ -2,6 +2,7 @@ using IICGP
 using Test
 using OpenCV
 using Combinatorics
+using BenchmarkTools
 
 function generate_white_img(sz::Tuple{Int64,Int64,Int64}=(3, 320, 210))
     convert(UInt8, 255) * ones(UInt8, sz)
@@ -23,8 +24,6 @@ function test_inputs(f::Function, inps::AbstractArray)
     @test all(out == f(inps...)) # functions are idempotent
     @test all(out .>= 0)
     @test all(out .<= 255)
-
-    @time f(inps...)
 end
 
 function test_functions(functions::Array{Function}, img_pairs)
@@ -64,6 +63,26 @@ end
         IPCGPFunctions.f_absdiff_img
     ]
 
-    # Test functions
+    # Test all functions
     test_functions(functions, img_pairs)
 end
+
+function time_functions(functions::Array{Function}, inps)
+    for i = 1:length(functions)
+        println(functions[i])
+        @btime functions[i](img_set[1], noisy_img)
+    end
+end
+
+img_pairs = Combinatorics.combinations(img_set, 2)
+functions = [
+    IPCGPFunctions.f_add_img,
+    IPCGPFunctions.f_subtract_img,
+    IPCGPFunctions.f_absdiff_img
+]
+time_functions(functions, [img_set[1], noisy_img])
+
+inps = [img_set[1], noisy_img]
+
+test_functions([IPCGPFunctions.f_add_img, IPCGPFunctions.f_absdiff_img], img_pairs)
+@btime IPCGPFunctions.f_absdiff_img(inps...)
