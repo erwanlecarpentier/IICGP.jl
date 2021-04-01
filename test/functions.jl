@@ -78,11 +78,16 @@ img_pairs = Combinatorics.combinations(img_set, 2)
 functions = [
     IPCGPFunctions.f_add_img,
     IPCGPFunctions.f_subtract_img,
-    IPCGPFunctions.f_absdiff_img
+    IPCGPFunctions.f_absdiff_img,
+    IPCGPFunctions.f_addweighted_img
 ]
 time_functions(functions, [img_set[1], noisy_img])
 
 inps = [img_set[1], noisy_img]
 
-test_functions([IPCGPFunctions.f_add_img, IPCGPFunctions.f_absdiff_img], img_pairs)
-@btime IPCGPFunctions.f_absdiff_img(inps...)
+test_functions([IPCGPFunctions.f_add_img, IPCGPFunctions.f_addweighted_img], img_pairs)
+@btime IPCGPFunctions.f_addweighted_img(inps...)
+@btime IPCGPFunctions.f_bitwise_or_img(inps...)
+@btime IPCGPFunctions.f_bitwise_and_img(inps...)
+@btime IPCGPFunctions.f_bitwise_not_img(img_set[1])
+@btime IPCGPFunctions.f_bitwise_xor_img(inps...)

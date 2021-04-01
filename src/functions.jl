@@ -17,16 +17,36 @@ end
 
 function fgen(name::Symbol, ar::Int, s1::SorX; safe::Bool=false)
     if safe
-        @eval function $name(x::OpenCV.InputArray, y::OpenCV.InputArray)::OpenCV.InputArray
-            try
-                return $s1
-            catch
-                return x
+        if ar == 1
+            @eval function $name(x::OpenCV.InputArray)::OpenCV.InputArray
+                try
+                    return $s1
+                catch
+                    return x
+                end
             end
+        elseif ar == 2
+            @eval function $name(x::OpenCV.InputArray, y::OpenCV.InputArray)::OpenCV.InputArray
+                try
+                    return $s1
+                catch
+                    return x
+                end
+            end
+        else
+            throw(DomainError("ar=$ar, arity different from 1 or 2 not implemented"))
         end
     else
-        @eval function $name(x::OpenCV.InputArray, y::OpenCV.InputArray)::OpenCV.InputArray
-            $s1
+        if ar == 1
+            @eval function $name(x::OpenCV.InputArray)::OpenCV.InputArray
+                $s1
+            end
+        elseif ar == 2
+            @eval function $name(x::OpenCV.InputArray, y::OpenCV.InputArray)::OpenCV.InputArray
+                $s1
+            end
+        else
+            throw(DomainError("ar=$ar, arity different from 1 or 2 not implemented"))
         end
     end
     arity[String(name)] = ar
@@ -36,6 +56,11 @@ end
 fgen(:f_add_img, 2, :(OpenCV.add(x, y)))
 fgen(:f_subtract_img, 2, :(OpenCV.subtract(x, y)))
 fgen(:f_absdiff_img, 2, :(OpenCV.absdiff(x, y)))
+fgen(:f_addweighted_img, 2, :(OpenCV.addWeighted(x, 0.5, y, 0.5, 0.0)))
+fgen(:f_bitwise_and_img, 2, :(OpenCV.bitwise_and(x, y)))
+fgen(:f_bitwise_not_img, 1, :(OpenCV.bitwise_not(x)))
+fgen(:f_bitwise_or_img, 2, :(OpenCV.bitwise_or(x, y)))
+fgen(:f_bitwise_xor_img, 2, :(OpenCV.bitwise_xor(x, y)))
 
 """
 # Mathematical
