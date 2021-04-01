@@ -23,6 +23,8 @@ function test_inputs(f::Function, inps::AbstractArray)
     @test all(out == f(inps...)) # functions are idempotent
     @test all(out .>= 0)
     @test all(out .<= 255)
+
+    @time f(inps...)
 end
 
 function test_functions(functions::Array{Function}, img_pairs)
@@ -38,11 +40,13 @@ end
     image_name = "centipede_frame_0"
     filename = string(@__DIR__, "/", image_name, ".png")
     atari_img = OpenCV.imread(filename)
-    noisy_img = generate_noisy_img()
-    white_img = generate_white_img()
-    black_img = generate_black_img()
+    grsca_img = OpenCV.cvtColor(atari_img, OpenCV.COLOR_BGR2GRAY)
+    sz = (1, 320, 210)
+    noisy_img = generate_noisy_img(sz)
+    white_img = generate_white_img(sz)
+    black_img = generate_black_img(sz)
 
-    img_set = [atari_img, noisy_img, white_img, black_img]
+    img_set = vcat(split_rgb(atari_img), [grsca_img, noisy_img, white_img, black_img])
     img_pairs = Combinatorics.combinations(img_set, 2)
 
     """
@@ -56,7 +60,8 @@ end
     # Fetch functions
     functions = [
         IPCGPFunctions.f_add_img,
-        IPCGPFunctions.f_subtract_img
+        IPCGPFunctions.f_subtract_img,
+        IPCGPFunctions.f_absdiff_img
     ]
 
     # Test functions
