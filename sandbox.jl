@@ -54,6 +54,6 @@ for i in myset
     println(size(i))
 end
 
-test_img = IPCGPFunctions.f_min_img(img_set[1], img_set[2])
+test_img = IPCGPFunctions.f_erode_img(img_set[1])
 OpenCV.imshow("Image", test_img)
 OpenCV.waitKey(Int32(0))

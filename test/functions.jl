@@ -48,49 +48,26 @@ end
     img_set = vcat(split_rgb(atari_img), [grsca_img, noisy_img, white_img, black_img])
     img_pairs = Combinatorics.combinations(img_set, 2)
 
-    """
-    for i in [noisy_img, white_img, black_img]
-        OpenCV.imshow("Image", i)
-        OpenCV.waitKey(Int32(0))
-        @test size(i) == (3, 320, 210)
-    end
-    """
-
     # Fetch functions
     functions = [
         IPCGPFunctions.f_add_img,
         IPCGPFunctions.f_subtract_img,
-        IPCGPFunctions.f_absdiff_img
+        IPCGPFunctions.f_absdiff_img,
+        IPCGPFunctions.f_addweighted_img,
+        IPCGPFunctions.f_bitwise_and_img,
+        IPCGPFunctions.f_bitwise_not_img,
+        IPCGPFunctions.f_bitwise_or_img,
+        IPCGPFunctions.f_bitwise_xor_img,
+        IPCGPFunctions.f_compare_eq_img,
+        IPCGPFunctions.f_compare_ge_img,
+        IPCGPFunctions.f_max_img,
+        IPCGPFunctions.f_min_img,
+        IPCGPFunctions.f_dilate_img
     ]
 
     # Test all functions
     test_functions(functions, img_pairs)
 end
 
-function time_functions(functions::Array{Function}, inps)
-    for i = 1:length(functions)
-        println(functions[i])
-        @btime functions[i](img_set[1], noisy_img)
-    end
-end
-
-img_pairs = Combinatorics.combinations(img_set, 2)
-functions = [
-    IPCGPFunctions.f_add_img,
-    IPCGPFunctions.f_subtract_img,
-    IPCGPFunctions.f_absdiff_img,
-    IPCGPFunctions.f_addweighted_img,
-    IPCGPFunctions.f_bitwise_and_img,
-    IPCGPFunctions.f_bitwise_not_img,
-    IPCGPFunctions.f_bitwise_or_img,
-    IPCGPFunctions.f_bitwise_xor_img,
-    IPCGPFunctions.f_compare_eq_img,
-    IPCGPFunctions.f_compare_ge_img,
-    IPCGPFunctions.f_max_img,
-    IPCGPFunctions.f_min_img,
-    IPCGPFunctions.f_dilate_img
-]
-
-
-@btime IPCGPFunctions.f_dilate_img(img_set[1])
-@btime IPCGPFunctions.f_erode_img(img_set[1])
+# @btime IPCGPFunctions.f_dilate_img(img_set[1])
+# @btime IPCGPFunctions.f_erode_img(img_set[1])
