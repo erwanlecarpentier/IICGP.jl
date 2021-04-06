@@ -1,5 +1,6 @@
 using OpenCV
 using IICGP
+using BenchmarkTools
 
 """
    pattern_recognition(m::T; ksize::Int64=100, pos::Tuple{Int64,Int64}=(1, 1)) where {T <: OpenCV.InputArray}
@@ -13,39 +14,40 @@ Method:
 - TM_SQDIFF
 - TM_SQDIFF_NORMED
 """
-function pattern_recognition(m::T; ksize::Int64=100, pos::Tuple{Int64,Int64}=(1, 1)) where {T <: OpenCV.InputArray}
-   x = min(pos[1], size(img)[2] - ksize + 1)
-   y = min(pos[2], size(img)[3] - ksize + 1)
+function pattern_recognition(m::T; ksize::Int64=100, pos::Tuple{Int64,Int64}=(1, 1), threshold::Float64=0.9) where {T <: OpenCV.InputArray}
+   _, x_max, y_max = size(m)
+   x = min(pos[1], x_max - ksize + 1)
+   y = min(pos[2], y_max - ksize + 1)
+
+   # Extract template
    template = m[:, x:x+ksize-1, y:y+ksize-1]
-
-
    IICGP.imshow(template)
 
-
-   println()
-   # println(x:x+ksize-1, " ", y:y+ksize-1)
-
+   # Compute matching map
    match = OpenCV.matchTemplate(m, template, OpenCV.TM_CCOEFF_NORMED)
-
-   # println(size(match))
+   _, i_max, j_max = size(match)
    IICGP.imshow(match)
 
-   return match
+   # Create and fill matching image
+   out = zeros(UInt8, size(m))
+   for i in 1:i_max
+      for j in 1:j_max
+         if match[1, i, j] > threshold
+            out[1, i:i+ksize-1, j:j+ksize-1] .= 255
+         end
+      end
+   end
+   IICGP.imshow(out)
+
+   return out
 end
 
-function load_img(rom_name::String, frame_number::Int64)
-   filename = string(@__DIR__, "/images/", rom_name, "_frame_$frame_number.png")
-   return OpenCV.imread(filename)
-end
-
+# Load image
 rom_name = "freeway"
-
-# First input
-img = load_img(rom_name, 30)
+img = OpenCV.imread(string(@__DIR__, "/images/", rom_name, "_frame_30.png"))
 img = IICGP.split_rgb(img)[1]
 IICGP.imshow(img)
 
+# Compute pattern recognition
 out = pattern_recognition(img)
-out = pattern_recognition(img, ksize=100, pos=(100, 50))
-
-IICGP.imshow(out)
+out = pattern_recognition(img, ksize=50, pos=(100, 50), threshold=0.9)
