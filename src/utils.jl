@@ -1,4 +1,4 @@
-export split_rgb, imshow
+export split_rgb, imshow, load_img
 
 using OpenCV
 
