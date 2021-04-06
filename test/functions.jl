@@ -65,6 +65,9 @@ end
         IPCGPFunctions.f_dilate_img
     ]
 
+    functions = functions[1:5]
+    println(size(functions))
+
     # Test all functions
     test_functions(functions, img_pairs)
 end
