@@ -50,9 +50,9 @@ end
 
     # Fetch functions
     functions = [
+        IPCGPFunctions.f_absdiff_img,
         IPCGPFunctions.f_add_img,
         IPCGPFunctions.f_subtract_img,
-        IPCGPFunctions.f_absdiff_img,
         IPCGPFunctions.f_addweighted_img,
         IPCGPFunctions.f_bitwise_and_img,
         IPCGPFunctions.f_bitwise_not_img,
@@ -60,13 +60,16 @@ end
         IPCGPFunctions.f_bitwise_xor_img,
         IPCGPFunctions.f_compare_eq_img,
         IPCGPFunctions.f_compare_ge_img,
+        IPCGPFunctions.f_compare_le_img,
         IPCGPFunctions.f_max_img,
         IPCGPFunctions.f_min_img,
-        IPCGPFunctions.f_dilate_img
+        IPCGPFunctions.f_dilate_img,
+        IPCGPFunctions.f_erode_img
     ]
-
+    #=
     functions = functions[1:5]
     println(size(functions))
+    =#
 
     # Test all functions
     test_functions(functions, img_pairs)
