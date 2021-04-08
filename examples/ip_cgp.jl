@@ -1,7 +1,24 @@
 using Test
 using OpenCV
+using ArgParse
+using Cambrian
 using CartesianGeneticProgramming
 using IICGP
+
+s = ArgParseSettings()
+@add_arg_table! s begin
+    "--cfg"
+    help = "configuration script"
+    default = "cfg/ip_cgp.yaml"
+    "--seed"
+    help = "random seed for evolution"
+    arg_type = Int
+    default = 0
+end
+args = parse_args(ARGS, s)
+n_in = 3  # RGB images
+n_out = 1  # Single image
+cfg = read_config(args["cfg"]; n_in=n_in, n_out=n_out)
 
 function load_img(rom_name::String, frame_number::Int64)
     filename = string(@__DIR__, "/images/", rom_name, "_frame_$frame_number.png")
@@ -17,10 +34,30 @@ function generate_io_image(rom_name::String="freeway", frame_number::Int64=30)
     b = IPCGPFunctions.f_erode_img(a, a)
     c = IPCGPFunctions.f_compare_eq_img(b, g)
     d = IPCGPFunctions.f_dilate_img(c, c)
-    output = IPCGPFunctions.f_compare_ge_img(b, d)
+    target = IPCGPFunctions.f_compare_ge_img(b, d)
 
-    return r, g, b, output
+    return r, g, b, target
 end
 
+#=
+function fitness(ind::CGPInd, target::T) where {T <: OpenCV.InputArray}
+    output = process(ind, input)
+    OpenCV.norm(output, target)
+end
+
+mutate(i::CGPInd) = goldman_mutate(cfg, i)
+fit(i::CGPInd) = fitness(i, target)
+=#
+
 # Generate input / output
-r, g, b, output = generate_io_image()
+r, g, b, target = generate_io_image()
+
+# Define mutate and fit functions
+mutate(i::CGPInd) = goldman_mutate(cfg, i)
+fit(i::CGPInd) = fitness(i, target)
+
+# Create an evolution framework
+e = CGPEvolution(cfg, fit)
+
+# Run evolution
+run!(e)

@@ -1,6 +1,7 @@
 module IICGP
 
-include("utils.jl")
+include("config.jl")
 include("functions.jl")
+include("utils.jl")
 
 end

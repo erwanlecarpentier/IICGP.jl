@@ -8,12 +8,14 @@ global arity = Dict()
 
 SorX = Union{Symbol, Expr}
 
+#=
 function scaled(x::Float64)
     if isnan(x)
         return 0.0
     end
     min(max(x, -1.0), 1.0)
 end
+=#
 
 function fgen(name::Symbol, ar::Int, s1::SorX; safe::Bool=false)
     if safe
