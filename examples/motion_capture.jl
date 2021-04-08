@@ -14,7 +14,7 @@ function motion_capture(m::T) where {T <: OpenCV.InputArray}
 end
 
 # method with `let` to hide the internal state
-"""
+#=
 let buffer = Ref{Union{<:OpenCV.InputArray, Nothing}}(nothing)
     global motion_capture
     function motion_capture(m::T) where {T <: OpenCV.InputArray}
@@ -26,7 +26,7 @@ let buffer = Ref{Union{<:OpenCV.InputArray, Nothing}}(nothing)
         end
     end
  end
- """
+=#
 
 function load_img(rom_name::String, frame_number::Int64)
     filename = string(@__DIR__, "/images/", rom_name, "_frame_$frame_number.png")
