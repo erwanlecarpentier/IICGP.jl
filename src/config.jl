@@ -36,7 +36,5 @@ function read_config(config_filename::String; kwargs...)
     end
     config["two_arity"] = two_arity
     config["functions"] = functions
-    (; (Symbol(k)=>v for (k, v) in config)...)
-
-    return config
+    return (; (Symbol(k)=>v for (k, v) in config)...)
 end
