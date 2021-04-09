@@ -21,7 +21,7 @@ function get_outputs(ind::CGPInd)::T where {T <:OpenCV.InputArray}
     """
 end
 
-function process(ind::CGPInd)::Array{Float64}
+function process(ind::CGPInd)::T where {T <:OpenCV.InputArray}
     for i in eachindex(ind.nodes)
         n = ind.nodes[i]
         if n.active
@@ -31,7 +31,7 @@ function process(ind::CGPInd)::Array{Float64}
     get_outputs(ind)
 end
 
-function process(ind::CGPInd, inputs::Array{T})::T where {T <:OpenCV.InputArray}
+function process(ind::CGPInd, inputs::Array{T}) where {T <:OpenCV.InputArray}
     set_inputs(ind, inputs)
-    process(ind)
+    # process(ind)
 end
