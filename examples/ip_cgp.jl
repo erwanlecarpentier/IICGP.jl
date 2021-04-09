@@ -2,7 +2,7 @@ using Test
 using OpenCV
 using ArgParse
 using Cambrian
-using CartesianGeneticProgramming
+# using CartesianGeneticProgramming
 using IICGP
 
 
@@ -50,11 +50,11 @@ n_out = 1  # Single image
 cfg = read_config(args["cfg"]; n_in=n_in, n_out=n_out)
 
 # Generate input / output
-input, target = generate_io_image()
+input_rgb, target = generate_io_image()
 
 # TODO here
 test_ind = CGPInd(cfg)
-out = IICGP.process(test_ind, input)
+out = IICGP.process(test_ind, input_rgb)
 
 
 # Define mutate and fit functions
