@@ -1,6 +1,6 @@
 export Node, IPCGPInd
 import Base.copy, Base.String, Base.show, Base.summary
-import Cambrian.print
+import Cambrian, Cambrian.print
 using OpenCV
 
 "default function for nodes, will cause error if used as a function node"
@@ -72,8 +72,9 @@ function IPCGPInd(cfg::NamedTuple, chromosome::Array{Float64},
         end
     end
     buffer = Array{Array{UInt8, 3}}(undef, R * C + cfg.n_in)
+    fill!(buffer, zeros(UInt8, cfg.img_size))
     fitness = -Inf .* ones(cfg.d_fitness)
-    CGPInd(cfg.n_in, cfg.n_out, chromosome, genes, outputs, nodes, buffer, fitness)
+    IPCGPInd(cfg.n_in, cfg.n_out, chromosome, genes, outputs, nodes, buffer, fitness)
 end
 
 function IPCGPInd(cfg::NamedTuple, chromosome::Array{Float64})::IPCGPInd
@@ -90,30 +91,31 @@ function IPCGPInd(cfg::NamedTuple, chromosome::Array{Float64})::IPCGPInd
     genes[:, :, 3] .*= length(cfg.functions)
     genes = Int16.(ceil.(genes))
     outputs = Int16.(ceil.(chromosome[(R*C*3+1):end] .* (R * C + cfg.n_in)))
-    CGPInd(cfg, chromosome, genes, outputs)
+    IPCGPInd(cfg, chromosome, genes, outputs)
 end
 
 function IPCGPInd(cfg::NamedTuple)::IPCGPInd
     chromosome = rand(cfg.rows * cfg.columns * 3 + cfg.n_out)
-    CGPInd(cfg, chromosome)
+    IPCGPInd(cfg, chromosome)
 end
 
 function IPCGPInd(cfg::NamedTuple, ind::String)::IPCGPInd
     dict = JSON.parse(ind)
-    CGPInd(cfg, Array{Float64}(dict["chromosome"]))
+    IPCGPInd(cfg, Array{Float64}(dict["chromosome"]))
 end
 
 function copy(n::Node)
     Node(n.x, n.y, n.f, n.active)
 end
 
-function copy(ind::CGPInd)
+function copy(ind::IPCGPInd)
     buffer = Array{Array{UInt8, 3}}(undef, length(ind.buffer))
+    fill!(buffer, zeros(UInt8, size(ind.buffer[1])))
     nodes = Array{Node}(undef, length(ind.nodes))
     for i in eachindex(ind.nodes)
         nodes[i] = copy(ind.nodes[i])
     end
-    CGPInd(ind.n_in, ind.n_out, copy(ind.chromosome), copy(ind.genes),
+    IPCGPInd(ind.n_in, ind.n_out, copy(ind.chromosome), copy(ind.genes),
            copy(ind.outputs), nodes, buffer, copy(ind.fitness))
 end
 
@@ -125,25 +127,25 @@ function show(io::IO, n::Node)
     print(io, String(n))
 end
 
-function String(ind::CGPInd)
+function String(ind::IPCGPInd)
     JSON.json(Dict("chromosome"=>ind.chromosome, "fitness"=>ind.fitness))
 end
 
-function show(io::IO, ind::CGPInd)
+function show(io::IO, ind::IPCGPInd)
     print(io, String(ind))
 end
 
-function get_active_nodes(ind::CGPInd)
+function get_active_nodes(ind::IPCGPInd)
     ind.nodes[[n.active for n in ind.nodes]]
 end
 
-function summary(io::IO, ind::CGPInd)
-    print(io, string("CGPInd(", get_active_nodes(ind), ", ",
+function summary(io::IO, ind::IPCGPInd)
+    print(io, string("IPCGPInd(", get_active_nodes(ind), ", ",
                      findall([n.active for n in ind.nodes]), ", ",
                      ind.outputs, " ,",
                      ind.fitness, ")"))
 end
 
-function interpret(i::CGPInd)
+function interpret(i::IPCGPInd)
     x::AbstractArray->process(i, x)
 end
