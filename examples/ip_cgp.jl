@@ -5,12 +5,10 @@ using Cambrian
 # using CartesianGeneticProgramming
 using IICGP
 
-
 function load_img(rom_name::String, frame_number::Int64)
     filename = string(@__DIR__, "/images/", rom_name, "_frame_$frame_number.png")
     return OpenCV.imread(filename)
 end
-
 
 function generate_io_image(rom_name::String="freeway", frame_number::Int64=30)
     img = load_img(rom_name, frame_number)
@@ -26,12 +24,10 @@ function generate_io_image(rom_name::String="freeway", frame_number::Int64=30)
     return [r, g, b], target
 end
 
-
-function fitness(ind::CGPInd, input::Vector{T}, target::T) where {T <: OpenCV.InputArray}
+function fitness(ind::IPCGPInd, input::Vector{T}, target::T) where {T <: OpenCV.InputArray}
     output = process(ind, input)
-    OpenCV.norm(output, target)
+    -OpenCV.norm(output[1], target)
 end
-
 
 # Read configuration file
 s = ArgParseSettings()
@@ -47,21 +43,20 @@ end
 args = parse_args(ARGS, s)
 n_in = 3  # RGB images
 n_out = 1  # Single image
-cfg = read_config(args["cfg"]; n_in=n_in, n_out=n_out)
-
-# Generate input / output
 input_rgb, target = generate_io_image()
+img_size = size(target)
+cfg = read_config(args["cfg"]; n_in=n_in, n_out=n_out, img_size=img_size)
 
-# TODO here
-test_ind = CGPInd(cfg)
-out = IICGP.process(test_ind, input_rgb)
-
+#=
+test_ind = IPCGPInd(cfg)
+out = process(test_ind, input_rgb)
+my_img = IPCGPFunctions.f_compare_eq_img(input_rgb[2], input_rgb[3])
+fitness(test_ind, input_rgb, target)
+=#
 
 # Define mutate and fit functions
-mutate(i::CGPInd) = goldman_mutate(cfg, i)
-fit(i::CGPInd) = fitness(i, input, target)
-
-
+mutate(i::IPCGPInd) = goldman_mutate(cfg, i)
+fit(i::IPCGPInd) = fitness(i, input, target)
 
 # Create an evolution framework
 e = CGPEvolution(cfg, fit)
