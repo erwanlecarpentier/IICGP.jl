@@ -47,12 +47,13 @@ input_rgb, target = generate_io_image()
 img_size = size(target)
 cfg = read_config(args["cfg"]; n_in=n_in, n_out=n_out, img_size=img_size)
 
-#=
+
 test_ind = IPCGPInd(cfg)
 out = process(test_ind, input_rgb)
+IICGP.imshow(out[1])
 my_img = IPCGPFunctions.f_compare_eq_img(input_rgb[2], input_rgb[3])
 fitness(test_ind, input_rgb, target)
-=#
+
 
 # Define mutate and fit functions
 mutate(i::IPCGPInd) = goldman_mutate(cfg, i)

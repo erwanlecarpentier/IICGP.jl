@@ -16,6 +16,6 @@ evaluate(e::CGPEvolution) = Cambrian.fitness_evaluate(e, e.fitness)
 function CGPEvolution(cfg::NamedTuple, fitness::Function;
                       logfile=string("logs/", cfg.id, ".csv"))
     logger = CambrianLogger(logfile)
-    population = Cambrian.initialize(CGPInd, cfg)
+    population = Cambrian.initialize(IPCGPInd, cfg)
     CGPEvolution(cfg, logger, population, fitness, 0)
 end
