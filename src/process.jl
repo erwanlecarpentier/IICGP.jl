@@ -1,27 +1,24 @@
 export process
 
 using OpenCV
-using CartesianGeneticProgramming
+# using CartesianGeneticProgramming
 
-function set_inputs(ind::CGPInd, inputs::Array{T})::Nothing where {T <:OpenCV.InputArray}
+function set_inputs(ind::IPCGPInd, inputs::Array{T})::Nothing where {T <: OpenCV.InputArray}
     for i in eachindex(inputs)
         ind.buffer[i] = inputs[i]
     end
 end
 
-function get_outputs(ind::CGPInd)::T where {T <:OpenCV.InputArray}
+function get_outputs(ind::IPCGPInd)
     # doesn't re-process, just gives outputs
-    # TODO
-    """
-    outputs = Array{Float64}(undef, length(ind.outputs))
+    outputs = Array{Array{UInt8, 3}}(undef, length(ind.outputs))
     for i in eachindex(outputs)
         outputs[i] = ind.buffer[ind.outputs[i]]
     end
     outputs
-    """
 end
 
-function process(ind::CGPInd)::T where {T <:OpenCV.InputArray}
+function process(ind::IPCGPInd)
     for i in eachindex(ind.nodes)
         n = ind.nodes[i]
         if n.active
@@ -31,7 +28,7 @@ function process(ind::CGPInd)::T where {T <:OpenCV.InputArray}
     get_outputs(ind)
 end
 
-function process(ind::CGPInd, inputs::Array{T}) where {T <:OpenCV.InputArray}
+function process(ind::IPCGPInd, inputs::Array{<:OpenCV.InputArray}) where {T <: OpenCV.InputArray}
     set_inputs(ind, inputs)
-    # process(ind)
+    process(ind)
 end
