@@ -1,7 +1,6 @@
 export Node, IPCGPInd
 import Base.copy, Base.String, Base.show, Base.summary
 import Cambrian, Cambrian.print
-using OpenCV
 
 "default function for nodes, will cause error if used as a function node"
 function f_null(args...)::Nothing
@@ -22,7 +21,7 @@ struct IPCGPInd <: Cambrian.Individual
     genes::Array{Int16}
     outputs::Array{Int16}
     nodes::Array{Node}
-    buffer::Array{<:OpenCV.InputArray}
+    buffer::AbstractArray
     fitness::Array{Float64}
 end
 

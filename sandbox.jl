@@ -27,16 +27,6 @@ function function_generator(name::Symbol, e::Expr, iotype::U) where {U <: Union{
     end
 end
 
-UType = Union{Int32, Int8}
-
-function foo(x::UType, y::UType)::UType
-    return x + y
-end
-
-function bar(x::T, y::T)::T where {T <: UType}
-    return x + y
-end
-
 # Functions generation
 
 function_generator(:incr, :(x + 1), Float64)

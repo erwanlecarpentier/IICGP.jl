@@ -3,7 +3,8 @@ export process
 using OpenCV
 using CartesianGeneticProgramming
 
-function set_inputs(ind::CGPInd, inputs::Array{<:OpenCV.InputArray})::Nothing  # where {T <: OpenCV.InputArray}
+function set_inputs(ind::CGPInd, inputs::AbstractArray)::Nothing  # where {T <: OpenCV.InputArray}
+    println(typeof(ind.buffer))
     for i in eachindex(inputs)
         ind.buffer[i] = inputs[i]
     end
@@ -28,7 +29,7 @@ function process(ind::CGPInd)
     get_outputs(ind)
 end
 
-function process(ind::CGPInd, inputs::Array{<:OpenCV.InputArray})  # where {T <: OpenCV.InputArray}
+function process(ind::CGPInd, inputs::AbstractArray)  # where {T <: OpenCV.InputArray}
     set_inputs(ind, inputs)
     # process(ind)
     return 0

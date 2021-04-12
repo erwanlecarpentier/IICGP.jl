@@ -34,7 +34,6 @@ end
 
 # OpenCV operations
 fgen(:f_absdiff_img, 2, :(OpenCV.absdiff(x, y)), OpenCV.InputArray)
-fgen(:f_add, 2, :(OpenCV.add(x, y)), OpenCV.InputArray)
 fgen(:f_add_img, 2, :(OpenCV.add(x, y)), OpenCV.InputArray)
 fgen(:f_subtract_img, 2, :(OpenCV.subtract(x, y)), OpenCV.InputArray)
 fgen(:f_addweighted_img, 2, :(OpenCV.addWeighted(x, 0.5, y, 0.5, 0.0)), OpenCV.InputArray)
@@ -61,7 +60,6 @@ fgen(:f_erode_img, 1, :(OpenCV.erode(x, OpenCV.getStructuringElement(OpenCV.MORP
 
 # Mathematical
 fgen(:f_add, 2, :((x + y) / 2.0), Float64)
-#=
 fgen(:f_subtract, 2, :(abs(x - y) / 2.0), Float64)
 fgen(:f_mult, 2, :(x * y), Float64)
 fgen(:f_div, 2, :(scaled(x / y)), Float64)
@@ -81,6 +79,5 @@ fgen(:f_and, 2, :(Float64((&)(Int(round(x)), Int(round(y))))), Float64)
 fgen(:f_or, 2, :(Float64((|)(Int(round(x)), Int(round(y))))), Float64)
 fgen(:f_xor, 2, :(Float64(xor(Int(abs(round(x))), Int(abs(round(y)))))), Float64)
 fgen(:f_not, 1, :(1 - abs(round(x))), Float64)
-=#
 
 end
