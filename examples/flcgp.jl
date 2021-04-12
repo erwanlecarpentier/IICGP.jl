@@ -10,7 +10,7 @@ Fitness function for float-CGP test.
 Fitness is calculated based on the error prediction from
 """
 function fitness(ind::CGPInd, input::Vector{Float64})
-    
+
     #output = process(ind, input)
     [0.0]
 end

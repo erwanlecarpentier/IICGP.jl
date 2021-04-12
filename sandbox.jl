@@ -4,9 +4,9 @@ global arity = Dict()
 
 SorX = Union{Symbol, Expr}
 
-function img_fgen(name::Symbol, ar::Int, s1::SorX; safe::Bool=false)
+function fgen(name::Symbol, ar::Int, s1::SorX, iotype::U; safe::Bool=false) where {U <: Union{DataType, Union}}
     if safe
-        @eval function $name(x::OpenCV.InputArray, y::OpenCV.InputArray)::OpenCV.InputArray
+        @eval function $name(x::T, y::T)::T where {T <: $(iotype)}
             try
                 return $s1
             catch
@@ -14,40 +14,37 @@ function img_fgen(name::Symbol, ar::Int, s1::SorX; safe::Bool=false)
             end
         end
     else
-        @eval function $name(x::OpenCV.InputArray, y::OpenCV.InputArray)::OpenCV.InputArray
+        @eval function $name(x::T, y::T)::T where {T <: $(iotype)}
             $s1
         end
     end
     arity[String(name)] = ar
 end
 
-function fgen(name::Symbol, ar::Int, s1::SorX, iotype::DataType; safe::Bool=false)
-    if safe
-        @eval function $name(x::T, y::T)::T where {T <: $(Symbol(iotype))}
-            try
-                return $s1
-            catch
-                return x
-            end
-        end
-    else
-        @eval function $name(x::T, y::T)::T where {T <: $(Symbol(iotype))}
-            $s1
-        end
-    end
-    arity[String(name)] = ar
-end
-
-function function_generator(name::Symbol, e::Expr, iotype::DataType)
-    @eval function $name(x::T, y::T)::T where {T <: $(Symbol(iotype))}
+function function_generator(name::Symbol, e::Expr, iotype::U) where {U <: Union{DataType, Union}}
+    @eval function $name(x::T, y::T)::T where {T <: $(iotype)}
         return $e
     end
 end
 
-function_generator(:incr, :(x + 1), Float64)
+UType = Union{Int32, Int8}
 
-# OpenCV operations
-img_fgen(:f_add_img_spec, 2, :(OpenCV.add(x, y)))
+function foo(x::UType, y::UType)::UType
+    return x + y
+end
+
+function bar(x::T, y::T)::T where {T <: UType}
+    return x + y
+end
+
+# Functions generation
+
+function_generator(:incr, :(x + 1), Float64)
+function_generator(:incr, :(x + 1), Int64)
+function_generator(:incr, :(x + 1), UType)
+
+fgen(:f_add, 2, :(x + y), Float64)
+fgen(:f_add, 2, :(x + y), Int64)
+fgen(:f_add, 2, :(x + y), UType)
 
 fgen(:f_add, 2, :(OpenCV.add(x, y)), OpenCV.InputArray)
-fgen(:f_add, 2, :(x + y), Float64)
