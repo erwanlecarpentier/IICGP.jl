@@ -1,0 +1,20 @@
+# Cambrian.jl settings
+seed: 0
+d_fitness: 1
+n_population: 5
+n_elite: 1
+n_gen: 100
+log_gen: 1
+save_gen: 10
+m_rate: 0.1
+# IPCGP.jl settings
+rows: 2
+columns: 3
+recur: 0.2
+out_m_rate: 0.3
+functions:
+  - f_add_img
+  - f_erode_img
+  - f_compare_eq_img
+  - f_dilate_img
+  - f_compare_ge_img

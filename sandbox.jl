@@ -1,49 +1,53 @@
-using BenchmarkTools
+using OpenCV
 
+global arity = Dict()
 
-# global buffer
-# buffer = 0
+SorX = Union{Symbol, Expr}
 
-function foobar()
-    if @isdefined foobar_buffer
-        global foobar_buffer
-        foobar_buffer += 1
-    else
-        global buffer
-        foobar_buffer = 1
-    end
-end
-
-foobar()
-
-@btime foobar()
-
-
-
-f(state=0) = ()->state+=1
-
-
-let state = Ref{Union{Int, Nothing}}(nothing)
-    global bar
-    function bar()
-        if state[] !== nothing
-            state[] += 1
-        else
-            state[] = 1
+function img_fgen(name::Symbol, ar::Int, s1::SorX; safe::Bool=false)
+    if safe
+        @eval function $name(x::OpenCV.InputArray, y::OpenCV.InputArray)::OpenCV.InputArray
+            try
+                return $s1
+            catch
+                return x
+            end
         end
-        state[]
-    end
- end
-
-Base.@kwdef mutable struct F
-    state = nothing
-end
-
-function (o::F)()
-    if o.state == nothing
-        o.state = 1
     else
-        o.state += 1
+        @eval function $name(x::OpenCV.InputArray, y::OpenCV.InputArray)::OpenCV.InputArray
+            $s1
+        end
+    end
+    arity[String(name)] = ar
+end
+
+function fgen(name::Symbol, ar::Int, s1::SorX, iotype::DataType; safe::Bool=false)
+    if safe
+        @eval function $name(x::T, y::T)::T where {T <: $(Symbol(iotype))}
+            try
+                return $s1
+            catch
+                return x
+            end
+        end
+    else
+        @eval function $name(x::T, y::T)::T where {T <: $(Symbol(iotype))}
+            $s1
+        end
+    end
+    arity[String(name)] = ar
+end
+
+function function_generator(name::Symbol, e::Expr, iotype::DataType)
+    @eval function $name(x::T, y::T)::T where {T <: $(Symbol(iotype))}
+        return $e
     end
 end
-fi = F()
+
+function_generator(:incr, :(x + 1), Float64)
+
+# OpenCV operations
+img_fgen(:f_add_img_spec, 2, :(OpenCV.add(x, y)))
+
+fgen(:f_add, 2, :(OpenCV.add(x, y)), OpenCV.InputArray)
+fgen(:f_add, 2, :(x + y), Float64)

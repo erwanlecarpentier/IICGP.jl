@@ -1,6 +1,6 @@
-export IPCGPFunctions
+export CGPFunctions
 
-module IPCGPFunctions
+module CGPFunctions
 
 using OpenCV
 
@@ -17,7 +17,7 @@ function scaled(x::Float64)
 end
 =#
 
-function fgen(name::Symbol, ar::Int, s1::SorX; safe::Bool=false)
+function img_fgen(name::Symbol, ar::Int, s1::SorX; safe::Bool=false)
     if safe
         @eval function $name(x::OpenCV.InputArray, y::OpenCV.InputArray)::OpenCV.InputArray
             try
@@ -34,8 +34,29 @@ function fgen(name::Symbol, ar::Int, s1::SorX; safe::Bool=false)
     arity[String(name)] = ar
 end
 
+function fgen(name::Symbol, ar::Int, s1::SorX, IOType::Type; safe::Bool=false)
+    if safe
+        @eval function $name(x::IOType, y::IOType)::IOType
+            try
+                return $s1
+            catch
+                return x
+            end
+        end
+    else
+        @eval function $name(x::IOType, y::IOType)::IOType
+            $s1
+        end
+    end
+    arity[String(name)] = ar
+end
+
 # OpenCV operations
-fgen(:f_absdiff_img, 2, :(OpenCV.absdiff(x, y)))
+img_fgen(:f_add_img_spec, 2, :(OpenCV.add(x, y)))
+fgen(:f_add_img, 2, :(OpenCV.add(x, y)), OpenCV.InputArray)
+
+#=
+img_fgen(:f_absdiff_img, 2, :(OpenCV.absdiff(x, y)))
 fgen(:f_add_img, 2, :(OpenCV.add(x, y)))
 fgen(:f_subtract_img, 2, :(OpenCV.subtract(x, y)))
 fgen(:f_addweighted_img, 2, :(OpenCV.addWeighted(x, 0.5, y, 0.5, 0.0)))
@@ -59,6 +80,7 @@ fgen(:f_min_img, 2, :(OpenCV.min(x, y)))
 # Filters
 fgen(:f_dilate_img, 1, :(OpenCV.dilate(x, OpenCV.getStructuringElement(OpenCV.MORPH_ELLIPSE, OpenCV.Size{Int32}(8, 8)))))
 fgen(:f_erode_img, 1, :(OpenCV.erode(x, OpenCV.getStructuringElement(OpenCV.MORPH_ELLIPSE, OpenCV.Size{Int32}(4, 4)))))
+=#
 
 #=
 # Mathematical
