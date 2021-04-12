@@ -8,13 +8,14 @@ log_gen: 1
 save_gen: 10
 m_rate: 0.1
 # IPCGP.jl settings
-rows: 2
-columns: 3
+rows: 1
+columns: 5
 recur: 0.2
 out_m_rate: 0.3
 functions:
-  - f_add_img
-  - f_erode_img
-  - f_compare_eq_img
-  - f_dilate_img
-  - f_compare_ge_img
+  - f_add
+  - f_subtract
+  - f_mult
+  - f_div
+  - f_sin
+  - f_cos

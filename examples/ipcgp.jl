@@ -28,12 +28,19 @@ function fitness(ind::CGPInd, input::Vector{T}, target::T) where {T <: OpenCV.In
     [-OpenCV.norm(output[1], target)]
 end
 
+# TODO put this in individuals
+function IPCGPInd(cfg::NamedTuple)
+    buffer = Array{Array{UInt8, 3}}(undef, cfg.rows * cfg.columns + cfg.n_in)
+    fill!(buffer, zeros(UInt8, cfg.img_size))
+    CGPInd(cfg; buffer=buffer)
+end
+
 # Read configuration file
 s = ArgParseSettings()
 @add_arg_table! s begin
     "--cfg"
     help = "configuration script"
-    default = "cfg/ip_cgp.yaml"
+    default = "cfg/ipcgp.yaml"
     "--seed"
     help = "random seed for evolution"
     arg_type = Int
@@ -46,6 +53,7 @@ input_rgb, target = generate_io_image()
 img_size = size(target)
 cfg = read_config(args["cfg"]; n_in=n_in, n_out=n_out, img_size=img_size)
 
+# Test I/O without evolution
 foo = IPCGPInd(cfg)
 out = IICGP.process(foo, input_rgb)
 IICGP.imshow(out[1])

@@ -20,7 +20,7 @@ s = ArgParseSettings()
 @add_arg_table! s begin
     "--cfg"
     help = "configuration script"
-    default = "cfg/ip_cgp.yaml"
+    default = "cfg/flcgp.yaml"
     "--seed"
     help = "random seed for evolution"
     arg_type = Int
