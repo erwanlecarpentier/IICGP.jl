@@ -29,10 +29,10 @@ function read_config(config_filename::String; kwargs...)
     functions = Array{Function}(undef, length(config["functions"]))
     for i in eachindex(config["functions"])
         fname = config["functions"][i]
-        if IPCGPFunctions.arity[fname] == 2
+        if IICGP.CGPFunctions.arity[fname] == 2
             two_arity[i] = true
         end
-        functions[i] = eval(Meta.parse(string("IPCGPFunctions.", fname)))
+        functions[i] = eval(Meta.parse(string("IICGP.CGPFunctions.", fname)))
     end
     config["two_arity"] = two_arity
     config["functions"] = functions

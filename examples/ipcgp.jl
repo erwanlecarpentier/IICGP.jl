@@ -1,4 +1,3 @@
-using Test
 using OpenCV
 using ArgParse
 using Cambrian
@@ -15,11 +14,11 @@ function generate_io_image(rom_name::String="freeway", frame_number::Int64=30)
     r, g, b = IICGP.split_rgb(img)
 
     # Arbitrary application of simple OpenCV functions
-    a = IPCGPFunctions.f_add_img(r, g)
-    b = IPCGPFunctions.f_erode_img(a, a)
-    c = IPCGPFunctions.f_compare_eq_img(b, g)
-    d = IPCGPFunctions.f_dilate_img(c, c)
-    target = IPCGPFunctions.f_compare_ge_img(b, d)
+    a = IICGP.CGPFunctions.f_add_img(r, g)
+    b = IICGP.CGPFunctions.f_erode_img(a, a)
+    c = IICGP.CGPFunctions.f_compare_eq_img(b, g)
+    d = IICGP.CGPFunctions.f_dilate_img(c, c)
+    target = IICGP.CGPFunctions.f_compare_ge_img(b, d)
 
     return [r, g, b], target
 end
@@ -51,7 +50,7 @@ cfg = read_config(args["cfg"]; n_in=n_in, n_out=n_out, img_size=img_size)
 test_ind = CGPInd(cfg)
 out = IICGP.process(test_ind, input_rgb)
 IICGP.imshow(out[1])
-my_img = IPCGPFunctions.f_compare_eq_img(input_rgb[2], input_rgb[3])
+my_img = IICGP.CGPFunctions.f_compare_eq_img(input_rgb[2], input_rgb[3])
 fitness(test_ind, input_rgb, target)
 
 
