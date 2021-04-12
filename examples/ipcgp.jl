@@ -2,7 +2,7 @@ using Test
 using OpenCV
 using ArgParse
 using Cambrian
-# using CartesianGeneticProgramming
+using CartesianGeneticProgramming
 using IICGP
 
 function load_img(rom_name::String, frame_number::Int64)
@@ -24,7 +24,7 @@ function generate_io_image(rom_name::String="freeway", frame_number::Int64=30)
     return [r, g, b], target
 end
 
-function fitness(ind::IPCGPInd, input::Vector{T}, target::T) where {T <: OpenCV.InputArray}
+function fitness(ind::CGPInd, input::Vector{T}, target::T) where {T <: OpenCV.InputArray}
     output = process(ind, input)
     [-OpenCV.norm(output[1], target)]
 end
