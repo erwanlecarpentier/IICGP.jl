@@ -6,7 +6,23 @@ using CartesianGeneticProgramming
 using IICGP
 
 """
-Fitness function for float-CGP test.
+Function generating random inputs/outputs with a simple function mapping.
+The function mapping is
+    y = cos(x[1] + x[2] * x[3])
+where `x[i]` is in `[0.0, 1.0]`.
+Can be used to generate a simple dataset.
+"""
+function generate_io(n::Int64=10)
+    inps = rand(Float64, (n, 3))
+    outs = zeros(Float64, (size(inps)[1]))
+    for i in eachindex(inps[:,1])
+        outs[i] = cos(inps[i,1] + inps[i,2] * inps[i,3])
+    end
+    return inps, out
+end
+
+"""
+Random fitness function for float-CGP test.
 Fitness is calculated based on the error prediction from
 """
 function fitness(ind::CGPInd, input::Vector{Float64})
@@ -27,18 +43,16 @@ s = ArgParseSettings()
     default = 0
 end
 args = parse_args(ARGS, s)
-n_in = 3  # RGB images
-n_out = 1  # Single image
-input_rgb, target = generate_io_image()
-img_size = size(target)
-cfg = read_config(args["cfg"]; n_in=n_in, n_out=n_out, img_size=img_size)
+n_in = 3  # Three floating numbers as input
+n_out = 1  # Single output
+cfg = read_config(args["cfg"]; n_in=n_in, n_out=n_out)
 
 
-test_ind = CGPInd(cfg)
-out = IICGP.process(test_ind, input_rgb)
-IICGP.imshow(out[1])
-my_img = IPCGPFunctions.f_compare_eq_img(input_rgb[2], input_rgb[3])
-fitness(test_ind, input_rgb, target)
+foo = CGPInd(cfg)
+inp = [1.0, 3.0, 5.0]
+out = process(foo, inp)
+inps, out = generate_io()
+fitness(foo, inps, outs)
 
 
 # Define mutate and fit functions

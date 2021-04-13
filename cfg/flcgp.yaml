@@ -7,7 +7,7 @@ n_gen: 100
 log_gen: 1
 save_gen: 10
 m_rate: 0.1
-# IPCGP.jl settings
+# CartesianGeneticProgramming.jl settings
 rows: 1
 columns: 5
 recur: 0.2
