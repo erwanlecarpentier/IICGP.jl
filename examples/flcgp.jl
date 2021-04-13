@@ -4,6 +4,7 @@ using ArgParse
 using Cambrian
 using CartesianGeneticProgramming
 using IICGP
+using LinearAlgebra
 
 """
 Function generating random inputs/outputs with a simple function mapping.
@@ -12,7 +13,7 @@ The function mapping is
 where `x[i]` is in `[0.0, 1.0]`.
 Can be used to generate a simple dataset.
 """
-function generate_io(n::Int64=10)
+function generate_io(n::Int64=10)::Tuple{Array{Float64,2},Array{Float64,1}}
     inps = rand(Float64, (n, 3))
     outs = zeros(Float64, (size(inps)[1]))
     for i in eachindex(inps[:,1])
@@ -22,13 +23,20 @@ function generate_io(n::Int64=10)
 end
 
 """
-Random fitness function for float-CGP test.
-Fitness is calculated based on the error prediction from
+Fitness function for float-CGP test.
+Fitness is calculated based on the L2-error prediction from the given
+inputs/outputs dataset.
 """
-function fitness(ind::CGPInd, input::Vector{Float64})
-
-    #output = process(ind, input)
-    [0.0]
+function fitness(ind::CGPInd, inps::Array{Float64,2},
+                 outs::Array{Float64,1})::Array{Float64,1}
+    preds = zeros(Float64, (size(inps)[1]))
+    for i in eachindex(inps[:,1])
+        preds[i] = process(foo, inps[i,:])[1]
+    end
+    println(preds)
+    println(outs)
+    println(preds .- outs)
+    return [LinearAlgebra.norm(preds .- outs)]
 end
 
 # Read configuration file
@@ -56,8 +64,8 @@ fitness(foo, inps, outs)
 
 
 # Define mutate and fit functions
-mutate(i::IPCGPInd) = goldman_mutate(cfg, i)
-fit(i::IPCGPInd) = fitness(i, input_rgb, target)
+mutate(i::CGPInd) = goldman_mutate(cfg, i)
+fit(i::CGPInd) = fitness(i, inps, outs)
 
 # Create an evolution framework
 e = CGPEvolution(cfg, fit)
