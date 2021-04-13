@@ -55,13 +55,14 @@ n_in = 3  # Three floating numbers as input
 n_out = 1  # Single output
 cfg = read_config(args["cfg"]; n_in=n_in, n_out=n_out)
 
+# Generate data
+inps, outs = generate_io()
 
+# Test on random CGP individual
+#=
 foo = CGPInd(cfg)
-inp = [1.0, 3.0, 5.0]
-out = process(foo, inp)
-inps, out = generate_io()
 fitness(foo, inps, outs)
-
+=#
 
 # Define mutate and fit functions
 mutate(i::CGPInd) = goldman_mutate(cfg, i)
