@@ -19,7 +19,7 @@ function generate_io(n::Int64=10)::Tuple{Array{Float64,2},Array{Float64,1}}
     for i in eachindex(inps[:,1])
         outs[i] = cos(inps[i,1] + inps[i,2] * inps[i,3])
     end
-    return inps, out
+    return inps, outs
 end
 
 """
@@ -31,7 +31,7 @@ function fitness(ind::CGPInd, inps::Array{Float64,2},
                  outs::Array{Float64,1})::Array{Float64,1}
     preds = zeros(Float64, (size(inps)[1]))
     for i in eachindex(inps[:,1])
-        preds[i] = process(foo, inps[i,:])[1]
+        preds[i] = process(ind, inps[i,:])[1]
     end
     println(preds)
     println(outs)
@@ -49,6 +49,10 @@ s = ArgParseSettings()
     help = "random seed for evolution"
     arg_type = Int
     default = 0
+    "--ind"
+    help = "individual for evaluation"
+    arg_type = String
+    default = ""
 end
 args = parse_args(ARGS, s)
 n_in = 3  # Three floating numbers as input
@@ -64,12 +68,18 @@ foo = CGPInd(cfg)
 fitness(foo, inps, outs)
 =#
 
-# Define mutate and fit functions
-mutate(i::CGPInd) = goldman_mutate(cfg, i)
-fit(i::CGPInd) = fitness(i, inps, outs)
+if length(args["ind"]) > 0
+    ind = CGPInd(cfg, read(args["ind"], String))
+    ftn = fitness(ind, inps, outs)
+    println("Fitness: ", ftn)
+else
+    # Define mutate and fit functions
+    mutate(i::CGPInd) = goldman_mutate(cfg, i)
+    fit(i::CGPInd) = fitness(i, inps, outs)
 
-# Create an evolution framework
-e = CGPEvolution(cfg, fit)
+    # Create an evolution framework
+    e = CGPEvolution(cfg, fit)
 
-# Run evolution
-run!(e)
+    # Run evolution
+    run!(e)
+end
