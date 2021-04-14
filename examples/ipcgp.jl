@@ -70,3 +70,21 @@ e = CGPEvolution(cfg, fit)
 
 # Run evolution
 run!(e)
+
+"""
+if length(args["ind"]) > 0
+    ind = CGPInd(cfg, read(args["ind"], String))
+    ftn = fitness(ind, inps, outs)
+    println("Fitness: ", ftn)
+else
+    # Define mutate and fit functions
+    mutate(i::CGPInd) = goldman_mutate(cfg, i)
+    fit(i::CGPInd) = fitness(i, inps, outs)
+
+    # Create an evolution framework
+    e = CGPEvolution(cfg, fit)
+
+    # Run evolution
+    run!(e)
+end
+"""

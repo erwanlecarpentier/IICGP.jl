@@ -18,6 +18,7 @@ function generate_io(n::Int64=10)::Tuple{Array{Float64,2},Array{Float64,1}}
     outs = zeros(Float64, (size(inps)[1]))
     for i in eachindex(inps[:,1])
         outs[i] = cos(inps[i,1] + inps[i,2] * inps[i,3])
+        # outs[i] = inps[i,1] + inps[i,2] * inps[i,3]
     end
     return inps, outs
 end
@@ -33,10 +34,7 @@ function fitness(ind::CGPInd, inps::Array{Float64,2},
     for i in eachindex(inps[:,1])
         preds[i] = process(ind, inps[i,:])[1]
     end
-    println(preds)
-    println(outs)
-    println(preds .- outs)
-    return [LinearAlgebra.norm(preds .- outs)]
+    return [-LinearAlgebra.norm(preds .- outs)]
 end
 
 # Read configuration file
