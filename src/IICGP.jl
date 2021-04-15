@@ -4,7 +4,7 @@ import YAML
 using Cambrian
 import JSON
 
-include("config.jl")
+# include("config.jl")
 # include("evolution.jl")
 include("functions.jl")
 # include("individual.jl")
