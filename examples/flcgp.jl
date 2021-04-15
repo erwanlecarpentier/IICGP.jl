@@ -65,13 +65,13 @@ end
 args = parse_args(ARGS, s)
 n_in = 3  # Three floating numbers as input
 n_out = 1  # Single output
-cfg = read_config(args["cfg"]; n_in=n_in, n_out=n_out)
+cfg = CartesianGeneticProgramming.get_config(args["cfg"]; n_in=n_in, n_out=n_out)
 
 # Test on random CGP individual
-
+#=
 foo = CGPInd(cfg)
 fitness(foo)
-
+=#
 
 if length(args["ind"]) > 0
     ind = CGPInd(cfg, read(args["ind"], String))
