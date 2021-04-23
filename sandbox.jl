@@ -18,8 +18,13 @@ end
 bar(A)
 bar(B)
 
+function foo(x::T, y::T) where {T <: Union{Int64, Int32}}
+    x + y
+end
 
-
+function bar(f::Function)
+    println(f)
+end
 
 
 

@@ -2,22 +2,60 @@ using IICGP
 using OpenCV
 using Test
 
-@testset "Reducer" begin
+function test_inputs(f::Function, img::AbstractArray)
+    img_reduced = f(img)
+
+    # TODO remove
+    println(size(img))
+    println(size(img_reduced))
+    println(size(img_reduced) <= size(img))
+
+    @test size(img_reduced) <= size(img)
+end
+
+function test_functions(functions::Array{Function}, images)
+    for f in functions
+        for img in images
+            test_inputs(f, img)
+        end
+    end
+end
+
+@testset "Reducing functions" begin
         # Load / generate images
         image_name = "centipede_frame_0"
         filename = string(@__DIR__, "/", image_name, ".png")
         m = OpenCV.imread(filename)
+        r, g, b = IICGP.split_rgb(m)
+        images = [r, g, b]
 
-        m_p = IICGP.max_pool_reduction(m)
+        functions = [
+                IICGP.ReducingFunctions.area_reduction,
+                IICGP.ReducingFunctions.linear_reduction
+        ]
 
-        @test size(m) > size(m_new)
+        # Test each function
+        test_functions(functions, images)
 end
 
 
+# Load image and split
 image_name = "centipede_frame_0"
 filename = string(@__DIR__, "/", image_name, ".png")
 m = OpenCV.imread(filename)
-IICGP.imshow(m)
+r, g, b = IICGP.split_rgb(m)
+images = [r, g, b]
 
-m_new = IICGP.max_pool_reduction(m)
-IICGP.imshow(m_new)
+
+m_reduced = IICGP.ReducingFunctions.area_reduction(m)
+m_reduced = IICGP.ReducingFunctions.linear_reduction(m)
+
+imshow(m_reduced, 100)
+
+
+
+functions = [
+        IICGP.ReducingFunctions.area_reduction,
+        IICGP.ReducingFunctions.linear_reduction
+]
+test_functions(functions, images)
