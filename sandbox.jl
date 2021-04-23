@@ -16,6 +16,17 @@ out = max_pool(inp)
 IICGP.imshow(inp, 10.0)
 IICGP.imshow(out, 100.0)
 
+function bar(x::X, y::Y) where {X <: Union{Float64, Int64}, Y <: Union{Float64, Int64}}
+    x + y
+end
+function foo(x::X, y::X) where {X <: Union{Float64, Int64}}
+    x + y
+end
+foo(1, 2)
+foo(1.0, 2.0)
+foo(0.5, 2.5)
+bar(1, 2.0)
+
 
 #=
 using PkgTemplates

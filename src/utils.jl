@@ -30,7 +30,7 @@ Show enlarged input image using functions `imshow` and `waitKey` from OpenCV
 Julia binding.
 The enlargement factor is given by the `enlargement` input parameter.
 """
-function imshow(m::T, enlargement<:Union{Int64, Float64}) where {T <: OpenCV.InputArray}
+function imshow(m::T, enlargement::E) where {T <: OpenCV.InputArray, E <: Union{Int64, Float64}}
     n_cols = convert(Int32, size(m)[2] * enlargement)
     n_rows = convert(Int32, size(m)[3] * enlargement)
     new_size = OpenCV.Size(n_cols, n_rows)
