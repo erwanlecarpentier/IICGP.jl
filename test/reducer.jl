@@ -4,12 +4,6 @@ using Test
 
 function test_inputs(f::Function, img::AbstractArray)
     img_reduced = f(img)
-
-    # TODO remove
-    println(size(img))
-    println(size(img_reduced))
-    println(size(img_reduced) <= size(img))
-
     @test size(img_reduced) <= size(img)
 end
 
