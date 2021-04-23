@@ -38,8 +38,6 @@ end
 function max_pool_reduction(m::T; s::Int64=5) where {T <: OpenCV.InputArray}
     n_cols = s
     n_rows = s
-
-    # Process
     # out = zeros(1, n_cols, n_rows)
     tile_width = convert(Int64, ceil(size(m)[2] / n_cols))
     tile_heigt = convert(Int64, ceil(size(m)[3] / n_rows))
@@ -50,7 +48,6 @@ function max_pool_reduction(m::T; s::Int64=5) where {T <: OpenCV.InputArray}
             println(maximum(m[1, tileaxs...]))
     end
     =#
-
     out = map(TileIterator(axes(m[1, :, :]), (tile_width, tile_heigt))) do tileaxs maximum(m[1, tileaxs...]) end
     reshape(out, 1, n_cols, n_rows)
 end

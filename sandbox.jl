@@ -1,33 +1,23 @@
+using IICGP
+using TiledIteration
 
-module A
-function foo()
-    println("A.foo()")
+function max_pool(img::Array{UInt8}; s::Int64=5)
+    n_cols = s
+    n_rows = s
+    tile_width = convert(Int64, ceil(size(img)[2] / n_cols))
+    tile_heigt = convert(Int64, ceil(size(img)[3] / n_rows))
+    out = map(TileIterator(axes(img[1, :, :]), (tile_width, tile_heigt))) do tileaxs maximum(img[1, tileaxs...]) end
+    reshape(out, 1, n_cols, n_rows)
 end
-end
-
-module B
-function foo()
-    println("B.foo()")
-end
-end
-
-function bar(m::Module)
-    m.foo()
-end
-
-bar(A)
-bar(B)
-
-function foo(x::T, y::T) where {T <: Union{Int64, Int32}}
-    x + y
-end
-
-function bar(f::Function)
-    println(f)
-end
+inp = rand(collect(UInt8, 0:255), (1, 100, 100))
+out = max_pool(inp)
 
 
+IICGP.imshow(inp, 10.0)
+IICGP.imshow(out, 100.0)
 
+
+#=
 using PkgTemplates
 
 t = Template(;
@@ -46,3 +36,4 @@ t = Template(;
 # 7:18
 
 generate("JuliaSandbox", t)
+=#
