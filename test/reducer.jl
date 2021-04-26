@@ -1,6 +1,8 @@
 using IICGP
 using OpenCV
 using Test
+using TiledIteration  # TODO remove
+using BenchmarkTools  # TODO remove
 
 function test_input(f::Function, img::AbstractArray)
     img_reduced = f(img)
@@ -29,7 +31,8 @@ end
                 IICGP.ReducingFunctions.area_reduction,
                 IICGP.ReducingFunctions.cubic_reduction,
                 IICGP.ReducingFunctions.lanczos_reduction,
-                IICGP.ReducingFunctions.max_pool_reduction
+                IICGP.ReducingFunctions.max_pool_reduction,
+                IICGP.ReducingFunctions.max_pool_reduction2
         ]
 
         # Test each function
