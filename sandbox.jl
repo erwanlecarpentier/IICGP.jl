@@ -22,6 +22,30 @@ end
 function foo(x::X, y::X) where {X <: Union{Float64, Int64}}
     x + y
 end
+
+
+
+
+
+module A
+function foo()
+    println("This is A.foo")
+end
+end
+
+function bar(m::Module, s::String)
+    # println(m)
+    # println(s)
+    println(m.eval(Meta.parse(s)))
+    println(typeof(m.eval(Meta.parse(s))))
+end
+
+s = "foo"
+bar(A, s)
+
+
+
+
 foo(1, 2)
 foo(1.0, 2.0)
 foo(0.5, 2.5)
