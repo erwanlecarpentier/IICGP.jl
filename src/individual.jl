@@ -5,7 +5,7 @@ using CartesianGeneticProgramming
 function IPCGPInd(cfg::NamedTuple)
     buffer = Array{Array{UInt8, 3}}(undef, cfg.rows * cfg.columns + cfg.n_in)
     fill!(buffer, zeros(UInt8, cfg.img_size))
-    CGPInd(cfg; buffer=buffer)
+    CartesianGeneticProgramming.CGPInd(cfg; buffer=buffer)
 end
 
 #=
