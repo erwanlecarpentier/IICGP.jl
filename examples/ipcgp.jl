@@ -51,10 +51,11 @@ img_size = size(target)
 cfg = CartesianGeneticProgramming.get_config(args["cfg"]; function_module=IICGP.CGPFunctions, n_in=n_in, n_out=n_out, img_size=img_size)
 # cfg = CartesianGeneticProgramming.get_config(args["cfg"]; n_in=n_in, n_out=n_out, img_size=img_size)
 
-#=
+
 # Test I/O without evolution
-foo = IPCGPInd(cfg)
-out = IICGP.process(foo, input_rgb)
+foo = CGPInd(cfg)
+#=
+out = CartesianGeneticProgramming.process(foo, input_rgb)
 IICGP.imshow(out[1])
 my_img = IICGP.CGPFunctions.f_compare_eq_img(input_rgb[2], input_rgb[3])
 fitness(foo, input_rgb, target)

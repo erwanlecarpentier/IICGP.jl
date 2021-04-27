@@ -67,11 +67,13 @@ n_in = 3  # Three floating numbers as input
 n_out = 1  # Single output
 cfg = CartesianGeneticProgramming.get_config(args["cfg"]; n_in=n_in, n_out=n_out)
 
+
+foo = CGPInd(cfg)
+
 # Test on random CGP individual
 #=
 foo = CGPInd(cfg)
 fitness(foo)
-=#
 
 if length(args["ind"]) > 0
     ind = CGPInd(cfg, read(args["ind"], String))
@@ -88,3 +90,4 @@ else
     # Run evolution
     run!(e)
 end
+=#

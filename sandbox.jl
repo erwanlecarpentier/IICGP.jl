@@ -1,5 +1,6 @@
 using IICGP
 using TiledIteration
+using BenchmarkTools
 
 function max_pool(img::Array{UInt8}; s::Int64=5)
     n_cols = s
@@ -28,20 +29,23 @@ end
 
 
 module A
-function foo()
-    println("This is A.foo")
+function foo1()
+    println("Foo 1")
+end
+function foo2()
+    println("Foo 2")
 end
 end
 
-function bar(m::Module, s::String)
-    # println(m)
-    # println(s)
-    println(m.eval(Meta.parse(s)))
-    println(typeof(m.eval(Meta.parse(s))))
+function bar(m::Module, l::Array{String})
+    for s in l
+        getfield(m, Symbol(s))()
+    end
 end
 
-s = "foo"
-bar(A, s)
+bar(A, ["foo1"])
+bar(A, ["foo1", "foo2"])
+
 
 
 
