@@ -53,7 +53,6 @@ cfg = CartesianGeneticProgramming.get_config(args["cfg"]; function_module=IICGP.
 
 
 # Test I/O without evolution
-# foo = CartesianGeneticProgramming.CGPInd(cfg)
 foo = IICGP.IPCGPInd(cfg)
 
 CartesianGeneticProgramming.set_inputs(foo, input_rgb)

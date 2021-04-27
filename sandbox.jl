@@ -56,6 +56,49 @@ foo(0.5, 2.5)
 bar(1, 2.0)
 
 
+
+
+function foobar(; kwargs...)
+    kwargs_dict = Dict(kwargs)
+
+    println("\ntypeof kwargs      : ", typeof(kwargs))
+    println("typeof kwargs_dict : ", typeof(kwargs_dict))
+    println("kwargs_dict        : ", kwargs_dict)
+    println(haskey(kwargs_dict, :a))
+end
+
+foobar(a=1, b="hola")
+
+
+
+
+struct foo
+    a
+    b
+end
+
+function bar(a, b; kwargs...)
+    kwargs_dict = Dict(kwargs)
+    if haskey(kwargs_dict, :buffer)
+        a = kwargs_dict[:buffer]
+    end
+    foo(a, b)
+end
+
+function bar(a; kwargs...)
+    b = a + 1
+    bar(a, b, kwargs...)
+end
+
+bar(1)
+bar(1, 3)
+bar(1, 3; buffer=33)
+
+
+
+
+
+
 #=
 using PkgTemplates
 
