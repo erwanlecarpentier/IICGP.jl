@@ -55,18 +55,21 @@ cfg = CartesianGeneticProgramming.get_config(args["cfg"]; function_module=IICGP.
 # Test I/O without evolution
 foo = IICGP.IPCGPInd(cfg)
 
+
 CartesianGeneticProgramming.set_inputs(foo, input_rgb)
+
+IICGP.imshow(foo.buffer[1])
+
 CartesianGeneticProgramming.process(foo)
 
 out = CartesianGeneticProgramming.process(foo, input_rgb)
 
-
+#=
 
 IICGP.imshow(out[1])
 my_img = IICGP.CGPFunctions.f_compare_eq_img(input_rgb[2], input_rgb[3])
 fitness(foo, input_rgb, target)
 
-#=
 if length(args["ind"]) > 0
     ind = CGPInd(cfg, read(args["ind"], String))
     ftn = fitness(ind, inps, outs)
