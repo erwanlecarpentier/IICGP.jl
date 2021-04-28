@@ -6,6 +6,8 @@ using LinearAlgebra
 import Cambrian.mutate
 
 """
+    function generate_io(n::Int64=10)::Tuple{Array{Float64,2},Array{Float64,1}}
+
 Function generating random inputs/outputs with a simple function mapping.
 The function mapping is
     y = cos(x[1] + x[2] * x[3])
@@ -23,6 +25,8 @@ function generate_io(n::Int64=10)::Tuple{Array{Float64,2},Array{Float64,1}}
 end
 
 """
+    function fitness(ind::CGPInd, inps::Array{Float64,2}, outs::Array{Float64,1})::Array{Float64,1}
+
 Fitness function for float-CGP test.
 Fitness is calculated based on the L2-error prediction from the given
 inputs/outputs dataset.
@@ -38,6 +42,8 @@ function fitness(ind::CGPInd, inps::Array{Float64,2},
 end
 
 """
+    function fitness(ind::CGPInd, n::Int64=100)::Array{Float64,1}
+
 Fitness function for float-CGP test.
 Fitness is calculated based on the L2-error prediction from the generated
 inputs/outputs dataset.
