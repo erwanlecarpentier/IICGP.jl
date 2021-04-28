@@ -58,13 +58,14 @@ foo = IICGP.IPCGPInd(cfg)
 
 CartesianGeneticProgramming.set_inputs(foo, input_rgb)
 
-IICGP.imshow(foo.buffer[1])
+IICGP.display_buffer(foo, 2, indexes=1:3)
 
+#=
 CartesianGeneticProgramming.process(foo)
 
 out = CartesianGeneticProgramming.process(foo, input_rgb)
 
-#=
+#==#
 
 IICGP.imshow(out[1])
 my_img = IICGP.CGPFunctions.f_compare_eq_img(input_rgb[2], input_rgb[3])

@@ -72,6 +72,29 @@ foobar(a=1, b="hola")
 
 
 
+
+function foobar(x, y=2*x)
+    x + y
+end
+function bar(x, y=2*x)
+    x + y
+end
+
+function foobar(x; kwargs...)
+    kwargs_dict = Dict(kwargs)
+    if haskey(kwargs_dict, :y)
+        y = kwargs_dict[:y]
+    else
+        y = 2 * x
+    end
+    x + y
+end
+
+foobar(1, y=2)
+foobar(1, 2)
+
+
+
 struct foo
     a
     b
