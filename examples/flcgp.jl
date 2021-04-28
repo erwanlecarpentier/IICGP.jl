@@ -74,7 +74,10 @@ n_out = 1  # Single output
 cfg = CartesianGeneticProgramming.get_config(args["cfg"]; n_in=n_in, n_out=n_out)
 
 
-foo = CGPInd(cfg)
+inp, out = generate_io(1)
+bar = CGPInd(cfg)
+CartesianGeneticProgramming.set_inputs(bar, inp)
+CartesianGeneticProgramming.process(bar)
 
 # Test on random CGP individual
 #=
