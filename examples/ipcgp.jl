@@ -49,15 +49,12 @@ n_out = 1  # Single image
 input_rgb, target = generate_io_image()
 img_size = size(target)
 cfg = CartesianGeneticProgramming.get_config(args["cfg"]; function_module=IICGP.CGPFunctions, n_in=n_in, n_out=n_out, img_size=img_size)
-# cfg = CartesianGeneticProgramming.get_config(args["cfg"]; n_in=n_in, n_out=n_out, img_size=img_size)
-
 
 # Test I/O without evolution
 foo = IICGP.IPCGPInd(cfg)
 CartesianGeneticProgramming.set_inputs(foo, input_rgb)
 CartesianGeneticProgramming.process(foo)
-
-# IICGP.display_buffer(foo, 2, indexes=1:3)
+# IICGP.display_buffer(foo, 2) #, indexes=1:3)
 
 #=
 CartesianGeneticProgramming.process(foo)
