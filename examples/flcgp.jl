@@ -11,8 +11,7 @@ import Cambrian.mutate
 Function generating random inputs/outputs with a simple function mapping.
 The function mapping is
     y = 0.5 * (x[1] + x[2] * x[3])
-    y = cos(x[1] + x[2] * x[3])
-where `x[i]` is in `[0.0, 1.0]`.
+where `x[i]` is in `[0.0, 10.0]`.
 Can be used to generate a simple dataset.
 """
 function generate_io(n::Int64=1000)::Tuple{Array{Float64,2},Array{Float64,1}}
@@ -98,10 +97,8 @@ else
     # Define mutate and fit functions
     mutate(i::CGPInd) = goldman_mutate(cfg, i)
     fit(i::CGPInd) = fitness(i, 1000)
-
     # Create an evolution framework
     e = CGPEvolution(cfg, fit)
-
     # Run evolution
     run!(e)
 end

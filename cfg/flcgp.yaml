@@ -6,12 +6,12 @@ n_elite: 1  # number of elites (1 in 1 + λ)
 n_gen: 100  # number of generations
 log_gen: 10  # every log_gen generations: log a generation, including max, mean, and std of each fitness dimension
 save_gen: 10  # every save_gen generations: save the population in gens/
-m_rate: 0.3  # mutation ratio
+m_rate: 0.1  # mutation ratio
 # CartesianGeneticProgramming.jl settings
 rows: 1  # R
 columns: 5  # C
 recur: 0.2  # ability to connect to a node further in the genome (0 = CGP classic; 1 = uniform connection probability)
-out_m_rate: 0.5  # mutation ratio for outputs (we want them to experience more mutations)
+out_m_rate: 0.3  # mutation ratio for outputs (we want them to experience more mutations)
 functions:
   - f_add
   - f_subtract

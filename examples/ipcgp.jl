@@ -14,11 +14,11 @@ function generate_io_image(rom_name::String="freeway", frame_number::Int64=30)
     r, g, b = IICGP.split_rgb(img)
 
     # Arbitrary application of simple OpenCV functions
-    a = IICGP.CGPFunctions.f_add_img(r, g)
-    b = IICGP.CGPFunctions.f_erode_img(a, a)
-    c = IICGP.CGPFunctions.f_compare_eq_img(b, g)
-    d = IICGP.CGPFunctions.f_dilate_img(c, c)
-    target = IICGP.CGPFunctions.f_compare_ge_img(b, d)
+    i = IICGP.CGPFunctions.f_add_img(r, g)
+    j = IICGP.CGPFunctions.f_erode_img(i, i)
+    k = IICGP.CGPFunctions.f_compare_eq_img(j, g)
+    l = IICGP.CGPFunctions.f_dilate_img(k, k)
+    target = IICGP.CGPFunctions.f_compare_ge_img(j, l)
 
     return [r, g, b], target
 end
@@ -50,23 +50,15 @@ input_rgb, target = generate_io_image()
 img_size = size(target)
 cfg = CartesianGeneticProgramming.get_config(args["cfg"]; function_module=IICGP.CGPFunctions, n_in=n_in, n_out=n_out, img_size=img_size)
 
+#=
 # Test I/O without evolution
 foo = IICGP.IPCGPInd(cfg)
 CartesianGeneticProgramming.set_inputs(foo, input_rgb)
 CartesianGeneticProgramming.process(foo)
-# IICGP.display_buffer(foo, 2) #, indexes=1:3)
+IICGP.display_buffer(foo, 2, indexes=1:3)
+=#
 
 #=
-CartesianGeneticProgramming.process(foo)
-
-out = CartesianGeneticProgramming.process(foo, input_rgb)
-
-#==#
-
-IICGP.imshow(out[1])
-my_img = IICGP.CGPFunctions.f_compare_eq_img(input_rgb[2], input_rgb[3])
-fitness(foo, input_rgb, target)
-
 if length(args["ind"]) > 0
     ind = CGPInd(cfg, read(args["ind"], String))
     ftn = fitness(ind, inps, outs)
@@ -75,10 +67,8 @@ else
     # Define mutate and fit functions
     mutate(i::IPCGPInd) = goldman_mutate(cfg, i)
     fit(i::IPCGPInd) = fitness(i, input_rgb, target)
-
     # Create an evolution framework
     e = CGPEvolution(cfg, fit)
-
     # Run evolution
     run!(e)
 end
