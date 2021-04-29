@@ -1,8 +1,8 @@
-export CGPEvolution
+export IPCGPEvolution
 
 import Cambrian.populate, Cambrian.evaluate
 
-mutable struct CGPEvolution{T} <: Cambrian.AbstractEvolution
+mutable struct IPCGPEvolution{T} <: Cambrian.AbstractEvolution
     config::NamedTuple
     logger::CambrianLogger
     population::Array{T}
@@ -10,12 +10,12 @@ mutable struct CGPEvolution{T} <: Cambrian.AbstractEvolution
     gen::Int
 end
 
-populate(e::CGPEvolution) = Cambrian.oneplus_populate(e)
-evaluate(e::CGPEvolution) = Cambrian.fitness_evaluate(e, e.fitness)
+populate(e::IPCGPEvolution) = Cambrian.oneplus_populate(e)
+evaluate(e::IPCGPEvolution) = Cambrian.fitness_evaluate(e, e.fitness)
 
-function CGPEvolution(cfg::NamedTuple, fitness::Function;
-                      logfile=string("logs/", cfg.id, ".csv"))
+function IPCGPEvolution(cfg::NamedTuple, fitness::Function;
+                        logfile=string("logs/", cfg.id, ".csv"))
     logger = CambrianLogger(logfile)
     population = Cambrian.initialize(IPCGPInd, cfg)
-    CGPEvolution(cfg, logger, population, fitness, 0)
+    IPCGPEvolution(cfg, logger, population, fitness, 0)
 end
