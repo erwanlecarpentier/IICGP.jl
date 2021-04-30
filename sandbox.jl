@@ -25,6 +25,37 @@ function foo(x::X, y::X) where {X <: Union{Float64, Int64}}
 end
 
 
+## Cambrian population initialization
+
+"create all members of the first generation"
+function initialize(itype::Type, cfg::NamedTuple; kwargs...)
+    population = Array{itype}(undef, cfg.n_population)
+    kwargs_dict = Dict(kwargs)
+    for i in 1:cfg.n_population
+        if haskey(kwargs_dict, :init_function)
+            population[i] = kwargs_dict[:init_function](cfg)
+        else
+            population[i] = itype(cfg)
+        end
+    end
+    population
+end
+
+
+## Passing a function as argument
+
+function f()
+    println("This is f")
+end
+
+function caller_noargs(x::Function)
+    x()
+end
+
+caller_noargs(f)
+
+## Apply some module's function based on string
+
 
 
 
@@ -46,7 +77,7 @@ end
 bar(A, ["foo1"])
 bar(A, ["foo1", "foo2"])
 
-
+##
 
 
 

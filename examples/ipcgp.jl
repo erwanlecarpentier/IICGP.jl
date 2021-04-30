@@ -52,15 +52,20 @@ cfg = CartesianGeneticProgramming.get_config(args["cfg"]; function_module=IICGP.
 
 inp, target = generate_io_image()
 
-#=
+
+
+
 # Test I/O without evolution
-foo = IICGP.IPCGPInd(cfg)
+foo = IPCGPInd(cfg)
 CartesianGeneticProgramming.set_inputs(foo, input_rgb)
 CartesianGeneticProgramming.process(foo)
 IICGP.display_buffer(foo, 2, indexes=1:3)
-=#
 
+mutate(i::CGPInd) = goldman_mutate(cfg, i)
+fit(i::CGPInd) = fitness(i, inp, target)
+e = CGPEvolution(cfg, fit, init_function=IPCGPInd)
 
+#=
 if length(args["ind"]) > 0
     ind = CGPInd(cfg, read(args["ind"], String))
     ftn = fitness(ind, inps, outs)
@@ -70,7 +75,8 @@ else
     mutate(i::CGPInd) = goldman_mutate(cfg, i)
     fit(i::CGPInd) = fitness(i, inp, target)
     # Create an evolution framework
-    e = CGPEvolution(cfg, fit)
+    e = IPCGPEvolution(cfg, fit)
     # Run evolution
-    run!(e)
+    # run!(e)
 end
+=#
