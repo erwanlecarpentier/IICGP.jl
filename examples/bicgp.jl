@@ -10,18 +10,10 @@ function load_img(rom_name::String, frame_number::Int64)
     return OpenCV.imread(filename)
 end
 
-function generate_io_image(rom_name::String="freeway", frame_number::Int64=30)
+function generate_io(rom_name::String="freeway", frame_number::Int64=30)
     img = load_img(rom_name, frame_number)
     r, g, b = IICGP.split_rgb(img)
-
-    # Arbitrary application of simple OpenCV functions
-    i = IICGP.CGPFunctions.f_add_img(r, g)
-    j = IICGP.CGPFunctions.f_erode_img(i, i)
-    k = IICGP.CGPFunctions.f_compare_eq_img(j, g)
-    l = IICGP.CGPFunctions.f_dilate_img(k, k)
-    target = IICGP.CGPFunctions.f_compare_ge_img(j, l)
-
-    return [r, g, b], target
+    return [r, g, b], 5
 end
 
 function fitness(ind::CGPInd, input::Vector{T}, target::T) where {T <: OpenCV.InputArray}
@@ -47,8 +39,8 @@ end
 args = parse_args(ARGS, s)
 n_in = 3  # RGB images
 n_out = 1  # Single image
-inp, target = generate_io_image()
-img_size = size(target)
+inp, target = generate_io()
+img_size = size(inp[1])
 cfg = CartesianGeneticProgramming.get_config(args["cfg"]; function_module=IICGP.CGPFunctions, n_in=n_in, n_out=n_out, img_size=img_size)
 
 #=

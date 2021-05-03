@@ -3,7 +3,7 @@ seed: 0  # for reproducibility
 d_fitness: 1  # fitness size (number of different objectives)
 n_population: 5  # population size (λ in 1 + λ)
 n_elite: 1  # number of elites (1 in 1 + λ)
-n_gen: 100  # number of generations
+n_gen: 300  # number of generations
 log_gen: 10  # every log_gen generations: log a generation, including max, mean, and std of each fitness dimension
 save_gen: 10  # every save_gen generations: save the population in gens/
 m_rate: 0.1  # mutation ratio

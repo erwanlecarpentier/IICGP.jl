@@ -150,7 +150,21 @@ bar(1, 3; buffer=33)
 
 
 
+##
+module A
+function foo()
+    println("Foo")
+end
+end
 
+function foocaller()
+    A.foo()
+end
+
+foocaller()
+
+
+##
 
 
 #=
