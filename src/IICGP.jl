@@ -9,7 +9,7 @@ import JSON
 include("functions.jl")
 include("reducer.jl")
 include("individual.jl")
-# include("process.jl")
+include("process.jl")
 include("utils.jl")
 include("visual.jl")
 

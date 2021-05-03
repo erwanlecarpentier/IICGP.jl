@@ -1,36 +1,18 @@
 export process
 
-using OpenCV
-using CartesianGeneticProgramming
+# using CartesianGeneticProgramming  # TODO remove
 
-function set_inputs(ind::CGPInd, inputs::AbstractArray)::Nothing  # where {T <: OpenCV.InputArray}
-    println(typeof(ind.buffer))
-    for i in eachindex(inputs)
-        ind.buffer[i] = inputs[i]
+"""
+    function process(encoder::CGPInd, controller::CGPInd, inputs::AbstractArray)
+
+Process function chaining encoder and controller CGP individuals
+"""
+function process(encoder::CGPInd, controller::CGPInd, inputs::AbstractArray, out_size::Int64)
+    output = CartesianGeneticProgramming.process(encoder, inputs)
+    for i in eachindex(output)
+        output[i] = ReducingFunctions.max_pool_reduction(output[i], out_size)
     end
-end
-
-function get_outputs(ind::CGPInd)
-    # doesn't re-process, just gives outputs
-    outputs = Array{Array{UInt8, 3}}(undef, length(ind.outputs))
-    for i in eachindex(outputs)
-        outputs[i] = ind.buffer[ind.outputs[i]]
-    end
-    outputs
-end
-
-function process(ind::CGPInd)
-    for i in eachindex(ind.nodes)
-        n = ind.nodes[i]
-        if n.active
-            ind.buffer[i] = n.f(ind.buffer[n.x], ind.buffer[n.y])
-        end
-    end
-    get_outputs(ind)
-end
-
-function process(ind::CGPInd, inputs::AbstractArray)  # where {T <: OpenCV.InputArray}
-    set_inputs(ind, inputs)
-    # process(ind)
-    return 0
+    inp = collect(Iterators.flatten(output))
+    return output
+    # reduce(vcat, output[1])
 end

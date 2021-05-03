@@ -1,8 +1,6 @@
 using IICGP
 using OpenCV
 using Test
-using TiledIteration  # TODO remove
-using BenchmarkTools  # TODO remove
 
 function test_input(f::Function, img::AbstractArray)
     img_reduced = f(img)

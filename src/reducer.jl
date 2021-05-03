@@ -35,6 +35,11 @@ function lanczos_reduction(m::T; s::Int64=5) where {T <: OpenCV.InputArray}
                          m, 1.0, 1.0, OpenCV.INTER_LANCZOS4)
 end
 
+"""
+    function max_pool_reduction(m::T, s::Int64=5) where {T <: OpenCV.InputArray}
+
+Max pooling function.
+"""
 function max_pool_reduction(m::T, s::Int64=5) where {T <: OpenCV.InputArray}
     outsz = (size(m, 1), ntuple(_->s, ndims(m) - 1)...)
     out = Array{eltype(m), ndims(m)}(undef, outsz)

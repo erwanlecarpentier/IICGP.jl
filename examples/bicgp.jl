@@ -24,9 +24,12 @@ end
 # Read configuration file
 s = ArgParseSettings()
 @add_arg_table! s begin
-    "--cfg"
-    help = "configuration script"
-    default = "cfg/ipcgp.yaml"
+    "--encoder_cfg"
+    help = "encoder configuration script"
+    default = "cfg/encoder.yaml"
+    "--controller_cfg"
+    help = "controller configuration script"
+    default = "cfg/controller.yaml"
     "--seed"
     help = "random seed for evolution"
     arg_type = Int
@@ -41,15 +44,19 @@ n_in = 3  # RGB images
 n_out = 1  # Single image
 inp, target = generate_io()
 img_size = size(inp[1])
-cfg = CartesianGeneticProgramming.get_config(args["cfg"]; function_module=IICGP.CGPFunctions, n_in=n_in, n_out=n_out, img_size=img_size)
+encoder_cfg = get_config(args["encoder_cfg"];
+    function_module=IICGP.CGPFunctions, n_in=3, img_size=img_size)
+n_in_controller = encoder_cfg.n_out * encoder_cfg.out_size^2
+controller_cfg = get_config(args["controller_cfg"]; n_in=n_in_controller, n_out=1)
+
+# Test I/O without evolution
+foo = IPCGPInd(encoder_cfg)
+bar = CGPInd(controller_cfg)
+out = IICGP.process(foo, bar, inp, encoder_cfg.out_size)
+# IICGP.imshow(out[1], 100)
+# IICGP.display_buffer(foo, 2, indexes=1:4)
 
 #=
-# Test I/O without evolution
-foo = IPCGPInd(cfg)
-process(foo, inp)
-# IICGP.display_buffer(foo, 2, indexes=1:3)
-=#
-
 if length(args["ind"]) > 0
     ind = CGPInd(cfg, read(args["ind"], String))
     ftn = fitness(ind, inps, outs)
@@ -63,3 +70,4 @@ else
     # Run evolution
     run!(e)
 end
+=#
