@@ -1,0 +1,20 @@
+seed: 0
+d_fitness: 1
+n_population: 5
+n_elite: 1
+n_gen: 100
+log_gen: 10
+save_gen: 10
+# Controller's parameters
+m_rate: 0.1
+rows: 1
+columns: 5
+recur: 0.2
+out_m_rate: 0.3
+functions:
+  - f_add
+  - f_subtract
+  - f_mult
+  - f_div
+  - f_sin
+  - f_cos
