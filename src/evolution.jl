@@ -53,6 +53,7 @@ function DualCGPEvolution(
         controller_population = Cambrian.initialize(CGPInd, controller_config)
     end
     # Global evolution config
+    # TODO have a single config file?
     config = (
         seed=encoder_config.seed,
         n_gen=max(encoder_config.n_gen, controller_config.n_gen),
