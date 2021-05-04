@@ -51,12 +51,13 @@ n_in_controller = encoder_cfg.n_out * encoder_cfg.out_size^2
 controller_cfg = get_config(args["controller_cfg"]; n_in=n_in_controller, n_out=1)
 
 # Test I/O without evolution
+#=
 foo = IPCGPInd(encoder_cfg)
 bar = CGPInd(controller_cfg)
 out = IICGP.process(foo, bar, inp, encoder_cfg.out_size)
 # IICGP.display_buffer(foo, 2, indexes=1:4)
+=#
 
-#=
 if length(args["ind"]) > 0
     ind = CGPInd(cfg, read(args["ind"], String))
     ftn = fitness(ind, inps, outs)
@@ -66,8 +67,8 @@ else
     mutate(i::CGPInd) = goldman_mutate(cfg, i, init_function=IPCGPInd)
     fit(i::CGPInd) = fitness(i, inp, target)
     # Create an evolution framework
-    e = CGPEvolution(cfg, fit, init_function=IPCGPInd)
+    e = IICGP.DualCGPEvolution(encoder_cfg, controller_cfg, fit,
+                               encoder_init_function=IPCGPInd)
     # Run evolution
-    run!(e)
+    # run!(e)
 end
-=#
