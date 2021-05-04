@@ -20,7 +20,7 @@ end
 function fitness(encoder::CGPInd, controller::CGPInd, input::Vector{T}, target::Int64) where {T <: OpenCV.InputArray}
     out = IICGP.process(encoder, controller, input, encoder_cfg.out_size)
     if out == target
-        return +1.0
+        return 1.0
     else
         return 0.0
     end
@@ -74,5 +74,5 @@ else
     e = IICGP.DualCGPEvolution(encoder_cfg, controller_cfg, fit,
                                encoder_init_function=IPCGPInd)
     # Run evolution
-    # run!(e)
+    run!(e)
 end
