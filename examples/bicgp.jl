@@ -51,14 +51,14 @@ inp, target = generate_io()
 img_size = size(inp[1])
 encoder_cfg = get_config(args["encoder_cfg"];
     function_module=IICGP.CGPFunctions, n_in=3, img_size=img_size)
-n_in_controller = encoder_cfg.n_out * encoder_cfg.out_size^2
+n_in_controller = encoder_cfg.n_out * encoder_cfg.features_size^2
 controller_cfg = get_config(args["controller_cfg"]; n_in=n_in_controller, n_out=1)
 
 # Test I/O without evolution
 #=
 foo = IPCGPInd(encoder_cfg)
 bar = CGPInd(controller_cfg)
-out = IICGP.process(foo, bar, inp, encoder_cfg.out_size)
+out = IICGP.process(foo, bar, inp, encoder_cfg.features_size)
 # IICGP.display_buffer(foo, 2, indexes=1:4)
 =#
 
