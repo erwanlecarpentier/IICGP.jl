@@ -1,18 +1,18 @@
 export process
 
-# using CartesianGeneticProgramming  # TODO remove
-
 """
-    function process(encoder::CGPInd, controller::CGPInd, inputs::AbstractArray)
+    function process(encoder::CGPInd, controller::CGPInd, inputs::AbstractArray, features_size::Int64)
 
-Process function chaining encoder and controller CGP individuals
+Process function chaining encoder and controller CGP individuals.
+Max pooling layer is used in between both individuals.
 """
-function process(encoder::CGPInd, controller::CGPInd, inputs::AbstractArray, out_size::Int64)
+function process(encoder::CGPInd, controller::CGPInd, inputs::AbstractArray, features_size::Int64)
     output = CartesianGeneticProgramming.process(encoder, inputs)
+    features = Array{Array{UInt8}}(undef, length(encoder.outputs))
     for i in eachindex(output)
-        output[i] = ReducingFunctions.max_pool_reduction(output[i], out_size)
+        # output[i] = ReducingFunctions.max_pool_reduction(output[i], out_size)
+        features[i] = ReducingFunctions.max_pool_reduction(output[i], out_size)
     end
-    inp = collect(Iterators.flatten(output))
-    return output
-    # reduce(vcat, output[1])
+    features_flatten = collect(Iterators.flatten(features))
+    CartesianGeneticProgramming.process(controller, features_flatten)
 end

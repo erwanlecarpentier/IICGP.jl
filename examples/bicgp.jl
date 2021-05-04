@@ -4,6 +4,7 @@ using Cambrian
 using CartesianGeneticProgramming
 using IICGP
 import Cambrian.mutate  # mutate function scope definition
+using BenchmarkTools
 
 function load_img(rom_name::String, frame_number::Int64)
     filename = string(@__DIR__, "/images/", rom_name, "_frame_$frame_number.png")
@@ -41,7 +42,7 @@ s = ArgParseSettings()
 end
 args = parse_args(ARGS, s)
 n_in = 3  # RGB images
-n_out = 1  # Single image
+n_out = 1  # Single scalar
 inp, target = generate_io()
 img_size = size(inp[1])
 encoder_cfg = get_config(args["encoder_cfg"];
@@ -53,7 +54,6 @@ controller_cfg = get_config(args["controller_cfg"]; n_in=n_in_controller, n_out=
 foo = IPCGPInd(encoder_cfg)
 bar = CGPInd(controller_cfg)
 out = IICGP.process(foo, bar, inp, encoder_cfg.out_size)
-# IICGP.imshow(out[1], 100)
 # IICGP.display_buffer(foo, 2, indexes=1:4)
 
 #=

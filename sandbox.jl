@@ -42,6 +42,35 @@ function initialize(itype::Type, cfg::NamedTuple; kwargs...)
 end
 
 
+
+
+## Function with complex default value
+
+
+function foo(n::Int64; a::Array{Int64}=Array{Int64}(undef, n, 2*n))
+    println(a) # Do whatever
+end
+
+n = 2
+foo(2)  # Use default value
+foo(2, a=Array{Int64}(undef, 3))  # use specific value
+
+function foo(n::Int64; kwargs...)
+    kwargs_dict = Dict(kwargs)
+    if haskey(kwargs_dict, :a)
+        a = kwargs_dict[:a]
+    else
+        a = Array{Int64}(undef, n, 2*n)  # default value of `a`
+        # Notice that here, setting `a` to this default value could be several lines of code
+    end
+    println(a) # Do whatever
+end
+
+n = 2
+foo(n, a=Array{Int64}(undef, 3))
+foo(n)
+
+
 ## Passing a function as argument
 
 function f()
