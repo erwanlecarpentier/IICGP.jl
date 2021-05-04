@@ -17,9 +17,13 @@ function generate_io(rom_name::String="freeway", frame_number::Int64=30)
     return [r, g, b], 5
 end
 
-function fitness(ind::CGPInd, input::Vector{T}, target::T) where {T <: OpenCV.InputArray}
-    output = process(ind, input)
-    [-OpenCV.norm(output[1], target)]
+function fitness(encoder::CGPInd, controller::CGPInd, input::Vector{T}, target::Int64) where {T <: OpenCV.InputArray}
+    out = IICGP.process(encoder, controller, input, encoder_cfg.out_size)
+    if out == target
+        return +1.0
+    else
+        return 0.0
+    end
 end
 
 # Read configuration file
@@ -65,7 +69,7 @@ if length(args["ind"]) > 0
 else
     # Define mutate and fit functions
     mutate(i::CGPInd) = goldman_mutate(cfg, i, init_function=IPCGPInd)
-    fit(i::CGPInd) = fitness(i, inp, target)
+    fit(encoder::CGPInd, controller::CGPInd) = fitness(encoder, controller, inp, target)
     # Create an evolution framework
     e = IICGP.DualCGPEvolution(encoder_cfg, controller_cfg, fit,
                                encoder_init_function=IPCGPInd)
