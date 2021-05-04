@@ -1,8 +1,9 @@
 export DualCGPEvolution
 
-# import Cambrian.populate, Cambrian.evaluate
+import Cambrian.populate, Cambrian.evaluate, Cambrian.log_gen, Cambrian.save_gen
 
 mutable struct DualCGPEvolution{T} <: Cambrian.AbstractEvolution
+    config::NamedTuple
     encoder_config::NamedTuple
     encoder_population::Array{T}
     encoder_logger::CambrianLogger
@@ -14,7 +15,7 @@ mutable struct DualCGPEvolution{T} <: Cambrian.AbstractEvolution
 end
 
 # populate(e::CGPEvolution) = Cambrian.oneplus_populate(e)
-# evaluate(e::CGPEvolution) = Cambrian.fitness_evaluate(e, e.fitness)
+evaluate(e::IICGP.DualCGPEvolution) = IICGP.fitness_evaluate(e, e.fitness)
 
 """
     function DualCGPEvolution(
@@ -51,9 +52,56 @@ function DualCGPEvolution(
     else
         controller_population = Cambrian.initialize(CGPInd, controller_config)
     end
+    # Global evolution config
+    config = (
+        seed=encoder_config.seed,
+        n_gen=max(encoder_config.n_gen, controller_config.n_gen),
+        log_gen=min(encoder_config.log_gen, controller_config.log_gen),
+        save_gen=min(encoder_config.save_gen, controller_config.save_gen)
+    )
     DualCGPEvolution(
+        config,
         encoder_config, encoder_population, encoder_logger,
         controller_config, controller_population, controller_logger,
         fitness, 0
     )
+end
+
+"""
+    function log_gen(e::DualCGPEvolution)
+
+Log a generation within a dual CGP evolution framework, including max, mean,
+and std of each fitness dimension.
+"""
+function log_gen(e::DualCGPEvolution)
+    println("TODO log_gen(e::DualCGPEvolution)")
+    #=
+    for d in 1:e.config.d_fitness
+        maxs = map(i->i.fitness[d], e.population)
+        with_logger(e.logger) do
+            @info Formatting.format("{1:04d},{2:e},{3:e},{4:e}",
+                                    e.gen, maximum(maxs), mean(maxs), std(maxs))
+        end
+    end
+    flush(e.logger.stream)
+    =#
+end
+
+"""
+    function save_gen(e::DualCGPEvolution)
+
+Save the population of a dual CGP evolution framework in `gens/`.
+"""
+function save_gen(e::DualCGPEvolution)
+    println("TODO function save_gen(e::DualCGPEvolution)")
+    #=
+    path = Formatting.format("gens/{1}/{2:04d}", e.config.id, e.gen)
+    mkpath(path)
+    sort!(e.population)
+    for i in eachindex(e.population)
+        f = open(Formatting.format("{1}/{2:04d}.dna", path, i), "w+")
+        write(f, string(e.population[i]))
+        close(f)
+    end
+    =#
 end

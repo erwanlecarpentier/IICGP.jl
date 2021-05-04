@@ -1,11 +1,12 @@
 module IICGP
 
 import YAML
+using CartesianGeneticProgramming
 using Cambrian
 import JSON
 
-# include("config.jl")
 include("evolution.jl")
+include("evaluation.jl")
 include("functions.jl")
 include("reducer.jl")
 include("individual.jl")
