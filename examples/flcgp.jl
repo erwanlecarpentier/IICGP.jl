@@ -30,7 +30,7 @@ function fitness(ind::CGPInd, inps::Array{Float64,2},
                  outs::Array{Float64,1})::Array{Float64,1}
     preds = zeros(Float64, (size(inps)[1]))
     for i in eachindex(inps[:,1])
-        preds[i] = process(ind, inps[i,:])[1]
+        preds[i] = CartesianGeneticProgramming.process(ind, inps[i,:])[1]
     end
     return [-LinearAlgebra.norm(preds .- outs, 1) / length(preds)]
 end

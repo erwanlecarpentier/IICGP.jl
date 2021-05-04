@@ -46,7 +46,6 @@ end
 
 ## Function with complex default value
 
-
 function foo(n::Int64; a::Array{Int64}=Array{Int64}(undef, n, 2*n))
     println(a) # Do whatever
 end
@@ -69,7 +68,6 @@ end
 n = 2
 foo(n, a=Array{Int64}(undef, 3))
 foo(n)
-
 
 ## Passing a function as argument
 
