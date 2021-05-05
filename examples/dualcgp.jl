@@ -62,13 +62,21 @@ out = IICGP.process(foo, bar, inp, encoder_cfg.features_size)
 # IICGP.display_buffer(foo, 2, indexes=1:4)
 =#
 
+
+
 if length(args["ind"]) > 0
     ind = CGPInd(cfg, read(args["ind"], String))
     ftn = fitness(ind, inps, outs)
     println("Fitness: ", ftn)
 else
     # Define mutate and fit functions
-    mutate(i::CGPInd) = goldman_mutate(cfg, i, init_function=IPCGPInd)
+    function mutate(ind::CGPInd, ind_type::String)
+        if ind_type == "encoder"
+            return goldman_mutate(encoder_cfg, ind, init_function=IPCGPInd)
+        elseif ind_type == "controller"
+            return goldman_mutate(controller_cfg, ind)
+        end
+    end
     fit(encoder::CGPInd, controller::CGPInd) = fitness(encoder, controller, inp, target)
     # Create an evolution framework
     e = IICGP.DualCGPEvolution(encoder_cfg, controller_cfg, fit,
