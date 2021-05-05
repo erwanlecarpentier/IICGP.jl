@@ -41,6 +41,13 @@ function initialize(itype::Type, cfg::NamedTuple; kwargs...)
     population
 end
 
+## Maximum row/col wise
+
+a = [
+    1.0 2.0 3.0 0.0;
+    4.0 5.0 6.0 0.0;
+    7.0 8.0 9.0 0.0
+]
 
 
 

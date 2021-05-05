@@ -18,7 +18,7 @@ function generate_io(rom_name::String="freeway", frame_number::Int64=30)
 end
 
 function fitness(encoder::CGPInd, controller::CGPInd, input::Vector{T}, target::Int64) where {T <: OpenCV.InputArray}
-    out = IICGP.process(encoder, controller, input, encoder_cfg.out_size)
+    out = IICGP.process(encoder, controller, input, encoder_cfg.features_size)
     if out == target
         return 1.0
     else

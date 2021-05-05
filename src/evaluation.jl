@@ -14,6 +14,9 @@ end
 
 Sets the fitness of each individual to the maximum value of the fitness matrix
 in the dual CGP evolution framework.
+
+TODOs:
+- handle multi dimensional fitness in coevolution
 """
 function fitness_evaluate(e::DualCGPEvolution, fitness::Function=null_evaluate)
     n_encoders = length(e.encoder_population)
@@ -27,9 +30,14 @@ function fitness_evaluate(e::DualCGPEvolution, fitness::Function=null_evaluate)
             )
         end
     end
-    #=
-    for i in eachindex(e.population)
-        e.population[i].fitness[:] = fitness(e.population[i])[:]
+    # Retrieve maximum values for fitness
+    encoders_fitnesses = maximum(fitness_matrix, dims=2)
+    controllers_fitnesses = maximum(fitness_matrix, dims=1)
+    for i in 1:n_encoders
+        e.encoder_population[i].fitness[1] = encoders_fitnesses[i]
+        # fitness(e.population[i])[:]
     end
-    =#
+    for j in 1:n_controllers
+        e.controller_population[j].fitness[1] = controllers_fitnesses[j]
+    end
 end
