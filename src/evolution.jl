@@ -14,7 +14,7 @@ mutable struct DualCGPEvolution{T} <: Cambrian.AbstractEvolution
     gen::Int
 end
 
-# populate(e::CGPEvolution) = Cambrian.oneplus_populate(e)
+populate(e::IICGP.DualCGPEvolution) = IICGP.oneplus_populate(e)
 evaluate(e::IICGP.DualCGPEvolution) = IICGP.fitness_evaluate(e, e.fitness)
 
 """
