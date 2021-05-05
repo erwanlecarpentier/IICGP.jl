@@ -14,7 +14,20 @@ end
 function generate_io(rom_name::String="freeway", frame_number::Int64=30)
     img = load_img(rom_name, frame_number)
     r, g, b = IICGP.split_rgb(img)
-    return [r, g, b], 5
+
+    # Arbitrary application of simple OpenCV functions
+    i = IICGP.CGPFunctions.f_add_img(r, g)
+    j = IICGP.CGPFunctions.f_erode_img(i, i)
+    k = IICGP.CGPFunctions.f_compare_eq_img(j, g)
+    # l = IICGP.CGPFunctions.f_dilate_img(k, k)
+    # m = IICGP.CGPFunctions.f_compare_ge_img(j, l)
+
+    # Feature map
+    feature = IICGP.ReducingFunctions.max_pool_reduction(k, 5)
+
+    target = 0.5 * (feature[1, 1, 1] + feature[1, 2, 2]) / feature[1, 1, 1]
+
+    return [r, g, b], target
 end
 
 function fitness(encoder::CGPInd, controller::CGPInd, input::Vector{T}, target::Int64) where {T <: OpenCV.InputArray}
@@ -61,8 +74,6 @@ bar = CGPInd(controller_cfg)
 out = IICGP.process(foo, bar, inp, encoder_cfg.features_size)
 # IICGP.display_buffer(foo, 2, indexes=1:4)
 =#
-
-
 
 if length(args["ind"]) > 0
     ind = CGPInd(cfg, read(args["ind"], String))
