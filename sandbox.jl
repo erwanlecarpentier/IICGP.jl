@@ -2,6 +2,8 @@ using IICGP
 using TiledIteration
 using BenchmarkTools
 
+## maxpool
+
 function max_pool(img::Array{UInt8}; s::Int64=5)
     n_cols = s
     n_rows = s
@@ -17,13 +19,73 @@ out = max_pool(inp)
 IICGP.imshow(inp, 10.0)
 IICGP.imshow(out, 100.0)
 
-function bar(x::X, y::Y) where {X <: Union{Float64, Int64}, Y <: Union{Float64, Int64}}
-    x + y
-end
-function foo(x::X, y::X) where {X <: Union{Float64, Int64}}
-    x + y
+## distance between boxes and center
+using IICGP
+using OpenCV
+using LinearAlgebra
+
+function load_img(rom_name::String, frame_number::Int64)
+    filename = string(@__DIR__, "/examples/images/", rom_name, "_frame_$frame_number.png")
+    return OpenCV.imread(filename)
 end
 
+m1 = load_img("freeway", 30)
+r1, g1, b1 = IICGP.split_rgb(m1)
+m2 = load_img("freeway", 31)
+r2, g2, b2 = IICGP.split_rgb(m2)
+
+function motion_objects(x, x_p)
+    diff = OpenCV.subtract(x, x_p)
+    dilated = OpenCV.dilate(
+        diff,
+        OpenCV.getStructuringElement(
+            OpenCV.MORPH_ELLIPSE,
+            OpenCV.Size{Int32}(8, 8)
+        )
+    )
+    n_labels, labels_img, stats, centroids = OpenCV.connectedComponentsWithStats(dilated)
+    # Compute colored_labels_img
+    colored_labels_img = zeros(UInt8, size(labels_img))
+    norm = convert(UInt8, floor(255 / (n_labels - 1)))
+    for i in eachindex(labels_img[1, :, 1])
+        for j in eachindex(labels_img[1, 1, :])
+            colored_labels_img[1, i, j] = labels_img[1, i, j] * norm
+        end
+    end
+    return colored_labels_img
+end
+
+function motion_distances_to_center(x, x_p)
+    diff = OpenCV.subtract(x, x_p)
+    dilated = OpenCV.dilate(
+        diff,
+        OpenCV.getStructuringElement(
+            OpenCV.MORPH_ELLIPSE,
+            OpenCV.Size{Int32}(8, 8)
+        )
+    )
+    n_labels, labels_img, stats, centroids = OpenCV.connectedComponentsWithStats(dilated)
+    # Compute distances_to_center_img
+    center = collect(size(x)[2:3] ./ 2)
+    max_distance = norm(center)
+    distances_to_center_img = zeros(UInt8, size(labels_img))
+    distances_to_center = zeros(UInt8, n_labels)
+    for i in 1:n_labels
+        distances_to_center[i] = floor(255 * norm(centroids[1,:,i] - center) / max_distance)
+    end
+    for i in eachindex(labels_img[1, :, 1])
+        for j in eachindex(labels_img[1, 1, :])
+            distances_to_center_img[1, i, j] = distances_to_center[labels_img[1, i, j] + 1]
+        end
+    end
+    return distances_to_center_img
+end
+
+out1 = motion_objects(r1, r2)
+out2 = motion_distances_to_center(r1, r2)
+
+IICGP.imshow(out1, 2)
+IICGP.imshow(out2, 2)
 
 ## Cambrian population initialization
 
