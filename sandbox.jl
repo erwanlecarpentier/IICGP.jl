@@ -109,6 +109,32 @@ function motion_distances_to_center_julia(x, x_p)
     distances_to_center_img
 end
 
+function motion_objects_julia(x, x_p)
+    diff = my_subtract(x_p, x)
+    dilated = dilate(diff)
+    thresholded = img_threshold(dilated)
+    thresholded
+end
+
+function motion_boxes_julia(x, x_p)
+    diff = my_subtract(x_p, x)
+    dilated = dilate(diff)
+    thresholded = img_threshold(dilated)
+    label = label_components(thresholded)
+    boxes = component_boxes(label)
+    boxes_img = zeros(UInt8, size(x))
+    for i in 2:length(boxes)
+        boxes_img[
+            1,
+            boxes[i][1][2]:boxes[i][2][2],
+            boxes[i][1][3]:boxes[i][2][3]
+        ] .= 255
+    end
+    boxes_img
+end
+
+
+
 # WITH OPENCV
 function motion_objects(x, x_p)
     diff = OpenCV.subtract(x_p, x)
@@ -160,10 +186,20 @@ end
 # out3 = motion_objects(r1, r2)
 
 out1 = motion_distances_to_center_julia(r1, r2)
+# 1.542 ms (1054 allocations: 1.52 MiB)
 out2 = motion_distances_to_center(r1, r2)
+# 17.729 ms (71044 allocations: 2.52 MiB)
+
+out3 = motion_objects_julia(r1, r2)
+# 546.036 μs (656 allocations: 388.33 KiB)
+
+out4 = motion_boxes_julia(r1, r2)
+# 1.951 ms (883 allocations: 992.11 KiB)
 
 my_imshow(out1)
 my_imshow(out2)
+my_imshow(out3)
+my_imshow(out4)
 
 ## Cambrian population initialization
 
