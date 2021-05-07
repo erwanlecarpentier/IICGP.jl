@@ -58,6 +58,8 @@ fgen(:f_min_img, 2, :(OpenCV.min(x, y)), OpenCV.InputArray)
 fgen(:f_dilate_img, 1, :(OpenCV.dilate(x, OpenCV.getStructuringElement(OpenCV.MORPH_ELLIPSE, OpenCV.Size{Int32}(8, 8)))), OpenCV.InputArray)
 fgen(:f_erode_img, 1, :(OpenCV.erode(x, OpenCV.getStructuringElement(OpenCV.MORPH_ELLIPSE, OpenCV.Size{Int32}(4, 4)))), OpenCV.InputArray)
 
+# Custom image functions
+
 # Mathematical
 fgen(:f_add, 2, :((x + y) / 2.0), Float64)
 fgen(:f_subtract, 2, :(abs(x - y) / 2.0), Float64)

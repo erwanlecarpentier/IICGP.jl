@@ -21,8 +21,8 @@ IICGP.imshow(out, 100.0)
 
 ## distance between boxes and center
 using IICGP
-using OpenCV
 using LinearAlgebra
+using OpenCV
 
 function load_img(rom_name::String, frame_number::Int64)
     filename = string(@__DIR__, "/examples/images/", rom_name, "_frame_$frame_number.png")
@@ -34,8 +34,54 @@ r1, g1, b1 = IICGP.split_rgb(m1)
 m2 = load_img("freeway", 31)
 r2, g2, b2 = IICGP.split_rgb(m2)
 
+# WITH JULIAIMAGES
+using ImageMorphology
+using BenchmarkTools
+using Plots
+using Images
+using ImageShow
+
+function my_imshow(x)
+    heatmap(
+        transpose(x[1,:,:]),
+        yflip=true,
+        color=:grays,
+        clim=(0,255)
+    )
+end
+
+# Same as OpenCV.subtract
+function my_subtract(x, y)
+    z = zeros(UInt8, size(x))
+    for i in eachindex(x[1,:,1])
+        for j in eachindex(x[1,1,:])
+            if x[1,i,j] > y[1,i,j]
+                z[1,i,j] = x[1,i,j] - y[1,i,j]
+            end
+        end
+    end
+    z
+end
+
+function disprange(m)
+    k = m[1, 300:310, 25:35]
+    convert(Array{Int64}, k)
+end
+
+x = r1
+x_p = r2
+
+#
+diff = my_subtract(x_p, x)
+label = label_components(diff)
+#
+
+imshow(r1)
+
+# WITH OPENCV
+
 function motion_objects(x, x_p)
-    diff = OpenCV.subtract(x, x_p)
+    diff = OpenCV.subtract(x_p, x)
     dilated = OpenCV.dilate(
         diff,
         OpenCV.getStructuringElement(
@@ -173,76 +219,47 @@ end
 bar(A, ["foo1"])
 bar(A, ["foo1", "foo2"])
 
-##
+## Motion capture with functor
 
+using IICGP
+using OpenCV
+using LinearAlgebra
 
-
-foo(1, 2)
-foo(1.0, 2.0)
-foo(0.5, 2.5)
-bar(1, 2.0)
-
-
-
-
-function foobar(; kwargs...)
-    kwargs_dict = Dict(kwargs)
-
-    println("\ntypeof kwargs      : ", typeof(kwargs))
-    println("typeof kwargs_dict : ", typeof(kwargs_dict))
-    println("kwargs_dict        : ", kwargs_dict)
-    println(haskey(kwargs_dict, :a))
+function load_img(rom_name::String, frame_number::Int64)
+    filename = string(@__DIR__, "/examples/images/", rom_name, "_frame_$frame_number.png")
+    return OpenCV.imread(filename)
 end
 
-foobar(a=1, b="hola")
+m1 = load_img("freeway", 30)
+r1, g1, b1 = IICGP.split_rgb(m1)
+m2 = load_img("freeway", 31)
+r2, g2, b2 = IICGP.split_rgb(m2)
 
 
 
-
-
-function foobar(x, y=2*x)
-    x + y
-end
-function bar(x, y=2*x)
-    x + y
+Base.@kwdef mutable struct MotionCapture
+    state::Array{UInt8,3} = zeros(UInt8, (1, 320, 210))
 end
 
-function foobar(x; kwargs...)
-    kwargs_dict = Dict(kwargs)
-    if haskey(kwargs_dict, :y)
-        y = kwargs_dict[:y]
+function (o::MotionCapture)(img)
+    if o.state == nothing
+        diff = img
     else
-        y = 2 * x
+        diff = OpenCV.subtract(img, o.state)
     end
-    x + y
+    o.state = img
+    return diff
 end
 
-foobar(1, y=2)
-foobar(1, 2)
+f = MotionCapture()
 
-
-
-struct foo
-    a
-    b
+# Apply it several times in a row
+for i in 1:3
+    out = f(r1)
+    IICGP.imshow(out)
+    out = f(r2)
+    IICGP.imshow(out)
 end
-
-function bar(a, b; kwargs...)
-    kwargs_dict = Dict(kwargs)
-    if haskey(kwargs_dict, :buffer)
-        a = kwargs_dict[:buffer]
-    end
-    foo(a, b)
-end
-
-function bar(a; kwargs...)
-    b = a + 1
-    bar(a, b, kwargs...)
-end
-
-bar(1)
-bar(1, 3)
-bar(1, 3; buffer=33)
 
 
 
