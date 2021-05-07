@@ -23,6 +23,11 @@ IICGP.imshow(out, 100.0)
 using IICGP
 using LinearAlgebra
 using OpenCV
+using ImageMorphology
+using BenchmarkTools
+using Plots
+using Images
+using ImageShow
 
 function load_img(rom_name::String, frame_number::Int64)
     filename = string(@__DIR__, "/examples/images/", rom_name, "_frame_$frame_number.png")
@@ -35,18 +40,19 @@ m2 = load_img("freeway", 31)
 r2, g2, b2 = IICGP.split_rgb(m2)
 
 # WITH JULIAIMAGES
-using ImageMorphology
-using BenchmarkTools
-using Plots
-using Images
-using ImageShow
 
-function my_imshow(x)
+function my_imshow(x; kwargs...)
+    kwargs_dict = Dict(kwargs)
+    if haskey(kwargs_dict, :clim)
+        clim = kwargs_dict[:clim]
+    else
+        clim = (0,255)
+    end
     heatmap(
         transpose(x[1,:,:]),
         yflip=true,
         color=:grays,
-        clim=(0,255)
+        clim=clim
     )
 end
 
@@ -68,18 +74,42 @@ function disprange(m)
     convert(Array{Int64}, k)
 end
 
-x = r1
-x_p = r2
+function img_threshold(x, threshold=1)
+    y = zeros(UInt8, size(x))
+    for i in eachindex(x[1,:,1])
+        for j in eachindex(x[1,1,:])
+            if x[1,i,j] >= threshold
+                y[1,i,j] = 255
+            end
+        end
+    end
+    y
+end
 
-#
-diff = my_subtract(x_p, x)
-label = label_components(diff)
-#
-
-imshow(r1)
+function motion_distances_to_center_julia(x, x_p)
+    diff = my_subtract(x_p, x)
+    dilated = dilate(diff)
+    thresholded = img_threshold(dilated)
+    label = label_components(thresholded)
+    centroids = component_centroids(label)
+    # boxes = component_boxes(label)
+    center = collect(size(x)[2:3] ./ 2)
+    max_distance = norm(center)
+    n_labels = length(centroids)
+    distances_to_center = zeros(UInt8, n_labels)
+    for i in 1:n_labels
+        distances_to_center[i] = floor(255 * norm(collect(centroids[i][2:3]) - center) / max_distance)
+    end
+    distances_to_center_img = zeros(UInt8, size(label))
+    for i in eachindex(label[1, :, 1])
+        for j in eachindex(label[1, 1, :])
+            distances_to_center_img[1, i, j] = distances_to_center[label[1, i, j] + 1]
+        end
+    end
+    distances_to_center_img
+end
 
 # WITH OPENCV
-
 function motion_objects(x, x_p)
     diff = OpenCV.subtract(x_p, x)
     dilated = OpenCV.dilate(
@@ -127,11 +157,13 @@ function motion_distances_to_center(x, x_p)
     return distances_to_center_img
 end
 
-out1 = motion_objects(r1, r2)
+# out3 = motion_objects(r1, r2)
+
+out1 = motion_distances_to_center_julia(r1, r2)
 out2 = motion_distances_to_center(r1, r2)
 
-IICGP.imshow(out1, 2)
-IICGP.imshow(out2, 2)
+my_imshow(out1)
+my_imshow(out2)
 
 ## Cambrian population initialization
 
