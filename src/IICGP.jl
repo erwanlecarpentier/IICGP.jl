@@ -1,9 +1,9 @@
 module IICGP
 
-import YAML
 using CartesianGeneticProgramming
 using Cambrian
 import JSON
+import YAML
 
 include("evolution.jl")
 include("evaluation.jl")

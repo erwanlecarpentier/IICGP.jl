@@ -1,8 +1,22 @@
+## Load
+
 using IICGP
 using TiledIteration
 using BenchmarkTools
+using LinearAlgebra
+using OpenCV
+using ImageMorphology
+using Plots
+using Images
+using ImageShow
+using ImageSegmentation
 
-## maxpool
+function load_img(rom_name::String, frame_number::Int64)
+    filename = string(@__DIR__, "/examples/images/", rom_name, "_frame_$frame_number.png")
+    return OpenCV.imread(filename)
+end
+
+## Julia maxpool
 
 function max_pool(img::Array{UInt8}; s::Int64=5)
     n_cols = s
@@ -15,18 +29,81 @@ end
 inp = rand(collect(UInt8, 0:255), (1, 100, 100))
 out = max_pool(inp)
 
-
 IICGP.imshow(inp, 10.0)
 IICGP.imshow(out, 100.0)
 
-## Julia matchTemplate function
+## Julia segmentation
 
-using TiledIteration
+m1 = load_img("freeway", 30)
+r1, g1, b1 = IICGP.split_rgb(m1)
 
-function load_img(rom_name::String, frame_number::Int64)
-    filename = string(@__DIR__, "/examples/images/", rom_name, "_frame_$frame_number.png")
-    return OpenCV.imread(filename)
+function remove_details(img)
+    dilate(erode(img))
 end
+
+function rescale_img(img)
+    m = convert(Array{Float64}, img) .* (255 / maximum(img))
+    floor.(UInt8, m)
+end
+
+function felzenszwalb_segmentation(img, segment_size::Int64=50)
+    m = remove_details(img)
+    segments = felzenszwalb(m, segment_size)
+    rescale_img(segments.image_indexmap)
+end
+
+function components_segmentation(img)
+    m = remove_details(img)
+    label = label_components(m)
+    rescale_img(label)
+    #=
+    dilated = dilate(diff)
+    thresholded = img_threshold(dilated)
+    label = label_components(thresholded)
+    centroids = component_centroids(label)
+    boxes = component_boxes(label)
+    =#
+end
+
+function box_segmentation(img)
+    m = remove_details(img)
+    label = label_components(m)
+    boxes = component_boxes(label)
+    boxes_img = zeros(UInt8, size(img))
+    incr = 1
+    for i in 2:length(boxes)
+        boxes_img[
+            boxes[i][1][1]:boxes[i][2][1],
+            boxes[i][1][2]:boxes[i][2][2]
+        ] .+= incr
+        incr += 1
+    end
+    rescale_img(boxes_img)
+end
+
+# m = dilate(dilate(erode(erode(m))))
+
+m = r1[1,:,:]
+
+out0 = remove_details(m)
+# 311.636 μs (16 allocations: 131.72 KiB)
+
+out1 = felzenszwalb_segmentation(m)
+# 22.131 ms (126980 allocations: 15.43 MiB)
+
+out2 = components_segmentation(m)
+# 1.176 ms (76 allocations: 1.74 MiB)
+
+out3 = box_segmentation(m)
+# 2.013 ms (1236 allocations: 1.91 MiB)
+
+IICGP.my_imshow(m)
+IICGP.my_imshow(out0)
+IICGP.my_imshow(out1)
+IICGP.my_imshow(out2)
+IICGP.my_imshow(out3)
+
+## Julia matchTemplate function
 
 m1 = load_img("montezuma_revenge", 30)
 r1, g1, b1 = IICGP.split_rgb(m1)
@@ -58,16 +135,8 @@ match_img = match_template(img, 700.0)
 my_imshow(img)
 my_imshow(match_img, clim="auto")
 
-
 ## distance between boxes and center
-using IICGP
-using LinearAlgebra
-using OpenCV
-using ImageMorphology
-using BenchmarkTools
-using Plots
-using Images
-using ImageShow
+
 
 function load_img(rom_name::String, frame_number::Int64)
     filename = string(@__DIR__, "/examples/images/", rom_name, "_frame_$frame_number.png")
@@ -80,7 +149,6 @@ m2 = load_img("freeway", 31)
 r2, g2, b2 = IICGP.split_rgb(m2)
 
 # WITH JULIAIMAGES
-
 # Same as OpenCV.subtract
 function my_subtract(x, y)
     z = zeros(UInt8, size(x))

@@ -1,6 +1,7 @@
 export imshow, display_buffer
 
-using CartesianGeneticProgramming
+# using CartesianGeneticProgramming
+using Plots
 
 """
     imshow(m::T) where {T <: OpenCV.InputArray}
