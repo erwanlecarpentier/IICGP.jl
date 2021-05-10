@@ -8,8 +8,8 @@ function max_pool(img::Array{UInt8}; s::Int64=5)
     n_cols = s
     n_rows = s
     tile_width = convert(Int64, ceil(size(img)[2] / n_cols))
-    tile_heigt = convert(Int64, ceil(size(img)[3] / n_rows))
-    out = map(TileIterator(axes(img[1, :, :]), (tile_width, tile_heigt))) do tileaxs maximum(img[1, tileaxs...]) end
+    tile_height = convert(Int64, ceil(size(img)[3] / n_rows))
+    out = map(TileIterator(axes(img[1, :, :]), (tile_width, tile_height))) do tileaxs maximum(img[1, tileaxs...]) end
     reshape(out, 1, n_cols, n_rows)
 end
 inp = rand(collect(UInt8, 0:255), (1, 100, 100))
@@ -18,6 +18,46 @@ out = max_pool(inp)
 
 IICGP.imshow(inp, 10.0)
 IICGP.imshow(out, 100.0)
+
+## Julia matchTemplate function
+
+using TiledIteration
+
+function load_img(rom_name::String, frame_number::Int64)
+    filename = string(@__DIR__, "/examples/images/", rom_name, "_frame_$frame_number.png")
+    return OpenCV.imread(filename)
+end
+
+m1 = load_img("montezuma_revenge", 30)
+r1, g1, b1 = IICGP.split_rgb(m1)
+# @btime img = r1[1,:,:]
+# 67.606 μs (5 allocations: 65.84 KiB)
+img = r1[1,:,:]
+
+function match_template(img, threshold::Float64=700.0)
+    tile_w = 10
+    tile_h = 10
+    match_img = zeros(size(img))
+    incr = 1
+    for t in TileIterator(axes(img), (tile_w, tile_h))
+        template = img[t...]
+        for u in TileIterator(axes(img), (tile_w, tile_h))
+            if norm(template .- img[u...]) < threshold
+                match_img[u...] .+= incr
+                incr += 1
+            end
+        end
+    end
+    match_img .*= 255 / maximum(match_img)
+    floor.(UInt8, match_img)
+end
+
+match_img = match_template(img, 700.0)
+# 449.513 ms (1127761 allocations: 357.41 MiB)
+
+my_imshow(img)
+my_imshow(match_img, clim="auto")
+
 
 ## distance between boxes and center
 using IICGP
@@ -40,21 +80,6 @@ m2 = load_img("freeway", 31)
 r2, g2, b2 = IICGP.split_rgb(m2)
 
 # WITH JULIAIMAGES
-
-function my_imshow(x; kwargs...)
-    kwargs_dict = Dict(kwargs)
-    if haskey(kwargs_dict, :clim)
-        clim = kwargs_dict[:clim]
-    else
-        clim = (0,255)
-    end
-    heatmap(
-        transpose(x[1,:,:]),
-        yflip=true,
-        color=:grays,
-        clim=clim
-    )
-end
 
 # Same as OpenCV.subtract
 function my_subtract(x, y)
@@ -201,6 +226,10 @@ my_imshow(out2)
 my_imshow(out3)
 my_imshow(out4)
 
+## Connected components
+
+# TODO
+
 ## Cambrian population initialization
 
 "create all members of the first generation"
@@ -265,9 +294,6 @@ end
 caller_noargs(f)
 
 ## Apply some module's function based on string
-
-
-
 
 module A
 function foo1()
