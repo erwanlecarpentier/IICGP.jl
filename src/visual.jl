@@ -36,6 +36,42 @@ end
 
 
 """
+    function my_imshow(img::AbstractArray; kwargs...)
+
+Show input image using heatmap.
+Magnitude parameter may be precised using the `clim` keyword. The default value
+is set to `clim=(0,255)`. Using `clim="auto"` amounts to take the maximum of
+the input image as maximum magnitude.
+
+Examples:
+
+    my_imshow(m)
+    my_imshow(m, clim="auto")
+    my_imshow(m, clim=(1, 10))
+"""
+function my_imshow(img::AbstractArray; kwargs...)
+    kwargs_dict = Dict(kwargs)
+    if haskey(kwargs_dict, :clim)
+        if kwargs_dict[:clim] == "auto"
+            clim = (0, maximum(img))
+        else
+            clim = kwargs_dict[:clim]
+        end
+    else
+        clim = (0, 255)
+    end
+    if ndims(img) == 3
+        img = img[1,:,:]
+    end
+    heatmap(
+        transpose(img),
+        yflip=true,
+        color=:grays,
+        clim=clim
+    )
+end
+
+"""
     function display_buffer(ind::CGPInd, enlargement::E=1, indexes::Array{Int64}) where {E <: Union{Int64, Float64}}
 
 Display the images contained in each node in the input IPCGP individual.
