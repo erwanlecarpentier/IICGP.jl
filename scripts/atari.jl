@@ -1,13 +1,11 @@
-using IICGP
-using Cambrian
 using ArcadeLearningEnvironment
 using ArgParse
+using Cambrian
+using IICGP
 import Random
 
-include("game.jl")
-
 ```
-Playing Atari games using classic CGP on RAM values
+Playing Atari games using DualCGP on screen input values
 
 This uses a single Game seed, meaning an unfair deterministic Atari
 environment. To evolve using a different game seed per generation, add in
@@ -18,7 +16,7 @@ s = ArgParseSettings()
 @add_arg_table s begin
     "--cfg"
     help = "configuration script"
-    default = "cfg/atari_ram.yaml"
+    default = "cfg/atari.yaml"
     "--game"
     help = "game rom name"
     default = "centipede"
@@ -33,12 +31,20 @@ cfg = get_config(args["cfg"])
 cfg["game"] = args["game"]
 Random.seed!(args["seed"])
 
+game = Game("centipede", 0)
+
+
+rawscreen = getScreenRGB(game.ale)
+rgb = reshape(rawscreen, (3, game.width, game.height));
+out = [Array{UInt8}(rgb[i,:,:]) for i in 1:3]
+out = get_rgb(game)
+
 function play_atari(ind::MTCGPInd; seed=0, max_frames=18000)
     game = Game(cfg["game"], seed)
     reward = 0.0
     frames = 0
     while ~game_over(game.ale)
-        output = process(ind, get_ram(game))
+        output = mean_process(ind, get_rgb(game))
         action = game.actions[argmax(output)]
         reward += act(game.ale, action)
         frames += 1
@@ -52,7 +58,7 @@ end
 
 function get_params()
     game = Game(cfg["game"], 0)
-    nin = length(get_ram(game))
+    nin = 3 # r g b
     nout = length(game.actions)
     close!(game)
     nin, nout
@@ -70,7 +76,7 @@ end
 
 cfg["n_in"], cfg["n_out"] = get_params()
 
-e = Cambrian.Evolution(MTCGPInd, cfg; id=string(cfg["game"], "_ram_", args["seed"]),
+e = Cambrian.Evolution(MTCGPInd, cfg; id=string(cfg["game"], "_", args["seed"]),
                        populate=populate,
                        evaluate=evaluate)
 Cambrian.run!(e)

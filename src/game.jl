@@ -1,6 +1,7 @@
 # The following was inspired by AtariAlgos.jl
-# Modifications by Dennis Wilson @d9w
+# Modifications by Dennis Wilson @d9w and Erwan Lecarpentier
 
+using ArcadeLearningEnvironment
 using Colors
 using ImageCore
 using ImageTransformations
@@ -49,8 +50,8 @@ function get_rgb(game::Game)
     # TODO: speed this up
     # rawscreen = Array{Cuchar}(undef, game.width * game.height * 3)
     rawscreen = getScreenRGB(game.ale)
-    rgb = Float64.(reshape(rawscreen/256., (3, game.width, game.height)));
-    [Array{Float64}(rgb[i,:,:]) for i in 1:3]
+    rgb = reshape(rawscreen, (3, game.width, game.height));
+    [Array{UInt8}(rgb[i,:,:]) for i in 1:3]
 end
 
 function get_ram(game::Game)
