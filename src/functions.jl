@@ -60,6 +60,7 @@ fgen(:f_erode_img, 1, :(OpenCV.erode(x, OpenCV.getStructuringElement(OpenCV.MORP
 
 # Julia image processing functions
 # TODO here
+#=
 fgen(:f_corners, 1, :(x),
      :(Float64.(Images.fastcorners(x))); safe=true)
 fgen(:f_filter, 2, :(x), :(x),
@@ -109,6 +110,7 @@ fgen(:f_mean_window, 1, :(x), :(ImageFiltering.MapWindow.mapwindow(
     Statistics.mean, x, 3*ones(Int, ndims(x)))); safe=true)
 fgen(:f_restrict, 1, :(x),
      :(scaled(ImageTransformations.restrict(x))); safe=true)
+=#
 
 # Mathematical
 fgen(:f_add, 2, :((x + y) / 2.0), Float64)

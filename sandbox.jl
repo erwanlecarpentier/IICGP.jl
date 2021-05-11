@@ -26,11 +26,18 @@ function max_pool(img::Array{UInt8}; s::Int64=5)
     out = map(TileIterator(axes(img[1, :, :]), (tile_width, tile_height))) do tileaxs maximum(img[1, tileaxs...]) end
     reshape(out, 1, n_cols, n_rows)
 end
+
 inp = rand(collect(UInt8, 0:255), (1, 100, 100))
 out = max_pool(inp)
-
 IICGP.imshow(inp, 10.0)
 IICGP.imshow(out, 100.0)
+
+m1 = load_img("freeway", 30)
+r1, g1, b1 = IICGP.split_rgb(m1)
+out = max_pool(r1, s=5)
+# 168.767 μs (30 allocations: 136.30 KiB)
+
+IICGP.my_imshow(out)
 
 ## Julia segmentation
 
@@ -56,13 +63,11 @@ function components_segmentation(img)
     m = remove_details(img)
     label = label_components(m)
     rescale_img(label)
-    #=
-    dilated = dilate(diff)
-    thresholded = img_threshold(dilated)
-    label = label_components(thresholded)
-    centroids = component_centroids(label)
-    boxes = component_boxes(label)
-    =#
+end
+
+function make_box(img)
+    # TODO
+    img
 end
 
 function box_segmentation(img)
@@ -80,8 +85,6 @@ function box_segmentation(img)
     end
     rescale_img(boxes_img)
 end
-
-# m = dilate(dilate(erode(erode(m))))
 
 m = r1[1,:,:]
 
@@ -107,6 +110,8 @@ IICGP.my_imshow(out3)
 
 m1 = load_img("montezuma_revenge", 30)
 r1, g1, b1 = IICGP.split_rgb(m1)
+m2 = load_img("montezuma_revenge", 31)
+r2, g2, b2 = IICGP.split_rgb(m2)
 # @btime img = r1[1,:,:]
 # 67.606 μs (5 allocations: 65.84 KiB)
 img = r1[1,:,:]
@@ -132,21 +137,10 @@ end
 match_img = match_template(img, 700.0)
 # 449.513 ms (1127761 allocations: 357.41 MiB)
 
-my_imshow(img)
-my_imshow(match_img, clim="auto")
+IICGP.my_imshow(img)
+IICGP.my_imshow(match_img, clim="auto")
 
 ## distance between boxes and center
-
-
-function load_img(rom_name::String, frame_number::Int64)
-    filename = string(@__DIR__, "/examples/images/", rom_name, "_frame_$frame_number.png")
-    return OpenCV.imread(filename)
-end
-
-m1 = load_img("freeway", 30)
-r1, g1, b1 = IICGP.split_rgb(m1)
-m2 = load_img("freeway", 31)
-r2, g2, b2 = IICGP.split_rgb(m2)
 
 # WITH JULIAIMAGES
 # Same as OpenCV.subtract
@@ -226,8 +220,6 @@ function motion_boxes_julia(x, x_p)
     boxes_img
 end
 
-
-
 # WITH OPENCV
 function motion_objects(x, x_p)
     diff = OpenCV.subtract(x_p, x)
@@ -276,23 +268,41 @@ function motion_distances_to_center(x, x_p)
     return distances_to_center_img
 end
 
-# out3 = motion_objects(r1, r2)
+
+m1 = load_img("freeway", 30)
+r1, g1, b1 = IICGP.split_rgb(m1)
+m2 = load_img("freeway", 31)
+r2, g2, b2 = IICGP.split_rgb(m2)
+
+diff = my_subtract(r1, r2)
+
 
 out1 = motion_distances_to_center_julia(r1, r2)
 # 1.542 ms (1054 allocations: 1.52 MiB)
 out2 = motion_distances_to_center(r1, r2)
 # 17.729 ms (71044 allocations: 2.52 MiB)
 
-out3 = motion_objects_julia(r1, r2)
+out3 = motion_objects(r1, r2)
+out4 = motion_objects_julia(r1, r2)
 # 546.036 μs (656 allocations: 388.33 KiB)
 
-out4 = motion_boxes_julia(r1, r2)
+out5 = motion_boxes_julia(r1, r2)
 # 1.951 ms (883 allocations: 992.11 KiB)
 
-my_imshow(out1)
-my_imshow(out2)
-my_imshow(out3)
-my_imshow(out4)
+IICGP.my_imshow(r1)
+IICGP.my_imshow(r2)
+IICGP.my_imshow(diff)
+IICGP.my_imshow(out1)
+IICGP.my_imshow(out2)
+IICGP.my_imshow(out3)
+IICGP.my_imshow(out4)
+IICGP.my_imshow(out5)
+
+#=
+TODO
+- distance_to_center -> distance to parametrized point
+(1D image pt running through the image)
+=#
 
 ## Connected components
 
