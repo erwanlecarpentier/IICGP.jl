@@ -14,7 +14,20 @@ using IICGP
 
 ## Julia maxpool
 
-function max_pool(img::Array{UInt8,2}, s::Int64=5)
+function max_pool_reduction(img::Array{UInt8,2}, s::Int64=5)
+    outsz = (s, s)
+    out = Array{eltype(img), ndims(img)}(undef, outsz)
+    tilesz = ceil.(Int, size(img)./outsz)
+    R = TileIterator(axes(img), tilesz)
+    i = 1
+    for tileaxs in R
+       out[i] = maximum(view(img, tileaxs...))
+       i += 1
+    end
+    return out
+end
+
+function max_pool_reduction2(img::Array{UInt8,2}, s::Int64=5)
     n_cols = s
     n_rows = s
     tile_width = convert(Int64, ceil(size(img)[1] / n_cols))
@@ -24,8 +37,12 @@ function max_pool(img::Array{UInt8,2}, s::Int64=5)
 end
 
 r1, g1, b1 = IICGP.load_rgb("freeway", 30)
-out = max_pool(r1)
-# 168.767 μs (30 allocations: 136.30 KiB)
+
+out1 = max_pool_reduction(r1)
+# 208.893 μs (1 allocation: 112 bytes)
+
+out2 = max_pool_reduction2(r1)
+# 174.697 μs (28 allocations: 136.19 KiB)
 
 IICGP.implot(r1)
 IICGP.implot(out)

@@ -40,26 +40,26 @@ end
 
 Max pooling function.
 """
-function max_pool_reduction(m::T, s::Int64=5) where {T <: OpenCV.InputArray}
-    outsz = (size(m, 1), ntuple(_->s, ndims(m) - 1)...)
-    out = Array{eltype(m), ndims(m)}(undef, outsz)
-    tilesz = ceil.(Int, size(m)./outsz)
-    R = TileIterator(axes(m), tilesz)
+function max_pool_reduction(img::Array{UInt8,2}, s::Int64=5)
+    outsz = (s, s)
+    out = Array{eltype(img), ndims(img)}(undef, outsz)
+    tilesz = ceil.(Int, size(img)./outsz)
+    R = TileIterator(axes(img), tilesz)
     i = 1
     for tileaxs in R
-       out[i] = maximum(view(m, tileaxs...))
+       out[i] = maximum(view(img, tileaxs...))
        i += 1
     end
     return out
 end
 
-function max_pool_reduction2(m::T, s::Int64=5) where {T <: OpenCV.InputArray}
+function max_pool_reduction2(img::Array{UInt8,2}, s::Int64=5)
     n_cols = s
     n_rows = s
-    tile_width = convert(Int64, ceil(size(m)[2] / n_cols))
-    tile_heigt = convert(Int64, ceil(size(m)[3] / n_rows))
-    out = map(TileIterator(axes(m[1, :, :]), (tile_width, tile_heigt))) do tileaxs maximum(m[1, tileaxs...]) end
-    reshape(out, 1, n_cols, n_rows)
+    tile_width = convert(Int64, ceil(size(img)[1] / n_cols))
+    tile_height = convert(Int64, ceil(size(img)[2] / n_rows))
+    out = map(TileIterator(axes(img[:, :]), (tile_width, tile_height))) do tileaxs maximum(img[tileaxs...]) end
+    reshape(out, n_cols, n_rows)
 end
 
 function max_pool_reduction_threads(m::T, s::Int64=5) where {T <: OpenCV.InputArray}
