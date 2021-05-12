@@ -1,5 +1,7 @@
 export load_img, save_img, split_rgb
 
+using Images
+
 """
     function load_img(filename::String)
 
@@ -32,20 +34,34 @@ function load_rgb(rom_name::String, frame_number::Int64)
 end
 
 """
-    function save_img(img::Array{Float64,3}, filename::String)
+    function save_img(img::Array{Float64,2}, filename::String)
 
 Save an image to the input path.
 """
-function save_img(img::Array{Float64,3}, filename::String)
-    FileIO.save(filename, colorview(RGB, img))
+function save_img(img::Array{Float64}, filename::String)
+
+    println()
+    println(ndims(img))
+    println()
+    if ndims(img) == 3
+        FileIO.save(filename, colorview(RGB, img))
+    elseif ndims(img) == 2
+        println(ndims(img))
+        println(ndims(img))
+        println(ndims(img))
+        println(ndims(img))
+        FileIO.save(filename, colorview(Gray, img))
+    else
+        println("Warning: number of dimensions for image save is not 2 or 3")
+    end
 end
 
 """
-    function save_img(img::Array{UInt8,3}, filename::String)
+    function save_img(img::Array{UInt8,2}, filename::String)
 
 Save an image to the input path.
 """
-function save_img(img::Array{UInt8,3}, filename::String)
+function save_img(img::Array{UInt8}, filename::String)
     img = adjust_histogram(Float64.(img), LinearStretching())
     save_img(img, filename)
 end

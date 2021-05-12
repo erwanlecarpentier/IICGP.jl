@@ -5,9 +5,9 @@ using TiledIteration
 using BenchmarkTools
 using LinearAlgebra
 using OpenCV
-using ImageMorphology
 using Plots
 using Images
+using ImageMorphology
 using ImageShow
 using ImageSegmentation
 using IICGP
