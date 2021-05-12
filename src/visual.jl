@@ -37,20 +37,20 @@ end
 
 
 """
-    function my_imshow(img::AbstractArray; kwargs...)
+    function implot(img::AbstractArray; kwargs...)
 
-Show input image using heatmap.
+Plot input image using heatmap.
 Magnitude parameter may be precised using the `clim` keyword. The default value
 is set to `clim=(0,255)`. Using `clim="auto"` amounts to take the maximum of
 the input image as maximum magnitude.
 
 Examples:
 
-    my_imshow(m)
-    my_imshow(m, clim="auto")
-    my_imshow(m, clim=(1, 10))
+    implot(m)
+    implot(m, clim="auto")
+    implot(m, clim=(1, 10))
 """
-function my_imshow(img::AbstractArray; kwargs...)
+function implot(img::AbstractArray; kwargs...)
     kwargs_dict = Dict(kwargs)
     if haskey(kwargs_dict, :clim)
         if kwargs_dict[:clim] == "auto"

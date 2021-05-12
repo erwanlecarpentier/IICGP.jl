@@ -59,7 +59,7 @@ fgen(:f_erode_img, 1, :(OpenCV.erode(x, OpenCV.getStructuringElement(OpenCV.MORP
 =#
 
 # Julia image processing functions
-# TODO here
+
 #=
 fgen(:f_corners, 1, :(x),
      :(Float64.(Images.fastcorners(x))); safe=true)

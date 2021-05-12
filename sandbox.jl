@@ -1,6 +1,5 @@
 ## Load
 
-using IICGP
 using FileIO
 using TiledIteration
 using BenchmarkTools
@@ -11,30 +10,24 @@ using Plots
 using Images
 using ImageShow
 using ImageSegmentation
-
+using IICGP
 
 ## Julia maxpool
 
-function max_pool(img::Array{UInt8}; s::Int64=5)
+function max_pool(img::Array{UInt8,2}, s::Int64=5)
     n_cols = s
     n_rows = s
-    tile_width = convert(Int64, ceil(size(img)[2] / n_cols))
-    tile_height = convert(Int64, ceil(size(img)[3] / n_rows))
-    out = map(TileIterator(axes(img[1, :, :]), (tile_width, tile_height))) do tileaxs maximum(img[1, tileaxs...]) end
-    reshape(out, 1, n_cols, n_rows)
+    tile_width = convert(Int64, ceil(size(img)[1] / n_cols))
+    tile_height = convert(Int64, ceil(size(img)[2] / n_rows))
+    out = map(TileIterator(axes(img[:, :]), (tile_width, tile_height))) do tileaxs maximum(img[tileaxs...]) end
+    reshape(out, n_cols, n_rows)
 end
 
-inp = rand(collect(UInt8, 0:255), (1, 100, 100))
-out = max_pool(inp)
-IICGP.imshow(inp, 10.0)
-IICGP.imshow(out, 100.0)
-
-m1 = load_img("freeway", 30)
-r1, g1, b1 = IICGP.split_rgb(m1)
-out = max_pool(r1, s=5)
+r1, g1, b1 = IICGP.load_rgb("freeway", 30)
+out = max_pool(r1)
 # 168.767 μs (30 allocations: 136.30 KiB)
 
-IICGP.my_imshow(out)
+IICGP.implot(out)
 
 ## Julia segmentation
 

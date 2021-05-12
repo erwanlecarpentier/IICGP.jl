@@ -2,6 +2,8 @@ module IICGP
 
 using CartesianGeneticProgramming
 using Cambrian
+using OpenCV
+using FileIO
 import JSON
 import YAML
 
