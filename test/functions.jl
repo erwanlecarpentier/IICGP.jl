@@ -1,7 +1,6 @@
 using ArcadeLearningEnvironment
 using IICGP
 using Test
-using OpenCV
 using Combinatorics
 using BenchmarkTools
 
@@ -18,19 +17,20 @@ function generate_noisy_img(sz::Tuple{Int64,Int64}=(210, 320))
 end
 
 function test_inputs(f::Function, inps::AbstractArray)
+    @btime f(inps...)
     out = copy(f(inps...))
     @test size(out) == size(inps[1])
     @test size(out) == size(inps[2])
-    @test typeof(out) == IICGP.ImgType
+    @test typeof(out) == Array{UInt8,2}
     @test all(out == f(inps...)) # functions are idempotent
     @test all(out .>= 0)
     @test all(out .<= 255)
 end
 
-function test_functions(functions::Array{Function}, img_pairs)
+function test_functions(functions::Array{Function}, pairs)
     for f in functions
-        for pair in img_pairs
-            test_inputs(f, pair)
+        for p in pairs
+            test_inputs(f, p)
         end
     end
 end
@@ -49,7 +49,6 @@ end
 function generate_atari_img_set()
     set = Array{Array{UInt8,2},1}()
     rom_list = setdiff(getROMList(), ["pacman", "surround"])
-    rom_list = ["freeway", "alien", "atlantis"]
     for rom in rom_list
         append!(set, IICGP.load_rgb(rom, 30))
     end
@@ -68,21 +67,9 @@ function generate_img_pair_set()
     img_pairs
 end
 
-pairs = generate_img_pair_set()
-
 @testset "Julia Image functions" begin
     # Load / generate images
-    image_name = "centipede_frame_0"
-    filename = string(@__DIR__, "/", image_name, ".png")
-    atari_img = OpenCV.imread(filename)
-    # grsca_img = OpenCV.cvtColor(atari_img, OpenCV.COLOR_BGR2GRAY)
-    sz = (1, 320, 210)
-    noisy_img = generate_noisy_img(sz)
-    white_img = generate_white_img(sz)
-    black_img = generate_black_img(sz)
-
-    img_set = vcat(split_rgb(atari_img), [noisy_img, white_img, black_img])
-    img_pairs = Combinatorics.combinations(img_set, 2)
+    pairs = generate_img_pair_set()
 
     # Fetch functions
     functions = [
@@ -92,7 +79,7 @@ pairs = generate_img_pair_set()
     ]
 
     # Test all functions
-    test_functions(functions, img_pairs)
+    test_functions(functions, pairs)
 end
 
 #=

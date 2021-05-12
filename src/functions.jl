@@ -2,6 +2,8 @@ export CGPFunctions, ImgType
 
 module CGPFunctions
 
+using ImageMorphology
+
 global arity = Dict()
 
 SorX = Union{Symbol, Expr}
@@ -115,9 +117,9 @@ fgen(:f_restrict, 1, :(x),
 
 # Image processing
 fgen(:f_dilate, 1, :(ImageMorphology.dilate(x)), ImgType)
-fgen(:f_erode, 1, :(scaled(ImageMorphology.erode(x))), ImgType)
+fgen(:f_erode, 1, :(ImageMorphology.erode(x)), ImgType)
 fgen(:f_remove_details, 1,
-     :(ImageMorphology.dilate(scaled(ImageMorphology.erode(x)))), ImgType)
+     :(ImageMorphology.dilate(ImageMorphology.erode(x))), ImgType)
 
 # Mathematical
 fgen(:f_add, 2, :((x + y) / 2.0), Float64)
