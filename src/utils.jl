@@ -7,7 +7,6 @@ Load an image given file name.
 """
 function load_img(filename::String)
     img = FileIO.load(filename)
-    println(typeof(img))
     convert(Array{UInt8}, rawview(channelview(img)))
 end
 

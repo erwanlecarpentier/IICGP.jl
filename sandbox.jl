@@ -45,12 +45,10 @@ out2 = max_pool_reduction2(r1)
 # 174.697 μs (28 allocations: 136.19 KiB)
 
 IICGP.implot(r1)
-IICGP.implot(out)
 
 ## Julia segmentation
 
-m1 = load_img("montezuma_revenge", 30)
-r1, g1, b1 = IICGP.split_rgb(m1)
+r1, g1, b1 = IICGP.load_rgb("montezuma_revenge", 30)
 
 function remove_details(img)
     dilate(erode(img))

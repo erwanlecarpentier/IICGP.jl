@@ -17,7 +17,7 @@ for rom_name in rom_list
         while ~game_over(ale)
             act(ale, noop)
             if frame_number ∈ saved_frames
-                filename = string(@__DIR__, "/images/", rom_name, "_frame_$frame_number.png")
+                filename = string(@__DIR__, "../images/", rom_name, "_frame_$frame_number.png")
                 saveScreenPNG(ale, filename)
             end
             if frame_number > last_frame

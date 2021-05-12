@@ -1,10 +1,11 @@
-export CGPFunctions
+export CGPFunctions, ImgType
 
 module CGPFunctions
 
 global arity = Dict()
 
 SorX = Union{Symbol, Expr}
+ImgType = Array{UInt8,2}
 
 function scaled(x::Float64)
     if isnan(x)
@@ -111,6 +112,12 @@ fgen(:f_mean_window, 1, :(x), :(ImageFiltering.MapWindow.mapwindow(
 fgen(:f_restrict, 1, :(x),
      :(scaled(ImageTransformations.restrict(x))); safe=true)
 =#
+
+# Image processing
+fgen(:f_dilate, 1, :(ImageMorphology.dilate(x)), ImgType)
+fgen(:f_erode, 1, :(scaled(ImageMorphology.erode(x))), ImgType)
+fgen(:f_remove_details, 1,
+     :(ImageMorphology.dilate(scaled(ImageMorphology.erode(x)))), ImgType)
 
 # Mathematical
 fgen(:f_add, 2, :((x + y) / 2.0), Float64)

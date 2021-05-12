@@ -36,7 +36,7 @@ function lanczos_reduction(m::T; s::Int64=5) where {T <: OpenCV.InputArray}
 end
 
 """
-    function max_pool_reduction(m::T, s::Int64=5) where {T <: OpenCV.InputArray}
+    function max_pool_reduction(img::Array{UInt8,2}, s::Int64=5)
 
 Max pooling function.
 """
