@@ -27,6 +27,7 @@ r1, g1, b1 = IICGP.load_rgb("freeway", 30)
 out = max_pool(r1)
 # 168.767 μs (30 allocations: 136.30 KiB)
 
+IICGP.implot(r1)
 IICGP.implot(out)
 
 ## Julia segmentation

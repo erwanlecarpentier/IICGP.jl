@@ -64,12 +64,7 @@ function implot(img::AbstractArray; kwargs...)
     if ndims(img) == 3
         img = img[1,:,:]
     end
-    heatmap(
-        transpose(img),
-        yflip=true,
-        color=:grays,
-        clim=clim
-    )
+    heatmap(img, yflip=true, color=:grays, clim=clim)
 end
 
 """
