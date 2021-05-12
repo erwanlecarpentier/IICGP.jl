@@ -17,7 +17,6 @@ function generate_noisy_img(sz::Tuple{Int64,Int64}=(210, 320))
 end
 
 function test_inputs(f::Function, inps::AbstractArray)
-    @btime f(inps...)
     out = copy(f(inps...))
     @test size(out) == size(inps[1])
     @test size(out) == size(inps[2])
