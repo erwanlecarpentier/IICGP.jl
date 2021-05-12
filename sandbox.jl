@@ -1,6 +1,7 @@
 ## Load
 
 using IICGP
+using FileIO
 using TiledIteration
 using BenchmarkTools
 using LinearAlgebra
@@ -11,10 +12,23 @@ using Images
 using ImageShow
 using ImageSegmentation
 
-function load_img(rom_name::String, frame_number::Int64)
-    filename = string(@__DIR__, "/examples/images/", rom_name, "_frame_$frame_number.png")
-    return OpenCV.imread(filename)
+function load_img(filename::String)
+    img = FileIO.load(filename)
+    convert(Array{UInt8}, rawview(channelview(img)))
 end
+
+function load_img(rom_name::String, frame_number::Int64)
+    filename = string(@__DIR__, "/scripts/images/", rom_name, "_frame_30.png")
+    load_img(filename)
+end
+
+function save_img(img::AbstractArray, filename::String)
+    FileIO.save(filename, img)
+end
+
+img = load_img("freeway", 30)
+save_img(img, "test.png")
+
 
 ## Julia maxpool
 
@@ -392,10 +406,6 @@ bar(A, ["foo1"])
 bar(A, ["foo1", "foo2"])
 
 ## Motion capture with functor
-
-using IICGP
-using OpenCV
-using LinearAlgebra
 
 function load_img(rom_name::String, frame_number::Int64)
     filename = string(@__DIR__, "/examples/images/", rom_name, "_frame_$frame_number.png")
