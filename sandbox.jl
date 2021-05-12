@@ -12,23 +12,6 @@ using Images
 using ImageShow
 using ImageSegmentation
 
-function load_img(filename::String)
-    img = FileIO.load(filename)
-    convert(Array{UInt8}, rawview(channelview(img)))
-end
-
-function load_img(rom_name::String, frame_number::Int64)
-    filename = string(@__DIR__, "/scripts/images/", rom_name, "_frame_30.png")
-    load_img(filename)
-end
-
-function save_img(img::AbstractArray, filename::String)
-    FileIO.save(filename, img)
-end
-
-img = load_img("freeway", 30)
-save_img(img, "test.png")
-
 
 ## Julia maxpool
 
@@ -55,7 +38,7 @@ IICGP.my_imshow(out)
 
 ## Julia segmentation
 
-m1 = load_img("freeway", 30)
+m1 = load_img("montezuma_revenge", 30)
 r1, g1, b1 = IICGP.split_rgb(m1)
 
 function remove_details(img)
@@ -283,6 +266,12 @@ function motion_distances_to_center(x, x_p)
 end
 
 
+function load_img(rom_name::String, frame_number::Int64)
+    filename = string(@__DIR__, "/images/", rom_name, "_frame_$frame_number.png")
+    return OpenCV.imread(filename)
+end
+
+
 m1 = load_img("freeway", 30)
 r1, g1, b1 = IICGP.split_rgb(m1)
 m2 = load_img("freeway", 31)
@@ -308,7 +297,7 @@ IICGP.my_imshow(r2)
 IICGP.my_imshow(diff)
 IICGP.my_imshow(out1)
 IICGP.my_imshow(out2)
-IICGP.my_imshow(out3)
+# IICGP.my_imshow(out3)
 IICGP.my_imshow(out4)
 IICGP.my_imshow(out5)
 
