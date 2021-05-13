@@ -39,20 +39,13 @@ end
 Save an image to the input path.
 """
 function save_img(img::Array{Float64}, filename::String)
-
-    println()
-    println(ndims(img))
-    println()
-    if ndims(img) == 3
-        FileIO.save(filename, colorview(RGB, img))
-    elseif ndims(img) == 2
-        println(ndims(img))
-        println(ndims(img))
-        println(ndims(img))
-        println(ndims(img))
+    n_dims = ndims(img)
+    if n_dims == 2
         FileIO.save(filename, colorview(Gray, img))
+    elseif n_dims == 3
+        FileIO.save(filename, colorview(RGB, img))
     else
-        println("Warning: number of dimensions for image save is not 2 or 3")
+        println("Warning: `save_img` image dimension is $n_dims - not saving")
     end
 end
 
