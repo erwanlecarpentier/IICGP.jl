@@ -137,8 +137,11 @@ fgen(:f_dilate, 1, :(ImageMorphology.dilate(x)), ImgType)
 fgen(:f_erode, 1, :(ImageMorphology.erode(x)), ImgType)
 fgen(:f_subtract, 2, :(x .- y), ImgType)
 
-function remove_details(x::ImgType, p::Float64)::ImgType
+function remove_details(x::ImgType, p::Float64=0.1)::ImgType
     n_passes = ceil(Int64, 5 * p)
+    remove_details(x, n_passes)
+end
+function remove_details(x::ImgType, n_passes::Int64=1)::ImgType
     for i in 1:n_passes
         x = ImageMorphology.erode(x)
     end
@@ -171,7 +174,7 @@ fgen(:f_felzenszwalb_segmentation, 1, :(felzenszwalb_segmentation(x, p[1])), Img
 function components_segmentation(x::ImgType)::ImgType
     label = label_components(x)
     m = rescale_img(label)
-    remove_details(m)
+    remove_details(m, 1) # more passes?
 end
 fgen(:f_components_segmentation, 1, :(components_segmentation(x)), ImgType)
 
@@ -206,7 +209,7 @@ end
 fgen(:f_make_boxes, 1, :(make_boxes(x)), ImgType)
 
 function box_segmentation(x::ImgType)::ImgType
-    m = remove_details(x)
+    m = remove_details(x, 1) # more passes?
     label = label_components(m)
     make_boxes(label)
 end
