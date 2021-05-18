@@ -71,7 +71,7 @@ function test_functions(functions::Array{Function},
     end
 end
 
-@testset "Julia Image functions" begin
+@testset "Image CGP functions" begin
     # Fetch functions
     idempotent_functions = [
         IICGP.CGPFunctions.f_dilate,
@@ -92,4 +92,21 @@ end
 
     # Test non-idempotent functions
     test_functions(non_idempotent_functions, pairs, idempotent=false)
+end
+
+@testset "Motion capture function" begin
+    rom_sublist = ["boxing", "freeway", "kung_fu_master", "montezuma_revenge"]
+    for rom in rom_sublist
+        p = rand(1)
+        r1, g1, b1 = IICGP.load_rgb(rom, 30)
+        r2, g2, b2 = IICGP.load_rgb(rom, 31)
+
+        out1 = IICGP.CGPFunctions.f_motion_capture(r1, g1, p)
+        @test out1 == r1
+        @test convert(Array{UInt8}, reshape(p, size(r1))) == r1
+
+        out2 = IICGP.CGPFunctions.f_motion_capture(r2, g2, p)
+        @assert out2 == r2 .- r1
+        @assert convert(Array{UInt8}, reshape(p, size(r2))) == r2
+    end
 end
