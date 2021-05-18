@@ -161,6 +161,21 @@ end
 
 function make_boxes(x::AbstractArray)::ImgType
     boxes = component_boxes(convert(Array{Int64}, x))
+    # Filter error boxes reaching typemax(Int64) or typemin(Int64)
+    to_remove = Int64[]
+    maxi = maximum(size(x))
+    for i in eachindex(boxes)
+        if any(boxes[i][1] .< 0) || any(boxes[i][2] .< 0) || any(boxes[i][1] .> maxi) || any(boxes[i][2] .> maxi)
+            push!(to_remove, i)
+        end
+    end
+    deleteat!(boxes, to_remove)
+    # Compute areas and sort boxes
+    areas = zeros(length(boxes))
+    for i in eachindex(boxes)
+        areas[i] = abs(boxes[i][1][1] - boxes[i][2][1]) * abs(boxes[i][1][2] - boxes[i][2][2])
+    end
+    boxes = reverse(boxes[sortperm(areas)])
     boxes_img = zeros(Int64, size(x))
     incr = 1
     for i in 2:length(boxes)
@@ -180,6 +195,46 @@ function box_segmentation(x::ImgType)::ImgType
 end
 
 r1, g1, b1 = IICGP.load_rgb("freeway", 30)
+
+
+
+
+###
+x = r1
+x = out3
+###
+boxes = component_boxes(convert(Array{Int64}, x))
+# Filter error boxes reaching typemax(Int64) or typemin(Int64)
+to_remove = Int64[]
+maxi = maximum(size(x))
+for i in eachindex(boxes)
+    if any(boxes[i][1] .< 0) || any(boxes[i][2] .< 0) || any(boxes[i][1] .> maxi) || any(boxes[i][2] .> maxi)
+        push!(to_remove, i)
+    end
+end
+deleteat!(boxes, to_remove)
+# Compute areas and sort boxes
+areas = zeros(length(boxes))
+for i in eachindex(boxes)
+    areas[i] = abs(boxes[i][1][1] - boxes[i][2][1]) * abs(boxes[i][1][2] - boxes[i][2][2])
+end
+boxes = reverse(boxes[sortperm(areas)])
+boxes_img = zeros(Int64, size(x))
+incr = 1
+for i in 2:length(boxes)
+    boxes_img[
+        boxes[i][1][1]:boxes[i][2][1],
+        boxes[i][1][2]:boxes[i][2][2]
+    ] .+= incr
+    incr += 1
+end
+out = rescale_img(boxes_img)
+###
+IICGP.implot(out)
+###
+
+
+
 
 out1 = remove_details(r1, 10)
 # 311.636 μs (16 allocations: 131.72 KiB)
