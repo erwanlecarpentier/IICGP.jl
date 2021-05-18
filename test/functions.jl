@@ -77,7 +77,9 @@ end
         IICGP.CGPFunctions.f_dilate,
         IICGP.CGPFunctions.f_erode,
         IICGP.CGPFunctions.f_remove_details,
-        IICGP.CGPFunctions.f_subtract
+        IICGP.CGPFunctions.f_subtract,
+        IICGP.CGPFunctions.f_felzenszwalb_segmentation,
+        IICGP.CGPFunctions.f_components_segmentation
     ]
     non_idempotent_functions = [
         IICGP.CGPFunctions.f_subtract,
@@ -106,7 +108,7 @@ end
         @test convert(Array{UInt8}, reshape(p, size(r1))) == r1
 
         out2 = IICGP.CGPFunctions.f_motion_capture(r2, g2, p)
-        @assert out2 == r2 .- r1
-        @assert convert(Array{UInt8}, reshape(p, size(r2))) == r2
+        @test out2 == r2 .- r1
+        @test convert(Array{UInt8}, reshape(p, size(r2))) == r2
     end
 end

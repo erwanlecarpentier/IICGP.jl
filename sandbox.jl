@@ -126,27 +126,30 @@ IICGP.implot(out2)
 
 ## Julia segmentation
 
-r1, g1, b1 = IICGP.load_rgb("montezuma_revenge", 30)
-
-function remove_details(img)
-    dilate(erode(img))
+function remove_details(x)
+    dilate(erode(x))
 end
 
-function rescale_img(img)
-    m = convert(Array{Float64}, img) .* (255 / maximum(img))
+"""
+    rescale_img(x)::Array{UInt8}
+
+Rescale input array in [0, 255] and convert data to UInt8.
+"""
+function rescale_img(x)::Array{UInt8}
+    mini, maxi = minimum(x), maximum(x)
+    m = (convert(Array{Float64}, x) .- mini) .* (255 / (maxi - mini))
     floor.(UInt8, m)
 end
 
-function felzenszwalb_segmentation(img, segment_size::Int64=50)
-    m = remove_details(img)
-    segments = felzenszwalb(m, segment_size)
+function felzenszwalb_segmentation(x, segment_size::Int64=50, min_size::Int64=10)
+    segments = felzenszwalb(m, segment_size, min_size)
     rescale_img(segments.image_indexmap)
 end
 
-function components_segmentation(img)
-    m = remove_details(img)
-    label = label_components(m)
-    rescale_img(label)
+function components_segmentation(x)
+    label = label_components(x)
+    m = rescale_img(label)
+    remove_details(m)
 end
 
 function make_box(img)
@@ -170,25 +173,24 @@ function box_segmentation(img)
     rescale_img(boxes_img)
 end
 
-m = r1[1,:,:]
+r1, g1, b1 = IICGP.load_rgb("freeway", 30)
 
-out0 = remove_details(m)
+out1 = remove_details(r1)
 # 311.636 μs (16 allocations: 131.72 KiB)
 
-out1 = felzenszwalb_segmentation(m)
+out2 = felzenszwalb_segmentation(r1, 100, 1)
 # 22.131 ms (126980 allocations: 15.43 MiB)
 
-out2 = components_segmentation(m)
+out3 = components_segmentation(r1)
 # 1.176 ms (76 allocations: 1.74 MiB)
 
 out3 = box_segmentation(m)
 # 2.013 ms (1236 allocations: 1.91 MiB)
 
-IICGP.my_imshow(m)
-IICGP.my_imshow(out0)
-IICGP.my_imshow(out1)
-IICGP.my_imshow(out2)
-IICGP.my_imshow(out3)
+IICGP.implot(r1)
+IICGP.implot(out1)
+IICGP.implot(out2)
+IICGP.implot(out3)
 
 ## Julia matchTemplate function
 

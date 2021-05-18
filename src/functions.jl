@@ -3,6 +3,7 @@ export CGPFunctions, ImgType
 module CGPFunctions
 
 using ImageMorphology
+using ImageSegmentation
 
 global arity = Dict()
 
@@ -115,13 +116,31 @@ fgen(:f_restrict, 1, :(x),
      :(scaled(ImageTransformations.restrict(x))); safe=true)
 =#
 
+"""
+    rescale_img(x)::Array{UInt8}
+
+Rescale input array in [0, 255] and convert data to UInt8.
+"""
+function rescale_img(x)::Array{UInt8}
+    mini, maxi = minimum(x), maximum(x)
+    if mini == maxi
+        # return convert(Array{UInt8}, 127 * ones(size(x)))
+        return x
+    end
+    m = (convert(Array{Float64}, x) .- mini) .* (255 / (maxi - mini))
+    floor.(UInt8, m)
+end
+
 # Image processing
 
 fgen(:f_dilate, 1, :(ImageMorphology.dilate(x)), ImgType)
 fgen(:f_erode, 1, :(ImageMorphology.erode(x)), ImgType)
-fgen(:f_remove_details, 1,
-     :(ImageMorphology.dilate(ImageMorphology.erode(x))), ImgType)
 fgen(:f_subtract, 2, :(x .- y), ImgType)
+
+function remove_details(x::ImgType)::ImgType
+    ImageMorphology.dilate(ImageMorphology.erode(x))
+end
+fgen(:f_remove_details, 1, :(remove_details(x)), ImgType)
 
 function motion_capture!(x::ImgType, p::Array{Float64})::ImgType
     if length(p) == length(x)
@@ -135,7 +154,22 @@ function motion_capture!(x::ImgType, p::Array{Float64})::ImgType
 end
 fgen(:f_motion_capture, 1, :(motion_capture!(x, p)), ImgType)
 
+function felzenszwalb_segmentation(x::ImgType, p::Float64)::ImgType
+    min_size = floor(Int64, 10 * p)
+    segments = ImageSegmentation.felzenszwalb(x, 50, min_size)
+    rescale_img(segments.image_indexmap)
+end
+fgen(:f_felzenszwalb_segmentation, 1, :(felzenszwalb_segmentation(x, p[1])), ImgType)
+
+function components_segmentation(x::ImgType)::ImgType
+    label = label_components(x)
+    m = rescale_img(label)
+    remove_details(m)
+end
+fgen(:f_components_segmentation, 1, :(components_segmentation(x)), ImgType)
+
 # Mathematical
+
 fgen(:f_add, 2, :((x + y) / 2.0), Float64)
 fgen(:f_subtract, 2, :(abs(x - y) / 2.0), Float64)
 fgen(:f_mult, 2, :(x * y), Float64)
