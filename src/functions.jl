@@ -137,10 +137,17 @@ fgen(:f_dilate, 1, :(ImageMorphology.dilate(x)), ImgType)
 fgen(:f_erode, 1, :(ImageMorphology.erode(x)), ImgType)
 fgen(:f_subtract, 2, :(x .- y), ImgType)
 
-function remove_details(x::ImgType)::ImgType
-    ImageMorphology.dilate(ImageMorphology.erode(x))
+function remove_details(x::ImgType, p::Float64)::ImgType
+    n_passes = ceil(Int64, 5 * p)
+    for i in 1:n_passes
+        x = ImageMorphology.erode(x)
+    end
+    for i in 1:n_passes
+        x = ImageMorphology.dilate(x)
+    end
+    x
 end
-fgen(:f_remove_details, 1, :(remove_details(x)), ImgType)
+fgen(:f_remove_details, 1, :(remove_details(x, p[1])), ImgType)
 
 function motion_capture!(x::ImgType, p::Array{Float64})::ImgType
     if length(p) == length(x)
@@ -167,6 +174,29 @@ function components_segmentation(x::ImgType)::ImgType
     remove_details(m)
 end
 fgen(:f_components_segmentation, 1, :(components_segmentation(x)), ImgType)
+
+function make_boxes(x::AbstractArray)::ImgType
+    boxes = component_boxes(convert(Array{Int64}, x))
+    boxes_img = zeros(Int64, size(x))
+    incr = 1
+    for i in 2:length(boxes)
+        boxes_img[
+            boxes[i][1][1]:boxes[i][2][1],
+            boxes[i][1][2]:boxes[i][2][2]
+        ] .+= incr
+        incr += 1
+        # TODO increment big boxes first
+    end
+    rescale_img(boxes_img)
+end
+fgen(:f_make_boxes, 1, :(make_boxes(x)), ImgType)
+
+function box_segmentation(x::ImgType)::ImgType
+    m = remove_details(x)
+    label = label_components(m)
+    make_boxes(label)
+end
+fgen(:f_box_segmentation, 1, :(box_segmentation(x)), ImgType)
 
 # Mathematical
 

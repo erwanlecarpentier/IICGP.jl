@@ -79,7 +79,9 @@ end
         IICGP.CGPFunctions.f_remove_details,
         IICGP.CGPFunctions.f_subtract,
         IICGP.CGPFunctions.f_felzenszwalb_segmentation,
-        IICGP.CGPFunctions.f_components_segmentation
+        IICGP.CGPFunctions.f_components_segmentation,
+        IICGP.CGPFunctions.f_make_boxes,
+        IICGP.CGPFunctions.f_box_segmentation
     ]
     non_idempotent_functions = [
         IICGP.CGPFunctions.f_subtract,

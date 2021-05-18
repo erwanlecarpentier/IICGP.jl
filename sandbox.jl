@@ -12,6 +12,8 @@ using ImageShow
 using ImageSegmentation
 using IICGP
 
+ImgType = Array{UInt8,2}
+
 ## Julia maxpool
 
 function max_pool_reduction(img::Array{UInt8,2}, s::Int64=5)
@@ -95,7 +97,6 @@ IICGP.implot(out2)
 IICGP.implot(out3)
 
 ## Julia motion capture
-ImgType = Array{UInt8,2}
 
 function motion_capture!(x::ImgType, p::Array{Float64})::ImgType
     if length(p) == length(x)
@@ -126,8 +127,14 @@ IICGP.implot(out2)
 
 ## Julia segmentation
 
-function remove_details(x)
-    dilate(erode(x))
+function remove_details(x::ImgType, n_passes::Int64=1)::ImgType
+    for i in 1:n_passes
+        x = ImageMorphology.erode(x)
+    end
+    for i in 1:n_passes
+        x = ImageMorphology.dilate(x)
+    end
+    x
 end
 
 """
@@ -142,7 +149,7 @@ function rescale_img(x)::Array{UInt8}
 end
 
 function felzenszwalb_segmentation(x, segment_size::Int64=50, min_size::Int64=10)
-    segments = felzenszwalb(m, segment_size, min_size)
+    segments = felzenszwalb(x, segment_size, min_size)
     rescale_img(segments.image_indexmap)
 end
 
@@ -152,16 +159,9 @@ function components_segmentation(x)
     remove_details(m)
 end
 
-function make_box(img)
-    # TODO
-    img
-end
-
-function box_segmentation(img)
-    m = remove_details(img)
-    label = label_components(m)
-    boxes = component_boxes(label)
-    boxes_img = zeros(UInt8, size(img))
+function make_boxes(x::AbstractArray)::ImgType
+    boxes = component_boxes(convert(Array{Int64}, x))
+    boxes_img = zeros(Int64, size(x))
     incr = 1
     for i in 2:length(boxes)
         boxes_img[
@@ -173,9 +173,15 @@ function box_segmentation(img)
     rescale_img(boxes_img)
 end
 
+function box_segmentation(x::ImgType)::ImgType
+    m = remove_details(x)
+    label = label_components(m)
+    make_boxes(label)
+end
+
 r1, g1, b1 = IICGP.load_rgb("freeway", 30)
 
-out1 = remove_details(r1)
+out1 = remove_details(r1, 10)
 # 311.636 μs (16 allocations: 131.72 KiB)
 
 out2 = felzenszwalb_segmentation(r1, 100, 1)
@@ -184,13 +190,17 @@ out2 = felzenszwalb_segmentation(r1, 100, 1)
 out3 = components_segmentation(r1)
 # 1.176 ms (76 allocations: 1.74 MiB)
 
-out3 = box_segmentation(m)
+out4 = box_segmentation(m)
 # 2.013 ms (1236 allocations: 1.91 MiB)
+
+out5 = make_boxes(r1)
 
 IICGP.implot(r1)
 IICGP.implot(out1)
 IICGP.implot(out2)
 IICGP.implot(out3)
+IICGP.implot(out4)
+IICGP.implot(out5)
 
 ## Julia matchTemplate function
 
