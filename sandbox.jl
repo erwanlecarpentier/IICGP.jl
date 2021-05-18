@@ -46,6 +46,84 @@ out2 = max_pool_reduction2(r1)
 
 IICGP.implot(r1)
 
+## Julia img subtract
+
+function img_subtract1(x::Array{UInt8,2}, y::Array{UInt8,2})::Array{UInt8,2}
+    z = zeros(UInt8, size(x))
+    for i in eachindex(x)
+        if x[i] > y[i]
+            z[i] = x[i] - y[i]
+        end
+    end
+    z
+end
+
+function img_subtract2(x::Array{UInt8,2}, y::Array{UInt8,2})::Array{UInt8,2}
+    z = copy(x)
+    for i in eachindex(z)
+        if z[i] > y[i]
+            z[i] -= y[i]
+        else
+            z[i] = 0
+        end
+    end
+    z
+end
+
+function img_subtract3(x::Array{UInt8,2}, y::Array{UInt8,2})::Array{UInt8,2}
+    x .- y
+end
+
+r1, g1, b1 = IICGP.load_rgb("freeway", 30)
+r2, g2, b2 = IICGP.load_rgb("freeway", 31)
+
+out1 = img_subtract1(r2, r1)
+# 69.571 μs (2 allocations: 65.77 KiB)
+
+out2 = img_subtract2(r2, r1)
+# 70.559 μs (2 allocations: 65.77 KiB)
+
+out3 = img_subtract3(r2, r1)
+# 21.667 μs (2 allocations: 65.77 KiB)
+
+@assert out1 == out2
+
+IICGP.implot(r1)
+IICGP.implot(r2)
+IICGP.implot(out1)
+IICGP.implot(out2)
+IICGP.implot(out3)
+
+## Julia motion capture
+ImgType = Array{UInt8,2}
+
+function motion_capture!(x::ImgType, p::Array{Float64})::ImgType
+    if length(p) == length(x)
+        out = x .- convert(Array{UInt8}, reshape(p, size(x)))
+    else
+        out = x
+        resize!(p, length(x))
+    end
+    p[:] = x[:]
+    return out
+end
+
+r1, g1, b1 = IICGP.load_rgb("freeway", 30)
+r2, g2, b2 = IICGP.load_rgb("freeway", 31)
+
+p = rand(1)
+
+out1 = motion_capture!(r1, p)
+IICGP.implot(out1)
+@assert out1 == r1
+@assert convert(Array{UInt8}, reshape(p, size(r1))) == r1
+
+out2 = motion_capture!(r2, p)
+# 250.899 μs (8 allocations: 197.39 KiB)
+IICGP.implot(out2)
+@assert out2 == r2 .- r1
+@assert convert(Array{UInt8}, reshape(p, size(r2))) == r2
+
 ## Julia segmentation
 
 r1, g1, b1 = IICGP.load_rgb("montezuma_revenge", 30)

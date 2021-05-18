@@ -18,7 +18,7 @@ end
 
 function fgen(name::Symbol, ar::Int, s1::SorX, iotype::U; safe::Bool=false) where {U <: Union{DataType, Union}}
     if safe
-        @eval function $name(x::T, y::T)::T where {T <: $(iotype)}
+        @eval function $name(x::T, y::T, p::Array{Float64}=Float64[])::T where {T <: $(iotype)}
             try
                 return $s1
             catch
@@ -26,7 +26,7 @@ function fgen(name::Symbol, ar::Int, s1::SorX, iotype::U; safe::Bool=false) wher
             end
         end
     else
-        @eval function $name(x::T, y::T)::T where {T <: $(iotype)}
+        @eval function $name(x::T, y::T, p::Array{Float64}=Float64[])::T where {T <: $(iotype)}
             $s1
         end
     end
@@ -116,10 +116,24 @@ fgen(:f_restrict, 1, :(x),
 =#
 
 # Image processing
+
 fgen(:f_dilate, 1, :(ImageMorphology.dilate(x)), ImgType)
 fgen(:f_erode, 1, :(ImageMorphology.erode(x)), ImgType)
 fgen(:f_remove_details, 1,
      :(ImageMorphology.dilate(ImageMorphology.erode(x))), ImgType)
+fgen(:f_subtract, 2, :(x .- y), ImgType)
+
+function motion_capture!(x::ImgType, p::Array{Float64})::ImgType
+    if length(p) == length(x)
+        out = x .- convert(Array{UInt8}, reshape(p, size(x)))
+    else
+        out = x
+        resize!(p, length(x))
+    end
+    p[:] = x[:]
+    return out
+end
+fgen(:f_motion_capture, 1, :(motion_capture!(x, p)), ImgType)
 
 # Mathematical
 fgen(:f_add, 2, :((x + y) / 2.0), Float64)

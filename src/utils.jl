@@ -29,7 +29,7 @@ Load a pre-saved Atari image given ROM name and frame number.
 Return an array containing the separated chanels.
 """
 function load_rgb(rom_name::String, frame_number::Int64)
-    filename = string(@__DIR__, "/../images/", rom_name, "_frame_30.png")
+    filename = string(@__DIR__, "/../images/", rom_name, "_frame_$frame_number.png")
     split_rgb(load_img(filename))
 end
 
