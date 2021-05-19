@@ -127,11 +127,11 @@ end
             r2, g2, b2 = IICGP.load_rgb(rom, 31)
 
             out1 = IICGP.CGPFunctions.f_motion_distances(r1, g1, p)
-            @assert out1 == r1
-            @assert convert(Array{UInt8}, reshape(p[end-length(r1)+1:end], size(r1))) == r1
+            @test out1 == r1
+            @test convert(Array{UInt8}, reshape(p[end-length(r1)+1:end], size(r1))) == r1
 
             out2 = IICGP.CGPFunctions.f_motion_distances(r2, g2, p)
-            @assert convert(Array{UInt8}, reshape(p[end-length(r2)+1:end], size(r2))) == r2
+            @test convert(Array{UInt8}, reshape(p[end-length(r2)+1:end], size(r2))) == r2
         end
     end
 end
