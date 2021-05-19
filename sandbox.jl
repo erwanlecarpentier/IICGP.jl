@@ -4,7 +4,7 @@ using FileIO
 using TiledIteration
 using BenchmarkTools
 using LinearAlgebra
-using OpenCV
+# using OpenCV
 using Plots
 using Images
 using ImageMorphology
@@ -196,46 +196,6 @@ end
 
 r1, g1, b1 = IICGP.load_rgb("freeway", 30)
 
-
-
-
-###
-x = r1
-x = out3
-###
-boxes = component_boxes(convert(Array{Int64}, x))
-# Filter error boxes reaching typemax(Int64) or typemin(Int64)
-to_remove = Int64[]
-maxi = maximum(size(x))
-for i in eachindex(boxes)
-    if any(boxes[i][1] .< 0) || any(boxes[i][2] .< 0) || any(boxes[i][1] .> maxi) || any(boxes[i][2] .> maxi)
-        push!(to_remove, i)
-    end
-end
-deleteat!(boxes, to_remove)
-# Compute areas and sort boxes
-areas = zeros(length(boxes))
-for i in eachindex(boxes)
-    areas[i] = abs(boxes[i][1][1] - boxes[i][2][1]) * abs(boxes[i][1][2] - boxes[i][2][2])
-end
-boxes = reverse(boxes[sortperm(areas)])
-boxes_img = zeros(Int64, size(x))
-incr = 1
-for i in 2:length(boxes)
-    boxes_img[
-        boxes[i][1][1]:boxes[i][2][1],
-        boxes[i][1][2]:boxes[i][2][2]
-    ] .+= incr
-    incr += 1
-end
-out = rescale_img(boxes_img)
-###
-IICGP.implot(out)
-###
-
-
-
-
 out1 = remove_details(r1, 10)
 # 311.636 μs (16 allocations: 131.72 KiB)
 
@@ -294,18 +254,6 @@ IICGP.my_imshow(match_img, clim="auto")
 ## distance between boxes and center
 
 # WITH JULIAIMAGES
-# Same as OpenCV.subtract
-function my_subtract(x, y)
-    z = zeros(UInt8, size(x))
-    for i in eachindex(x[1,:,1])
-        for j in eachindex(x[1,1,:])
-            if x[1,i,j] > y[1,i,j]
-                z[1,i,j] = x[1,i,j] - y[1,i,j]
-            end
-        end
-    end
-    z
-end
 
 function disprange(m)
     k = m[1, 300:310, 25:35]
@@ -371,7 +319,9 @@ function motion_boxes_julia(x, x_p)
     boxes_img
 end
 
+
 # WITH OPENCV
+#=
 function motion_objects(x, x_p)
     diff = OpenCV.subtract(x_p, x)
     dilated = OpenCV.dilate(
@@ -424,36 +374,7 @@ function load_img(rom_name::String, frame_number::Int64)
     filename = string(@__DIR__, "/images/", rom_name, "_frame_$frame_number.png")
     return OpenCV.imread(filename)
 end
-
-
-m1 = load_img("freeway", 30)
-r1, g1, b1 = IICGP.split_rgb(m1)
-m2 = load_img("freeway", 31)
-r2, g2, b2 = IICGP.split_rgb(m2)
-
-diff = my_subtract(r1, r2)
-
-
-out1 = motion_distances_to_center_julia(r1, r2)
-# 1.542 ms (1054 allocations: 1.52 MiB)
-out2 = motion_distances_to_center(r1, r2)
-# 17.729 ms (71044 allocations: 2.52 MiB)
-
-out3 = motion_objects(r1, r2)
-out4 = motion_objects_julia(r1, r2)
-# 546.036 μs (656 allocations: 388.33 KiB)
-
-out5 = motion_boxes_julia(r1, r2)
-# 1.951 ms (883 allocations: 992.11 KiB)
-
-IICGP.my_imshow(r1)
-IICGP.my_imshow(r2)
-IICGP.my_imshow(diff)
-IICGP.my_imshow(out1)
-IICGP.my_imshow(out2)
-# IICGP.my_imshow(out3)
-IICGP.my_imshow(out4)
-IICGP.my_imshow(out5)
+=#
 
 #=
 TODO
@@ -464,6 +385,72 @@ TODO
 ## Connected components
 
 # TODO
+
+## Thresholding
+
+function threshold(x::ImgType, t::UInt8, reverse::Bool=false)::ImgType
+    out = copy(x)
+    if reverse
+        out[x .> t] .= 0x00
+    else
+        out[x .< t] .= 0x00
+    end
+    out
+end
+
+function threshold(x::ImgType, t::Int64)::ImgType
+    threshold(x, convert(UInt8, t))
+end
+
+function threshold(x::ImgType, p::Float64)::ImgType
+    if p < 0.5
+        t = floor(UInt8, 255 * 2 * p)
+        reverse = false
+    else
+        t = floor(UInt8, 255 * 2 * (p - 0.5))
+        reverse = true
+    end
+    threshold(x, t, reverse)
+end
+
+r1, g1, b1 = IICGP.load_rgb("freeway", 30)
+out = threshold(r1, 0.8)
+IICGP.implot(r1)
+IICGP.implot(out)
+
+## Binary
+
+function binary(x::ImgType, t::UInt8)::ImgType
+    out = copy(x)
+    out[x .< t] .= 0x00
+    out[x .>= t] .= 0xff
+    out
+end
+
+function binary(x::ImgType, t::Int64)::ImgType
+    binary(x, convert(UInt8, t))
+end
+
+function binary(x::ImgType, p::Float64)::ImgType
+    t = floor(UInt8, 255 * p)
+    binary(x, t)
+end
+
+r1, g1, b1 = IICGP.load_rgb("freeway", 30)
+out = binary(r1, 0.75)
+IICGP.implot(r1)
+IICGP.implot(out)
+
+## Negative
+
+function negative(x::ImgType)::ImgType
+    0xff .- x
+end
+
+r1, g1, b1 = IICGP.load_rgb("freeway", 30)
+out = negative(r1)
+IICGP.implot(r1)
+IICGP.implot(out)
 
 ## Cambrian population initialization
 
@@ -480,16 +467,6 @@ function initialize(itype::Type, cfg::NamedTuple; kwargs...)
     end
     population
 end
-
-## Maximum row/col wise
-
-a = [
-    1.0 2.0 3.0 0.0;
-    4.0 5.0 6.0 0.0;
-    7.0 8.0 9.0 0.0
-]
-
-
 
 ## Function with complex default value
 
@@ -586,8 +563,6 @@ for i in 1:3
     IICGP.imshow(out)
 end
 
-
-
 ##
 module A
 function foo()
@@ -600,7 +575,6 @@ function foocaller()
 end
 
 foocaller()
-
 
 ##
 

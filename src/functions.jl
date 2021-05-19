@@ -116,6 +116,8 @@ fgen(:f_restrict, 1, :(x),
      :(scaled(ImageTransformations.restrict(x))); safe=true)
 =#
 
+# Image processing
+
 """
     rescale_img(x)::Array{UInt8}
 
@@ -131,16 +133,11 @@ function rescale_img(x)::Array{UInt8}
     floor.(UInt8, m)
 end
 
-# Image processing
-
-fgen(:f_dilate, 1, :(ImageMorphology.dilate(x)), ImgType)
-fgen(:f_erode, 1, :(ImageMorphology.erode(x)), ImgType)
-fgen(:f_subtract, 2, :(x .- y), ImgType)
-
 function remove_details(x::ImgType, p::Float64=0.1)::ImgType
     n_passes = ceil(Int64, 5 * p)
     remove_details(x, n_passes)
 end
+
 function remove_details(x::ImgType, n_passes::Int64=1)::ImgType
     for i in 1:n_passes
         x = ImageMorphology.erode(x)
@@ -150,7 +147,6 @@ function remove_details(x::ImgType, n_passes::Int64=1)::ImgType
     end
     x
 end
-fgen(:f_remove_details, 1, :(remove_details(x, p[1])), ImgType)
 
 function motion_capture!(x::ImgType, p::Array{Float64})::ImgType
     if length(p) == length(x)
@@ -162,21 +158,18 @@ function motion_capture!(x::ImgType, p::Array{Float64})::ImgType
     p[:] = x[:]
     return out
 end
-fgen(:f_motion_capture, 1, :(motion_capture!(x, p)), ImgType)
 
 function felzenszwalb_segmentation(x::ImgType, p::Float64)::ImgType
     min_size = floor(Int64, 10 * p)
     segments = ImageSegmentation.felzenszwalb(x, 50, min_size)
     rescale_img(segments.image_indexmap)
 end
-fgen(:f_felzenszwalb_segmentation, 1, :(felzenszwalb_segmentation(x, p[1])), ImgType)
 
 function components_segmentation(x::ImgType)::ImgType
     label = label_components(x)
     m = rescale_img(label)
     remove_details(m, 1) # more passes?
 end
-fgen(:f_components_segmentation, 1, :(components_segmentation(x)), ImgType)
 
 function make_boxes(x::AbstractArray)::ImgType
     boxes = component_boxes(convert(Array{Int64}, x))
@@ -206,14 +199,66 @@ function make_boxes(x::AbstractArray)::ImgType
     end
     rescale_img(boxes_img)
 end
-fgen(:f_make_boxes, 1, :(make_boxes(x)), ImgType)
 
 function box_segmentation(x::ImgType)::ImgType
     m = remove_details(x, 1) # more passes?
     label = label_components(m)
     make_boxes(label)
 end
+
+function binary(x::ImgType, t::UInt8)::ImgType
+    out = copy(x)
+    out[x .< t] .= 0x00
+    out[x .>= t] .= 0xff
+    out
+end
+
+function binary(x::ImgType, t::Int64)::ImgType
+    binary(x, convert(UInt8, t))
+end
+
+function binary(x::ImgType, p::Float64)::ImgType
+    t = floor(UInt8, 255 * p)
+    binary(x, t)
+end
+
+function threshold(x::ImgType, t::UInt8, reverse::Bool=false)::ImgType
+    out = copy(x)
+    if reverse
+        out[x .> t] .= 0x00
+    else
+        out[x .< t] .= 0x00
+    end
+    out
+end
+
+function threshold(x::ImgType, t::Int64)::ImgType
+    threshold(x, convert(UInt8, t))
+end
+
+function threshold(x::ImgType, p::Float64)::ImgType
+    if p < 0.5
+        t = floor(UInt8, 255 * 2 * p)
+        reverse = false
+    else
+        t = floor(UInt8, 255 * 2 * (p - 0.5))
+        reverse = true
+    end
+    threshold(x, t, reverse)
+end
+
+fgen(:f_dilate, 1, :(ImageMorphology.dilate(x)), ImgType)
+fgen(:f_erode, 1, :(ImageMorphology.erode(x)), ImgType)
+fgen(:f_negative, 1, :(0xff .- x), ImgType)
+fgen(:f_subtract, 2, :(x .- y), ImgType)
+fgen(:f_remove_details, 1, :(remove_details(x, p[1])), ImgType)
+fgen(:f_motion_capture, 1, :(motion_capture!(x, p)), ImgType)
+fgen(:f_make_boxes, 1, :(make_boxes(x)), ImgType)
+fgen(:f_felzenszwalb_segmentation, 1, :(felzenszwalb_segmentation(x, p[1])), ImgType)
+fgen(:f_components_segmentation, 1, :(components_segmentation(x)), ImgType)
 fgen(:f_box_segmentation, 1, :(box_segmentation(x)), ImgType)
+fgen(:f_threshold, 1, :(threshold(x, p[1])), ImgType)
+fgen(:f_binary, 1, :(binary(x, p[1])), ImgType)
 
 # Mathematical
 
