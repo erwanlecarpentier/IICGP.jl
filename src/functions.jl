@@ -4,6 +4,7 @@ module CGPFunctions
 
 using ImageMorphology
 using ImageSegmentation
+using LinearAlgebra
 
 global arity = Dict()
 
@@ -133,12 +134,12 @@ function rescale_img(x)::Array{UInt8}
     floor.(UInt8, m)
 end
 
-function remove_details(x::ImgType, p::Float64=0.1)::ImgType
+function remove_details(x::ImgType, p::Float64)::ImgType
     n_passes = ceil(Int64, 5 * p)
     remove_details(x, n_passes)
 end
 
-function remove_details(x::ImgType, n_passes::Int64=1)::ImgType
+function remove_details(x::ImgType, n_passes::Int64)::ImgType
     for i in 1:n_passes
         x = ImageMorphology.erode(x)
     end
@@ -146,17 +147,6 @@ function remove_details(x::ImgType, n_passes::Int64=1)::ImgType
         x = ImageMorphology.dilate(x)
     end
     x
-end
-
-function motion_capture!(x::ImgType, p::Array{Float64})::ImgType
-    if length(p) == length(x)
-        out = x .- convert(Array{UInt8}, reshape(p, size(x)))
-    else
-        out = x
-        resize!(p, length(x))
-    end
-    p[:] = x[:]
-    return out
 end
 
 function felzenszwalb_segmentation(x::ImgType, p::Float64)::ImgType
@@ -172,8 +162,10 @@ function components_segmentation(x::ImgType)::ImgType
 end
 
 function make_boxes(x::AbstractArray)::ImgType
-    boxes = component_boxes(convert(Array{Int64}, x))
+    labels = label_components(x)
+    boxes = component_boxes(labels)
     # Filter error boxes reaching typemax(Int64) or typemin(Int64)
+    #=
     to_remove = Int64[]
     maxi = maximum(size(x))
     for i in eachindex(boxes)
@@ -182,6 +174,7 @@ function make_boxes(x::AbstractArray)::ImgType
         end
     end
     deleteat!(boxes, to_remove)
+    =#
     # Compute areas and sort boxes
     areas = zeros(length(boxes))
     for i in eachindex(boxes)
@@ -247,18 +240,70 @@ function threshold(x::ImgType, p::Float64)::ImgType
     threshold(x, t, reverse)
 end
 
+function index1d_to_index2d(x::AbstractArray, index::Int64)::Tuple{Int64,Int64}
+    ci = CartesianIndices(size(x))
+    return ci[index][1], ci[index][2]
+end
+
+function motion_capture!(x::ImgType, p::Array{Float64})::ImgType
+    if length(p) == length(x)
+        out = x .- convert(Array{UInt8}, reshape(p, size(x)))
+    else
+        out = x
+        resize!(p, length(x))
+    end
+    p[:] = x[:]
+    return out
+end
+
+function motion_distances!(x::ImgType, p::Array{Float64})::ImgType
+    if length(p) >= length(x)
+        diff = x .- convert(Array{UInt8}, reshape(p[end-length(x)+1:end], size(x)))
+        dilated = dilate(diff)
+        binarized = binary(dilated, 3)
+        labels = label_components(binarized)
+        centroids = component_centroids(labels)
+        popfirst!(centroids) # remove background centroid
+        # boxes = component_boxes(labels)
+        # Find reference point
+        index1d = max(convert(Int64, ceil(p[1] * length(x))), 1)
+        r, c = index1d_to_index2d(x, index1d)
+        # Compute distances
+        n_centroids = length(centroids)
+        distances = zeros(n_centroids)
+        for i in 1:n_centroids
+            distances[i] = norm(centroids[i] .- (r, c))
+        end
+        distances_img = zeros(size(x))
+        for i in eachindex(distances_img)
+            if labels[i] > 0
+                distances_img[i] = distances[labels[i]]
+            end
+        end
+        out = rescale_img(distances_img)
+    else
+        out = x
+        resize!(p, length(p) + length(x))
+    end
+    p[end-length(x)+1:end] = x[:] # save first parameters
+    return out
+end
+
 fgen(:f_dilate, 1, :(ImageMorphology.dilate(x)), ImgType)
 fgen(:f_erode, 1, :(ImageMorphology.erode(x)), ImgType)
-fgen(:f_negative, 1, :(0xff .- x), ImgType)
 fgen(:f_subtract, 2, :(x .- y), ImgType)
 fgen(:f_remove_details, 1, :(remove_details(x, p[1])), ImgType)
-fgen(:f_motion_capture, 1, :(motion_capture!(x, p)), ImgType)
 fgen(:f_make_boxes, 1, :(make_boxes(x)), ImgType)
+# Segmentation
 fgen(:f_felzenszwalb_segmentation, 1, :(felzenszwalb_segmentation(x, p[1])), ImgType)
 fgen(:f_components_segmentation, 1, :(components_segmentation(x)), ImgType)
 fgen(:f_box_segmentation, 1, :(box_segmentation(x)), ImgType)
+# Thresholds and values
+fgen(:f_negative, 1, :(0xff .- x), ImgType)
 fgen(:f_threshold, 1, :(threshold(x, p[1])), ImgType)
 fgen(:f_binary, 1, :(binary(x, p[1])), ImgType)
+fgen(:f_motion_capture, 1, :(motion_capture!(x, p)), ImgType)
+fgen(:f_motion_distances, 1, :(motion_distances!(x, p)), ImgType)
 
 # Mathematical
 

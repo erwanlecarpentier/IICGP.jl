@@ -111,7 +111,6 @@ end
 
 r1, g1, b1 = IICGP.load_rgb("freeway", 30)
 r2, g2, b2 = IICGP.load_rgb("freeway", 31)
-
 p = rand(1)
 
 out1 = motion_capture!(r1, p)
@@ -160,8 +159,10 @@ function components_segmentation(x)
 end
 
 function make_boxes(x::AbstractArray)::ImgType
-    boxes = component_boxes(convert(Array{Int64}, x))
+    labels = label_components(x)
+    boxes = component_boxes(labels)
     # Filter error boxes reaching typemax(Int64) or typemin(Int64)
+    #=
     to_remove = Int64[]
     maxi = maximum(size(x))
     for i in eachindex(boxes)
@@ -170,6 +171,7 @@ function make_boxes(x::AbstractArray)::ImgType
         end
     end
     deleteat!(boxes, to_remove)
+    =#
     # Compute areas and sort boxes
     areas = zeros(length(boxes))
     for i in eachindex(boxes)
@@ -255,132 +257,76 @@ IICGP.my_imshow(match_img, clim="auto")
 
 # WITH JULIAIMAGES
 
-function disprange(m)
-    k = m[1, 300:310, 25:35]
-    convert(Array{Int64}, k)
+function index1d_to_index2d(x::AbstractArray, index::Int64)::Tuple{Int64,Int64}
+    n_rows = size(x)[1]
+    q, r = divrem(index, n_rows)
+    if r == 0
+        return n_rows, q
+    else
+        return r, q + 1
+    end
 end
 
-function img_threshold(x, threshold=1)
-    y = zeros(UInt8, size(x))
-    for i in eachindex(x[1,:,1])
-        for j in eachindex(x[1,1,:])
-            if x[1,i,j] >= threshold
-                y[1,i,j] = 255
+function index1d_to_index2d2(x::AbstractArray, index::Int64)::Tuple{Int64,Int64}
+    ci = CartesianIndices(size(x))
+    return ci[index][1], ci[index][2]
+end
+
+x = rand(7000, 1000)
+for i in 1:length(x)
+    r, c = index1d_to_index2d(x, i)
+    @assert x[i] == x[r, c]
+    r, c = index1d_to_index2d2(x, i)
+    @assert x[i] == x[r, c]
+end
+
+function motion_distances!(x::ImgType, p::Array{Float64})::ImgType
+    if length(p) >= length(x)
+        diff = x .- convert(Array{UInt8}, reshape(p[end-length(x)+1:end], size(x)))
+        dilated = dilate(diff)
+        binarized = binary(dilated, 3)
+        labels = label_components(binarized)
+        centroids = component_centroids(labels)
+        popfirst!(centroids) # remove background centroid
+        # boxes = component_boxes(labels)
+        # Find reference point
+        index1d = max(convert(Int64, ceil(p[1] * length(x))), 1)
+        r, c = index1d_to_index2d(x, index1d)
+        # Compute distances
+        n_centroids = length(centroids)
+        distances = zeros(n_centroids)
+        for i in 1:n_centroids
+            distances[i] = norm(centroids[i] .- (r, c))
+        end
+        distances_img = zeros(size(x))
+        for i in eachindex(distances_img)
+            if labels[i] > 0
+                distances_img[i] = distances[labels[i]]
             end
         end
+        out = rescale_img(distances_img)
+    else
+        out = x
+        resize!(p, length(p) + length(x))
     end
-    y
+    p[end-length(x)+1:end] = x[:] # save first parameters
+    return out
 end
 
-function motion_distances_to_center_julia(x, x_p)
-    diff = my_subtract(x_p, x)
-    dilated = dilate(diff)
-    thresholded = img_threshold(dilated)
-    label = label_components(thresholded)
-    centroids = component_centroids(label)
-    # boxes = component_boxes(label)
-    center = collect(size(x)[2:3] ./ 2)
-    max_distance = norm(center)
-    n_labels = length(centroids)
-    distances_to_center = zeros(UInt8, n_labels)
-    for i in 1:n_labels
-        distances_to_center[i] = floor(255 * norm(collect(centroids[i][2:3]) - center) / max_distance)
-    end
-    distances_to_center_img = zeros(UInt8, size(label))
-    for i in eachindex(label[1, :, 1])
-        for j in eachindex(label[1, 1, :])
-            distances_to_center_img[1, i, j] = distances_to_center[label[1, i, j] + 1]
-        end
-    end
-    distances_to_center_img
-end
+r1, g1, b1 = IICGP.load_rgb("freeway", 30)
+r2, g2, b2 = IICGP.load_rgb("freeway", 31)
+p = [0.999]
 
-function motion_objects_julia(x, x_p)
-    diff = my_subtract(x_p, x)
-    dilated = dilate(diff)
-    thresholded = img_threshold(dilated)
-    thresholded
-end
+out1 = motion_distances!(r1, p)
+@assert out1 == r1
+@assert convert(Array{UInt8}, reshape(p[end-length(r1)+1:end], size(r1))) == r1
 
-function motion_boxes_julia(x, x_p)
-    diff = my_subtract(x_p, x)
-    dilated = dilate(diff)
-    thresholded = img_threshold(dilated)
-    label = label_components(thresholded)
-    boxes = component_boxes(label)
-    boxes_img = zeros(UInt8, size(x))
-    for i in 2:length(boxes)
-        boxes_img[
-            1,
-            boxes[i][1][2]:boxes[i][2][2],
-            boxes[i][1][3]:boxes[i][2][3]
-        ] .= 255
-    end
-    boxes_img
-end
+out2 = motion_distances!(r2, p)
+# @assert out2 == dilate(r2 .- r1)
+@assert convert(Array{UInt8}, reshape(p[end-length(r2)+1:end], size(r2))) == r2
 
-
-# WITH OPENCV
-#=
-function motion_objects(x, x_p)
-    diff = OpenCV.subtract(x_p, x)
-    dilated = OpenCV.dilate(
-        diff,
-        OpenCV.getStructuringElement(
-            OpenCV.MORPH_ELLIPSE,
-            OpenCV.Size{Int32}(8, 8)
-        )
-    )
-    n_labels, labels_img, stats, centroids = OpenCV.connectedComponentsWithStats(dilated)
-    # Compute colored_labels_img
-    colored_labels_img = zeros(UInt8, size(labels_img))
-    norm = convert(UInt8, floor(255 / (n_labels - 1)))
-    for i in eachindex(labels_img[1, :, 1])
-        for j in eachindex(labels_img[1, 1, :])
-            colored_labels_img[1, i, j] = labels_img[1, i, j] * norm
-        end
-    end
-    return colored_labels_img
-end
-
-function motion_distances_to_center(x, x_p)
-    diff = OpenCV.subtract(x, x_p)
-    dilated = OpenCV.dilate(
-        diff,
-        OpenCV.getStructuringElement(
-            OpenCV.MORPH_ELLIPSE,
-            OpenCV.Size{Int32}(8, 8)
-        )
-    )
-    n_labels, labels_img, stats, centroids = OpenCV.connectedComponentsWithStats(dilated)
-    # Compute distances_to_center_img
-    center = collect(size(x)[2:3] ./ 2)
-    max_distance = norm(center)
-    distances_to_center_img = zeros(UInt8, size(labels_img))
-    distances_to_center = zeros(UInt8, n_labels)
-    for i in 1:n_labels
-        distances_to_center[i] = floor(255 * norm(centroids[1,:,i] - center) / max_distance)
-    end
-    for i in eachindex(labels_img[1, :, 1])
-        for j in eachindex(labels_img[1, 1, :])
-            distances_to_center_img[1, i, j] = distances_to_center[labels_img[1, i, j] + 1]
-        end
-    end
-    return distances_to_center_img
-end
-
-
-function load_img(rom_name::String, frame_number::Int64)
-    filename = string(@__DIR__, "/images/", rom_name, "_frame_$frame_number.png")
-    return OpenCV.imread(filename)
-end
-=#
-
-#=
-TODO
-- distance_to_center -> distance to parametrized point
-(1D image pt running through the image)
-=#
+IICGP.implot(out1)
+IICGP.implot(out2)
 
 ## Connected components
 

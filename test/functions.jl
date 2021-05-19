@@ -71,22 +71,24 @@ function test_functions(functions::Array{Function},
     end
 end
 
-@testset "Image CGP functions" begin
+@testset "CGP functions for images" begin
     # Fetch functions
     idempotent_functions = [
         IICGP.CGPFunctions.f_dilate,
         IICGP.CGPFunctions.f_erode,
-        IICGP.CGPFunctions.f_negative,
         IICGP.CGPFunctions.f_subtract,
         IICGP.CGPFunctions.f_remove_details,
         IICGP.CGPFunctions.f_make_boxes,
         IICGP.CGPFunctions.f_felzenszwalb_segmentation,
         IICGP.CGPFunctions.f_components_segmentation,
         IICGP.CGPFunctions.f_box_segmentation,
+        IICGP.CGPFunctions.f_negative,
+        IICGP.CGPFunctions.f_threshold,
+        IICGP.CGPFunctions.f_binary
     ]
     non_idempotent_functions = [
-        IICGP.CGPFunctions.f_subtract, # TODO remove
-        IICGP.CGPFunctions.f_motion_capture
+        IICGP.CGPFunctions.f_motion_capture,
+        IICGP.CGPFunctions.f_motion_distances
     ]
 
     # Load / generate images
@@ -99,8 +101,9 @@ end
     test_functions(non_idempotent_functions, pairs, idempotent=false)
 end
 
+rom_sublist = ["boxing", "freeway", "kung_fu_master", "montezuma_revenge"]
+
 @testset "Motion capture function" begin
-    rom_sublist = ["boxing", "freeway", "kung_fu_master", "montezuma_revenge"]
     for rom in rom_sublist
         p = rand(1)
         r1, g1, b1 = IICGP.load_rgb(rom, 30)
@@ -113,5 +116,22 @@ end
         out2 = IICGP.CGPFunctions.f_motion_capture(r2, g2, p)
         @test out2 == r2 .- r1
         @test convert(Array{UInt8}, reshape(p, size(r2))) == r2
+    end
+end
+
+@testset "Motion distance function" begin
+    for rom in rom_sublist
+        for param in [0.0, 0.1, 0.5, 1.0]
+            p = [param]
+            r1, g1, b1 = IICGP.load_rgb(rom, 30)
+            r2, g2, b2 = IICGP.load_rgb(rom, 31)
+
+            out1 = IICGP.CGPFunctions.f_motion_distances(r1, g1, p)
+            @assert out1 == r1
+            @assert convert(Array{UInt8}, reshape(p[end-length(r1)+1:end], size(r1))) == r1
+
+            out2 = IICGP.CGPFunctions.f_motion_distances(r2, g2, p)
+            @assert convert(Array{UInt8}, reshape(p[end-length(r2)+1:end], size(r2))) == r2
+        end
     end
 end
