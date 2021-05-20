@@ -49,16 +49,17 @@ function generate_img_pair_set()
 end
 
 function test_inputs(f::Function, inps::AbstractArray; idempotent::Bool=true)
-    p = rand(1)
-    out = copy(f(inps..., p))
-    @test size(out) == size(inps[1])
-    @test size(out) == size(inps[2])
-    @test typeof(out) == Array{UInt8,2}
-    if idempotent
-        @test all(out == f(inps..., p))
+    for p in [0.0, 0.57, 1.0]
+        out = copy(f(inps..., [p]))
+        @test size(out) == size(inps[1])
+        @test size(out) == size(inps[2])
+        @test typeof(out) == Array{UInt8,2}
+        if idempotent
+            @test all(out == f(inps..., [p]))
+        end
+        @test all(out .>= 0)
+        @test all(out .<= 255)
     end
-    @test all(out .>= 0)
-    @test all(out .<= 255)
 end
 
 function test_functions(functions::Array{Function},

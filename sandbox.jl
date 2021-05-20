@@ -257,7 +257,7 @@ IICGP.my_imshow(match_img, clim="auto")
 
 # WITH JULIAIMAGES
 
-function index1d_to_index2d(x::AbstractArray, index::Int64)::Tuple{Int64,Int64}
+function index1d_to_index2d_diy(x::AbstractArray, index::Int64)::Tuple{Int64,Int64}
     n_rows = size(x)[1]
     q, r = divrem(index, n_rows)
     if r == 0
@@ -267,12 +267,12 @@ function index1d_to_index2d(x::AbstractArray, index::Int64)::Tuple{Int64,Int64}
     end
 end
 
-function index1d_to_index2d2(x::AbstractArray, index::Int64)::Tuple{Int64,Int64}
+function index1d_to_index2d(x::AbstractArray, index::Int64)::Tuple{Int64,Int64}
     ci = CartesianIndices(size(x))
     return ci[index][1], ci[index][2]
 end
 
-x = rand(7000, 1000)
+x = rand(700, 100)
 for i in 1:length(x)
     r, c = index1d_to_index2d(x, i)
     @assert x[i] == x[r, c]
