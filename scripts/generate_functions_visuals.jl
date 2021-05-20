@@ -1,6 +1,6 @@
 using IICGP
 
-function original(img1::Array{UInt8,2}, img2::Array{UInt8,2})::Array{UInt8,2}
+function original(img1::Array{UInt8,2}, img2::Array{UInt8,2}, p::Array{Float64})::Array{UInt8,2}
     img1
 end
 
@@ -10,16 +10,27 @@ function generate_img_pairs_dict(;rom_names=nothing)
         rom_names = setdiff(getROMList(), ["pacman", "surround"])
     end
     for rom in rom_names
-        d[rom] = [IICGP.load_rgb(rom, 30)[1], IICGP.load_rgb(rom, 31)[1]]
+        d[rom] = [
+            IICGP.load_rgb(rom, 30)[1],
+            IICGP.load_rgb(rom, 30)[2],
+            IICGP.load_rgb(rom, 31)[1],
+            IICGP.load_rgb(rom, 31)[2]
+        ]
     end
     d
 end
 
 function generate_visual(f::Function, rom_name::String, inps::AbstractArray)
-    out = f(inps...)
+    p = [0.1]
+    out = f(inps[1], inps[2], p)
+    out = f(inps[3], inps[4], p)
     function_name = :($f)
     filename = string(@__DIR__, "/../images/filtered/", rom_name, "_function_",
                       function_name, ".png")
+
+    println(filename)
+    println(maximum(out), " ", minimum(out))
+
     IICGP.save_img(out, filename)
 end
 
@@ -37,7 +48,17 @@ functions = [
     original,
     IICGP.CGPFunctions.f_dilate,
     IICGP.CGPFunctions.f_erode,
-    IICGP.CGPFunctions.f_remove_details
+    IICGP.CGPFunctions.f_subtract,
+    IICGP.CGPFunctions.f_remove_details,
+    IICGP.CGPFunctions.f_make_boxes,
+    IICGP.CGPFunctions.f_felzenszwalb_segmentation,
+    IICGP.CGPFunctions.f_components_segmentation,
+    IICGP.CGPFunctions.f_box_segmentation,
+    IICGP.CGPFunctions.f_negative,
+    IICGP.CGPFunctions.f_threshold,
+    IICGP.CGPFunctions.f_binary,
+    IICGP.CGPFunctions.f_motion_capture,
+    IICGP.CGPFunctions.f_motion_distances
 ]
 rom_names = [
     "boxing",
@@ -50,4 +71,8 @@ rom_names = [
     "riverraid",
     "pong"
 ]
+
+
+functions = [IICGP.CGPFunctions.f_motion_capture, IICGP.CGPFunctions.f_motion_capture]
+rom_names = ["pong", "pong"]
 generate_visual(functions, rom_names=rom_names)
