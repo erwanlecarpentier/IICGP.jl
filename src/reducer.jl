@@ -2,9 +2,10 @@ export ReducingFunctions
 
 module ReducingFunctions
 
-using OpenCV
+# using OpenCV
 using TiledIteration
 
+#=
 function nearest_reduction(m::T; s::Int64=5) where {T <: OpenCV.InputArray}
     # dsize = OpenCV.Size(convert(Int32, s), convert(Int32, s))
     return OpenCV.resize(m, OpenCV.Size(convert(Int32, s), convert(Int32, s)),
@@ -34,6 +35,7 @@ function lanczos_reduction(m::T; s::Int64=5) where {T <: OpenCV.InputArray}
     return OpenCV.resize(m, OpenCV.Size(convert(Int32, s), convert(Int32, s)),
                          m, 1.0, 1.0, OpenCV.INTER_LANCZOS4)
 end
+=#
 
 """
     function max_pool_reduction(img::Array{UInt8,2}, s::Int64=5)

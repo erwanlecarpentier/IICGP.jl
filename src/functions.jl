@@ -128,7 +128,7 @@ function rescale_img(x)::Array{UInt8}
     mini, maxi = minimum(x), maximum(x)
     if mini == maxi
         # return convert(Array{UInt8}, 127 * ones(size(x)))
-        return x
+        return UInt8.(x)
     end
     m = (convert(Array{Float64}, x) .- mini) .* (255 / (maxi - mini))
     floor.(UInt8, m)

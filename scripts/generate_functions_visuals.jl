@@ -27,10 +27,6 @@ function generate_visual(f::Function, rom_name::String, inps::AbstractArray)
     function_name = :($f)
     filename = string(@__DIR__, "/../images/filtered/", rom_name, "_function_",
                       function_name, ".png")
-
-    println(filename)
-    println(maximum(out), " ", minimum(out))
-
     IICGP.save_img(out, filename)
 end
 
@@ -71,8 +67,4 @@ rom_names = [
     "riverraid",
     "pong"
 ]
-
-
-functions = [IICGP.CGPFunctions.f_motion_capture, IICGP.CGPFunctions.f_motion_capture]
-rom_names = ["pong", "pong"]
 generate_visual(functions, rom_names=rom_names)

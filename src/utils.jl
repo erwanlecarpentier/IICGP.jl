@@ -55,7 +55,11 @@ end
 Save an image to the input path.
 """
 function save_img(img::Array{UInt8}, filename::String)
-    img = adjust_histogram(Float64.(img), LinearStretching())
+    mini, maxi = minimum(img), maximum(img)
+    img = Float64.(img)
+    if mini != maxi
+        img = adjust_histogram(img, LinearStretching())
+    end
     save_img(img, filename)
 end
 
