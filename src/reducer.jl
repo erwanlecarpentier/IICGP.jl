@@ -3,6 +3,7 @@ export ReducingFunctions
 module ReducingFunctions
 
 # using OpenCV
+using Statistics
 using TiledIteration
 
 #=
@@ -38,7 +39,7 @@ end
 =#
 
 """
-    function max_pool_reduction(img::Array{UInt8,2}, s::Int64=5)
+    max_pool_reduction(img::Array{UInt8,2}, s::Int64=5)
 
 Max pooling function.
 """
@@ -51,6 +52,44 @@ function max_pool_reduction(img::Array{UInt8,2}, s::Int64=5)
     i = 1
     for tileaxs in R
        out[i] = maximum(view(img, tileaxs...))
+       i += 1
+    end
+    return out ./ 255.0
+end
+
+"""
+    min_pool_reduction(img::Array{UInt8,2}, s::Int64=5)
+
+Min pooling function.
+"""
+function min_pool_reduction(img::Array{UInt8,2}, s::Int64=5)
+    outsz = (s, s)
+    # out = Array{eltype(img), ndims(img)}(undef, outsz)
+    out = Array{Float64, ndims(img)}(undef, outsz)
+    tilesz = ceil.(Int, size(img)./outsz)
+    R = TileIterator(axes(img), tilesz)
+    i = 1
+    for tileaxs in R
+       out[i] = minimum(view(img, tileaxs...))
+       i += 1
+    end
+    return out ./ 255.0
+end
+
+"""
+    mean_pool_reduction(img::Array{UInt8,2}, s::Int64=5)
+
+Mean pooling function.
+"""
+function mean_pool_reduction(img::Array{UInt8,2}, s::Int64=5)
+    outsz = (s, s)
+    # out = Array{eltype(img), ndims(img)}(undef, outsz)
+    out = Array{Float64, ndims(img)}(undef, outsz)
+    tilesz = ceil.(Int, size(img)./outsz)
+    R = TileIterator(axes(img), tilesz)
+    i = 1
+    for tileaxs in R
+       out[i] = Statistics.mean(view(img, tileaxs...))
        i += 1
     end
     return out ./ 255.0

@@ -1,10 +1,12 @@
 using IICGP
-using OpenCV
 using Test
 
 function test_input(f::Function, img::AbstractArray)
-    img_reduced = f(img)
-    @test size(img_reduced) <= size(img)
+    out = f(img)
+    @test size(out) <= size(img)
+    @test typeof(out) <: Array{Float64}
+    @test maximum(out) <= 1.0
+    @test minimum(out) >= 0.0
 end
 
 function test_functions(functions::Array{Function}, images)
@@ -17,20 +19,15 @@ end
 
 @testset "Reducing functions" begin
         # Load / generate images
-        image_name = "centipede_frame_0"
-        filename = string(@__DIR__, "/", image_name, ".png")
-        m = OpenCV.imread(filename)
-        r, g, b = IICGP.split_rgb(m)
-        images = [r, g, b]
+        r, g, b = IICGP.load_rgb("freeway", 30)
+        z = zeros(UInt8, size(r))
+        o = 0xff .* ones(UInt8, size(r))
+        images = [r, g, b, z, o]
 
         functions = [
-                IICGP.ReducingFunctions.nearest_reduction,
-                IICGP.ReducingFunctions.linear_reduction,
-                IICGP.ReducingFunctions.area_reduction,
-                IICGP.ReducingFunctions.cubic_reduction,
-                IICGP.ReducingFunctions.lanczos_reduction,
                 IICGP.ReducingFunctions.max_pool_reduction,
-                IICGP.ReducingFunctions.max_pool_reduction2
+                IICGP.ReducingFunctions.min_pool_reduction,
+                IICGP.ReducingFunctions.mean_pool_reduction
         ]
 
         # Test each function

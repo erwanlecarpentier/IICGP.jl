@@ -3,6 +3,8 @@ export imshow, display_buffer
 # using CartesianGeneticProgramming
 using Plots
 
+#=
+# DEPRECATED
 """
     imshow(m::T) where {T <: OpenCV.InputArray}
 
@@ -34,6 +36,7 @@ function imshow(m::T, enlargement::E) where {T <: OpenCV.InputArray, E <: Union{
     enlarged = OpenCV.resize(m, new_size, m, 1.0, 1.0, OpenCV.INTER_NEAREST)
     imshow(enlarged)
 end
+=#
 
 
 """

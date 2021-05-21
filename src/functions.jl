@@ -36,88 +36,6 @@ function fgen(name::Symbol, ar::Int, s1::SorX, iotype::U; safe::Bool=false) wher
     arity[String(name)] = ar
 end
 
-#=
-# OpenCV image processing functions
-fgen(:f_absdiff_img, 2, :(OpenCV.absdiff(x, y)), OpenCV.InputArray)
-fgen(:f_add_img, 2, :(OpenCV.add(x, y)), OpenCV.InputArray)
-fgen(:f_subtract_img, 2, :(OpenCV.subtract(x, y)), OpenCV.InputArray)
-fgen(:f_addweighted_img, 2, :(OpenCV.addWeighted(x, 0.5, y, 0.5, 0.0)), OpenCV.InputArray)
-
-# OpenCV Bitwise operations
-fgen(:f_bitwise_and_img, 2, :(OpenCV.bitwise_and(x, y)), OpenCV.InputArray)
-fgen(:f_bitwise_not_img, 1, :(OpenCV.bitwise_not(x)), OpenCV.InputArray)
-fgen(:f_bitwise_or_img, 2, :(OpenCV.bitwise_or(x, y)), OpenCV.InputArray)
-fgen(:f_bitwise_xor_img, 2, :(OpenCV.bitwise_xor(x, y)), OpenCV.InputArray)
-
-# OpenCV Images comparison
-fgen(:f_compare_eq_img, 2, :(OpenCV.compare(x, y, OpenCV.CMP_EQ)), OpenCV.InputArray)
-fgen(:f_compare_ge_img, 2, :(OpenCV.compare(x, y, OpenCV.CMP_GE)), OpenCV.InputArray)
-fgen(:f_compare_le_img, 2, :(OpenCV.compare(x, y, OpenCV.CMP_LE)), OpenCV.InputArray)
-
-# OpenCV Change pixels magnitude
-fgen(:f_max_img, 2, :(OpenCV.max(x, y)), OpenCV.InputArray)
-fgen(:f_min_img, 2, :(OpenCV.min(x, y)), OpenCV.InputArray)
-# fgen(:f_normalize_img, 1, :(OpenCV.normalize(x, x, 1.0, 0.0, OpenCV.NORM_L2)))
-
-# OpenCV Filters
-fgen(:f_dilate_img, 1, :(OpenCV.dilate(x, OpenCV.getStructuringElement(OpenCV.MORPH_ELLIPSE, OpenCV.Size{Int32}(8, 8)))), OpenCV.InputArray)
-fgen(:f_erode_img, 1, :(OpenCV.erode(x, OpenCV.getStructuringElement(OpenCV.MORPH_ELLIPSE, OpenCV.Size{Int32}(4, 4)))), OpenCV.InputArray)
-=#
-
-# Julia image processing functions
-
-#=
-fgen(:f_corners, 1, :(x),
-     :(Float64.(Images.fastcorners(x))); safe=true)
-fgen(:f_filter, 2, :(x), :(x),
-     :(ndims(y) == 2 ?
-       scaled(ImageFiltering.imfilter(x, Images.centered(y))) : x);
-     safe=true)
-fgen(:f_gaussian, 1, :(x),
-     :(scaled(ImageFiltering.imfilter(x, Images.Kernel.gaussian(0.1))));
-     safe=true)
-fgen(:f_laplacian, 1, :(x),
-     :(scaled(ImageFiltering.imfilter(x, Images.Kernel.Laplacian())));
-     safe=true)
-fgen(:f_sobelx, 1, :(x),
-     :(scaled(ImageFiltering.imfilter(x, Images.Kernel.sobel()[2])));
-     safe=true)
-fgen(:f_sobely, 1, :(x),
-     :(scaled(ImageFiltering.imfilter(x, Images.Kernel.sobel()[1])));
-     safe=true)
-fgen(:f_canny, 1, :(x),
-     :(Float64.(Images.canny(x, (Images.Percentile(80),
-                                 Images.Percentile(20)))));
-     safe=true)
-fgen(:f_edge, 1, :(x), :(ndims(x) > 1 ? scaled(Images.imedge(x)[3]) : x))
-fgen(:f_histogram, 1, :(x), :(normalized(Float64.(Images.imhist(x, 10)[2])));
-     safe=true)
-fgen(:f_dilate, 1, :(x), :(ImageMorphology.dilate(x)))
-fgen(:f_erode, 1, :(x), :(scaled(ImageMorphology.erode(x))))
-fgen(:f_opening, 1, :(x), :(scaled(ImageMorphology.opening(x))))
-fgen(:f_closing, 1, :(x), :(scaled(ImageMorphology.closing(x))))
-fgen(:f_tophat, 1, :(x), :(scaled(ImageMorphology.tophat(x))))
-fgen(:f_bothat, 1, :(x), :(scaled(ImageMorphology.bothat(x))))
-fgen(:f_morphogradient, 1, :(x), :(scaled(ImageMorphology.morphogradient(x))))
-fgen(:f_morpholaplace, 1, :(x), :(scaled(ImageMorphology.morpholaplace(x))))
-fgen(:f_rotate_right, 1, :(x), :(rotr90(x)); safe=true)
-fgen(:f_rotate_left, 1, :(x), :(rotl90(x)); safe=true)
-fgen(:f_shift_up, 1, :(x), :(circshift(x, (-1, zeros(ndims(x)-1)...))))
-fgen(:f_shift_down, 1, :(x), :(circshift(x, (1, zeros(ndims(x)-1)...))))
-fgen(:f_shift_left, 1, :(x),
-     :(circshift(x, (0, -1, zeros(ndims(x)-2)...))), safe=true)
-fgen(:f_shift_right, 1, :(x),
-     :(circshift(x, (0, 1, zeros(ndims(x)-2)...))), safe=true)
-fgen(:f_min_window, 1, :(x), :(ImageFiltering.MapWindow.mapwindow(
-    minimum, x, 3*ones(Int, ndims(x)))); safe=true)
-fgen(:f_max_window, 1, :(x), :(ImageFiltering.MapWindow.mapwindow(
-    maximum, x, 3*ones(Int, ndims(x)))); safe=true)
-fgen(:f_mean_window, 1, :(x), :(ImageFiltering.MapWindow.mapwindow(
-    Statistics.mean, x, 3*ones(Int, ndims(x)))); safe=true)
-fgen(:f_restrict, 1, :(x),
-     :(scaled(ImageTransformations.restrict(x))); safe=true)
-=#
-
 # Image processing
 
 """
@@ -324,6 +242,10 @@ fgen(:f_bitwise_not, 1, :(.~x), ImgType)
 fgen(:f_bitwise_and, 2, :(0xff .* (x .& y)), ImgType)
 fgen(:f_bitwise_or, 2, :(0xff .* (x .| y)), ImgType)
 fgen(:f_bitwise_xor, 2, :(0xff .* (x .⊻ y)), ImgType)
+# TODO Comparisons
+# fgen(:f_compare_eq_img, 2, :(OpenCV.compare(x, y, OpenCV.CMP_EQ)), OpenCV.InputArray)
+# fgen(:f_compare_ge_img, 2, :(OpenCV.compare(x, y, OpenCV.CMP_GE)), OpenCV.InputArray)
+# fgen(:f_compare_le_img, 2, :(OpenCV.compare(x, y, OpenCV.CMP_LE)), OpenCV.InputArray)
 
 # Mathematical
 
