@@ -48,6 +48,40 @@ out2 = max_pool_reduction2(r1)
 
 IICGP.implot(r1)
 
+##
+
+function rescale_uint_img(x::AbstractArray)::Array{UInt8}
+    mini, maxi = minimum(x), maximum(x)
+    if mini == maxi
+        # return convert(Array{UInt8}, 127 * ones(size(x)))
+        return UInt8.(x)
+    end
+    m = (convert(Array{Float64}, x) .- mini) .* (255 / (maxi - mini))
+    floor.(UInt8, m)
+end
+
+r1, g1, b1 = IICGP.load_rgb("freeway", 30)
+
+x = r1
+y = g1
+
+out1 = rescale_uint_img(Images.fastcorners(x))
+out2 = rescale_uint_img(ImageFiltering.imfilter(x, Images.Kernel.gaussian(0)))
+out3 = rescale_uint_img(ImageFiltering.imfilter(x, Images.Kernel.Laplacian()))
+out4 = rescale_uint_img(ImageFiltering.imfilter(x, Images.Kernel.sobel()[2]))
+out5 = rescale_uint_img(ImageFiltering.imfilter(x, Images.Kernel.sobel()[1]))
+out6 = rescale_uint_img(Images.canny(x, (Images.Percentile(80), Images.Percentile(20)))))
+out7 = rescale_uint_img(Images.imedge(x)[3])
+out8 = ImageMorphology.opening(x)
+out9 = ImageMorphology.closing(x)
+out10= ImageMorphology.tophat(x)
+out11= ImageMorphology.bothat(x)
+out12= ImageMorphology.morphogradient(x)
+out13= rescale_uint_img(ImageMorphology.morpholaplace(x))
+
+IICGP.implot(x)
+IICGP.implot(out13)
+
 ## Julia img subtract
 
 function img_subtract1(x::Array{UInt8,2}, y::Array{UInt8,2})::Array{UInt8,2}

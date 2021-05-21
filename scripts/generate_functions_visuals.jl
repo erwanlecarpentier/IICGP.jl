@@ -4,6 +4,10 @@ function original(img1::Array{UInt8,2}, img2::Array{UInt8,2}, p::Array{Float64})
     img1
 end
 
+function max_pool(img1::Array{UInt8,2}, img2::Array{UInt8,2}, p::Array{Float64})
+    IICGP.ReducingFunctions.max_pool_reduction(img1)
+end
+
 function generate_img_pairs_dict(;rom_names=nothing)
     d = Dict{String,Array{Array{UInt8,2},1}}()
     if rom_names === nothing
@@ -54,7 +58,8 @@ functions = [
     IICGP.CGPFunctions.f_threshold,
     IICGP.CGPFunctions.f_binary,
     IICGP.CGPFunctions.f_motion_capture,
-    IICGP.CGPFunctions.f_motion_distances
+    IICGP.CGPFunctions.f_motion_distances,
+    max_pool
 ]
 rom_names = [
     "boxing",
