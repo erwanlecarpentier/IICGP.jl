@@ -1,36 +1,41 @@
-using OpenCV
 using ArgParse
+using BenchmarkTools
 using Cambrian
 using CartesianGeneticProgramming
 using IICGP
 import Cambrian.mutate  # mutate function scope definition
-using BenchmarkTools
 
-function load_img(rom_name::String, frame_number::Int64)
-    filename = string(@__DIR__, "/images/", rom_name, "_frame_$frame_number.png")
-    return OpenCV.imread(filename)
-end
+# rom_names = setdiff(getROMList(), ["pacman", "surround"])
+rom_names = [
+    "boxing",
+    "centipede",
+    "demon_attack",
+    "enduro",
+    "freeway",
+    "kung_fu_master",
+    "space_invaders",
+    "riverraid",
+    "pong"
+]
 
 function generate_io(rom_name::String="freeway", frame_number::Int64=30)
-    img = load_img(rom_name, frame_number)
-    r, g, b = IICGP.split_rgb(img)
-
-    # Arbitrary application of simple OpenCV functions
-    i = IICGP.CGPFunctions.f_add_img(r, g)
-    j = IICGP.CGPFunctions.f_erode_img(i, i)
-    k = IICGP.CGPFunctions.f_compare_eq_img(j, g)
-    # l = IICGP.CGPFunctions.f_dilate_img(k, k)
-    # m = IICGP.CGPFunctions.f_compare_ge_img(j, l)
-
-    # Feature map
-    feature = IICGP.ReducingFunctions.max_pool_reduction(k, 5)
-
-    target = 0.5 * (feature[1, 1, 1] + feature[1, 2, 2]) / feature[1, 1, 1]
-
-    return [r, g, b], target
+    inps = Array{Array{Array{UInt8,2},1},1}()
+    outs = Array{Array{Float64,1},1}()
+    for rom in rom_names
+        r, g, b = IICGP.load_rgb(rom, 30)
+        i = IICGP.CGPFunctions.f_binary(r, g, [0.5])
+        j = IICGP.CGPFunctions.f_erode(i, i, [0.5])
+        k = IICGP.CGPFunctions.f_subtract(j, g, [0.5])
+        feature = IICGP.ReducingFunctions.max_pool_reduction(k, 5)
+        t1 = 0.5 * (feature[1, 1] + feature[2, 2]) * feature[1, 1]
+        t2 = feature[3, 3]
+        push!(inps, [r, g, b])
+        push!(outs, [t1, t2])
+    end
+    return inps, outs
 end
 
-function fitness(encoder::CGPInd, controller::CGPInd, input::Vector{T}, target::Int64) where {T <: OpenCV.InputArray}
+function fitness(encoder::CGPInd, controller::CGPInd, input::Vector{Array{UInt8}}, target::Int64)
     out = IICGP.process(encoder, controller, input, encoder_cfg.features_size)
     if out == target
         return 1.0
@@ -60,7 +65,7 @@ end
 args = parse_args(ARGS, s)
 n_in = 3  # RGB images
 n_out = 1  # Single scalar
-inp, target = generate_io()
+inps, outs = generate_io()
 img_size = size(inp[1])
 encoder_cfg = get_config(args["encoder_cfg"];
     function_module=IICGP.CGPFunctions, n_in=3, img_size=img_size)
