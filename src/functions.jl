@@ -312,12 +312,18 @@ fgen(:f_sobel_x, 1, :(rescale_uint_img(ImageFiltering.imfilter(x, Images.Kernel.
 fgen(:f_sobel_y, 1, :(rescale_uint_img(ImageFiltering.imfilter(x, Images.Kernel.sobel()[1]))), ImgType)
 fgen(:f_canny, 1, :(rescale_uint_img(Images.canny(x, (Images.Percentile(80), Images.Percentile(20))))), ImgType)
 fgen(:f_edges, 1, :(rescale_uint_img(Images.imedge(x)[3])), ImgType)
+# Morphological functions
 fgen(:f_opening, 1, :(ImageMorphology.opening(x)), ImgType)
 fgen(:f_closing, 1, :(ImageMorphology.closing(x)), ImgType)
 fgen(:f_tophat, 1, :(ImageMorphology.tophat(x)), ImgType)
 fgen(:f_bothat, 1, :(ImageMorphology.bothat(x)), ImgType)
 fgen(:f_morphogradient, 1, :(ImageMorphology.morphogradient(x)), ImgType)
 fgen(:f_morpholaplace, 1, :(rescale_uint_img(ImageMorphology.morpholaplace(x))), ImgType)
+# Bitwise operations
+fgen(:f_bitwise_not, 1, :(.~x), ImgType)
+fgen(:f_bitwise_and, 2, :(0xff .* (x .& y)), ImgType)
+fgen(:f_bitwise_or, 2, :(0xff .* (x .| y)), ImgType)
+fgen(:f_bitwise_xor, 2, :(0xff .* (x .⊻ y)), ImgType)
 
 # Mathematical
 

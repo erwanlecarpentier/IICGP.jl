@@ -1,7 +1,11 @@
 using IICGP
 
-function original(img1::Array{UInt8,2}, img2::Array{UInt8,2}, p::Array{Float64})::Array{UInt8,2}
+function x_input(img1::Array{UInt8,2}, img2::Array{UInt8,2}, p::Array{Float64})::Array{UInt8,2}
     img1
+end
+
+function y_input(img1::Array{UInt8,2}, img2::Array{UInt8,2}, p::Array{Float64})::Array{UInt8,2}
+    img2
 end
 
 function max_pool(img1::Array{UInt8,2}, img2::Array{UInt8,2}, p::Array{Float64})
@@ -45,7 +49,8 @@ function generate_visual(functions::Array{Function};
 end
 
 functions = [
-    original,
+    x_input,
+    y_input,
     IICGP.CGPFunctions.f_dilate,
     IICGP.CGPFunctions.f_erode,
     IICGP.CGPFunctions.f_subtract,
@@ -59,6 +64,23 @@ functions = [
     IICGP.CGPFunctions.f_binary,
     IICGP.CGPFunctions.f_motion_capture,
     IICGP.CGPFunctions.f_motion_distances,
+    IICGP.CGPFunctions.f_corners,
+    IICGP.CGPFunctions.f_gaussian,
+    IICGP.CGPFunctions.f_laplacian,
+    IICGP.CGPFunctions.f_sobel_x,
+    IICGP.CGPFunctions.f_sobel_y,
+    IICGP.CGPFunctions.f_canny,
+    IICGP.CGPFunctions.f_edges,
+    IICGP.CGPFunctions.f_opening,
+    IICGP.CGPFunctions.f_closing,
+    IICGP.CGPFunctions.f_tophat,
+    IICGP.CGPFunctions.f_bothat,
+    IICGP.CGPFunctions.f_morphogradient,
+    IICGP.CGPFunctions.f_morpholaplace,
+    IICGP.CGPFunctions.f_bitwise_not,
+    IICGP.CGPFunctions.f_bitwise_and,
+    IICGP.CGPFunctions.f_bitwise_or,
+    IICGP.CGPFunctions.f_bitwise_xor,
     max_pool
 ]
 rom_names = [

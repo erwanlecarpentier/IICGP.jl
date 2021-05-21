@@ -75,7 +75,6 @@ end
 @testset "CGP functions for images" begin
     # Fetch functions
     idempotent_functions = [
-        #=
         IICGP.CGPFunctions.f_dilate,
         IICGP.CGPFunctions.f_erode,
         IICGP.CGPFunctions.f_subtract,
@@ -87,7 +86,6 @@ end
         IICGP.CGPFunctions.f_negative,
         IICGP.CGPFunctions.f_threshold,
         IICGP.CGPFunctions.f_binary,
-        =#
         IICGP.CGPFunctions.f_corners,
         IICGP.CGPFunctions.f_gaussian,
         IICGP.CGPFunctions.f_laplacian,
@@ -100,7 +98,11 @@ end
         IICGP.CGPFunctions.f_tophat,
         IICGP.CGPFunctions.f_bothat,
         IICGP.CGPFunctions.f_morphogradient,
-        IICGP.CGPFunctions.f_morpholaplace
+        IICGP.CGPFunctions.f_morpholaplace,
+        IICGP.CGPFunctions.f_bitwise_not,
+        IICGP.CGPFunctions.f_bitwise_and,
+        IICGP.CGPFunctions.f_bitwise_or,
+        IICGP.CGPFunctions.f_bitwise_xor
     ]
     non_idempotent_functions = [
         IICGP.CGPFunctions.f_motion_capture,
@@ -114,7 +116,7 @@ end
     test_functions(idempotent_functions, pairs, idempotent=true)
 
     # Test non-idempotent functions
-    # test_functions(non_idempotent_functions, pairs, idempotent=false)
+    test_functions(non_idempotent_functions, pairs, idempotent=false)
 end
 
 rom_sublist = ["boxing", "freeway", "kung_fu_master", "montezuma_revenge"]
