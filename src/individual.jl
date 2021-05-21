@@ -8,7 +8,7 @@ using CartesianGeneticProgramming
 Image buffer constructor for IPCGP individuals.
 """
 function image_buffer(cfg::NamedTuple)
-    buffer = Array{Array{UInt8, 3}}(undef, cfg.rows * cfg.columns + cfg.n_in)
+    buffer = Array{Array{UInt8,2}}(undef, cfg.rows * cfg.columns + cfg.n_in)
     fill!(buffer, zeros(UInt8, cfg.img_size))
     return buffer
 end

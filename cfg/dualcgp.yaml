@@ -11,11 +11,11 @@ rows: 1
 columns: 5
 recur: 0.2
 out_m_rate: 0.3
-n_out: 1
-n_parameters: 1
+n_out: 2
 features_size: 5
 functions:
-  - f_binary
-  - f_erode
-  - f_dilate
-  - f_subtract
+  - f_add_img
+  - f_erode_img
+  - f_compare_eq_img
+  - f_dilate_img
+  - f_compare_ge_img
