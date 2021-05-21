@@ -44,7 +44,8 @@ Max pooling function.
 """
 function max_pool_reduction(img::Array{UInt8,2}, s::Int64=5)
     outsz = (s, s)
-    out = Array{eltype(img), ndims(img)}(undef, outsz)
+    # out = Array{eltype(img), ndims(img)}(undef, outsz)
+    out = Array{Float64, ndims(img)}(undef, outsz)
     tilesz = ceil.(Int, size(img)./outsz)
     R = TileIterator(axes(img), tilesz)
     i = 1
@@ -52,7 +53,7 @@ function max_pool_reduction(img::Array{UInt8,2}, s::Int64=5)
        out[i] = maximum(view(img, tileaxs...))
        i += 1
     end
-    return out
+    return out ./ 255.0
 end
 
 function max_pool_reduction2(img::Array{UInt8,2}, s::Int64=5)
@@ -64,7 +65,7 @@ function max_pool_reduction2(img::Array{UInt8,2}, s::Int64=5)
     reshape(out, n_cols, n_rows)
 end
 
-function max_pool_reduction_threads(m::T, s::Int64=5) where {T <: OpenCV.InputArray}
+function max_pool_reduction_threads(m::AbstractArray, s::Int64=5)
     outsz = (size(m, 1), ntuple(_->s, ndims(m) - 1)...)
     out = Array{eltype(m), ndims(m)}(undef, outsz)
     tilesz = ceil.(Int, size(m)./outsz)
