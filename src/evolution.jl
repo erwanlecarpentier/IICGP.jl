@@ -33,8 +33,8 @@ function DualCGPEvolution(
     encoder_config::NamedTuple,
     controller_config::NamedTuple,
     fitness::Function;
-    encoder_logfile=string("logs/encoder_", encoder_config.id, ".csv"),
-    controller_logfile=string("logs/controller_", controller_config.id, ".csv"),
+    encoder_logfile=string("logs/", encoder_config.id, "/encoders.csv"),
+    controller_logfile=string("logs/", encoder_config.id, "/controller.csv"),
     kwargs...
 )
     encoder_logger = CambrianLogger(encoder_logfile)
@@ -54,7 +54,9 @@ function DualCGPEvolution(
     end
     # Global evolution config
     # TODO have a single config file?
+    @assert encoder_config.d_fitness == controller_config.d_fitness
     config = (
+        d_fitness=encoder_config.d_fitness,
         seed=encoder_config.seed,
         n_gen=max(encoder_config.n_gen, controller_config.n_gen),
         log_gen=min(encoder_config.log_gen, controller_config.log_gen),
@@ -68,6 +70,17 @@ function DualCGPEvolution(
     )
 end
 
+function log_gen_from_pop_logger(d_fitness, pop, logger, gen)
+    for d in 1:d_fitness
+        maxs = map(i->i.fitness[d], pop)
+        with_logger(logger) do
+            @info Formatting.format("{1:04d},{2:e},{3:e},{4:e}",
+                                    gen, maximum(maxs), mean(maxs), std(maxs))
+        end
+    end
+    flush(logger.stream)
+end
+
 """
     function log_gen(e::DualCGPEvolution)
 
@@ -75,17 +88,19 @@ Log a generation within a dual CGP evolution framework, including max, mean,
 and std of each fitness dimension.
 """
 function log_gen(e::DualCGPEvolution)
-    println("TODO log_gen(e::DualCGPEvolution)")
-    #=
-    for d in 1:e.config.d_fitness
-        maxs = map(i->i.fitness[d], e.population)
-        with_logger(e.logger) do
-            @info Formatting.format("{1:04d},{2:e},{3:e},{4:e}",
-                                    e.gen, maximum(maxs), mean(maxs), std(maxs))
-        end
+    log_gen_from_pop_logger(e.config.d_fitness, e.encoder_population,
+                            e.encoder_logger, e.gen)
+    log_gen_from_pop_logger(e.config.d_fitness, e.controller_population,
+                            e.controller_logger, e.gen)
+end
+
+function save_gen_at(path, pop)
+    sort!(pop)
+    for i in eachindex(pop)
+        f = open(Formatting.format("{1}/{2:04d}.dna", path, i), "w+")
+        write(f, string(pop[i]))
+        close(f)
     end
-    flush(e.logger.stream)
-    =#
 end
 
 """
@@ -94,15 +109,10 @@ end
 Save the population of a dual CGP evolution framework in `gens/`.
 """
 function save_gen(e::DualCGPEvolution)
-    println("TODO function save_gen(e::DualCGPEvolution)")
-    #=
-    path = Formatting.format("gens/{1}/{2:04d}", e.config.id, e.gen)
-    mkpath(path)
-    sort!(e.population)
-    for i in eachindex(e.population)
-        f = open(Formatting.format("{1}/{2:04d}.dna", path, i), "w+")
-        write(f, string(e.population[i]))
-        close(f)
-    end
-    =#
+    encoder_path = Formatting.format("gens/{1}/encoder_{2:04d}", e.encoder_config.id, e.gen)
+    controller_path = Formatting.format("gens/{1}/controller_{2:04d}", e.encoder_config.id, e.gen)
+    mkpath(encoder_path)
+    mkpath(controller_path)
+    save_gen_at(encoder_path, e.encoder_population)
+    save_gen_at(controller_path, e.controller_population)
 end

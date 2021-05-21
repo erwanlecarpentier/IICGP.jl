@@ -35,7 +35,6 @@ function fitness_evaluate(e::DualCGPEvolution, fitness::Function=null_evaluate)
     controllers_fitnesses = maximum(fitness_matrix, dims=1)
     for i in 1:n_encoders
         e.encoder_population[i].fitness[1] = encoders_fitnesses[i]
-        # fitness(e.population[i])[:]
     end
     for j in 1:n_controllers
         e.controller_population[j].fitness[1] = controllers_fitnesses[j]

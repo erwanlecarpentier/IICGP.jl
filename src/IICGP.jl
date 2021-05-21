@@ -3,6 +3,7 @@ module IICGP
 using CartesianGeneticProgramming
 using Cambrian
 using FileIO
+using Logging
 import JSON
 import YAML
 

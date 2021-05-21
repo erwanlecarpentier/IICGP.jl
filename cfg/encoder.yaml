@@ -2,7 +2,7 @@ seed: 0
 d_fitness: 1
 n_population: 5
 n_elite: 1
-n_gen: 1
+n_gen: 50
 log_gen: 10
 save_gen: 10
 # Encoder's parameters

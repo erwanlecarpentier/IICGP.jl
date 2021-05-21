@@ -85,7 +85,7 @@ out = IICGP.process(foo, bar, inps[1], encoder_cfg.features_size)
 =#
 
 
-
+#=
 function mutate(ind::CGPInd, ind_type::String)
     if ind_type == "encoder"
         return goldman_mutate(encoder_cfg, ind, init_function=IPCGPInd)
@@ -100,6 +100,8 @@ e = IICGP.DualCGPEvolution(encoder_cfg, controller_cfg, fit,
                            encoder_init_function=IPCGPInd)
 # Run evolution
 run!(e)
+=#
+
 
 if length(args["ind"]) > 0
     ind = CGPInd(cfg, read(args["ind"], String))
