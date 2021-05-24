@@ -10,4 +10,9 @@
 #SBATCH --mail-user=erwanlecarpentier@mailbox.org
 #SBATCH --mail-type=END
 
-julia scripts/dualcgp.jl
+julia
+cd("/home/wahara/.julia/dev/IICGP")
+import Pkg
+Pkg.activate(".")
+include("scripts/dualcgp.jl")
+exit()
