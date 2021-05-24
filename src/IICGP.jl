@@ -4,6 +4,7 @@ using CartesianGeneticProgramming
 using Cambrian
 using FileIO
 using Logging
+import Formatting
 import JSON
 import YAML
 
