@@ -1,6 +1,7 @@
 export DualCGPEvolution
 
 import Cambrian.populate, Cambrian.evaluate, Cambrian.log_gen, Cambrian.save_gen
+using Statistics
 
 mutable struct DualCGPEvolution{T} <: Cambrian.AbstractEvolution
     config::NamedTuple
