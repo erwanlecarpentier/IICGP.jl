@@ -27,6 +27,7 @@ TiledIteration = "06e1c1a7-607b-532d-9fad-de7d9aa2abac"
 YAML = "ddb6d928-2868-570f-bddf-ab3f9cf99eb6"
 
 [compat]
+ImageTransformations = "0.8"
 Plots = "1.15"
 Formatting = "0.4"
 ImageCore = "0.9"
