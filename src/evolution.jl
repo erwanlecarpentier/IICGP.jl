@@ -5,6 +5,7 @@ using Statistics
 
 mutable struct DualCGPEvolution{T} <: Cambrian.AbstractEvolution
     config::NamedTuple
+    logid::String
     encoder_config::NamedTuple
     encoder_population::Array{T}
     encoder_logger::CambrianLogger
@@ -40,12 +41,12 @@ function DualCGPEvolution(
 
     # Logger
     if haskey(kwargs_dict, :logid)
-        encoder_logfile = string("logs/", kwargs_dict[:logid], "/encoders.csv")
-        controller_logfile = string("logs/", kwargs_dict[:logid], "/controller.csv")
+        logid = kwargs_dict[:logid]
     else
-        encoder_logfile = string("logs/", encoder_config.id, "/encoders.csv")
-        controller_logfile = string("logs/", encoder_config.id, "/controller.csv")
+        logid = encoder_config.id
     end
+    encoder_logfile = string("logs/", logid, "/encoders.csv")
+    controller_logfile = string("logs/", logid, "/controller.csv")
     encoder_logger = CambrianLogger(encoder_logfile)
     controller_logger = CambrianLogger(controller_logfile)
 
@@ -77,7 +78,7 @@ function DualCGPEvolution(
 
     # Create and return DualCGPEvolution
     DualCGPEvolution(
-        config,
+        config, logid,
         encoder_config, encoder_population, encoder_logger,
         controller_config, controller_population, controller_logger,
         fitness, 0
@@ -123,8 +124,8 @@ end
 Save the population of a dual CGP evolution framework in `gens/`.
 """
 function save_gen(e::DualCGPEvolution)
-    encoder_path = Formatting.format("gens/{1}/encoder_{2:04d}", e.encoder_config.id, e.gen)
-    controller_path = Formatting.format("gens/{1}/controller_{2:04d}", e.encoder_config.id, e.gen)
+    encoder_path = Formatting.format("gens/{1}/encoder_{2:04d}", e.logid, e.gen)
+    controller_path = Formatting.format("gens/{1}/controller_{2:04d}", e.logid, e.gen)
     mkpath(encoder_path)
     mkpath(controller_path)
     save_gen_at(encoder_path, e.encoder_population)
