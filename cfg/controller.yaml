@@ -1,6 +1,7 @@
+# Cambrian.jl settings
 seed: 0
 d_fitness: 1
-n_population: 3
+n_population: 5
 n_elite: 1
 n_gen: 1000
 log_gen: 10

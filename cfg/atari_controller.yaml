@@ -1,0 +1,34 @@
+# Cambrian.jl settings
+seed: 0
+d_fitness: 1
+n_population: 5
+n_elite: 1
+n_gen: 10 # 10000
+log_gen: 1
+save_gen: 1 # 100
+# Controller's parameters
+rows: 1
+columns: 10 # 200
+recur: 0.0
+m_rate: 0.1
+out_m_rate: 0.3
+n_parameters: 1
+functions:
+  - f_add
+  - f_subtract
+  - f_mult
+  - f_div
+  - f_abs
+  - f_sqrt
+  - f_pow
+  - f_exp
+  - f_sin
+  - f_cos
+  - f_tanh
+  - f_sqrt_xy
+  - f_lt
+  - f_gt
+  - f_and
+  - f_or
+  - f_xor
+  - f_not

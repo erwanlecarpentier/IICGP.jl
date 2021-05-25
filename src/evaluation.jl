@@ -27,7 +27,7 @@ function fitness_evaluate(e::DualCGPEvolution, fitness::Function=null_evaluate)
             fitness_matrix[i, j] = fitness(
                 e.encoder_population[i],
                 e.controller_population[j]
-            )
+            )[1] # Currently: only pick 1st fitness dimension
         end
     end
     # Retrieve maximum values for fitness
