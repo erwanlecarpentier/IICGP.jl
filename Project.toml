@@ -27,6 +27,7 @@ TiledIteration = "06e1c1a7-607b-532d-9fad-de7d9aa2abac"
 YAML = "ddb6d928-2868-570f-bddf-ab3f9cf99eb6"
 
 [compat]
+CartesianGeneticProgramming = "0.1"
 ImageSegmentation = "1.5"
 ImageMorphology = "0.2"
 Images = "0.24"
