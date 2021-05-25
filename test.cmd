@@ -10,4 +10,4 @@
 #SBATCH --mail-user=erwanlecarpentier@mailbox.org
 #SBATCH --mail-type=END
 
-julia scripts/atari.jl --game=freeway
+julia --project=/users/p21001/lecarpen/IICGP.jl scripts/atari.jl --game=freeway
