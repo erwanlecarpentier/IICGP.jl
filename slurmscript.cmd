@@ -11,7 +11,7 @@
 #SBATCH --mail-type=END
 
 julia
-cd("/home/wahara/.julia/dev/IICGP")
+cd("/users/p21001/lecarpen/IICGP.jl")
 import Pkg
 Pkg.activate(".")
 include("scripts/dualcgp.jl")
