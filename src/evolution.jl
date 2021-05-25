@@ -34,27 +34,38 @@ function DualCGPEvolution(
     encoder_config::NamedTuple,
     controller_config::NamedTuple,
     fitness::Function;
-    encoder_logfile=string("logs/", encoder_config.id, "/encoders.csv"),
-    controller_logfile=string("logs/", encoder_config.id, "/controller.csv"),
     kwargs...
 )
+    kwargs_dict = Dict(kwargs)
+
+    # Logger
+    if haskey(kwargs_dict, :logid)
+        encoder_logfile = string("logs/", kwargs_dict[:logid], "/encoders.csv")
+        controller_logfile = string("logs/", kwargs_dict[:logid], "/controller.csv")
+    else
+        encoder_logfile = string("logs/", encoder_config.id, "/encoders.csv")
+        controller_logfile = string("logs/", encoder_config.id, "/controller.csv")
+    end
     encoder_logger = CambrianLogger(encoder_logfile)
     controller_logger = CambrianLogger(controller_logfile)
-    kwargs_dict = Dict(kwargs)
+
+    # Encoder population
     if haskey(kwargs_dict, :encoder_init_function)
         encoder_population = Cambrian.initialize(CGPInd, encoder_config,
             init_function=kwargs_dict[:encoder_init_function])
     else
         encoder_population = Cambrian.initialize(CGPInd, encoder_config)
     end
+
+    # Controller population
     if haskey(kwargs_dict, :controller_init_function)
         controller_population = Cambrian.initialize(CGPInd, controller_config,
             init_function=kwargs_dict[:controller_init_function])
     else
         controller_population = Cambrian.initialize(CGPInd, controller_config)
     end
+
     # Global evolution config
-    # TODO have a single config file?
     @assert encoder_config.d_fitness == controller_config.d_fitness
     config = (
         d_fitness=encoder_config.d_fitness,
@@ -63,6 +74,8 @@ function DualCGPEvolution(
         log_gen=min(encoder_config.log_gen, controller_config.log_gen),
         save_gen=min(encoder_config.save_gen, controller_config.save_gen)
     )
+
+    # Create and return DualCGPEvolution
     DualCGPEvolution(
         config,
         encoder_config, encoder_population, encoder_logger,

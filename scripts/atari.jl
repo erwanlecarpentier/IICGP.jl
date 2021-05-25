@@ -2,6 +2,7 @@ using ArcadeLearningEnvironment
 using ArgParse
 using Cambrian
 using CartesianGeneticProgramming
+using Dates
 using IICGP
 import Random
 import Cambrian.mutate  # mutate function scope definition
@@ -52,6 +53,7 @@ encoder_cfg = get_config(
     n_in=n_in,
     img_size=img_size
 )
+logid = string(Dates.now(), "_", args["game"], "_", args["seed"])
 
 # Controller configuration
 n_in_controller = encoder_cfg.n_out * encoder_cfg.features_size^2
@@ -103,7 +105,7 @@ else
     fit(encoder::CGPInd, controller::CGPInd) = play_atari(encoder, controller)
     # Create an evolution framework
     e = IICGP.DualCGPEvolution(encoder_cfg, controller_cfg, fit,
-                               encoder_init_function=IPCGPInd)
+                               encoder_init_function=IPCGPInd, logid=logid)
     # Run evolution
     run!(e)
 end
