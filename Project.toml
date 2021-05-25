@@ -28,6 +28,22 @@ YAML = "ddb6d928-2868-570f-bddf-ab3f9cf99eb6"
 
 [compat]
 CartesianGeneticProgramming = "0.1"
+ImageSegmentation = "1.5"
+ImageMorphology = "0.2"
+Images = "0.24"
+BenchmarkTools = "1.0"
+ArcadeLearningEnvironment = "0.2"
+FileIO = "1.9"
+ImageTransformations = "0.8"
+Plots = "1.15"
+Formatting = "0.4"
+ImageCore = "0.9"
+Cambrian = "0.2"
+Colors = "0.12"
+ArgParse = "1.1"
+YAML = "0.4"
+TiledIteration = "0.3"
+JSON = "0.21"
 julia = "1.5"
 
 [extras]
