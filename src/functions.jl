@@ -217,7 +217,7 @@ fgen(:f_felzenszwalb_segmentation, 1, :(felzenszwalb_segmentation(x, p[1])), Img
 fgen(:f_components_segmentation, 1, :(components_segmentation(x)), ImgType)
 fgen(:f_box_segmentation, 1, :(box_segmentation(x)), ImgType)
 # Thresholds and values
-fgen(:f_negative, 1, :(0xff .- x), ImgType)
+# fgen(:f_negative, 1, :(0xff .- x), ImgType) # Same as f_bitwise_not
 fgen(:f_threshold, 1, :(threshold(x, p[1])), ImgType)
 fgen(:f_binary, 1, :(binary(x, p[1])), ImgType)
 fgen(:f_motion_capture, 1, :(motion_capture!(x, p)), ImgType)
