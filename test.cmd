@@ -10,9 +10,4 @@
 #SBATCH --mail-user=erwanlecarpentier@mailbox.org
 #SBATCH --mail-type=END
 
-julia
-cd("/users/p21001/lecarpen/IICGP.jl")
-import Pkg
-Pkg.activate(".")
-include("scripts/dualcgp.jl")
-exit()
+julia scripts/atari.jl --game=freeway

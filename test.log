@@ -1,2 +1,0 @@
-/var/spool/slurmd/job619169/slurm_script: line 14: syntax error near unexpected token `"/users/p21001/lecarpen/IICGP.jl"'
-/var/spool/slurmd/job619169/slurm_script: line 14: `cd("/users/p21001/lecarpen/IICGP.jl")'

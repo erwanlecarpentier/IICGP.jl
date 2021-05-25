@@ -88,7 +88,6 @@ function play_atari(encoder::CGPInd, controller::CGPInd; seed=0,
 end
 
 
-
 if length(args["ind"]) > 0
     ind = CGPInd(cfg, read(args["ind"], String))
     ftn = fitness(ind, inps, outs)
