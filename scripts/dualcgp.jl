@@ -44,7 +44,7 @@ function fitness(encoder::CGPInd, controller::CGPInd,
         pred = IICGP.process(encoder, controller, inps[i], encoder_cfg.features_size)
         score -= LinearAlgebra.norm(pred - outs[i])
     end
-    return score
+    [score]
 end
 
 # Read configuration file
@@ -71,11 +71,19 @@ n_out = 2  # Two scalar values
 inps, outs = generate_io()
 img_size = size(inps[1][1])
 
-encoder_cfg = get_config(args["encoder_cfg"];
-    function_module=IICGP.CGPFunctions, n_in=n_in, img_size=img_size)
+encoder_cfg = get_config(
+    args["encoder_cfg"];
+    function_module=IICGP.CGPFunctions,
+    n_in=n_in,
+    img_size=img_size
+)
 
 n_in_controller = encoder_cfg.n_out * encoder_cfg.features_size^2
-controller_cfg = get_config(args["controller_cfg"]; n_in=n_in_controller, n_out=n_out)
+controller_cfg = get_config(
+    args["controller_cfg"];
+    n_in=n_in_controller,
+    n_out=n_out
+)
 
 #=
 # Test I/O without evolution
