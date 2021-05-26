@@ -1,11 +1,11 @@
 #!/bin/bash
-#SBATCH -J atari-$1
+#SBATCH -J atari
 #SBATCH -N 1
 #SBATCH -n 1
 #SBATCH --ntasks-per-node=1
 #SBATCH --ntasks-per-core=1
-#SBATCH -o atari-$1.out
-#SBATCH -e atari-$1.log
+#SBATCH -o atari.out
+#SBATCH -e atari.log
 #SBATCH --time=96:00:00
 #SBATCH --mail-user=erwanlecarpentier@mailbox.org
 #SBATCH --mail-type=END
