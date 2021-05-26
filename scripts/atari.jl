@@ -69,7 +69,7 @@ controller_cfg = get_config(
 Fitness function.
 """
 function play_atari(encoder::CGPInd, controller::CGPInd; seed=0,
-                    max_frames=40)  # TODO max_frames=18000
+                    max_frames=18000)
     game = Game(args["game"], seed)
     reward = 0.0
     frames = 0
