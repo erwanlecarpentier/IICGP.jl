@@ -8,7 +8,8 @@
 
 for GAME in boxing centipede demon_attack enduro freeway kung_fu_master space_invaders riverraid pong
 do
-	sbatch atari-single.cmd $game
+	echo sbatch atari-single.cmd $GAME
+	# sbatch atari-single.cmd $GAME
 done
 
 wait

@@ -10,4 +10,4 @@
 #SBATCH --mail-user=erwanlecarpentier@mailbox.org
 #SBATCH --mail-type=END
 
-julia --project=/users/p21001/lecarpen/IICGP.jl scripts/atari.jl --game=$1 &
+# julia --project=/users/p21001/lecarpen/IICGP.jl scripts/atari.jl --game=$1
