@@ -1,12 +1,12 @@
 #!/bin/bash
-#SBATCH -J atari9
+#SBATCH -J atari9-bis
 #SBATCH -N 1
-#SBATCH -n 9
-#SBATCH --ntasks-per-node=9
+#SBATCH -n 18
+#SBATCH --ntasks-per-node=18
 #SBATCH --ntasks-per-core=1
-#SBATCH -o atari9.out
-#SBATCH -e atari9.log
-#SBATCH --time=96:00:00
+#SBATCH -o atari9-bis.out
+#SBATCH -e atari9-bis.log
+#SBATCH --time=4-00:00:00
 #SBATCH --mail-user=erwanlecarpentier@mailbox.org
 #SBATCH --mail-type=END
 
