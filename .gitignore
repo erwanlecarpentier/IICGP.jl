@@ -5,5 +5,5 @@
 *.log
 *.out
 
-gens/
-logs/
+# gens/
+# logs/
