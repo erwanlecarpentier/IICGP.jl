@@ -156,13 +156,8 @@ scalar_functions = [
 end
 
 @testset "CGP functions for images" begin
-    # Load / generate images
     pairs = generate_img_pair_set()
-
-    # Test idempotent functions
     test_img_functions(idempotent_img_functions, pairs, idempotent=true)
-
-    # Test non-idempotent functions
     test_img_functions(non_idempotent_img_functions, pairs, idempotent=false)
 end
 
@@ -216,8 +211,9 @@ function time_functions(functions::Array{Function}, io_type::String)
     for f in functions
         f_name = string(f)
         print("| ", f_name, " | ")
-        out = f(inps..., [0.33])
-        @btime out = $f($inps..., [0.33])
+        p = [0.33]
+        out = f(inps..., p)
+        @btime out = $f($inps..., p)
         println(" |")
     end
 end
