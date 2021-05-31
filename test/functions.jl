@@ -48,23 +48,30 @@ function generate_img_pair_set()
     img_pairs
 end
 
-function test_inputs(f::Function, inps::AbstractArray; idempotent::Bool=true)
+function test_inputs(f::Function, inps::AbstractArray; idempotent::Bool=true,
+                     is_img::Bool=true)
     for p in [0.0, 0.57, 1.0]
         out = copy(f(inps..., [p]))
         @test size(out) == size(inps[1])
         @test size(out) == size(inps[2])
-        @test typeof(out) == Array{UInt8,2}
         if idempotent
             @test all(out == f(inps..., [p]))
         end
-        @test all(out .>= 0)
-        @test all(out .<= 255)
+        if is_img
+            @test typeof(out) == Array{UInt8,2}
+            @test all(out .>= 0)
+            @test all(out .<= 255)
+        else
+            @test typeof(out) == Float64
+            @test all(out .>= -1.0)
+            @test all(out .<= 1.0)
+        end
     end
 end
 
-function test_functions(functions::Array{Function},
-                        pairs::Array{Array{Array{UInt8,2},1},1};
-                        idempotent::Bool=true)
+function test_img_functions(functions::Array{Function},
+                            pairs::Array{Array{Array{UInt8,2},1},1};
+                            idempotent::Bool=true)
     for f in functions
         for p in pairs
             test_inputs(f, p, idempotent=idempotent)
@@ -72,51 +79,93 @@ function test_functions(functions::Array{Function},
     end
 end
 
-@testset "CGP functions for images" begin
-    # Fetch functions
-    idempotent_functions = [
-        IICGP.CGPFunctions.f_dilate,
-        IICGP.CGPFunctions.f_erode,
-        IICGP.CGPFunctions.f_subtract,
-        IICGP.CGPFunctions.f_remove_details,
-        IICGP.CGPFunctions.f_make_boxes,
-        IICGP.CGPFunctions.f_felzenszwalb_segmentation,
-        IICGP.CGPFunctions.f_components_segmentation,
-        IICGP.CGPFunctions.f_box_segmentation,
-        IICGP.CGPFunctions.f_negative,
-        IICGP.CGPFunctions.f_threshold,
-        IICGP.CGPFunctions.f_binary,
-        IICGP.CGPFunctions.f_corners,
-        IICGP.CGPFunctions.f_gaussian,
-        IICGP.CGPFunctions.f_laplacian,
-        IICGP.CGPFunctions.f_sobel_x,
-        IICGP.CGPFunctions.f_sobel_y,
-        IICGP.CGPFunctions.f_canny,
-        IICGP.CGPFunctions.f_edges,
-        IICGP.CGPFunctions.f_opening,
-        IICGP.CGPFunctions.f_closing,
-        IICGP.CGPFunctions.f_tophat,
-        IICGP.CGPFunctions.f_bothat,
-        IICGP.CGPFunctions.f_morphogradient,
-        IICGP.CGPFunctions.f_morpholaplace,
-        IICGP.CGPFunctions.f_bitwise_not,
-        IICGP.CGPFunctions.f_bitwise_and,
-        IICGP.CGPFunctions.f_bitwise_or,
-        IICGP.CGPFunctions.f_bitwise_xor
-    ]
-    non_idempotent_functions = [
-        IICGP.CGPFunctions.f_motion_capture,
-        IICGP.CGPFunctions.f_motion_distances
-    ]
+function test_scalar_functions(functions::Array{Function};
+                               idempotent::Bool=true)
+    for f in functions
+        # println(f)
+        test_inputs(f, [-1.0, -1.0], is_img=false)
+        test_inputs(f, [0.0, 0.0], is_img=false)
+        test_inputs(f, [1e-310, 1e-310], is_img=false)
+        test_inputs(f, [-1e-310, -2e-310], is_img=false)
+        test_inputs(f, [1.0, 1.0], is_img=false)
+        for i in 1:5
+            test_inputs(f, [2 * rand() - 1, 2 * rand() - 1], is_img=false)
+        end
+    end
+end
 
+# Fetch functions
+idempotent_img_functions = [
+    IICGP.CGPFunctions.f_dilate,
+    IICGP.CGPFunctions.f_erode,
+    IICGP.CGPFunctions.f_subtract,
+    IICGP.CGPFunctions.f_remove_details,
+    IICGP.CGPFunctions.f_make_boxes,
+    IICGP.CGPFunctions.f_felzenszwalb_segmentation,
+    IICGP.CGPFunctions.f_components_segmentation,
+    IICGP.CGPFunctions.f_box_segmentation,
+    IICGP.CGPFunctions.f_threshold,
+    IICGP.CGPFunctions.f_binary,
+    IICGP.CGPFunctions.f_corners,
+    IICGP.CGPFunctions.f_gaussian,
+    IICGP.CGPFunctions.f_laplacian,
+    IICGP.CGPFunctions.f_sobel_x,
+    IICGP.CGPFunctions.f_sobel_y,
+    IICGP.CGPFunctions.f_canny,
+    IICGP.CGPFunctions.f_edges,
+    IICGP.CGPFunctions.f_opening,
+    IICGP.CGPFunctions.f_closing,
+    IICGP.CGPFunctions.f_tophat,
+    IICGP.CGPFunctions.f_bothat,
+    IICGP.CGPFunctions.f_morphogradient,
+    IICGP.CGPFunctions.f_morpholaplace,
+    IICGP.CGPFunctions.f_bitwise_not,
+    IICGP.CGPFunctions.f_bitwise_and,
+    IICGP.CGPFunctions.f_bitwise_or,
+    IICGP.CGPFunctions.f_bitwise_xor
+]
+idempotent_img_functions = [  # TODO remove
+    IICGP.CGPFunctions.f_dilate,
+    IICGP.CGPFunctions.f_erode
+]
+non_idempotent_img_functions = [
+    IICGP.CGPFunctions.f_motion_capture,
+    IICGP.CGPFunctions.f_motion_distances
+]
+scalar_functions = [
+    IICGP.CGPFunctions.f_add,
+    IICGP.CGPFunctions.f_subtract,
+    IICGP.CGPFunctions.f_mult,
+    IICGP.CGPFunctions.f_div,
+    IICGP.CGPFunctions.f_abs,
+    IICGP.CGPFunctions.f_sqrt,
+    IICGP.CGPFunctions.f_pow,
+    IICGP.CGPFunctions.f_exp,
+    IICGP.CGPFunctions.f_sin,
+    IICGP.CGPFunctions.f_cos,
+    IICGP.CGPFunctions.f_tanh,
+    IICGP.CGPFunctions.f_sqrt_xy,
+    IICGP.CGPFunctions.f_lt,
+    IICGP.CGPFunctions.f_gt,
+    IICGP.CGPFunctions.f_and,
+    IICGP.CGPFunctions.f_or,
+    IICGP.CGPFunctions.f_xor,
+    IICGP.CGPFunctions.f_not
+]
+
+@testset "CGP functions for scalars" begin
+    test_scalar_functions(scalar_functions, idempotent=true)
+end
+
+@testset "CGP functions for images" begin
     # Load / generate images
     pairs = generate_img_pair_set()
 
     # Test idempotent functions
-    test_functions(idempotent_functions, pairs, idempotent=true)
+    test_img_functions(idempotent_img_functions, pairs, idempotent=true)
 
     # Test non-idempotent functions
-    test_functions(non_idempotent_functions, pairs, idempotent=false)
+    test_img_functions(non_idempotent_img_functions, pairs, idempotent=false)
 end
 
 rom_sublist = ["boxing", "freeway", "kung_fu_master", "montezuma_revenge"]
