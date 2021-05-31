@@ -1,0 +1,46 @@
+# Cambrian.jl settings
+seed: 0
+d_fitness: 1
+n_population: 5
+n_elite: 1
+n_gen: 2
+log_gen: 1
+save_gen: 1
+# Encoder's parameters
+rows: 1
+columns: 20
+recur: 0.0
+m_rate: 0.1
+out_m_rate: 0.5
+n_out: 4
+n_parameters: 1
+features_size: 5
+functions:
+  - f_dilate
+  - f_erode
+  - f_subtract
+  - f_remove_details
+  - f_make_boxes
+  - f_felzenszwalb_segmentation
+  - f_components_segmentation
+#  - f_box_segmentation
+  - f_threshold
+  - f_binary
+  - f_motion_capture
+  - f_motion_distances
+  - f_corners
+  - f_gaussian
+#  - f_laplacian
+#  - f_sobel_x
+#  - f_sobel_y
+#  - f_canny
+  - f_opening
+  - f_closing
+#  - f_tophat
+#  - f_bothat
+#  - f_morphogradient
+#  - f_morpholaplace
+  - f_bitwise_not
+  - f_bitwise_and
+  - f_bitwise_or
+  - f_bitwise_xor
