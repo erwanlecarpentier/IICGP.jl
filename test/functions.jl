@@ -124,14 +124,12 @@ idempotent_img_functions = [
     IICGP.CGPFunctions.f_bitwise_or,
     IICGP.CGPFunctions.f_bitwise_xor
 ]
-idempotent_img_functions = [  # TODO remove
-    IICGP.CGPFunctions.f_dilate,
-    IICGP.CGPFunctions.f_erode
-]
+
 non_idempotent_img_functions = [
     IICGP.CGPFunctions.f_motion_capture,
     IICGP.CGPFunctions.f_motion_distances
 ]
+
 scalar_functions = [
     IICGP.CGPFunctions.f_add,
     IICGP.CGPFunctions.f_subtract,
@@ -202,3 +200,28 @@ end
         end
     end
 end
+
+
+function time_functions(functions::Array{Function}, io_type::String)
+    if io_type == "img"
+        r, g, b = IICGP.load_rgb("freeway", 30)
+        inps = [r, g]
+    elseif io_type == "scalar"
+        inps = [-0.2, 0.33]
+    else
+        println("I/O type not implemented")
+    end
+    # n_spaces = maximum([length(string(f)) for f in scalar_functions]) + 1
+    println("Functions timing:")
+    for f in functions
+        f_name = string(f)
+        print("| ", f_name, " | ")
+        out = f(inps..., [0.33])
+        @btime out = $f($inps..., [0.33])
+        println(" |")
+    end
+end
+
+time_functions(scalar_functions, "scalar")
+time_functions(idempotent_img_functions, "img")
+time_functions(non_idempotent_img_functions, "img")
