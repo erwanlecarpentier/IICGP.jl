@@ -106,6 +106,21 @@ function run_evolution()
 end
 
 
+n = 3
+m = Array{Float64}(undef, n, n)
+Threads.@threads for i in 1:n
+    Threads.@threads for j in 1:n
+        m[i, j] = Threads.threadid()
+        println(m)
+
+        sleep(1)
+    end
+end
+
+
+
+
+### Profiling
 run_evolution()
 
 Profile.clear()
@@ -113,7 +128,8 @@ Profile.clear()
 Profile.print()
 
 Juno.profiler()
-Juno.profiler(; C = true)
+# Juno.profiler(; C = true)
+###
 
 
 

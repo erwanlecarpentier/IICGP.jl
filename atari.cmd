@@ -1,12 +1,12 @@
 #!/bin/bash
-#SBATCH -J atari9-bis
+#SBATCH -J atari-test
 #SBATCH -N 1
 #SBATCH -n 18
-#SBATCH --ntasks-per-node=18
+#SBATCH --ntasks-per-node=25
 #SBATCH --ntasks-per-core=1
-#SBATCH -o atari9-bis.out
-#SBATCH -e atari9-bis.log
-#SBATCH --time=4-00:00:00
+#SBATCH -o atari-test.out
+#SBATCH -e atari-test.log
+#SBATCH --time=00:10:00
 #SBATCH --mail-user=erwanlecarpentier@mailbox.org
 #SBATCH --mail-type=END
 
@@ -16,11 +16,13 @@
 # Subset 9 representative games
 # boxing centipede demon_attack enduro freeway kung_fu_master space_invaders riverraid pong
 
-for VARIABLE in boxing centipede demon_attack enduro freeway kung_fu_master space_invaders riverraid pong
-do
-	julia --project=/users/p21001/lecarpen/IICGP.jl scripts/atari.jl --game=$VARIABLE &
-done
+# for VARIABLE in boxing centipede demon_attack enduro freeway kung_fu_master space_invaders riverraid pong
+# do
+# 	julia --threads 1 --project=/users/p21001/lecarpen/IICGP.jl scripts/atari.jl --game=$VARIABLE &
+# done
+#
+# wait
+# echo "All games complete"
 
-wait
-echo "All games complete"
+julia --threads 25 --project=/users/p21001/lecarpen/IICGP.jl scripts/atari.jl --game=centipede
 
