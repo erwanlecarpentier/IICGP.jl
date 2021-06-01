@@ -196,7 +196,6 @@ end
     end
 end
 
-
 function time_functions(functions::Array{Function}, io_type::String)
     if io_type == "img"
         r, g, b = IICGP.load_rgb("freeway", 30)
@@ -213,11 +212,13 @@ function time_functions(functions::Array{Function}, io_type::String)
         print("| ", f_name, " | ")
         p = [0.33]
         out = f(inps..., p)
-        @btime out = $f($inps..., p)
-        println(" |")
+        @btime out = $f($inps..., $p)
     end
 end
 
-time_functions(scalar_functions, "scalar")
-time_functions(idempotent_img_functions, "img")
-time_functions(non_idempotent_img_functions, "img")
+do_time = false
+if do_time
+    time_functions(scalar_functions, "scalar")
+    time_functions(idempotent_img_functions, "img")
+    time_functions(non_idempotent_img_functions, "img")
+end
