@@ -1,12 +1,12 @@
 #!/bin/bash
 #SBATCH -J atari-test
 #SBATCH -N 1
-#SBATCH -n 18
+#SBATCH -n 25
 #SBATCH --ntasks-per-node=25
 #SBATCH --ntasks-per-core=1
 #SBATCH -o atari-test.out
 #SBATCH -e atari-test.log
-#SBATCH --time=00:10:00
+#SBATCH --time=01:00:00
 #SBATCH --mail-user=erwanlecarpentier@mailbox.org
 #SBATCH --mail-type=END
 
