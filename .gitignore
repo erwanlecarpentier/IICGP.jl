@@ -4,6 +4,8 @@
 /Manifest.toml
 *.log
 *.out
+.tags*
+
 
 # gens/
 # logs/
