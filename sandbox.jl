@@ -12,6 +12,45 @@ using ImageShow
 using ImageSegmentation
 using IICGP
 
+
+##
+
+function CGPInd(n_in::Int64, d_fitness::Int64, nodes::Array{Node},
+                outputs::Array{Int16}, arity_dict::Dict; kwargs...)::CGPInd
+    R = 1
+    C = length(nodes)
+    all_nodes = Array{Node}(undef, n_in)
+    p = Float64[]
+    for i in 1:n_in
+        all_nodes[i] = Node(0, 0, f_null, p, false)
+    end
+    push!(all_nodes, nodes...)
+    arity_dict["f_null"] = 1
+    two_arity = get_two_arity(all_nodes, arity_dict)
+    active = find_active(all_nodes, outputs, two_arity)
+    # Re-create nodes as they are immutable struct
+    for i in eachindex(all_nodes)
+        all_nodes[i] = Node(all_nodes[i].x, all_nodes[i].y, all_nodes[i].f,
+                            all_nodes[i].p, active[i])
+    end
+    kwargs_dict = Dict(kwargs)
+    # Use given input buffer or default to Array{Float64, 1} type
+    if haskey(kwargs_dict, :buffer)
+        buffer = kwargs_dict[:buffer]
+    else
+        buffer = zeros(R * C + n_in)
+    end
+    fitness = -Inf .* ones(d_fitness)
+    n_out = length(outputs)
+    n_parameters = length(nodes[1].p)
+    chromosome = rand(R * C * (3 + n_parameters) + n_out)
+    genes = reshape(chromosome[1:(R*C*(3+n_parameters))], R, C, 3+n_parameters)
+    CGPInd(n_in, n_out, n_parameters, chromosome, genes, outputs,
+           nodes, buffer, fitness)
+end
+
+##
+
 ImgType = Array{UInt8,2}
 
 ## Julia maxpool

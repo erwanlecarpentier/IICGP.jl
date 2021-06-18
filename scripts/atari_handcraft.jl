@@ -12,19 +12,37 @@ using ImageView
 """
     get_two_arity(nodes::Array{Node,1}, arity_dict::Dict)
 
-Creates a boolean array tracking two-arity of the functions in the provied
+Creates a BitArray tracking two-arity of the functions in the provied
 nodes list.
 """
-function get_two_arity(nodes::Array{Node,1}, arity_dict::Dict)
-    two_arity = Bool[]
-    for n in nodes
-        if arity_dict[String(Symbol(n.f))] == 1
-            push!(two_arity, false)
-        else
-            push!(two_arity, true)
+function get_two_arity(nodes::Array{Node}, arity_dict::Dict)
+    two_arity = falses(length(nodes))
+    for i in eachindex(nodes)
+        if arity_dict[String(Symbol(nodes[i].f))] == 2
+            two_arity[i] = true
         end
     end
     two_arity
+end
+
+function recur_active(nodes::Array{Node}, i::Int16, active::BitArray,
+                      two_arity::BitArray)
+    active[i] = true
+    if nodes[i].x > 0
+        recur_active(nodes, nodes[i].x, active, two_arity)
+    end
+    if nodes[i].y > 0 && two_arity[i]
+        recur_active(nodes, nodes[i].y, active, two_arity)
+    end
+end
+
+function find_active(nodes::Array{Node}, outputs::Array{Int16},
+                     two_arity::BitArray)
+    active = falses(length(nodes))
+    for o in outputs
+        recur_active(nodes, o, active, two_arity)
+    end
+    active
 end
 
 "default function for nodes, will cause error if used as a function node"
@@ -46,7 +64,8 @@ function play_atari(encoder::CGPInd, controller::CGPInd; seed=0,
     if rendering
         rawscreen = getScreenRGB(game.ale)
         rgb = reshape(rawscreen, (3, game.width, game.height))
-        guidict = ImageView.imshow(img)
+        img = transpose(colorview(RGB, normedview(rgb)))
+        guidict = imshow(img)
         canvas = guidict["gui"]["canvas"]
     end
     while ~game_over(game.ale)
@@ -124,65 +143,26 @@ controller_cfg = get_config(
 
 # Create 2 individuals
 enco = IPCGPInd(encoder_cfg)
-cont = CGPInd(controller_cfg)
+# cont = CGPInd(controller_cfg)
 
 enco_nodes = Node[]
 push!(enco_nodes, Node(1, 2, IICGP.CGPFunctions.f_subtract, [0.5], false))
 push!(enco_nodes, Node(1, 2, IICGP.CGPFunctions.f_erode, [0.5], false))
-push!(enco_nodes, Node(3, 3, IICGP.CGPFunctions.f_erode, [0.5], false))
-two_arity = get_two_arity(enco_nodes, IICGP.CGPFunctions.arity)
+push!(enco_nodes, Node(3, 3, IICGP.CGPFunctions.f_erode, [0.6], false))
+enco_outputs = Int16[3, 4]
+
+cont_nodes = Node[]
+push!(cont_nodes, Node(1, 2, IICGP.CGPFunctions.f_abs, [0.5], false))
+push!(cont_nodes, Node(1, 2, IICGP.CGPFunctions.f_add, [0.5], false))
+push!(cont_nodes, Node(3, 3, IICGP.CGPFunctions.f_cos, [0.6], false))
+cont_outputs = Int16[3, 4, 5]
+
+enco = IICGP.IPCGPInd(enco_nodes, n_in, enco_outputs, IICGP.CGPFunctions, 1, img_size)
+cont = IICGP.CGPInd(cont_nodes, length(enco_outputs), cont_outputs, IICGP.CGPFunctions, 1)
 
 
-###
-nodes = enco_nodes
-###
-R = 1
-C = length(enco_nodes)
-all_nodes = Array{Node}(undef, n_in)
-p = Float64[]
-for i in 1:n_in
-    all_nodes[i] = Node(0, 0, f_null, p, false)
-end
-push!(all_nodes, nodes...)
 
-
-###
-
-function CGPInd(n_in::Int64, nodes::Array{Node,1}, outputs::Array{Int16}, two_arity::BitArray)
-    #cfg::NamedTuple, chromosome::Array{Float64}, nodes::Array{Node,1}, genes::Array{Float64}, outputs::Array{Int16}; kwargs...)::CGPInd
-    R = 1
-    C = length(nodes)
-    all_nodes = Array{Node}(undef, n_in)
-    p = Float64[]
-    for i in 1:n_in
-        all_nodes[i] = Node(0, 0, f_null, p, false)
-    end
-    push!(all_nodes, nodes...)
-
-    i = cfg.n_in
-    active = find_active(cfg, genes, outputs)
-    for y in 1:C
-        for x in 1:R
-            i += 1
-            if cfg.n_parameters > 0
-                p = genes[x, y, 4:end]
-            end
-            nodes[i] = Node(Int16(genes[x, y, 1]), Int16(genes[x, y, 2]),
-                            cfg.functions[Int16(genes[x, y, 3])], p,
-                            active[x, y])
-        end
-    end
-    kwargs_dict = Dict(kwargs)
-    # Use given input buffer or default to Array{Float64, 1} type
-    if haskey(kwargs_dict, :buffer)
-        buffer = kwargs_dict[:buffer]
-    else
-        buffer = zeros(R * C + cfg.n_in)
-    end
-    fitness = -Inf .* ones(cfg.d_fitness)
-    CGPInd(cfg.n_in, cfg.n_out, cfg.n_parameters, chromosome, genes, outputs,
-           nodes, buffer, fitness)
-end
+##
 
 # Play game
 play_atari(enco, cont, max_frames=300, sleep_time=0.1)
