@@ -7,7 +7,7 @@ using CartesianGeneticProgramming
 
 Image buffer constructor for IPCGP individuals.
 """
-function image_buffer(rows::Int64, columns::Int64, n_in::Int64, img_size)
+function image_buffer(rows::Int64, columns::Int64, n_in::Int64, img_size::Tuple)
     buffer = Array{Array{UInt8,2}}(undef, rows * columns + n_in)
     fill!(buffer, zeros(UInt8, img_size))
     return buffer
