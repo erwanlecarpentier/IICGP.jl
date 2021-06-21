@@ -55,12 +55,12 @@ end
 
 Fitness function.
 """
-function play_atari(encoder::CGPInd, controller::CGPInd; seed=0,
+function play_atari(encoder::CGPInd, controller::CGPInd; features_size=5, seed=0,
                     max_frames=18000, rendering=true, sleep_time=0.0)
     game = Game(args["game"], seed)
     reward = 0.0
     frames = 0
-    # First image for visu
+    # Rendering first image for visu
     if rendering
         rawscreen = getScreenRGB(game.ale)
         rgb = reshape(rawscreen, (3, game.width, game.height))
@@ -69,7 +69,7 @@ function play_atari(encoder::CGPInd, controller::CGPInd; seed=0,
         canvas = guidict["gui"]["canvas"]
     end
     while ~game_over(game.ale)
-        # Replace the get_rgb method to
+        # Replace get_rgb method to integrate visu
         rawscreen = getScreenRGB(game.ale)
         rgb = reshape(rawscreen, (3, game.width, game.height))
         if rendering
@@ -79,8 +79,7 @@ function play_atari(encoder::CGPInd, controller::CGPInd; seed=0,
         end
         sleep(sleep_time)
         rgb = [Array{UInt8}(rgb[i,:,:]) for i in 1:3]
-        output = IICGP.process(encoder, controller, rgb,
-                               encoder_cfg.features_size)
+        output = IICGP.process(encoder, controller, rgb, features_size)
         action = game.actions[argmax(output)]
         reward += act(game.ale, action)
         frames += 1
@@ -124,25 +123,7 @@ n_out = length(getMinimalActionSet(game.ale))  # One output per legal action
 img_size = size(out[1])
 close!(game)
 
-#=
-# Encoder configuration
-encoder_cfg = get_config(
-    args["encoder_cfg"];
-    function_module=IICGP.CGPFunctions,
-    n_in=n_in,
-    img_size=img_size
-)
-logid = string(Dates.now(), "_", args["game"], "_", args["seed"])
-
-# Controller configuration
-n_in_controller = encoder_cfg.n_out * encoder_cfg.features_size^2
-controller_cfg = get_config(
-    args["controller_cfg"];
-    n_in=n_in_controller,
-    n_out=n_out
-)
-=#
-
+##
 # Create custom individuals
 
 enco_nodes = [
@@ -152,15 +133,8 @@ enco_nodes = [
 ]
 enco_outputs = Int16[3, 4]
 enco_cfg = cfg_from_info(enco_nodes, n_in, enco_outputs, IICGP.CGPFunctions, 1)
-enco_buffer = image_buffer(enco_cfg.rows, enco_cfg.columns, n_in, img_size)
-enco = CGPInd(enco_nodes, enco_cfg, enco_outputs, buffer=enco_buffer)
-
-
-
-
-
-
-##
+enco = IPCGPInd(enco_nodes, enco_cfg, enco_outputs, img_size)
+features_size = 5
 
 
 cont_nodes = [
@@ -169,16 +143,13 @@ cont_nodes = [
     Node(3, 3, IICGP.CGPFunctions.f_cos, [0.6], false)
 ]
 cont_outputs = Int16[3, 4, 5]
-
-buffer = image_buffer(1, 6, n_in, img_size)
-enco = IICGP.IPCGPInd(enco_nodes, n_in, enco_outputs, IICGP.CGPFunctions, 1,
-                      img_size)
-cont = IICGP.CGPInd(cont_nodes, length(enco_outputs), cont_outputs,
-                    IICGP.CGPFunctions, 1)
+cont_n_in = length(enco_outputs) * features_size^2
+cont_cfg = cfg_from_info(cont_nodes, cont_n_in, cont_outputs, IICGP.CGPFunctions, 1)
+cont = CGPInd(cont_nodes, cont_cfg, cont_outputs)
 
 
 
 ##
 
 # Play game
-play_atari(enco, cont, max_frames=300, sleep_time=0.1)
+play_atari(enco, cont, max_frames=300, sleep_time=0.1, features_size=5)
