@@ -124,6 +124,7 @@ n_out = length(getMinimalActionSet(game.ale))  # One output per legal action
 img_size = size(out[1])
 close!(game)
 
+#=
 # Encoder configuration
 encoder_cfg = get_config(
     args["encoder_cfg"];
@@ -140,25 +141,40 @@ controller_cfg = get_config(
     n_in=n_in_controller,
     n_out=n_out
 )
+=#
 
-# Create 2 individuals
-enco = IPCGPInd(encoder_cfg)
-# cont = CGPInd(controller_cfg)
+# Create custom individuals
 
-enco_nodes = Node[]
-push!(enco_nodes, Node(1, 2, IICGP.CGPFunctions.f_subtract, [0.5], false))
-push!(enco_nodes, Node(1, 2, IICGP.CGPFunctions.f_erode, [0.5], false))
-push!(enco_nodes, Node(3, 3, IICGP.CGPFunctions.f_erode, [0.6], false))
+enco_nodes = [
+    Node(1, 2, IICGP.CGPFunctions.f_subtract, [0.5], false),
+    Node(1, 2, IICGP.CGPFunctions.f_erode, [0.5], false),
+    Node(3, 3, IICGP.CGPFunctions.f_erode, [0.6], false)
+]
 enco_outputs = Int16[3, 4]
+enco_cfg = cfg_from_info(enco_nodes, n_in, enco_outputs, IICGP.CGPFunctions, 1)
+enco_buffer = image_buffer(enco_cfg.rows, enco_cfg.columns, n_in, img_size)
+enco = CGPInd(enco_nodes, enco_cfg, enco_outputs, buffer=enco_buffer)
 
-cont_nodes = Node[]
-push!(cont_nodes, Node(1, 2, IICGP.CGPFunctions.f_abs, [0.5], false))
-push!(cont_nodes, Node(1, 2, IICGP.CGPFunctions.f_add, [0.5], false))
-push!(cont_nodes, Node(3, 3, IICGP.CGPFunctions.f_cos, [0.6], false))
+
+
+
+
+
+##
+
+
+cont_nodes = [
+    Node(1, 2, IICGP.CGPFunctions.f_subtract, [0.5], false),
+    Node(1, 2, IICGP.CGPFunctions.f_add, [0.5], false),
+    Node(3, 3, IICGP.CGPFunctions.f_cos, [0.6], false)
+]
 cont_outputs = Int16[3, 4, 5]
 
-enco = IICGP.IPCGPInd(enco_nodes, n_in, enco_outputs, IICGP.CGPFunctions, 1, img_size)
-cont = IICGP.CGPInd(cont_nodes, length(enco_outputs), cont_outputs, IICGP.CGPFunctions, 1)
+buffer = image_buffer(1, 6, n_in, img_size)
+enco = IICGP.IPCGPInd(enco_nodes, n_in, enco_outputs, IICGP.CGPFunctions, 1,
+                      img_size)
+cont = IICGP.CGPInd(cont_nodes, length(enco_outputs), cont_outputs,
+                    IICGP.CGPFunctions, 1)
 
 
 

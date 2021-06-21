@@ -1,4 +1,4 @@
-export IPCGPInd
+export IPCGPInd, image_buffer
 
 using CartesianGeneticProgramming
 
