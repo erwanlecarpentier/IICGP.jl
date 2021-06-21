@@ -87,3 +87,25 @@ function display_buffer(ind::CGPInd, enlargement::E=1; indexes=eachindex(ind.buf
         imshow(ind.buffer[i], enlargement)
     end
 end
+
+
+"""
+    plot_encoding(n_in::Int64, buffer::Array{Array{UInt8, 2}, 1}, features::AbstractArray)
+
+Plot the complete encoding pipeline from input to projection on feature space.
+"""
+function plot_encoding(n_in::Int64, buffer::Array{Array{UInt8, 2}, 1},
+                       features::AbstractArray)
+    n_cols = max(n_in, length(features), length(buffer)-n_in)
+    p = plot(layout=grid(3, n_cols), leg=false, framestyle=:none) #axis=nothing)
+    for i in 1:n_in
+        plot!(p[i], buffer[i], seriestype=:heatmap, ratio=:equal, color=:grays)
+    end
+    for i in n_in+1:length(buffer)
+        plot!(p[2,i-n_in], buffer[i], seriestype=:heatmap, ratio=:equal, color=:grays, flip=true)
+    end
+    for i in eachindex(features)
+        plot!(p[3,i], features[i], seriestype=:heatmap, ratio=:equal, color=:grays, flip=true)
+    end
+    p
+end
