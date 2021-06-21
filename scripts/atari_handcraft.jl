@@ -11,7 +11,8 @@ using ImageView
 using Plots
 using PlotThemes
 
-##
+theme(:dark)
+
 
 """
     get_two_arity(nodes::Array{Node,1}, arity_dict::Dict)
@@ -101,12 +102,6 @@ function play_atari(encoder::CGPInd, controller::CGPInd; features_size=5, seed=0
     [reward]
 end
 
-##
-
-play_atari(enco, cont, max_frames=300, sleep_time=0.0, features_size=features_size)
-
-##
-
 s = ArgParseSettings()
 @add_arg_table! s begin
     "--encoder_cfg"
@@ -143,11 +138,11 @@ close!(game)
 # Create custom individuals
 
 enco_nodes = [
-    Node(1, 2, IICGP.CGPFunctions.f_subtract, [0.5], false),
-    Node(1, 2, IICGP.CGPFunctions.f_erode, [0.5], false),
+    Node(1, 1, IICGP.CGPFunctions.f_motion_capture, [0.5], false),
+    Node(3, 3, IICGP.CGPFunctions.f_dilate, [1.0], false),
     Node(3, 3, IICGP.CGPFunctions.f_erode, [0.6], false)
 ]
-enco_outputs = Int16[3, 4]
+enco_outputs = Int16[4]
 enco_cfg = cfg_from_info(enco_nodes, n_in, enco_outputs, IICGP.CGPFunctions, 1)
 enco = IPCGPInd(enco_nodes, enco_cfg, enco_outputs, img_size)
 features_size = 5
@@ -168,7 +163,7 @@ cont = CGPInd(cont_nodes, cont_cfg, cont_outputs)
 ##
 
 # Play game
-play_atari(enco, cont, max_frames=300, sleep_time=0.1, features_size=features_size)
+play_atari(enco, cont, max_frames=10, sleep_time=0.1, features_size=features_size)
 
 
 

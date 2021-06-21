@@ -1,4 +1,4 @@
-export imshow, display_buffer
+export imshow, display_buffer, plot_encoding
 
 # using CartesianGeneticProgramming
 using Plots
@@ -99,13 +99,13 @@ function plot_encoding(n_in::Int64, buffer::Array{Array{UInt8, 2}, 1},
     n_cols = max(n_in, length(features), length(buffer)-n_in)
     p = plot(layout=grid(3, n_cols), leg=false, framestyle=:none) #axis=nothing)
     for i in 1:n_in
-        plot!(p[i], buffer[i], seriestype=:heatmap, ratio=:equal, color=:grays)
+        plot!(p[i], buffer[i], seriestype=:heatmap, flip=true, ratio=:equal, color=:grays) #, color=:inferno)
     end
     for i in n_in+1:length(buffer)
-        plot!(p[2,i-n_in], buffer[i], seriestype=:heatmap, ratio=:equal, color=:grays, flip=true)
+        plot!(p[2,i-n_in], buffer[i], seriestype=:heatmap, flip=true, ratio=:equal, color=:grays)
     end
     for i in eachindex(features)
-        plot!(p[3,i], features[i], seriestype=:heatmap, ratio=:equal, color=:grays, flip=true)
+        plot!(p[3,i], features[i], seriestype=:heatmap, flip=true, ratio=:equal, color=:grays)
     end
     p
 end
