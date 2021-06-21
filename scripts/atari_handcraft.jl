@@ -64,8 +64,8 @@ function play_atari(encoder::CGPInd, controller::CGPInd; features_size=5, seed=0
     if rendering
         rawscreen = getScreenRGB(game.ale)
         rgb = reshape(rawscreen, (3, game.width, game.height))
-        img = transpose(colorview(RGB, normedview(rgb)))
-        guidict = imshow(img)
+        img = colorview(RGB, normedview(rgb))
+        guidict = imshow(img, axes=(2, 1))
         canvas = guidict["gui"]["canvas"]
     end
     while ~game_over(game.ale)
@@ -73,9 +73,9 @@ function play_atari(encoder::CGPInd, controller::CGPInd; features_size=5, seed=0
         rawscreen = getScreenRGB(game.ale)
         rgb = reshape(rawscreen, (3, game.width, game.height))
         if rendering
-            img = transpose(colorview(RGB, normedview(rgb)))
+            img = colorview(RGB, normedview(rgb))
             # display(img)
-            imshow(canvas, img)
+            imshow(canvas, img, axes=(2, 1))
         end
         sleep(sleep_time)
         rgb = [Array{UInt8}(rgb[i,:,:]) for i in 1:3]
@@ -152,4 +152,34 @@ cont = CGPInd(cont_nodes, cont_cfg, cont_outputs)
 ##
 
 # Play game
-play_atari(enco, cont, max_frames=300, sleep_time=0.1, features_size=5)
+play_atari(enco, cont, max_frames=300, sleep_time=0.1, features_size=features_size)
+
+
+
+##
+
+game = Game(args["game"], 0)
+reward = 0.0
+frames = 0
+
+# Rendering first image for visu
+rawscreen = getScreenRGB(game.ale)
+rgb = permutedims(reshape(rawscreen, (3, game.width, game.height)), [1, 3, 2])
+img = colorview(RGB, normedview(rgb))
+guidict = imshow(img)
+canvas = guidict["gui"]["canvas"]
+
+
+
+rgb_split = [Array{UInt8}(rgb[i,:,:]) for i in 1:3]
+output = IICGP.process(enco, cont, rgb_split, features_size)
+action = game.actions[argmax(output)]
+
+
+b1 = enco.buffer[1]
+b2 = enco.buffer[2]
+b = enco.buffer[1]
+for i in 2:length(enco.buffer)
+    hcat(b, enco.buffer[i])
+end
+guidict = imshow(hcat(b1, b2))
