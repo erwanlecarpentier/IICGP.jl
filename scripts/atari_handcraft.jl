@@ -61,7 +61,7 @@ end
 Fitness function.
 """
 function play_atari(encoder::CGPInd, controller::CGPInd; features_size=5, seed=0,
-                    max_frames=18000, rendering=true, sleep_time=0.0)
+                    max_frames=18000, rendering=true, render_centroids=false, sleep_time=0.0)
     game = Game(args["game"], seed)
     reward = 0.0
     frames = 0
@@ -81,6 +81,14 @@ function play_atari(encoder::CGPInd, controller::CGPInd; features_size=5, seed=0
         rgb = permutedims(reshape(rawscreen, (3, game.width, game.height)), [1, 3, 2])
         rgb = [Array{UInt8}(rgb[i,:,:]) for i in 1:3]
         features, output = IICGP.process_f(encoder, controller, rgb, features_size)
+
+        if render_centroids
+            areas, centroids, centroids_flat = get_centroids(rgb[1], 20)
+            plt = plot_centroids(rgb[1], centroids)
+            display(plt)
+            # savefig(plt, "gifs/freeway_centroids/$frames.png")
+            # println(frames)
+        end
 
         if rendering
             # display(img)
@@ -112,7 +120,7 @@ s = ArgParseSettings()
     default = "cfg/atari_controller.yaml"
     "--game"
     help = "game rom name"
-    default = "centipede"
+    default = "freeway"
     "--seed"
     help = "random seed for evolution"
     arg_type = Int
@@ -134,9 +142,9 @@ n_out = length(getMinimalActionSet(game.ale))  # One output per legal action
 img_size = size(rgb)[2:3]
 close!(game)
 
-##
-# Create custom individuals
 
+
+# Create custom individuals
 enco_nodes = [
     Node(1, 1, IICGP.CGPFunctions.f_motion_capture, [0.5], false),
     Node(3, 3, IICGP.CGPFunctions.f_dilate, [1.0], false),
@@ -163,7 +171,11 @@ cont = CGPInd(cont_nodes, cont_cfg, cont_outputs)
 ##
 
 # Play game
-play_atari(enco, cont, max_frames=10, sleep_time=0.1, features_size=features_size)
+play_atari(enco, cont, max_frames=7, sleep_time=0.1,
+    features_size=features_size,
+    rendering=false,
+    render_centroids=true
+)
 
 
 

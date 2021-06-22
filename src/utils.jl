@@ -3,7 +3,7 @@ export load_img, save_img, split_rgb
 using Images
 
 """
-    function load_img(filename::String)
+    load_img(filename::String)
 
 Load an image given file name.
 """
@@ -13,7 +13,7 @@ function load_img(filename::String)
 end
 
 """
-    function load_img(filename::String)
+    load_img(filename::String)
 
 Load a pre-saved Atari image given ROM name and frame number.
 """
@@ -23,7 +23,7 @@ function load_img(rom_name::String, frame_number::Int64)
 end
 
 """
-    function load_rgb(rom_name::String, frame_number::Int64)
+    load_rgb(rom_name::String, frame_number::Int64)
 
 Load a pre-saved Atari image given ROM name and frame number.
 Return an array containing the separated chanels.
@@ -34,7 +34,7 @@ function load_rgb(rom_name::String, frame_number::Int64)
 end
 
 """
-    function save_img(img::Array{Float64,2}, filename::String)
+    save_img(img::Array{Float64,2}, filename::String)
 
 Save an image to the input path.
 """
@@ -50,7 +50,7 @@ function save_img(img::Array{Float64}, filename::String)
 end
 
 """
-    function save_img(img::Array{UInt8,2}, filename::String)
+    save_img(img::Array{UInt8,2}, filename::String)
 
 Save an image to the input path.
 """
@@ -64,7 +64,7 @@ function save_img(img::Array{UInt8}, filename::String)
 end
 
 """
-    function split_rgb(img::Array{UInt8,3})
+    split_rgb(img::Array{UInt8,3})
 
 Split input array in three channels.
 """
