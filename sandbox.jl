@@ -12,6 +12,88 @@ using ImageShow
 using ImageSegmentation
 using IICGP
 
+## Position-features from image
+
+m1 = load_img("images/freeway_frame_30.png")
+r1, g1, b1 = split_rgb(m1)
+
+m2 = load_img("images/freeway_frame_31.png")
+r2, g2, b2 = split_rgb(m2)
+
+
+function get_centroids(x::Array{UInt8, 2}, n::Int64; a_prev=nothing,
+                       c_prev=nothing)
+    labels = label_components(x)
+    boxes = component_boxes(labels)
+    centroids = component_centroids(labels)
+    # popfirst!(centroids) # remove background centroid
+    areas = [abs(b[1][1]-b[2][1]-1) * abs(b[1][2]-b[2][2]-1) for b in boxes]
+    p = sortperm(areas, rev=true)
+    if a_prev != nothing && c_prev != nothing
+
+    else
+        centroids = centroids[p][1:n]
+    end
+    centroids_flat = collect(Iterators.flatten(centroids))
+    areas, centroids, centroids_flat
+end
+
+n = 15
+a1, c1, cf1 = get_centroids(r1, n)
+a2, c2, cf2 = get_centroids(r2, n)
+
+function plot_centroids(x::Array{UInt8, 2},
+                        centroids::Array{Tuple{Float64,Float64},1})
+    plt = heatmap(x, color=:grays, ratio=:equal, yflip=true, leg=false,
+                  framestyle=:none)
+    xs = [c[1] for c in centroids]
+    ys = [c[2] for c in centroids]
+    pal = palette([:blue, :red, :orange, :yellow, :green], length(xs))
+    for i in eachindex(xs)
+        scatter!(plt, [ys[i]], [xs[i]], legend=:none, color=pal[i])#, color=:thermal)
+    end
+    plt
+end
+
+plot_centroids(r1, c1)
+plot_centroids(r2, c2)
+
+##
+
+c_prev = c1
+centroids = c2
+
+p = zeros(Int64, length(centroids))
+for i in eachindex(centroids)
+    di = fill(Inf, length(c_prev))
+    for j in eachindex(c_prev)
+        dij = norm(centroids[i] .-  c_prev[j])
+        di[j] = min(di[j], dij)
+    end
+    p[i] = argmin(di)
+end
+
+
+##
+
+n_points = 100
+w = [4, 0.7, -2.3]
+σ(a) = 1 / (1 + exp(-a))
+x_data = randn(n_points)
+y_data = randn(n_points)
+y_data[1:n_points÷2] .+= 8
+labels = [round(σ(p'*w)) for p in eachrow([ones(n_points) x_data y_data])]
+plt = scatter(x_data, y_data, zcolor=labels)
+xs = range(-4, 3, length=100)
+ys = range(-4, 11, length=100)
+grid = [[1, x, y] for x in xs, y in ys]
+heat = [σ(p'*w) for p in grid]
+heatmap!(plt, xs, ys, heat, alpha=0.5)
+# this doesn't look right
+
+# now transpose and it does
+plt = scatter(x_data, y_data, zcolor=labels)
+heatmap!(plt, xs, ys, transpose(heat), alpha=0.5)
 
 ##
 

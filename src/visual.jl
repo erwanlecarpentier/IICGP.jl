@@ -1,4 +1,4 @@
-export imshow, display_buffer, plot_encoding
+export implot, display_buffer, plot_encoding
 
 # using CartesianGeneticProgramming
 using Plots
@@ -67,7 +67,7 @@ function implot(img::AbstractArray; kwargs...)
     if ndims(img) == 3
         img = img[1,:,:]
     end
-    heatmap(img, yflip=true, color=:grays, clim=clim)
+    heatmap(img, yflip=true, color=:grays, clim=clim, ratio=:equal)
 end
 
 """
@@ -108,4 +108,23 @@ function plot_encoding(n_in::Int64, buffer::Array{Array{UInt8, 2}, 1},
         plot!(p[3,i], features[i], seriestype=:heatmap, flip=true, ratio=:equal, color=:grays)
     end
     p
+end
+
+"""
+    plot_centroids(x::Array{UInt8, 2}, centroids::Array{Tuple{Float64,Float64},1})
+
+Given an image and a set of centroids, plot the image as a heatmap along with
+the centroids.
+"""
+function plot_centroids(x::Array{UInt8, 2},
+                        centroids::Array{Tuple{Float64,Float64},1})
+    xs = [c[1] for c in centroids]
+    ys = [c[2] for c in centroids]
+    pal = palette([:blue, :red, :orange, :yellow, :green], length(xs))
+    plt = heatmap(x, color=:grays, ratio=:equal, yflip=true, leg=false,
+                  framestyle=:none)
+    for i in eachindex(xs)
+        scatter!(plt, [ys[i]], [xs[i]], legend=:none, color=pal[i])#, color=:thermal)
+    end
+    plt
 end
