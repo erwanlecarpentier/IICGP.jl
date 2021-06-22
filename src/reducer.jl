@@ -38,6 +38,25 @@ function lanczos_reduction(m::T; s::Int64=5) where {T <: OpenCV.InputArray}
 end
 =#
 
+
+"""
+    get_centroids(x::Array{UInt8, 2}, n::Int64)
+
+Given an image, return the centroids and the boxes areas of the `n` largest
+connected components.
+"""
+function get_centroids(x::Array{UInt8, 2}, n::Int64)
+    labels = label_components(x)
+    boxes = component_boxes(labels)
+    centroids = component_centroids(labels)
+    # popfirst!(centroids) # remove background centroid
+    areas = [abs(b[1][1]-b[2][1]-1) * abs(b[1][2]-b[2][2]-1) for b in boxes]
+    p = sortperm(areas, rev=true)
+    centroids = centroids[p][1:n]
+    centroids_flat = collect(Iterators.flatten(centroids))
+    areas, centroids, centroids_flat
+end
+
 """
     max_pool_reduction(img::Array{UInt8,2}, s::Int64=5)
 

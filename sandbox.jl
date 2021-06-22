@@ -42,19 +42,6 @@ n = 15
 a1, c1, cf1 = get_centroids(r1, n)
 a2, c2, cf2 = get_centroids(r2, n)
 
-function plot_centroids(x::Array{UInt8, 2},
-                        centroids::Array{Tuple{Float64,Float64},1})
-    plt = heatmap(x, color=:grays, ratio=:equal, yflip=true, leg=false,
-                  framestyle=:none)
-    xs = [c[1] for c in centroids]
-    ys = [c[2] for c in centroids]
-    pal = palette([:blue, :red, :orange, :yellow, :green], length(xs))
-    for i in eachindex(xs)
-        scatter!(plt, [ys[i]], [xs[i]], legend=:none, color=pal[i])#, color=:thermal)
-    end
-    plt
-end
-
 plot_centroids(r1, c1)
 plot_centroids(r2, c2)
 
