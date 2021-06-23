@@ -1,4 +1,4 @@
-export Reducer, pooling_reduction, connected_components_reduction
+export Reducer, PoolingReducer, CentroidReducer
 
 # using OpenCV
 using Statistics
@@ -13,6 +13,20 @@ abstract type AbstractReducer end
 struct Reducer <: AbstractReducer
     reduct::Function
     parameters::Dict
+end
+
+function PoolingReducer(f::Function, size::Int64)
+    p = Dict("pooling_function"=>f, "size"=>size)
+    Reducer(pooling_reduction, p)
+end
+
+function CentroidReducer(n::Int64)
+    p = Dict(
+        "n"=>n,
+        "c_prev"=>Tuple{Float64,Float64}[],
+        "a_prev"=>Int64[]
+    )
+    Reducer(centroid_reduction, p)
 end
 
 """
@@ -42,13 +56,14 @@ function reorder_features(
 end
 
 """
-    connected_components_reduction(x::Array{UInt8, 2}, n::Int64)
+    centroid_reduction(x::Array{UInt8, 2}, parameters::Dict)
 
 Given an image, return the centroids and the boxes areas of the `n` largest
-connected components.
+connected components, `n` being defined in the parameters dictionary.
 Fill with zeros if there are less than `n` components.
 """
-function connected_components_reduction(x::Array{UInt8, 2}, n::Int64)
+function centroid_reduction(x::Array{UInt8, 2}, parameters::Dict)
+    n = parameters["n"]
     labels = label_components(x)
     boxes = component_boxes(labels)
     centroids = component_centroids(labels)
@@ -66,8 +81,14 @@ function connected_components_reduction(x::Array{UInt8, 2}, n::Int64)
             break
         end
     end
+    if length(parameters["c_prev"]) > 0
+        a, c = reorder_features(parameters["c_prev"], parameters["a_prev"], c, a)
+    end
+    println(parameters["a_prev"])
+    parameters["a_prev"] = a
+    parameters["c_prev"] = c
     c_flat = collect(Iterators.flatten(c))
-    a, c, c_flat
+    c_flat
 end
 
 """
