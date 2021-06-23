@@ -8,7 +8,7 @@
 
 To build and install a Julia binding for [OpenCV](https://github.com/opencv/opencv), we recommend [the following tutorial](https://docs.opencv.org/master/d8/da4/tutorial_julia.html).
 
-## Functions
+## CGP Functions
 
 Scalar functions:
 
@@ -66,3 +66,7 @@ Image functions:
 | f_bitwise_xor | 22.86 | 4 allocations: 65.88 KiB | ✘ |
 | f_motion_capture | 251.47 | 9 allocations: 197.41 KiB | ✘ |
 | f_motion_distances | 3910 | 66781 allocations: 3.48 MiB | ✘ |
+
+# Features extraction
+
+![](gifs/freeway_centroids_cropped.gif)
