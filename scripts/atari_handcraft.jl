@@ -60,11 +60,14 @@ end
 
 Fitness function.
 """
-function play_atari(encoder::CGPInd, controller::CGPInd; features_size=5, seed=0,
-                    max_frames=18000, rendering=true, render_centroids=false, sleep_time=0.0)
+function play_atari(encoder::CGPInd, controller::CGPInd; features_size=5,
+                    seed=0, max_frames=18000, rendering=true,
+                    render_centroids=false, sleep_time=0.0)
     game = Game(args["game"], seed)
     reward = 0.0
     frames = 0
+    a_prev = nothing
+    c_prev = nothing
     # Rendering first image for visu
     #=
     if rendering
@@ -82,12 +85,20 @@ function play_atari(encoder::CGPInd, controller::CGPInd; features_size=5, seed=0
         rgb = [Array{UInt8}(rgb[i,:,:]) for i in 1:3]
         features, output = IICGP.process_f(encoder, controller, rgb, features_size)
 
+
         if render_centroids
-            areas, centroids, centroids_flat = get_centroids(rgb[1], 20)
-            plt = plot_centroids(rgb[1], centroids)
-            display(plt)
-            # savefig(plt, "gifs/freeway_centroids/$frames.png")
-            # println(frames)
+            img = rgb[1]
+            n = 20
+            a, c, cf = IICGP.ReducingFunctions.connected_components_features(img, n)
+            if frames > 0
+                a, c = IICGP.ReducingFunctions.reorder_features(c_prev, a_prev, c, a)
+            end
+            a_prev = a
+            c_prev = c
+            plt = plot_centroids(img, c)
+            # display(plt)
+            savefig(plt, "gifs/freeway_centroids/$frames.png")
+            println(frames)
         end
 
         if rendering
@@ -171,13 +182,11 @@ cont = CGPInd(cont_nodes, cont_cfg, cont_outputs)
 ##
 
 # Play game
-play_atari(enco, cont, max_frames=7, sleep_time=0.1,
+play_atari(enco, cont, max_frames=500, sleep_time=0.1,
     features_size=features_size,
     rendering=false,
     render_centroids=true
 )
-
-
 
 ##
 

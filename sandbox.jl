@@ -11,6 +11,7 @@ using ImageMorphology
 using ImageShow
 using ImageSegmentation
 using IICGP
+using Hungarian
 
 ## Position-features from image
 
@@ -20,13 +21,16 @@ r1, g1, b1 = split_rgb(m1)
 m2 = load_img("images/freeway_frame_31.png")
 r2, g2, b2 = split_rgb(m2)
 
+n = 20
+a1, c1, cf1 = IICGP.ReducingFunctions.connected_components_features(r1, n)
+a2, c2, cf2 = IICGP.ReducingFunctions.connected_components_features(r2, n)
 
-a1, c1, cf1 = IICGP.ReducingFunctions.connected_components_features(r1, 20)
-a2, c2, cf2 = IICGP.ReducingFunctions.connected_components_features(r2, 20)
+a2, c2 = IICGP.ReducingFunctions.reorder_features(c1, a1, c2, a2)
 
-n = 15
 
-plot_centroids(r1, c)
+
+plot_centroids(r1, c1)
+plot_centroids(r2, c2)
 
 ##
 

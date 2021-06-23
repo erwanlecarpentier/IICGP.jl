@@ -1,12 +1,40 @@
-export ReducingFunctions, get_centroids
+export ReducingFunctions
 
 module ReducingFunctions
 
 # using OpenCV
 using Statistics
 using TiledIteration
+using Hungarian
 using Images
 using ImageMorphology
+using LinearAlgebra
+
+"""
+    reorder_features(
+        c1::Array{Tuple{Float64,Float64},1},
+        a1::Array{Int64,1},
+        c2::Array{Tuple{Float64,Float64},1},
+        a2::Array{Int64,1}
+    )
+
+Reorder the features contained in c2, a2 by making a best match with c1, a1.
+"""
+function reorder_features(
+    c1::Array{Tuple{Float64,Float64},1},
+    a1::Array{Int64,1},
+    c2::Array{Tuple{Float64,Float64},1},
+    a2::Array{Int64,1}
+)
+    weights = zeros(length(c1), length(c1))
+    for i in eachindex(c1)
+        for j in eachindex(c2)
+            weights[i, j] = norm(c1[i] .- c2[j]) + abs(a1[i] - a2[j])
+        end
+    end
+    assignment, cost = hungarian(weights)  # 5.680 μs (40 allocations: 5.44 KiB)
+    a2[assignment], c2[assignment]
+end
 
 """
     connected_components_features(x::Array{UInt8, 2}, n::Int64)
