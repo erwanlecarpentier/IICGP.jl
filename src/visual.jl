@@ -1,4 +1,4 @@
-export implot, display_buffer, plot_encoding
+export implot, display_buffer, plot_encoding, plot_centroids
 
 # using CartesianGeneticProgramming
 using Plots

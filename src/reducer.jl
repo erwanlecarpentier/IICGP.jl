@@ -1,60 +1,40 @@
-export ReducingFunctions
+export ReducingFunctions, get_centroids
 
 module ReducingFunctions
 
 # using OpenCV
 using Statistics
 using TiledIteration
-
-#=
-function nearest_reduction(m::T; s::Int64=5) where {T <: OpenCV.InputArray}
-    # dsize = OpenCV.Size(convert(Int32, s), convert(Int32, s))
-    return OpenCV.resize(m, OpenCV.Size(convert(Int32, s), convert(Int32, s)),
-                         m, 1.0, 1.0, OpenCV.INTER_NEAREST)
-end
-
-function linear_reduction(m::T; s::Int64=5) where {T <: OpenCV.InputArray}
-    # dsize = OpenCV.Size(convert(Int32, s), convert(Int32, s))
-    return OpenCV.resize(m, OpenCV.Size(convert(Int32, s), convert(Int32, s)),
-                         m, 1.0, 1.0, OpenCV.INTER_LINEAR)
-end
-
-function area_reduction(m::T; s::Int64=5) where {T <: OpenCV.InputArray}
-    # dsize = OpenCV.Size(convert(Int32, s), convert(Int32, s))
-    return OpenCV.resize(m, OpenCV.Size(convert(Int32, s), convert(Int32, s)),
-                         m, 1.0, 1.0, OpenCV.INTER_AREA)
-end
-
-function cubic_reduction(m::T; s::Int64=5) where {T <: OpenCV.InputArray}
-    # dsize = OpenCV.Size(convert(Int32, s), convert(Int32, s))
-    return OpenCV.resize(m, OpenCV.Size(convert(Int32, s), convert(Int32, s)),
-                         m, 1.0, 1.0, OpenCV.INTER_CUBIC)
-end
-
-function lanczos_reduction(m::T; s::Int64=5) where {T <: OpenCV.InputArray}
-    # dsize = OpenCV.Size(convert(Int32, s), convert(Int32, s))
-    return OpenCV.resize(m, OpenCV.Size(convert(Int32, s), convert(Int32, s)),
-                         m, 1.0, 1.0, OpenCV.INTER_LANCZOS4)
-end
-=#
-
+using Images
+using ImageMorphology
 
 """
-    get_centroids(x::Array{UInt8, 2}, n::Int64)
+    connected_components_features(x::Array{UInt8, 2}, n::Int64)
 
 Given an image, return the centroids and the boxes areas of the `n` largest
 connected components.
+Fill with zeros if there are less than `n` components.
 """
-function get_centroids(x::Array{UInt8, 2}, n::Int64)
+function connected_components_features(x::Array{UInt8, 2}, n::Int64)
     labels = label_components(x)
     boxes = component_boxes(labels)
     centroids = component_centroids(labels)
     # popfirst!(centroids) # remove background centroid
     areas = [abs(b[1][1]-b[2][1]-1) * abs(b[1][2]-b[2][2]-1) for b in boxes]
     p = sortperm(areas, rev=true)
-    centroids = centroids[p][1:n]
-    centroids_flat = collect(Iterators.flatten(centroids))
-    areas, centroids, centroids_flat
+    centroids = centroids[p]
+    areas = areas[p]
+    c = fill((0.0, 0.0), n)
+    a = fill(0, n)
+    for i in eachindex(centroids)
+        c[i] = centroids[i]
+        a[i] = areas[i]
+        if i == n
+            break
+        end
+    end
+    c_flat = collect(Iterators.flatten(c))
+    a, c, c_flat
 end
 
 """

@@ -21,29 +21,12 @@ m2 = load_img("images/freeway_frame_31.png")
 r2, g2, b2 = split_rgb(m2)
 
 
-function get_centroids(x::Array{UInt8, 2}, n::Int64; a_prev=nothing,
-                       c_prev=nothing)
-    labels = label_components(x)
-    boxes = component_boxes(labels)
-    centroids = component_centroids(labels)
-    # popfirst!(centroids) # remove background centroid
-    areas = [abs(b[1][1]-b[2][1]-1) * abs(b[1][2]-b[2][2]-1) for b in boxes]
-    p = sortperm(areas, rev=true)
-    if a_prev != nothing && c_prev != nothing
-
-    else
-        centroids = centroids[p][1:n]
-    end
-    centroids_flat = collect(Iterators.flatten(centroids))
-    areas, centroids, centroids_flat
-end
+a1, c1, cf1 = IICGP.ReducingFunctions.connected_components_features(r1, 20)
+a2, c2, cf2 = IICGP.ReducingFunctions.connected_components_features(r2, 20)
 
 n = 15
-a1, c1, cf1 = get_centroids(r1, n)
-a2, c2, cf2 = get_centroids(r2, n)
 
-plot_centroids(r1, c1)
-plot_centroids(r2, c2)
+plot_centroids(r1, c)
 
 ##
 
