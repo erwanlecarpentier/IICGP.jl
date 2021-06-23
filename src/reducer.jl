@@ -1,6 +1,4 @@
-export ReducingFunctions
-
-module ReducingFunctions
+export Reducer, pooling_reduction, connected_components_reduction
 
 # using OpenCV
 using Statistics
@@ -9,6 +7,13 @@ using Hungarian
 using Images
 using ImageMorphology
 using LinearAlgebra
+
+abstract type AbstractReducer end
+
+struct Reducer <: AbstractReducer
+    reduct::Function
+    parameters::Dict
+end
 
 """
     reorder_features(
@@ -37,13 +42,13 @@ function reorder_features(
 end
 
 """
-    connected_components_features(x::Array{UInt8, 2}, n::Int64)
+    connected_components_reduction(x::Array{UInt8, 2}, n::Int64)
 
 Given an image, return the centroids and the boxes areas of the `n` largest
 connected components.
 Fill with zeros if there are less than `n` components.
 """
-function connected_components_features(x::Array{UInt8, 2}, n::Int64)
+function connected_components_reduction(x::Array{UInt8, 2}, n::Int64)
     labels = label_components(x)
     boxes = component_boxes(labels)
     centroids = component_centroids(labels)
@@ -66,57 +71,19 @@ function connected_components_features(x::Array{UInt8, 2}, n::Int64)
 end
 
 """
-    max_pool_reduction(img::Array{UInt8,2}, s::Int64=5)
+    pooling_reduction(img::Array{UInt8,2}, parameters::Dict)
 
-Max pooling function.
+Generic pooling function.
 """
-function max_pool_reduction(img::Array{UInt8,2}, s::Int64=5)
-    outsz = (s, s)
+function pooling_reduction(img::Array{UInt8,2}, parameters::Dict)
+    outsz = (parameters["size"], parameters["size"])
     # out = Array{eltype(img), ndims(img)}(undef, outsz)
     out = Array{Float64, ndims(img)}(undef, outsz)
     tilesz = ceil.(Int, size(img)./outsz)
     R = TileIterator(axes(img), tilesz)
     i = 1
     for tileaxs in R
-       out[i] = maximum(view(img, tileaxs...))
-       i += 1
-    end
-    return out ./ 255.0
-end
-
-"""
-    min_pool_reduction(img::Array{UInt8,2}, s::Int64=5)
-
-Min pooling function.
-"""
-function min_pool_reduction(img::Array{UInt8,2}, s::Int64=5)
-    outsz = (s, s)
-    # out = Array{eltype(img), ndims(img)}(undef, outsz)
-    out = Array{Float64, ndims(img)}(undef, outsz)
-    tilesz = ceil.(Int, size(img)./outsz)
-    R = TileIterator(axes(img), tilesz)
-    i = 1
-    for tileaxs in R
-       out[i] = minimum(view(img, tileaxs...))
-       i += 1
-    end
-    return out ./ 255.0
-end
-
-"""
-    mean_pool_reduction(img::Array{UInt8,2}, s::Int64=5)
-
-Mean pooling function.
-"""
-function mean_pool_reduction(img::Array{UInt8,2}, s::Int64=5)
-    outsz = (s, s)
-    # out = Array{eltype(img), ndims(img)}(undef, outsz)
-    out = Array{Float64, ndims(img)}(undef, outsz)
-    tilesz = ceil.(Int, size(img)./outsz)
-    R = TileIterator(axes(img), tilesz)
-    i = 1
-    for tileaxs in R
-       out[i] = Statistics.mean(view(img, tileaxs...))
+       out[i] = parameters["pooling_function"](view(img, tileaxs...))
        i += 1
     end
     return out ./ 255.0
@@ -140,6 +107,4 @@ function max_pool_reduction_threads(m::AbstractArray, s::Int64=5)
        @inbounds out[i] = maximum(view(m, R[i]...))
     end
     return out
-end
-
 end
