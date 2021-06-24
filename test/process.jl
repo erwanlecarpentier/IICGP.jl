@@ -27,8 +27,8 @@ enco_cfg = cfg_from_info(enco_nodes, n_in, enco_outputs, IICGP.CGPFunctions, 1)
 enco = IPCGPInd(enco_nodes, enco_cfg, enco_outputs, img_size)
 
 # Feature projection function
-p = Dict("pooling_function"=>Statistics.mean, "size"=>5)
-reducer = Reducer(pooling_reduction, p)
+size = 5
+r = PoolingReducer(Statistics.mean, size)
 
 # Controller
 cont_nodes = [

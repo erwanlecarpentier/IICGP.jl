@@ -45,9 +45,9 @@ function process(
     encoder::CGPInd,
     controller::CGPInd,
     inp::AbstractArray,
-    reducer::Function
+    reducer::AbstractReducer
 )
     out = CartesianGeneticProgramming.process(encoder, inp)
-    features = reducer(out)
+    features = reducer.reduct(out, reducer.parameters)
     CartesianGeneticProgramming.process(controller, features)
 end
