@@ -33,9 +33,9 @@ end
 """
     function process(
         encoder::CGPInd,
+        reducer::AbstractReducer,
         controller::CGPInd,
-        inp::AbstractArray,
-        reducer::Function
+        inp::AbstractArray
     )
 
 Process function chaining encoder, features projection and controller.
@@ -43,11 +43,33 @@ Both the encoder and the controller are CGP individuals.
 """
 function process(
     encoder::CGPInd,
+    reducer::AbstractReducer,
     controller::CGPInd,
-    inp::AbstractArray,
-    reducer::AbstractReducer
+    inp::AbstractArray
+)
+    process_f(encoder, reducer, controller, inp)[2]
+end
+
+"""
+    function process_f(
+        encoder::CGPInd,
+        reducer::AbstractReducer,
+        controller::CGPInd,
+        inp::AbstractArray
+    )
+
+Process function chaining encoder, features projection and controller.
+Both the encoder and the controller are CGP individuals.
+Return the created feature vector as well as the output.
+"""
+function process_f(
+    encoder::CGPInd,
+    reducer::AbstractReducer,
+    controller::CGPInd,
+    inp::AbstractArray
 )
     out = CartesianGeneticProgramming.process(encoder, inp)
     features = reducer.reduct(out, reducer.parameters)
-    CartesianGeneticProgramming.process(controller, features)
+    features_flatten = collect(Iterators.flatten(features))
+    return features, CartesianGeneticProgramming.process(controller, features_flatten)
 end

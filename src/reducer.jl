@@ -15,11 +15,21 @@ struct Reducer <: AbstractReducer
     parameters::Dict
 end
 
+"""
+    PoolingReducer(f::Function, size::Int64)
+
+Pooling reducer constructor.
+"""
 function PoolingReducer(f::Function, size::Int64)
     p = Dict("pooling_function"=>f, "size"=>size)
     Reducer(pooling_reduction, p)
 end
 
+"""
+    CentroidReducer(n::Int64)
+
+Centroid reducer constructor.
+"""
 function CentroidReducer(n::Int64)
     p = Dict(
         "n"=>n,
@@ -67,7 +77,7 @@ function centroid_reduction(x::Array{UInt8, 2}, parameters::Dict)
     labels = label_components(x)
     boxes = component_boxes(labels)
     centroids = component_centroids(labels)
-    # popfirst!(centroids) # remove background centroid
+    # popfirst!(centroids)  # remove largest
     areas = [abs(b[1][1]-b[2][1]-1) * abs(b[1][2]-b[2][2]-1) for b in boxes]
     p = sortperm(areas, rev=true)
     centroids = centroids[p]
@@ -92,40 +102,33 @@ function centroid_reduction(x::Array{UInt8, 2}, parameters::Dict)
 end
 
 """
-    pooling_reduction(img::Array{UInt8,2}, parameters::Dict)
+    pooling_reduction(x::Array{UInt8,2}, parameters::Dict)
 
-Generic pooling function.
+Generic pooling function for several images (sequential application).
 """
-function pooling_reduction(img::Array{UInt8,2}, parameters::Dict)
+function pooling_reduction(xs::Array{Array{UInt8,2},1}, parameters::Dict)
+    fs = Array{Array{Float64,2},1}(undef, length(xs))
+    for i in eachindex(xs)
+        fs[i] = pooling_reduction(xs[i], parameters)
+    end
+    return fs
+end
+
+"""
+    pooling_reduction(x::Array{UInt8,2}, parameters::Dict)
+
+Generic pooling function for a single image.
+"""
+function pooling_reduction(x::Array{UInt8,2}, parameters::Dict)
     outsz = (parameters["size"], parameters["size"])
-    # out = Array{eltype(img), ndims(img)}(undef, outsz)
-    out = Array{Float64, ndims(img)}(undef, outsz)
-    tilesz = ceil.(Int, size(img)./outsz)
-    R = TileIterator(axes(img), tilesz)
+    # out = Array{eltype(x), ndims(x)}(undef, outsz)
+    out = Array{Float64, ndims(x)}(undef, outsz)
+    tilesz = ceil.(Int, size(x)./outsz)
+    R = TileIterator(axes(x), tilesz)
     i = 1
     for tileaxs in R
-       out[i] = parameters["pooling_function"](view(img, tileaxs...))
+       out[i] = parameters["pooling_function"](view(x, tileaxs...))
        i += 1
     end
     return out ./ 255.0
-end
-
-function max_pool_reduction2(img::Array{UInt8,2}, s::Int64=5)
-    n_cols = s
-    n_rows = s
-    tile_width = convert(Int64, ceil(size(img)[1] / n_cols))
-    tile_height = convert(Int64, ceil(size(img)[2] / n_rows))
-    out = map(TileIterator(axes(img[:, :]), (tile_width, tile_height))) do tileaxs maximum(img[tileaxs...]) end
-    reshape(out, n_cols, n_rows)
-end
-
-function max_pool_reduction_threads(m::AbstractArray, s::Int64=5)
-    outsz = (size(m, 1), ntuple(_->s, ndims(m) - 1)...)
-    out = Array{eltype(m), ndims(m)}(undef, outsz)
-    tilesz = ceil.(Int, size(m)./outsz)
-    R = TileIterator(axes(m), tilesz)
-    Threads.@threads for i in eachindex(R)
-       @inbounds out[i] = maximum(view(m, R[i]...))
-    end
-    return out
 end
