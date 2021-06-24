@@ -1,4 +1,4 @@
-export Reducer, PoolingReducer, CentroidReducer
+export Reducer, PoolingReducer, CentroidReducer, AbstractReducer
 
 # using OpenCV
 using Statistics
@@ -26,15 +26,15 @@ function PoolingReducer(f::Function, size::Int64)
 end
 
 """
-    CentroidReducer(n::Int64)
+    CentroidReducer(n_centroids::Int64, n_in::Int64)
 
 Centroid reducer constructor.
 """
-function CentroidReducer(n::Int64)
+function CentroidReducer(n_centroids::Int64, n_in::Int64)
     p = Dict(
-        "n"=>n,
-        "c_prev"=>Tuple{Float64,Float64}[],
-        "a_prev"=>Int64[]
+        "n"=>n_centroids,
+        "c_prev"=>Array{Array{Tuple{Float64,Float64},1},1}(undef, n_in),
+        "a_prev"=>Array{Array{Int64,1},1}(undef, n_in)
     )
     Reducer(centroid_reduction, p)
 end
@@ -66,14 +66,44 @@ function reorder_features(
 end
 
 """
-    centroid_reduction(x::Array{UInt8, 2}, parameters::Dict)
+    centroid_reduction(xs::Array{Array{UInt8,2},1}, parameters::Dict)
+
+Generic centroid reduction function for several images (sequential application).
+"""
+function centroid_reduction(xs::Array{Array{UInt8,2},1}, parameters::Dict)
+    fs = Array{Array{Float64,2},1}(undef, length(xs))
+    for i in eachindex(xs)
+        if isdefined(parameters["c_prev"], i)
+            c_prev = parameters["c_prev"][i]
+            a_prev = parameters["a_prev"][i]
+        else
+            c_prev = nothing
+            a_prev = nothing
+        end
+        fs[i], c, a = centroid_reduction(xs[i], parameters["n"], c_prev, a_prev)
+        parameters["c_prev"][i] = c
+        parameters["a_prev"][i] = a
+    end
+    return fs
+end
+
+"""
+    centroid_reduction(
+        x::Array{UInt8, 2},
+        c_prev::Array{Tuple{Float64,Float64},1},
+        a_prev::Array{Int64,1}
+    )
 
 Given an image, return the centroids and the boxes areas of the `n` largest
 connected components, `n` being defined in the parameters dictionary.
 Fill with zeros if there are less than `n` components.
 """
-function centroid_reduction(x::Array{UInt8, 2}, parameters::Dict)
-    n = parameters["n"]
+function centroid_reduction(
+        x::Array{UInt8, 2},
+        n::Int64,
+        c_prev::Union{Array{Tuple{Float64,Float64},1}, Nothing},
+        a_prev::Union{Array{Int64,1}, Nothing}
+    )
     labels = label_components(x)
     boxes = component_boxes(labels)
     centroids = component_centroids(labels)
@@ -84,6 +114,7 @@ function centroid_reduction(x::Array{UInt8, 2}, parameters::Dict)
     areas = areas[p]
     c = fill((0.0, 0.0), n)
     a = fill(0, n)
+    println("GOT HERE")
     for i in eachindex(centroids)
         c[i] = centroids[i]
         a[i] = areas[i]
@@ -91,18 +122,15 @@ function centroid_reduction(x::Array{UInt8, 2}, parameters::Dict)
             break
         end
     end
-    if length(parameters["c_prev"]) > 0
+    if c_prev != nothing && a_prev != nothing
         a, c = reorder_features(parameters["c_prev"], parameters["a_prev"], c, a)
     end
-    println(parameters["a_prev"])
-    parameters["a_prev"] = a
-    parameters["c_prev"] = c
     c_flat = collect(Iterators.flatten(c))
-    c_flat
+    c_flat, c, a
 end
 
 """
-    pooling_reduction(x::Array{UInt8,2}, parameters::Dict)
+    pooling_reduction(xs::Array{Array{UInt8,2},1}, parameters::Dict)
 
 Generic pooling function for several images (sequential application).
 """
