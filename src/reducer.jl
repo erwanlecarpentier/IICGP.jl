@@ -26,15 +26,21 @@ function PoolingReducer(f::Function, size::Int64)
 end
 
 """
-    CentroidReducer(n_centroids::Int64, n_in::Int64)
+    CentroidReducer(
+        n_centroids::Int64,
+        n_in::Int64,
+        img_size::Tuple{Int64,Int64}
+    )
 
 Centroid reducer constructor.
 """
-function CentroidReducer(n_centroids::Int64, n_in::Int64)
+function CentroidReducer(n_centroids::Int64, n_in::Int64,
+                         img_size::Tuple{Int64,Int64})
     p = Dict(
         "n"=>n_centroids,
         "c_prev"=>Array{Array{Tuple{Float64,Float64},1},1}(undef, n_in),
-        "a_prev"=>Array{Array{Int64,1},1}(undef, n_in)
+        "a_prev"=>Array{Array{Int64,1},1}(undef, n_in),
+        "img_size"=>img_size
     )
     Reducer(centroid_reduction, p)
 end
@@ -66,6 +72,24 @@ function reorder_features(
 end
 
 """
+    normalized_centroids(
+        c::Array{Tuple{Float64,Float64},1},
+        img_size::Tuple{Int64,Int64}
+    )
+
+Normalize the input centroid vector to [0.0, 1.0].
+Requires the image size as a 2D tuple.
+"""
+function normalized_centroids(c::Array{Tuple{Float64,Float64},1},
+                              img_size::Tuple{Int64,Int64})
+    c_norm = Array{Tuple{Float64,Float64},1}(undef, length(c))
+    for i in eachindex(c)
+        c_norm[i] = c[i] ./ img_size
+    end
+    c_norm
+end
+
+"""
     centroid_reduction(xs::Array{Array{UInt8,2},1}, parameters::Dict)
 
 Generic centroid reduction function for several images (sequential application).
@@ -81,7 +105,7 @@ function centroid_reduction(xs::Array{Array{UInt8,2},1}, parameters::Dict)
             a_prev = nothing
         end
         c, a = centroid_reduction(xs[i], parameters["n"], c_prev, a_prev)
-        fs[i] = c
+        fs[i] = normalized_centroids(c, parameters["img_size"])
         parameters["c_prev"][i] = c
         parameters["a_prev"][i] = a
     end

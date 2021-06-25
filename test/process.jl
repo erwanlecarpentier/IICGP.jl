@@ -53,48 +53,38 @@ function enco_cont_from_reducer(r::AbstractReducer)
     enco, cont, img_size
 end
 
+@testset "Processing function" begin
+    # Pooling reducer
+    features_size = 5
+    r = PoolingReducer(Statistics.mean, features_size)
+    enco, cont, img_size = enco_cont_from_reducer(r)
 
-##
+    game = Game(GAME_NAME, 0)
+    n_out = length(getMinimalActionSet(game.ale))
+    rgb = get_rgb(game)
+    features, out = IICGP.process_f(enco, r, cont, rgb)
+    close!(game)
 
-# Pooling reducer
-features_size = 5
-r = PoolingReducer(Statistics.mean, features_size)
-enco, cont, img_size = enco_cont_from_reducer(r)
+    @test length(features) == N_OUT_ENCO
+    for i in eachindex(features)
+        @test typeof(features[i]) == Array{Float64, 2}
+        @test size(features[i]) == (features_size, features_size)
+        @test all(f -> (0.0 <= f <= 1.0), features[i])
+    end
+    @test length(out) == n_out
 
-game = Game(GAME_NAME, 0)
-n_out = length(getMinimalActionSet(game.ale))
-rgb = get_rgb(game)
-features, out = IICGP.process_f(enco, r, cont, rgb)
-close!(game)
+    # Centroid reducer
+    n_centroids = 20
+    r = CentroidReducer(n_centroids, N_OUT_ENCO, img_size)
+    enco, cont, img_size = enco_cont_from_reducer(r)
 
-@test length(features) == N_OUT_ENCO
-for i in eachindex(features)
-    @test typeof(features[i]) == Array{Float64, 2}
-    @test size(features[i]) == (features_size, features_size)
-    @test all(f -> (0.0 <= f <= 1.0), features[i])
-end
-@test length(out) == n_out
+    features, out = IICGP.process_f(enco, r, cont, rgb)
 
-##
-
-# Centroid reducer
-n_centroids = 20
-r = CentroidReducer(n_centroids, N_OUT_ENCO)
-enco, cont, img_size = enco_cont_from_reducer(r)
-
-features, out = IICGP.process_f(enco, r, cont, rgb)
-
-@test length(features) == N_OUT_ENCO
-for i in eachindex(features)
-    @test typeof(features[i]) == Array{Tuple{Float64,Float64},1}
-    @test length(features[i]) == n_centroids
-    @test all(f -> ((0.0, 0.0) <= f <= (maximum(img_size), maximum(img_size))), features[i])
-end
-@test length(out) == n_out
-
-
-
-##
-@testset "Processing functions" begin
-    println("TODO")
+    @test length(features) == N_OUT_ENCO
+    for i in eachindex(features)
+        @test typeof(features[i]) == Array{Tuple{Float64,Float64},1}
+        @test length(features[i]) == n_centroids
+        @test all(f -> ((0.0, 0.0) <= f <= (1.0, 1.0)), features[i])
+    end
+    @test length(out) == n_out
 end
