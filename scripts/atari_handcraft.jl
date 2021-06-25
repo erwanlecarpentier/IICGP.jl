@@ -85,7 +85,7 @@ function play_atari(
 )
     game = Game(args["game"], seed)
     reward = 0.0
-    frames = 0
+    frames = 1
     a_prev = nothing
     c_prev = nothing
     while ~game_over(game.ale)
@@ -95,24 +95,20 @@ function play_atari(
         rgb = [Array{UInt8}(rgb[i,:,:]) for i in 1:3]
 
         # Process
-        features, out = IICGP.process_f(encoder, reducer, controller, rgb)
+        enco_out, features, out = IICGP.process_full(
+            encoder,
+            reducer,
+            controller,
+            rgb
+        )
 
+        # Render and save
         if reducer_type == "pooling"
             plt = plot_encoding(n_in, enco.buffer, features)
         elseif reducer_type == "centroid"
-            img = rgb[1]
-            n = 20
-            a, c, cf = IICGP.ReducingFunctions.connected_components_features(img, n)
-            if frames > 0
-                a, c = IICGP.ReducingFunctions.reorder_features(c_prev, a_prev, c, a)
-            end
-            a_prev = a
-            c_prev = c
-            plt = plot_centroids(img, c)
-            # savefig(plt, "gifs/freeway_centroids/$frames.png")
-            # println(frames)
+            print(features)
+            plt = plot_centroids(enco_out, features)
         end
-
         if render
             display(plt)
         end
@@ -179,7 +175,7 @@ enco_cfg = cfg_from_info(enco_nodes, n_in, enco_outputs, IICGP.CGPFunctions,
 enco = IPCGPInd(enco_nodes, enco_cfg, enco_outputs, img_size)
 
 # Reducer
-reducer_type = "pooling"
+reducer_type = "centroid"
 if reducer_type == "pooling"
     feature_height = 5
     redu = PoolingReducer(Statistics.mean, feature_height)
@@ -209,7 +205,7 @@ cont = CGPInd(cont_nodes, cont_cfg, cont_outputs)
 play_atari(
     enco, redu, cont,
     reducer_type=reducer_type,
-    max_frames=500,
+    max_frames=10,
     sleep_time=0.0,
     render=true,
     save=false

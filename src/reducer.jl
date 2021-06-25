@@ -98,8 +98,10 @@ end
 Scale the input centroid vector from [0, 1] to the actual image size.
 Requires the image size as a 2D tuple.
 """
-function scaled_centroids(c::Array{Tuple{Float64,Float64},1},
-                              img_size::Tuple{Int64,Int64})
+function scaled_centroids(
+    c::Array{Tuple{Float64,Float64},1},
+    img_size::Tuple{Int64,Int64}
+)
     c_scaled = Array{Tuple{Float64,Float64},1}(undef, length(c))
     for i in eachindex(c)
         c_scaled[i] = c[i] .* img_size

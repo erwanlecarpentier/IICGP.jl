@@ -90,24 +90,28 @@ end
 
 """
     plot_centroids(
-        x::Array{UInt8, 2},
-        centroids::Array{Tuple{Float64,Float64},1}
+        images::Array{Array{UInt8,2},1},
+        centroids::Array{Array{Tuple{Float64,Float64},1},1}
     )
 
 Given an image and a set of centroids, plot the image as a heatmap along with
 the centroids.
 """
 function plot_centroids(
-        x::Array{UInt8, 2},
-        centroids::Array{Tuple{Float64,Float64},1}
+        images::Array{Array{UInt8,2},1},
+        centroids::Array{Array{Tuple{Float64,Float64},1},1}
     )
-    xs = [c[1] for c in centroids]
-    ys = [c[2] for c in centroids]
+    x = images[1]
+    img_size = size(x)
+    centro = IICGP.scaled_centroids(centroids[1], img_size)
+
+    xs = [c[1] for c in centro]
+    ys = [c[2] for c in centro]
     pal = palette([:blue, :red, :orange, :yellow, :green], length(xs))
     plt = heatmap(x, color=:grays, ratio=:equal, yflip=true, leg=false,
                   framestyle=:none)
     for i in eachindex(xs)
-        scatter!(plt, [ys[i]], [xs[i]], legend=:none, color=pal[i])#, color=:thermal)
+        scatter!(plt, [ys[i]], [xs[i]], legend=:none, color=pal[i])
     end
     plt
 end
