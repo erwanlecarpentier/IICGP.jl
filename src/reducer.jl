@@ -71,7 +71,7 @@ end
 Generic centroid reduction function for several images (sequential application).
 """
 function centroid_reduction(xs::Array{Array{UInt8,2},1}, parameters::Dict)
-    fs = Array{Array{Float64,2},1}(undef, length(xs))
+    fs = Array{Array{Tuple{Float64,Float64},1},1}(undef, length(xs))
     for i in eachindex(xs)
         if isdefined(parameters["c_prev"], i)
             c_prev = parameters["c_prev"][i]
@@ -80,7 +80,8 @@ function centroid_reduction(xs::Array{Array{UInt8,2},1}, parameters::Dict)
             c_prev = nothing
             a_prev = nothing
         end
-        fs[i], c, a = centroid_reduction(xs[i], parameters["n"], c_prev, a_prev)
+        c, a = centroid_reduction(xs[i], parameters["n"], c_prev, a_prev)
+        fs[i] = c
         parameters["c_prev"][i] = c
         parameters["a_prev"][i] = a
     end
@@ -114,7 +115,6 @@ function centroid_reduction(
     areas = areas[p]
     c = fill((0.0, 0.0), n)
     a = fill(0, n)
-    println("GOT HERE")
     for i in eachindex(centroids)
         c[i] = centroids[i]
         a[i] = areas[i]
@@ -126,7 +126,7 @@ function centroid_reduction(
         a, c = reorder_features(parameters["c_prev"], parameters["a_prev"], c, a)
     end
     c_flat = collect(Iterators.flatten(c))
-    c_flat, c, a
+    c, a
 end
 
 """

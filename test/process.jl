@@ -80,9 +80,17 @@ end
 # Centroid reducer
 n_centroids = 20
 r = CentroidReducer(n_centroids, N_OUT_ENCO)
+enco, cont = enco_cont_from_reducer(r)
+
 
 out = CartesianGeneticProgramming.process(enco, rgb)
 features = r.reduct(out, r.parameters)
+# features_flatten = collect(Iterators.flatten(features))
+features_flatten = collect(Iterators.flatten(Iterators.flatten(features)))
+CartesianGeneticProgramming.process(cont, features_flatten)
+
+
+features, out = IICGP.process_f(enco, r, cont, rgb)
 # TODO here
 
 
