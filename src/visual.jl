@@ -1,43 +1,6 @@
 export implot, display_buffer, plot_encoding, plot_centroids
 
-# using CartesianGeneticProgramming
 using Plots
-
-#=
-# DEPRECATED
-"""
-    imshow(m::T) where {T <: OpenCV.InputArray}
-
-Show input image using functions `imshow` and `waitKey` from OpenCV Julia
-binding.
-"""
-function imshow(m::T) where {T <: OpenCV.InputArray}
-    OpenCV.imshow("Image", m)
-    OpenCV.waitKey(Int32(0))
-end
-
-"""
-    imshow(m::T; enlargement::Int64) where {T <: OpenCV.InputArray}
-
-Show enlarged input image using functions `imshow` and `waitKey` from OpenCV
-Julia binding.
-The enlargement factor is given by the `enlargement` input parameter.
-
-Examples:
-
-    IICGP.imshow(m)
-    IICGP.imshow(m, 2)
-    IICGP.imshow(m, 0.5)
-"""
-function imshow(m::T, enlargement::E) where {T <: OpenCV.InputArray, E <: Union{Int64, Float64}}
-    n_cols = convert(Int32, size(m)[2] * enlargement)
-    n_rows = convert(Int32, size(m)[3] * enlargement)
-    new_size = OpenCV.Size(n_cols, n_rows)
-    enlarged = OpenCV.resize(m, new_size, m, 1.0, 1.0, OpenCV.INTER_NEAREST)
-    imshow(enlarged)
-end
-=#
-
 
 """
     function implot(img::AbstractArray; kwargs...)
@@ -71,7 +34,11 @@ function implot(img::AbstractArray; kwargs...)
 end
 
 """
-    function display_buffer(ind::CGPInd, enlargement::E=1, indexes::Array{Int64}) where {E <: Union{Int64, Float64}}
+    function display_buffer(
+        ind::CGPInd,
+        enlargement::E=1;
+        indexes=eachindex(ind.buffer)
+    ) where {E <: Union{Int64, Float64}}
 
 Display the images contained in each node in the input IPCGP individual.
 
@@ -82,7 +49,11 @@ Examples:
     IICGP.display_buffer(ind, indexes=1:3)
     IICGP.display_buffer(ind, 2, indexes=1:3)
 """
-function display_buffer(ind::CGPInd, enlargement::E=1; indexes=eachindex(ind.buffer)) where {E <: Union{Int64, Float64}}
+function display_buffer(
+        ind::CGPInd,
+        enlargement::E=1;
+        indexes=eachindex(ind.buffer)
+    ) where {E <: Union{Int64, Float64}}
     for i in indexes
         imshow(ind.buffer[i], enlargement)
     end
@@ -90,12 +61,19 @@ end
 
 
 """
-    plot_encoding(n_in::Int64, buffer::Array{Array{UInt8, 2}, 1}, features::AbstractArray)
+    plot_encoding(
+        n_in::Int64,
+        buffer::Array{Array{UInt8,2},1},
+        features::AbstractArray
+    )
 
 Plot the complete encoding pipeline from input to projection on feature space.
 """
-function plot_encoding(n_in::Int64, buffer::Array{Array{UInt8, 2}, 1},
-                       features::AbstractArray)
+function plot_encoding(
+        n_in::Int64,
+        buffer::Array{Array{UInt8,2},1},
+        features::AbstractArray
+    )
     n_cols = max(n_in, length(features), length(buffer)-n_in)
     p = plot(layout=grid(3, n_cols), leg=false, framestyle=:none) #axis=nothing)
     for i in 1:n_in
@@ -111,13 +89,18 @@ function plot_encoding(n_in::Int64, buffer::Array{Array{UInt8, 2}, 1},
 end
 
 """
-    plot_centroids(x::Array{UInt8, 2}, centroids::Array{Tuple{Float64,Float64},1})
+    plot_centroids(
+        x::Array{UInt8, 2},
+        centroids::Array{Tuple{Float64,Float64},1}
+    )
 
 Given an image and a set of centroids, plot the image as a heatmap along with
 the centroids.
 """
-function plot_centroids(x::Array{UInt8, 2},
-                        centroids::Array{Tuple{Float64,Float64},1})
+function plot_centroids(
+        x::Array{UInt8, 2},
+        centroids::Array{Tuple{Float64,Float64},1}
+    )
     xs = [c[1] for c in centroids]
     ys = [c[2] for c in centroids]
     pal = palette([:blue, :red, :orange, :yellow, :green], length(xs))

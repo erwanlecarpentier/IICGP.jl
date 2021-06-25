@@ -58,13 +58,11 @@ end
     features_size = 5
     r = PoolingReducer(Statistics.mean, features_size)
     enco, cont, img_size = enco_cont_from_reducer(r)
-
     game = Game(GAME_NAME, 0)
     n_out = length(getMinimalActionSet(game.ale))
     rgb = get_rgb(game)
     features, out = IICGP.process_f(enco, r, cont, rgb)
     close!(game)
-
     @test length(features) == N_OUT_ENCO
     for i in eachindex(features)
         @test typeof(features[i]) == Array{Float64, 2}
@@ -77,9 +75,7 @@ end
     n_centroids = 20
     r = CentroidReducer(n_centroids, N_OUT_ENCO, img_size)
     enco, cont, img_size = enco_cont_from_reducer(r)
-
     features, out = IICGP.process_f(enco, r, cont, rgb)
-
     @test length(features) == N_OUT_ENCO
     for i in eachindex(features)
         @test typeof(features[i]) == Array{Tuple{Float64,Float64},1}
