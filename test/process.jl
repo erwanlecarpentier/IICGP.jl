@@ -33,7 +33,7 @@ function enco_cont_from_reducer(r::AbstractReducer)
     # Forward pass to retrieve the number of input of the controller
     enco_out = CartesianGeneticProgramming.process(enco, rgb)
     features = r.reduct(enco_out, r.parameters)
-    features_flatten = collect(Iterators.flatten(features))
+    features_flatten = collect(Iterators.flatten(Iterators.flatten(features)))
 
     # Controller
     cont_nodes = [
@@ -50,7 +50,7 @@ function enco_cont_from_reducer(r::AbstractReducer)
                              IICGP.CGPFunctions, d_fitness)
     cont = CGPInd(cont_nodes, cont_cfg, cont_outputs)
 
-    enco, cont
+    enco, cont, img_size
 end
 
 
@@ -59,7 +59,7 @@ end
 # Pooling reducer
 features_size = 5
 r = PoolingReducer(Statistics.mean, features_size)
-enco, cont = enco_cont_from_reducer(r)
+enco, cont, img_size = enco_cont_from_reducer(r)
 
 game = Game(GAME_NAME, 0)
 n_out = length(getMinimalActionSet(game.ale))
@@ -80,19 +80,17 @@ end
 # Centroid reducer
 n_centroids = 20
 r = CentroidReducer(n_centroids, N_OUT_ENCO)
-enco, cont = enco_cont_from_reducer(r)
-
-
-out = CartesianGeneticProgramming.process(enco, rgb)
-features = r.reduct(out, r.parameters)
-# features_flatten = collect(Iterators.flatten(features))
-features_flatten = collect(Iterators.flatten(Iterators.flatten(features)))
-CartesianGeneticProgramming.process(cont, features_flatten)
-
+enco, cont, img_size = enco_cont_from_reducer(r)
 
 features, out = IICGP.process_f(enco, r, cont, rgb)
-# TODO here
 
+@test length(features) == N_OUT_ENCO
+for i in eachindex(features)
+    @test typeof(features[i]) == Array{Tuple{Float64,Float64},1}
+    @test length(features[i]) == n_centroids
+    @test all(f -> ((0.0, 0.0) <= f <= (maximum(img_size), maximum(img_size))), features[i])
+end
+@test length(out) == n_out
 
 
 
