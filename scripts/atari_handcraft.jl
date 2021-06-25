@@ -10,6 +10,7 @@ using Images
 using ImageView
 using Plots
 using PlotThemes
+using Statistics
 
 theme(:dark)
 
@@ -56,37 +57,49 @@ function f_null(args...)::Nothing
 end
 
 """
-    play_atari(encoder::CGPInd, controller::CGPInd; seed=0, max_frames=18000)
+    function play_atari(
+        encoder::CGPInd,
+        reducer::AbstractReducer,
+        controller::CGPInd;
+        reducer_type::String="pooling",
+        seed::Int64=0,
+        max_frames::Int64=18000,
+        sleep_time::Float64=0.0,
+        render::Bool=true,
+        save::Bool=false
+    )
 
-Fitness function.
+Play Atari and display individual's encoding.
 """
-function play_atari(encoder::CGPInd, controller::CGPInd; features_size=5,
-                    seed=0, max_frames=18000, rendering=true,
-                    render_centroids=false, sleep_time=0.0)
+function play_atari(
+    encoder::CGPInd,
+    reducer::AbstractReducer,
+    controller::CGPInd;
+    reducer_type::String="pooling",
+    seed::Int64=0,
+    max_frames::Int64=18000,
+    sleep_time::Float64=0.0,
+    render::Bool=true,
+    save::Bool=false,
+    save_repo::String="gifs/freeway/"
+)
     game = Game(args["game"], seed)
     reward = 0.0
     frames = 0
     a_prev = nothing
     c_prev = nothing
-    # Rendering first image for visu
-    #=
-    if rendering
-        rawscreen = getScreenRGB(game.ale)
-        rgb = reshape(rawscreen, (3, game.width, game.height))
-        img = colorview(RGB, normedview(rgb))
-        guidict = imshow(img, axes=(2, 1))
-        canvas = guidict["gui"]["canvas"]
-    end
-    =#
     while ~game_over(game.ale)
         # Replace get_rgb method to integrate visu
         rawscreen = getScreenRGB(game.ale)
         rgb = permutedims(reshape(rawscreen, (3, game.width, game.height)), [1, 3, 2])
         rgb = [Array{UInt8}(rgb[i,:,:]) for i in 1:3]
-        features, output = IICGP.process_f(encoder, controller, rgb, features_size)
 
+        # Process
+        features, out = IICGP.process_f(encoder, reducer, controller, rgb)
 
-        if render_centroids
+        if reducer_type == "pooling"
+            plt = plot_encoding(n_in, enco.buffer, features)
+        elseif reducer_type == "centroid"
             img = rgb[1]
             n = 20
             a, c, cf = IICGP.ReducingFunctions.connected_components_features(img, n)
@@ -96,20 +109,20 @@ function play_atari(encoder::CGPInd, controller::CGPInd; features_size=5,
             a_prev = a
             c_prev = c
             plt = plot_centroids(img, c)
-            # display(plt)
-            savefig(plt, "gifs/freeway_centroids/$frames.png")
-            println(frames)
+            # savefig(plt, "gifs/freeway_centroids/$frames.png")
+            # println(frames)
         end
 
-        if rendering
-            # display(img)
-            # img = colorview(RGB, normedview(rgb))
-            # imshow(canvas, img, axes=(2, 1))
-            display(plot_encoding(n_in, enco.buffer, features))
+        if render
+            display(plt)
         end
+        if save
+            savefig(plt, string(save_repo, "$frames.png"))
+            # println(frames)
+        end
+
         sleep(sleep_time)
-
-        action = game.actions[argmax(output)]
+        action = game.actions[argmax(out)]
         reward += act(game.ale, action)
         frames += 1
         game.ale
@@ -120,6 +133,8 @@ function play_atari(encoder::CGPInd, controller::CGPInd; features_size=5,
     close!(game)
     [reward]
 end
+
+##
 
 s = ArgParseSettings()
 @add_arg_table! s begin
@@ -151,28 +166,37 @@ rgb = permutedims(reshape(rawscreen, (3, game.width, game.height)), [1, 3, 2])
 n_in = 3  # RGB images
 n_out = length(getMinimalActionSet(game.ale))  # One output per legal action
 img_size = size(rgb)[2:3]
+d_fitness = 1
 close!(game)
 
-
-
-# Create custom individuals
+# Encoder
 enco_nodes = [
-    Node(1, 1, IICGP.CGPFunctions.f_motion_capture, [0.5], false),
-    Node(3, 3, IICGP.CGPFunctions.f_dilate, [1.0], false),
-    Node(3, 3, IICGP.CGPFunctions.f_erode, [0.6], false)
+    Node(1, 1, IICGP.CGPFunctions.f_motion_capture, [0.5], false)
 ]
-enco_outputs = Int16[4]
-enco_cfg = cfg_from_info(enco_nodes, n_in, enco_outputs, IICGP.CGPFunctions, 1)
+enco_outputs = Int16[1, 4]
+enco_cfg = cfg_from_info(enco_nodes, n_in, enco_outputs, IICGP.CGPFunctions,
+                         d_fitness)
 enco = IPCGPInd(enco_nodes, enco_cfg, enco_outputs, img_size)
-features_size = 5
 
+# Reducer
+reducer_type = "pooling"
+if reducer_type == "pooling"
+    feature_height = 5
+    redu = PoolingReducer(Statistics.mean, feature_height)
+    features_size = feature_height^2
+elseif reducer_type == "centroid"
+    n_centroids = 20
+    redu = CentroidReducer(n_centroids, length(enco_outputs), img_size)
+    features_size = 2 * n_centroids
+end
 
+# Controller
 cont_nodes = [
     Node(1, 2, IICGP.CGPFunctions.f_subtract, [0.5], false),
     Node(1, 2, IICGP.CGPFunctions.f_add, [0.5], false),
     Node(3, 3, IICGP.CGPFunctions.f_cos, [0.6], false)
 ]
-cont_outputs = Int16[3, 4, 5]
+cont_outputs = Int16[1, 2, 3]
 cont_n_in = length(enco_outputs) * features_size^2
 cont_cfg = cfg_from_info(cont_nodes, cont_n_in, cont_outputs, IICGP.CGPFunctions, 1)
 cont = CGPInd(cont_nodes, cont_cfg, cont_outputs)
@@ -182,10 +206,13 @@ cont = CGPInd(cont_nodes, cont_cfg, cont_outputs)
 ##
 
 # Play game
-play_atari(enco, cont, max_frames=500, sleep_time=0.1,
-    features_size=features_size,
-    rendering=false,
-    render_centroids=true
+play_atari(
+    enco, redu, cont,
+    reducer_type=reducer_type,
+    max_frames=500,
+    sleep_time=0.0,
+    render=true,
+    save=false
 )
 
 ##
