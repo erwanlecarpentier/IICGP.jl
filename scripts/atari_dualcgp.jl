@@ -20,12 +20,6 @@ s = ArgParseSettings()
     "--cfg"
     help = "configuration script"
     default = "cfg/dualcgp_atari_pooling.yaml"
-    "--encoder_cfg"
-    help = "configuration script"
-    default = "cfg/atari_encoder.yaml"
-    "--controller_cfg"
-    help = "configuration script"
-    default = "cfg/atari_controller.yaml"
     "--game"
     help = "game rom name"
     default = "centipede"
@@ -41,9 +35,8 @@ end
 args = parse_args(ARGS, s)
 Random.seed!(args["seed"])
 
-##
-encoder_cfg, controller_cfg, reducer = dualcgp_config(
-    args["cfg"], args["game"], args["seed"]
+encoder_cfg, controller_cfg, reducer = IICGP.dualcgp_config(
+    args["cfg"], args["game"], seed=args["seed"]
 )
 
 ##
