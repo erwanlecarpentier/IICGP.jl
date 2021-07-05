@@ -17,6 +17,9 @@ reset_expert=true and seed=evo.gen below.
 
 s = ArgParseSettings()
 @add_arg_table! s begin
+    "--cfg"
+    help = "configuration script"
+    default = "cfg/dualcgp_atari_pooling.yaml"
     "--encoder_cfg"
     help = "configuration script"
     default = "cfg/atari_encoder.yaml"
@@ -38,12 +41,20 @@ end
 args = parse_args(ARGS, s)
 Random.seed!(args["seed"])
 
+##
+encoder_cfg, controller_cfg, reducer = dualcgp_config(
+    args["cfg"], args["game"], args["seed"]
+)
+
+##
+
 # Temporarily open a game to retrieve parameters
 game = Game(args["game"], 0)
 out = get_rgb(game)
 n_in = 3  # RGB images
 n_out = length(getMinimalActionSet(game.ale))  # One output per legal action
 img_size = size(out[1])
+logid = string(Dates.now(), "_", args["game"], "_", args["seed"])
 close!(game)
 
 # Encoder configuration
@@ -51,9 +62,11 @@ encoder_cfg = get_config(
     args["encoder_cfg"];
     function_module=IICGP.CGPFunctions,
     n_in=n_in,
-    img_size=img_size
+    img_size=img_size,
+    id=logid
 )
-logid = string(Dates.now(), "_", args["game"], "_", args["seed"])
+
+##
 
 # Controller configuration
 n_in_controller = encoder_cfg.n_out * encoder_cfg.features_size^2
@@ -108,26 +121,3 @@ else
     # Run evolution
     run!(e)
 end
-
-
-
-#=
-function populate(evo::Cambrian.Evolution)
-    mutation = i::MTCGPInd->goldman_mutate(cfg, i)
-    Cambrian.oneplus_populate!(evo; mutation=mutation, reset_expert=false) # true
-end
-
-function evaluate(evo::Cambrian.Evolution)
-    fit = i::MTCGPInd->play_atari(i; max_frames=min(10*evo.gen, 18000)) #seed=evo.gen,
-    Cambrian.fitness_evaluate!(evo; fitness=fit)
-end
-
-cfg["n_in"], cfg["n_out"] = get_params()
-
-e = Cambrian.Evolution(MTCGPInd, cfg; id=string(cfg["game"], "_", args["seed"]),
-                       populate=populate,
-                       evaluate=evaluate)
-Cambrian.run!(e)
-best = sort(e.population)[end]
-println("Final fitness: ", best.fitness[1])
-=#
