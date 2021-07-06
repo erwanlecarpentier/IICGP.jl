@@ -18,11 +18,10 @@
 
 # for VARIABLE in boxing centipede demon_attack enduro freeway kung_fu_master space_invaders riverraid pong
 # do
-# 	julia --threads 1 --project=/users/p21001/lecarpen/IICGP.jl scripts/atari.jl --game=$VARIABLE &
+# 	julia --threads 1 --project=/users/p21001/lecarpen/IICGP.jl scripts/atari_dualcgp.jl --game=$VARIABLE &
 # done
 #
 # wait
 # echo "All games complete"
 
-julia --threads 25 --project=/users/p21001/lecarpen/IICGP.jl scripts/atari.jl --game=centipede
-
+julia --threads 25 --project=/users/p21001/lecarpen/IICGP.jl scripts/atari_dualcgp.jl --cfg=cfg/dualcgp_atari_pooling.yaml --game=centipede
