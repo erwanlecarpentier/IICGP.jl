@@ -13,6 +13,31 @@ using ImageSegmentation
 using IICGP
 using Hungarian
 
+##
+
+function remove_nan!(
+    c::Array{Tuple{Float64,Float64},1},
+    a::Array{Int64,1}
+)
+    indexes = Int64[]
+    for i in eachindex(c)
+        if isnan(c[i][1]) || isnan(c[i][2])
+            push!(indexes, i)
+        end
+    end
+    deleteat!(c, indexes)
+    deleteat!(a, indexes)
+end
+
+c = [(80.5, 184.5), (NaN, NaN), (75.125, 177.0), (79.875, 177.0), (98.0, 8.5)]
+a = [5, 4, 3, 2, 1]
+
+remove_nan!(c, a)
+
+#cn, an = remove_nan(c, a)
+#println(cn)
+#println(an)
+
 ## Position-features from image
 
 m1 = load_img("images/freeway_frame_30.png")

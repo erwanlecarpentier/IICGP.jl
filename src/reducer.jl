@@ -46,6 +46,29 @@ function CentroidReducer(n_centroids::Int64, n_in::Int64,
 end
 
 """
+    function remove_nan!(
+        c::Array{Tuple{Float64,Float64},1},
+        a::Array{Int64,1}
+    )
+
+Remove `NaN` values from centroids vector and apply the same removal to the
+corresponding areas vector.
+"""
+function remove_nan!(
+    c::Array{Tuple{Float64,Float64},1},
+    a::Array{Int64,1}
+)
+    indexes = Int64[]
+    for i in eachindex(c)
+        if isnan(c[i][1]) || isnan(c[i][2])
+            push!(indexes, i)
+        end
+    end
+    deleteat!(c, indexes)
+    deleteat!(a, indexes)
+end
+
+"""
     reorder_features(
         c1::Array{Tuple{Float64,Float64},1},
         a1::Array{Int64,1},
@@ -144,11 +167,11 @@ connected components, `n` being defined in the parameters dictionary.
 Fill with zeros if there are less than `n` components.
 """
 function centroid_reduction(
-        x::Array{UInt8, 2},
-        n::Int64,
-        c_prev::Union{Array{Tuple{Float64,Float64},1}, Nothing},
-        a_prev::Union{Array{Int64,1}, Nothing}
-    )
+    x::Array{UInt8, 2},
+    n::Int64,
+    c_prev::Union{Array{Tuple{Float64,Float64},1}, Nothing},
+    a_prev::Union{Array{Int64,1}, Nothing}
+)
     labels = label_components(x)
     boxes = component_boxes(labels)
     centroids = component_centroids(labels)
@@ -157,6 +180,7 @@ function centroid_reduction(
     p = sortperm(areas, rev=true)
     centroids = centroids[p]
     areas = areas[p]
+    centroids, areas = remove_nan(centroids, areas)
     c = fill((0.0, 0.0), n)
     a = fill(0, n)
     for i in eachindex(centroids)
@@ -167,9 +191,33 @@ function centroid_reduction(
         end
     end
     if c_prev != nothing && a_prev != nothing
-        a, c = reorder_features(parameters["c_prev"], parameters["a_prev"], c, a)
+        # a, c = reorder_features(parameters["c_prev"], parameters["a_prev"], c, a)
+        a, c = reorder_features(c_prev, a_prev, c, a)
+        heatmp = implot(labels)
+        display(heatmp)
     end
-    c_flat = collect(Iterators.flatten(c))
+    # c_flat = collect(Iterators.flatten(c))
+
+    ### TODO remove
+    if any(ci -> (isnan(ci[1]) || isnan(ci[2])), c)
+        println()
+        println("c_prev:")
+        println(c_prev)
+        println("a_prev:")
+        println(a_prev)
+        println("c:")
+        println(c)
+        println("a:")
+        println(a)
+        println()
+        println("centroids:")
+        println(centroids)
+        println("areas:")
+        println(areas)
+        println()
+    end
+    ###
+
     c, a
 end
 

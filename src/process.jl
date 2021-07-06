@@ -42,6 +42,15 @@ function process_f(
     features = reducer.reduct(out, reducer.parameters)
     # features_flatten = collect(Iterators.flatten(features))
     features_flatten = collect(Iterators.flatten(Iterators.flatten(features)))
+
+    ### TODO remove
+    #if any(fi -> isnan(fi), features_flatten)
+    #    println(features)
+    #    println(features_flatten)
+    #end
+    ###
+
+
     return features, CartesianGeneticProgramming.process(controller, features_flatten)
 end
 
