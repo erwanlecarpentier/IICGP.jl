@@ -19,7 +19,7 @@ s = ArgParseSettings()
 @add_arg_table! s begin
     "--cfg"
     help = "configuration script"
-    default = "cfg/dualcgp_atari_pooling.yaml"
+    default = "cfg/dualcgp_atari_pooling.yaml" # "cfg/dualcgp_atari_centroid.yaml"
     "--game"
     help = "game rom name"
     default = "centipede"

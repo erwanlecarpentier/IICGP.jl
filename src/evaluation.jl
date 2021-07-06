@@ -19,8 +19,8 @@ TODOs:
 - handle multi dimensional fitness in coevolution
 """
 function fitness_evaluate(e::DualCGPEvolution, fitness::Function=null_evaluate)
-    n_encoders = length(e.encoder_population)
-    n_controllers = length(e.controller_population)
+    n_encoders = e.encoder_config.n_population
+    n_controllers = e.controller_config.n_population
     fitness_matrix = Array{Float64}(undef, n_encoders, n_controllers)
     Threads.@threads for i in 1:n_encoders
         Threads.@threads for j in 1:n_controllers
