@@ -26,6 +26,12 @@ using Statistics
     @test encoder_cfg.id == controller_cfg.id
     @test encoder_cfg.n_parameters == controller_cfg.n_parameters == 1
 
+    @test encoder_cfg.seed == controller_cfg.seed == 0
+    @test encoder_cfg.d_fitness == controller_cfg.d_fitness == 1
+    @test encoder_cfg.n_gen == controller_cfg.n_gen == 1
+    @test encoder_cfg.log_gen == controller_cfg.log_gen == 10
+    @test encoder_cfg.save_gen == controller_cfg.save_gen == 10
+
     @test reducer.parameters["pooling_function"] == Statistics.mean
     @test reducer.parameters["size"] == 5
 
