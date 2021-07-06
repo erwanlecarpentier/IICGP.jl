@@ -180,7 +180,7 @@ function centroid_reduction(
     p = sortperm(areas, rev=true)
     centroids = centroids[p]
     areas = areas[p]
-    centroids, areas = remove_nan(centroids, areas)
+    remove_nan!(centroids, areas)
     c = fill((0.0, 0.0), n)
     a = fill(0, n)
     for i in eachindex(centroids)

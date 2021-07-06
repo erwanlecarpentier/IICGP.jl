@@ -24,7 +24,6 @@ function dualcgp_config(
     img_size = size(rgb[1])
     n_in = 3  # RGB images
     n_out = length(getMinimalActionSet(game.ale))  # One output per legal action
-    logid = string(Dates.now(), "_", game_name, "_", seed)
     close!(game)
 
     # Main config and  initialize sub-configs
@@ -36,6 +35,8 @@ function dualcgp_config(
     encoder_cfg = cfg["encoder"]
     reducer_cfg = cfg["reducer"]
     controller_cfg = cfg["controller"]
+    reducer_type = reducer_cfg["type"]
+    logid = string(Dates.now(), "_", game_name, "_", reducer_type, "_", seed)
     for k in ["d_fitness", "n_gen", "log_gen", "save_gen"]
         encoder_cfg[k] = cfg[k]
         controller_cfg[k] = cfg[k]
@@ -50,7 +51,6 @@ function dualcgp_config(
     encoder_cfg = get_config(encoder_cfg) # dict to named tuple
 
     # Reducer
-    reducer_type = reducer_cfg["type"]
     if reducer_type == "pooling"
         pooling_function = reducer_cfg["pooling_function"]
         if pooling_function == "mean"
