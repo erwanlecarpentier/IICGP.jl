@@ -33,55 +33,26 @@ s = ArgParseSettings()
     default = ""
 end
 args = parse_args(ARGS, s)
-Random.seed!(args["seed"])
+seed = args["seed"]
+Random.seed!(seed)
 
 encoder_cfg, controller_cfg, reducer = IICGP.dualcgp_config(
-    args["cfg"], args["game"], seed=args["seed"]
+    args["cfg"], args["game"], seed=seed
 )
+logid = encoder_cfg.id
 
-##
-
-# Temporarily open a game to retrieve parameters
-game = Game(args["game"], 0)
-out = get_rgb(game)
-n_in = 3  # RGB images
-n_out = length(getMinimalActionSet(game.ale))  # One output per legal action
-img_size = size(out[1])
-logid = string(Dates.now(), "_", args["game"], "_", args["seed"])
-close!(game)
-
-# Encoder configuration
-encoder_cfg = get_config(
-    args["encoder_cfg"];
-    function_module=IICGP.CGPFunctions,
-    n_in=n_in,
-    img_size=img_size,
-    id=logid
+function play_atari(
+    encoder::CGPInd,
+    reducer::Reducer,
+    controller::CGPInd;
+    seed=seed,
+    max_frames=5
 )
-
-##
-
-# Controller configuration
-n_in_controller = encoder_cfg.n_out * encoder_cfg.features_size^2
-controller_cfg = get_config(
-    args["controller_cfg"];
-    n_in=n_in_controller,
-    n_out=n_out
-)
-
-"""
-    play_atari(encoder::CGPInd, controller::CGPInd; seed=0, max_frames=18000)
-
-Fitness function.
-"""
-function play_atari(encoder::CGPInd, controller::CGPInd; seed=0,
-                    max_frames=18000)
     game = Game(args["game"], seed)
     reward = 0.0
     frames = 0
     while ~game_over(game.ale)
-        output = IICGP.process(encoder, controller, get_rgb(game),
-                               encoder_cfg.features_size)
+        output = IICGP.process(encoder, reducer, controller, get_rgb(game))
         action = game.actions[argmax(output)]
         reward += act(game.ale, action)
         frames += 1

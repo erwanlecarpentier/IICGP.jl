@@ -22,7 +22,10 @@ using Statistics
     @test controller_cfg.n_in == 50
     @test controller_cfg.n_out == n_out
 
-    # Reducer tests
+    @test encoder_cfg.img_size == img_size
+    @test encoder_cfg.id == controller_cfg.id
+    @test encoder_cfg.n_parameters == controller_cfg.n_parameters == 1
+
     @test reducer.parameters["pooling_function"] == Statistics.mean
     @test reducer.parameters["size"] == 5
 
