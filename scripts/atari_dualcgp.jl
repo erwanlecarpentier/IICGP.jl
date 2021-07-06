@@ -41,6 +41,8 @@ encoder_cfg, controller_cfg, reducer = IICGP.dualcgp_config(
 )
 logid = encoder_cfg.id
 
+##
+
 function play_atari(
     encoder::CGPInd,
     reducer::Reducer,
@@ -63,7 +65,6 @@ function play_atari(
     close!(game)
     [reward]
 end
-
 
 if length(args["ind"]) > 0
     ind = CGPInd(cfg, read(args["ind"], String))

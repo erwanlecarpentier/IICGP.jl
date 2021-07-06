@@ -27,18 +27,24 @@ function dualcgp_config(
     logid = string(Dates.now(), "_", game_name, "_", seed)
     close!(game)
 
-    # Main config
+    # Main config and  initialize sub-configs
     cfg = YAML.load_file(dualcgp_cfg_filename)
     d_fitness = cfg["d_fitness"]
+    n_gen = cfg["n_gen"]
+    log_gen = cfg["log_gen"]
+    save_gen = cfg["save_gen"]
     encoder_cfg = cfg["encoder"]
     reducer_cfg = cfg["reducer"]
     controller_cfg = cfg["controller"]
+    for k in ["d_fitness", "n_gen", "log_gen", "save_gen"]
+        encoder_cfg[k] = cfg[k]
+        controller_cfg[k] = cfg[k]
+    end
 
     # Encoder config
     encoder_cfg["function_module"] = IICGP.CGPFunctions
     encoder_cfg["n_in"] = n_in
     encoder_cfg["img_size"] = img_size
-    encoder_cfg["d_fitness"] = d_fitness
     encoder_cfg["seed"] = seed
     encoder_cfg["id"] = logid
     encoder_cfg = get_config(encoder_cfg) # dict to named tuple
@@ -74,7 +80,6 @@ function dualcgp_config(
     controller_cfg["function_module"] = IICGP.CGPFunctions
     controller_cfg["n_in"] = cont_n_in
     controller_cfg["n_out"] = n_out
-    controller_cfg["d_fitness"] = d_fitness
     controller_cfg["seed"] = seed
     controller_cfg["id"] = logid
     controller_cfg = get_config(controller_cfg) # dict to named tuple

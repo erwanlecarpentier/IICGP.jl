@@ -24,8 +24,6 @@ evaluate(e::IICGP.DualCGPEvolution) = IICGP.fitness_evaluate(e, e.fitness)
         encoder_config::NamedTuple,
         controller_config::NamedTuple,
         fitness::Function;
-        encoder_logfile=string("logs/encoder_", encoder_config.id, ".csv"),
-        controller_logfile=string("logs/controller_", controller_config.id, ".csv"),
         kwargs...
     )
 
