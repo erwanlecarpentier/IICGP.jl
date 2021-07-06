@@ -41,8 +41,6 @@ encoder_cfg, controller_cfg, reducer = IICGP.dualcgp_config(
 )
 logid = encoder_cfg.id
 
-##
-
 function play_atari(
     encoder::CGPInd,
     reducer::Reducer,
@@ -79,7 +77,7 @@ else
             return goldman_mutate(controller_cfg, ind)
         end
     end
-    fit(encoder::CGPInd, controller::CGPInd) = play_atari(encoder, controller)
+    fit(encoder::CGPInd, controller::CGPInd) = play_atari(encoder, reducer, controller)
     # Create an evolution framework
     e = IICGP.DualCGPEvolution(encoder_cfg, controller_cfg, fit,
                                encoder_init_function=IPCGPInd, logid=logid)
