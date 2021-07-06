@@ -5,12 +5,13 @@ using Test
 using Statistics
 
 # Global test parameters
-GAME_NAME = "freeway"
+GAME_NAMES = ["freeway", "centipede", "pong"]
 N_OUT_ENCO = 2
+N_STEPS = 3
 
-function enco_cont_from_reducer(r::AbstractReducer)
+function enco_cont_from_reducer(r::AbstractReducer, game_name::String)
     # Temporarily open a game to retrieve parameters
-    game = Game(GAME_NAME, 0)
+    game = Game(game_name, 0)
     n_in = 3  # RGB images
     n_out = length(getMinimalActionSet(game.ale))  # One output per legal action
     rgb = get_rgb(game)
@@ -54,33 +55,46 @@ function enco_cont_from_reducer(r::AbstractReducer)
 end
 
 @testset "Processing function" begin
-    # Pooling reducer
-    features_size = 5
-    r = PoolingReducer(Statistics.mean, features_size)
-    enco, cont, img_size = enco_cont_from_reducer(r)
-    game = Game(GAME_NAME, 0)
-    n_out = length(getMinimalActionSet(game.ale))
-    rgb = get_rgb(game)
-    features, out = IICGP.process_f(enco, r, cont, rgb)
-    close!(game)
-    @test length(features) == N_OUT_ENCO
-    for i in eachindex(features)
-        @test typeof(features[i]) == Array{Float64, 2}
-        @test size(features[i]) == (features_size, features_size)
-        @test all(f -> (0.0 <= f <= 1.0), features[i])
-    end
-    @test length(out) == n_out
+    for game_name in GAME_NAMES
+        # Pooling reducer
+        features_size = 5
+        r = PoolingReducer(Statistics.mean, features_size)
+        enco, cont, img_size = enco_cont_from_reducer(r, game_name)
+        game = Game(game_name, 0)
+        n_out = length(getMinimalActionSet(game.ale))
+        for step in 1:N_STEPS
+            rgb = get_rgb(game)
+            features, out = IICGP.process_f(enco, r, cont, rgb)
+            @test length(features) == N_OUT_ENCO
+            for i in eachindex(features)
+                @test typeof(features[i]) == Array{Float64, 2}
+                @test size(features[i]) == (features_size, features_size)
+                @test all(f -> (0.0 <= f <= 1.0), features[i])
+                @test all(f -> (!isnan(f)), features[i])
+            end
+            @test length(out) == n_out
+        end
+        close!(game)
 
-    # Centroid reducer
-    n_centroids = 20
-    r = CentroidReducer(n_centroids, N_OUT_ENCO, img_size)
-    enco, cont, img_size = enco_cont_from_reducer(r)
-    features, out = IICGP.process_f(enco, r, cont, rgb)
-    @test length(features) == N_OUT_ENCO
-    for i in eachindex(features)
-        @test typeof(features[i]) == Array{Tuple{Float64,Float64},1}
-        @test length(features[i]) == n_centroids
-        @test all(f -> ((0.0, 0.0) <= f <= (1.0, 1.0)), features[i])
+        # Centroid reducer
+        n_centroids = 20
+        r = CentroidReducer(n_centroids, N_OUT_ENCO, img_size)
+        enco, cont, img_size = enco_cont_from_reducer(r, game_name)
+        game = Game(game_name, 0)
+        for step in 1:N_STEPS
+            rgb = get_rgb(game)
+            features, out = IICGP.process_f(enco, r, cont, rgb)
+            action = game.actions[argmax(output)]
+            act(game.ale, action)
+            @test length(features) == N_OUT_ENCO
+            for i in eachindex(features)
+                @test typeof(features[i]) == Array{Tuple{Float64,Float64},1}
+                @test length(features[i]) == n_centroids
+                @test all(f -> ((0.0, 0.0) <= f <= (1.0, 1.0)), features[i])
+                @test all(f -> (!isnan(f[1]) && !isnan(f[2])), features[i])
+            end
+            @test length(out) == n_out
+        end
+        close!(game)
     end
-    @test length(out) == n_out
 end
