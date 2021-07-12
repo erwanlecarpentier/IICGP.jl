@@ -22,17 +22,19 @@ function fitness_evaluate(e::DualCGPEvolution, fitness::Function=null_evaluate)
     n_encoders = e.encoder_config.n_population
     n_controllers = e.controller_config.n_population
     fitness_matrix = Array{Float64}(undef, n_encoders, n_controllers)
-    Threads.@threads for i in 1:n_encoders
-        Threads.@threads for j in 1:n_controllers
+    @sync for i in 1:n_encoders
+        for j in 1:n_controllers
             encoder_i = IPCGPInd(e.encoder_config, e.encoder_population[i].chromosome)
             controller_j = CGPInd(e.controller_config, e.controller_population[j].chromosome)
-            fitness_matrix[i, j] = fitness(
-                encoder_i,
-                controller_j
-            )[1] # Currently, only pick 1st fitness dimension
+            Threads.@spawn begin
+                fitness_matrix[i, j] = fitness(
+                    encoder_i,
+                    controller_j
+                )[1] # Currently, only pick 1st fitness dimension
+            end
         end
     end
-    # Retrieve maximum values for fitness
+    # Retrieve maximum values for fitness (lenient evolution)
     encoders_fitnesses = maximum(fitness_matrix, dims=2)
     controllers_fitnesses = maximum(fitness_matrix, dims=1)
     for i in 1:n_encoders

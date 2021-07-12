@@ -30,3 +30,6 @@ done
 
 wait
 echo "All pooling scripts launched"
+
+# julia --threads 4 --project=/users/p21001/lecarpen/IICGP.jl scripts/atari_dualcgp.jl --cfg=cfg/test_dualcgp_atari_pooling.yaml --game=$GAME
+# julia --threads 4 --project=/home/wahara/.julia/dev/IICGP scripts/atari_dualcgp.jl --cfg=cfg/test_dualcgp_atari_pooling.yaml --game=pong

@@ -4,6 +4,7 @@ using Cambrian
 using CartesianGeneticProgramming
 using Dates
 using IICGP
+using Distributed
 import Random
 import Cambrian.mutate  # mutate function scope definition
 
@@ -35,11 +36,23 @@ end
 args = parse_args(ARGS, s)
 seed = args["seed"]
 Random.seed!(seed)
+addprocs(Threads.nthreads())
 
 encoder_cfg, controller_cfg, reducer = IICGP.dualcgp_config(
     args["cfg"], args["game"], seed=seed
 )
 logid = encoder_cfg.id
+
+# TODO remove
+using Images
+using ImageSegmentation
+img = convert(Array{UInt8}, ceil.(255*rand(200,300)))
+function longeval()
+    for i in 1:50
+        felzenszwalb(img, 0.5)
+    end
+end
+# TODO remove end
 
 function play_atari(
     encoder::CGPInd,
@@ -48,6 +61,12 @@ function play_atari(
     seed=seed,
     max_frames=5
 )
+    tid = Threads.threadid()
+    println("In fitness (i.e. play_atari) with thread $tid")
+    #sleep(4)
+    longeval()
+    return rand(1)
+    #=
     game = Game(args["game"], seed)
     reward = 0.0
     frames = 0
@@ -62,6 +81,7 @@ function play_atari(
     end
     close!(game)
     [reward]
+    =#
 end
 
 if length(args["ind"]) > 0
