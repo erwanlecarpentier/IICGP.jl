@@ -44,6 +44,7 @@ encoder_cfg, controller_cfg, reducer = IICGP.dualcgp_config(
 logid = encoder_cfg.id
 
 # TODO remove
+#=
 using Images
 using ImageSegmentation
 img = convert(Array{UInt8}, ceil.(255*rand(200,300)))
@@ -52,6 +53,7 @@ function longeval()
         felzenszwalb(img, 0.5)
     end
 end
+=#
 # TODO remove end
 
 function play_atari(
@@ -59,14 +61,8 @@ function play_atari(
     reducer::Reducer,
     controller::CGPInd;
     seed=seed,
-    max_frames=5
+    max_frames=1000
 )
-    tid = Threads.threadid()
-    println("In fitness (i.e. play_atari) with thread $tid")
-    #sleep(4)
-    longeval()
-    return rand(1)
-    #=
     game = Game(args["game"], seed)
     reward = 0.0
     frames = 0
@@ -81,7 +77,6 @@ function play_atari(
     end
     close!(game)
     [reward]
-    =#
 end
 
 if length(args["ind"]) > 0
