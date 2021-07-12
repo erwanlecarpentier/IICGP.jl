@@ -48,7 +48,7 @@ using Images
 using ImageSegmentation
 img = convert(Array{UInt8}, ceil.(255*rand(200,300)))
 function longeval()
-    for i in 1:1000
+    for i in 1:100
         felzenszwalb(img, 0.5)
     end
 end

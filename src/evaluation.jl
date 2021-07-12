@@ -19,6 +19,7 @@ TODOs:
 - handle multi dimensional fitness in coevolution
 """
 function fitness_evaluate(e::DualCGPEvolution, fitness::Function=null_evaluate)
+    t1 = time_ns()  # TODO remove
     n_encoders = e.encoder_config.n_population
     n_controllers = e.controller_config.n_population
     fitness_matrix = Array{Float64}(undef, n_encoders, n_controllers)
@@ -34,6 +35,9 @@ function fitness_evaluate(e::DualCGPEvolution, fitness::Function=null_evaluate)
             end
         end
     end
+    t2 = time_ns()  # TODO remove
+    elapsed = (t2-t1)/1.0e9  # TODO remove
+    println("Elapsed time in full fitness_matrix evaluation: $elapsed (s)")  # TODO remove
     # Retrieve maximum values for fitness (lenient evolution)
     encoders_fitnesses = maximum(fitness_matrix, dims=2)
     controllers_fitnesses = maximum(fitness_matrix, dims=1)
