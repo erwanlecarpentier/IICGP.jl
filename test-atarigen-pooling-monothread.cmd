@@ -21,7 +21,7 @@ do
 	echo "#SBATCH --mail-user=erwanlecarpentier@mailbox.org" >> atari_pooling_mono_$GAME.cmd
 	echo "#SBATCH --mail-type=END" >> atari_pooling_mono_$GAME.cmd
 	echo "" >> atari_pooling_mono_$GAME.cmd
-	echo "julia --threads 1 --project=/users/p21001/lecarpen/IICGP.jl scripts/atari_dualcgp.jl --cfg=cfg/test_dualcgp_atari_pooling.yaml --game=$GAME" >> atari_pooling_mono_$GAME.cmd
+	echo "julia --project=/users/p21001/lecarpen/IICGP.jl scripts/atari_dualcgp.jl --cfg=cfg/test_dualcgp_atari_pooling.yaml --game=$GAME" >> atari_pooling_mono_$GAME.cmd
 
 	sbatch atari_pooling_mono_$GAME.cmd
 

@@ -19,6 +19,7 @@ TODOs:
 - handle multi dimensional fitness in coevolution
 """
 function fitness_evaluate(e::DualCGPEvolution, fitness::Function=null_evaluate)
+    println("Enterring fitness_evaluate")
     t1 = time_ns()  # TODO remove
     n_encoders = e.encoder_config.n_population
     n_controllers = e.controller_config.n_population
