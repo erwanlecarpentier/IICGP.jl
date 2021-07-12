@@ -86,16 +86,25 @@ if length(args["ind"]) > 0
 else
     # Define mutate and fit functions
     function mutate(ind::CGPInd, ind_type::String)
+        println("\n----------------------------------------------------------------") # TODO remove
+        println("Enterring mutate (ind_type = $ind_type)") # TODO remove
+        println("----------------------------------------------------------------\n") # TODO remove
         if ind_type == "encoder"
             return goldman_mutate(encoder_cfg, ind, init_function=IPCGPInd)
         elseif ind_type == "controller"
             return goldman_mutate(controller_cfg, ind)
         end
+        println("\n----------------------------------------------------------------") # TODO remove
+        println("Exiting mutate (ind_type = $ind_type)") # TODO remove
+        println("----------------------------------------------------------------\n") # TODO remove
     end
     fit(encoder::CGPInd, controller::CGPInd) = play_atari(encoder, reducer, controller)
     # Create an evolution framework
     e = IICGP.DualCGPEvolution(encoder_cfg, controller_cfg, fit,
                                encoder_init_function=IPCGPInd, logid=logid)
     # Run evolution
+    println("\n----------------------------------------------------------------") # TODO remove
+    println("About to run") # TODO remove
+    println("----------------------------------------------------------------\n") # TODO remove
     run!(e)
 end
