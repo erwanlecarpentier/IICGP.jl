@@ -196,27 +196,6 @@ function centroid_reduction(
         heatmp = implot(labels)
         display(heatmp)
     end
-    # c_flat = collect(Iterators.flatten(c))
-
-    ### TODO remove
-    if any(ci -> (isnan(ci[1]) || isnan(ci[2])), c)
-        println()
-        println("c_prev:")
-        println(c_prev)
-        println("a_prev:")
-        println(a_prev)
-        println("c:")
-        println(c)
-        println("a:")
-        println(a)
-        println()
-        println("centroids:")
-        println(centroids)
-        println("areas:")
-        println(areas)
-        println()
-    end
-    ###
 
     c, a
 end

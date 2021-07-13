@@ -134,12 +134,6 @@ end
 
 s = ArgParseSettings()
 @add_arg_table! s begin
-    "--encoder_cfg"
-    help = "configuration script"
-    default = "cfg/atari_encoder.yaml"
-    "--controller_cfg"
-    help = "configuration script"
-    default = "cfg/atari_controller.yaml"
     "--game"
     help = "game rom name"
     default = "freeway"
