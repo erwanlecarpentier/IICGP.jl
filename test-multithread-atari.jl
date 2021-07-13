@@ -1,5 +1,6 @@
 using ArcadeLearningEnvironment
 
+#=
 function copyROM(game_name)
     bin_dir = ""
     while true
@@ -15,6 +16,7 @@ function copyROM(game_name)
     cp(src_file, dst_file, force=true)
     dst_file
 end
+=#
 
 """
 Random walk in Atari game.

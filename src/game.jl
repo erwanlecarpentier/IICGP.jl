@@ -19,15 +19,16 @@ struct Game
     actions::Array{Int32}
 end
 
-function Game(romfile::String, seed::Int64; lck::ReentrantLock=nothing)
+function Game(romfile::String, seed::Int64; kwargs...)
     ale = ALE_new()
     setInt(ale, "random_seed", Cint(seed))
-    if lck == nothing
-        loadROM(ale, romfile)
-    else
-        lock(lck) do
-            loadROM(ale, game_name)
+    kwargs_dict = Dict(kwargs)
+    if haskey(kwargs_dict, :lck)  # Thread safe
+        lock(kwargs_dict[:lck]) do
+            loadROM(ale, romfile)
         end
+    else
+        loadROM(ale, romfile)
     end
     w = getScreenWidth(ale)
     h = getScreenHeight(ale)

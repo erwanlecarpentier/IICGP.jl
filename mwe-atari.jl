@@ -1,24 +1,28 @@
 using ArcadeLearningEnvironment
+using IICGP
 
 """ Random walk in a single Atari game """
-function play_atari(lck, game_name="pong", seed=0, max_frames=3000)
+function play_atari(
+    lck::ReentrantLock;
+    game_name::String="pong",
+    seed::Int64=0,
+    max_frames::Int64=1000
+)
     println("\n\n\nThread $(Threads.threadid()) is playing $game_name")
-    ale = ALE_new()
-    lock(lck) do
-        loadROM(ale, game_name)
-    end
-    actions = getMinimalActionSet(ale)
+    game = Game(game_name, seed, lck=lck)
+    # game = Game(game_name, seed)
+    actions = getMinimalActionSet(game.ale)
     reward = 0.0
     frames = 0
-    while game_over(ale) == false
+    while ~game_over(game.ale)
         action = actions[rand(1:length(actions))]
-        reward += act(ale, action)
+        reward += act(game.ale, action)
         frames += 1
         if frames > max_frames
             break
         end
     end
-    ALE_del(ale)
+    close!(game)
     reward
 end
 
