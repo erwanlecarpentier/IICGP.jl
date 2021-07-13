@@ -1,6 +1,7 @@
 export implot, display_buffer, plot_encoding, plot_centroids
 
 using Plots
+using Plots.PlotMeasures
 
 """
     function implot(img::AbstractArray; kwargs...)
@@ -75,9 +76,12 @@ function plot_encoding(
         features::AbstractArray
     )
     n_cols = max(n_in, length(features), length(buffer)-n_in)
-    p = plot(layout=grid(3, n_cols), leg=false, framestyle=:none) #axis=nothing)
+    mrg = -4mm
+    pdg = (0.0, 0.0)
+    p = plot(layout=grid(3, n_cols), leg=false, framestyle=:none, margin=mrg) #axis=nothing)
     for i in 1:n_in
-        plot!(p[i], buffer[i], seriestype=:heatmap, flip=true, ratio=:equal, color=:grays) #, color=:inferno)
+        plot!(p[i], buffer[i], seriestype=:heatmap, flip=true, ratio=:equal,
+              color=:grays)
     end
     for i in n_in+1:length(buffer)
         plot!(p[2,i-n_in], buffer[i], seriestype=:heatmap, flip=true, ratio=:equal, color=:grays)
@@ -103,15 +107,21 @@ function plot_centroids(
     )
     x = images[1]
     img_size = size(x)
+    mlt = 1
+    mrg = -100mm
+    pdg = (0.0, 0.0)
+    final_size = (mlt*img_size[2], mlt*img_size[1])
     centro = IICGP.scaled_centroids(centroids[1], img_size)
 
     xs = [c[1] for c in centro]
     ys = [c[2] for c in centro]
     pal = palette([:blue, :red, :orange, :yellow, :green], length(xs))
     plt = heatmap(x, color=:grays, ratio=:equal, yflip=true, leg=false,
-                  framestyle=:none)
+                  framestyle=:none, padding=pdg, margin=mrg,
+                  size=final_size)
     for i in eachindex(xs)
-        scatter!(plt, [ys[i]], [xs[i]], legend=:none, color=pal[i])
+        scatter!(plt, [ys[i]], [xs[i]], padding=pdg,
+                 margin=mrg, color=pal[i])
     end
     plt
 end

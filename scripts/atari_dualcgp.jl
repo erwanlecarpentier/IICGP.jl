@@ -43,19 +43,6 @@ encoder_cfg, controller_cfg, reducer = IICGP.dualcgp_config(
 )
 logid = encoder_cfg.id
 
-# TODO remove
-#=
-using Images
-using ImageSegmentation
-img = convert(Array{UInt8}, ceil.(255*rand(200,300)))
-function longeval()
-    for i in 1:100
-        felzenszwalb(img, 0.5)
-    end
-end
-=#
-# TODO remove end
-
 function play_atari(
     encoder::CGPInd,
     reducer::Reducer,

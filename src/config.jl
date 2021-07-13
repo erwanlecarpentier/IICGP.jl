@@ -51,6 +51,8 @@ function dualcgp_config(
     encoder_cfg = get_config(encoder_cfg) # dict to named tuple
 
     # Reducer
+    reducer = Reducer(reducer_cfg, n_in=encoder_cfg.n_out, img_size=img_size)
+    #=
     if reducer_type == "pooling"
         pooling_function = reducer_cfg["pooling_function"]
         if pooling_function == "mean"
@@ -68,6 +70,7 @@ function dualcgp_config(
     else
         throw(ArgumentError("Reducer type $reducer_type not implemented."))
     end
+    =#
 
     # Forward pass to retrieve the number of input of the controller
     enco = IPCGPInd(encoder_cfg)

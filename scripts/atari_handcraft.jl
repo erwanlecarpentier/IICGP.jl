@@ -74,14 +74,14 @@ Play Atari and display individual's encoding.
 function play_atari(
     encoder::CGPInd,
     reducer::AbstractReducer,
-    controller::CGPInd;
-    reducer_type::String="pooling",
+    controller::CGPInd,
+    reducer_type::String;
     seed::Int64=0,
-    max_frames::Int64=18000,
+    max_frames::Int64=1000,
     sleep_time::Float64=0.0,
     render::Bool=true,
     save::Bool=false,
-    save_repo::String="gifs/freeway/"
+    save_repo::String=string("gifs/", args["game"], "/")
 )
     game = Game(args["game"], seed)
     reward = 0.0
@@ -106,7 +106,6 @@ function play_atari(
         if reducer_type == "pooling"
             plt = plot_encoding(n_in, enco.buffer, features)
         elseif reducer_type == "centroid"
-            print(features)
             plt = plot_centroids(enco_out, features)
         end
         if render
@@ -169,15 +168,17 @@ enco_cfg = cfg_from_info(enco_nodes, n_in, enco_outputs, IICGP.CGPFunctions,
 enco = IPCGPInd(enco_nodes, enco_cfg, enco_outputs, img_size)
 
 # Reducer
-reducer_type = "centroid"
-if reducer_type == "pooling"
-    feature_height = 5
-    redu = PoolingReducer(Statistics.mean, feature_height)
-    features_size = feature_height^2
-elseif reducer_type == "centroid"
-    n_centroids = 20
-    redu = CentroidReducer(n_centroids, length(enco_outputs), img_size)
-    features_size = 2 * n_centroids
+reducer_cfg = Dict(
+    "type" => "pooling",
+    "pooling_function" => "mean",
+    "features_size" => 5,
+    "n_centroids" => 20
+)
+redu = Reducer(reducer_cfg, n_in=enco_cfg.n_out, img_size=img_size)
+if reducer_cfg["type"] == "pooling"
+    features_size = reducer_cfg["features_size"]^2
+elseif reducer_cfg["type"] == "centroid"
+    features_size = 2 * reducer_cfg["n_centroids"]
 end
 
 # Controller
@@ -191,76 +192,42 @@ cont_n_in = length(enco_outputs) * features_size^2
 cont_cfg = cfg_from_info(cont_nodes, cont_n_in, cont_outputs, IICGP.CGPFunctions, 1)
 cont = CGPInd(cont_nodes, cont_cfg, cont_outputs)
 
-
-
 ##
 
 # Play game
 play_atari(
     enco, redu, cont,
-    reducer_type=reducer_type,
-    max_frames=10,
+    reducer_type=reducer_cfg["type"],
+    max_frames=2,
     sleep_time=0.0,
     render=true,
-    save=false
+    save_repo="gifs/",
+    save=true
 )
 
 ##
+using Plots.PlotMeasures
 
+# Temporarily open a game to retrieve parameters
 game = Game(args["game"], 0)
-reward = 0.0
-frames = 0
-
-# Rendering first image for visu
 rawscreen = getScreenRGB(game.ale)
 rgb = permutedims(reshape(rawscreen, (3, game.width, game.height)), [1, 3, 2])
-img = colorview(RGB, normedview(rgb))
-guidict = imshow(img)
-canvas = guidict["gui"]["canvas"]
-
-
-
-rgb_split = [Array{UInt8}(rgb[i,:,:]) for i in 1:3]
-features, output = IICGP.process_f(enco, cont, rgb_split, features_size)
-action = game.actions[argmax(output)]
-
-
-b = enco.buffer[1]
-for i in 2:length(enco.buffer)
-    b = hcat(b, enco.buffer[i])
-end
-
-
-plot(rand(100, 4), layout = 4)
-
-heatmap(b, yflip=true, color=:grays, legend=:none, axis=nothing, ratio=:equal, framestyle=:none)
-
-
-##
-#gr(leg = false, bg = :lightgrey)
-
-
-n_rows = 3
-w = 2 * n_cols * img_size[2]
-h = n_rows * img_size[1]
-
-theme(:dark)
-p = plot(size=(w, h), legend=:none, axis=nothing, framestyle=:none)
-
-
-heatmap!(zeros(w, h))
-
-heatmap!(b, yflip=true, color=:grays, legend=:none, axis=nothing, ratio=:equal,
-    inset = (1, bbox(0.0, 0.0, 0.5, 0.25, :bottom, :right)),
-    subplot=1, size=img_size,
-    framestyle=:none)
-
-
-
-
-##
-
-guidict = imshow(b)
-
-
+img_size = size(rgb)[2:3]
+rgb = [Array{UInt8}(rgb[i,:,:]) for i in 1:3]
+n_in = 3  # RGB images
+n_out = length(getMinimalActionSet(game.ale))  # One output per legal action
+d_fitness = 1
 close!(game)
+
+x = rgb[1]
+mult = 2
+sz = (mult*size(x)[2], mult*size(x)[1])
+plt = heatmap(
+    x, color=:grays, ratio=:equal,
+    yflip=true,
+    leg=false,
+    framestyle=:none,
+    padding=(0.0, 0.0),
+    margin=-100mm,
+    size=sz
+)

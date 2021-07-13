@@ -46,6 +46,40 @@ function CentroidReducer(n_centroids::Int64, n_in::Int64,
 end
 
 """
+    function Reducer(
+        reducer_cfg::Dict;
+        n_in::Int64=0,
+        img_size::Tuple{Int64,Int64}=(0,0)
+    )
+
+General constructor for reducer.
+"""
+function Reducer(
+    reducer_cfg::Dict;
+    n_in::Int64=0,
+    img_size::Tuple{Int64,Int64}=(0,0)
+)
+    reducer_type = reducer_cfg["type"]
+    if reducer_type == "pooling"
+        pooling_function = reducer_cfg["pooling_function"]
+        if pooling_function == "mean"
+            pf = Statistics.mean
+        elseif pooling_function == "max"
+            pf = maximum
+        elseif pooling_function == "min"
+            pf = minimum
+        else
+            throw(ArgumentError("Pooling function $pooling_function not implemented."))
+        end
+        reducer = PoolingReducer(pf, reducer_cfg["features_size"])
+    elseif reducer_type == "centroid"
+        reducer = CentroidReducer(reducer_cfg["n_centroids"], n_in, img_size)
+    else
+        throw(ArgumentError("Reducer type $reducer_type not implemented."))
+    end
+end
+
+"""
     function remove_nan!(
         c::Array{Tuple{Float64,Float64},1},
         a::Array{Int64,1}
@@ -196,7 +230,6 @@ function centroid_reduction(
         heatmp = implot(labels)
         display(heatmp)
     end
-
     c, a
 end
 
