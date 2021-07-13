@@ -47,10 +47,11 @@ function play_atari(
     encoder::CGPInd,
     reducer::Reducer,
     controller::CGPInd;
+    lck::ReentrantLock,
     seed=seed,
     max_frames=1000
 )
-    game = Game(args["game"], seed)
+    game = Game(args["game"], seed, lck=lck)
     reward = 0.0
     frames = 0
     while ~game_over(game.ale)
@@ -73,22 +74,18 @@ if length(args["ind"]) > 0
 else
     # Define mutate and fit functions
     function mutate(ind::CGPInd, ind_type::String)
-        println("\n----------------------------------------------------------------") # TODO remove
-        println("Mutate (ind_type = $ind_type)") # TODO remove
-        println("----------------------------------------------------------------\n") # TODO remove
         if ind_type == "encoder"
             return goldman_mutate(encoder_cfg, ind, init_function=IPCGPInd)
         elseif ind_type == "controller"
             return goldman_mutate(controller_cfg, ind)
         end
     end
-    fit(encoder::CGPInd, controller::CGPInd) = play_atari(encoder, reducer, controller)
+    lck = ReentrantLock()
+    fit(encoder::CGPInd, controller::CGPInd) = play_atari(encoder, reducer,
+                                                          controller, lck)
     # Create an evolution framework
     e = IICGP.DualCGPEvolution(encoder_cfg, controller_cfg, fit,
                                encoder_init_function=IPCGPInd, logid=logid)
     # Run evolution
-    println("\n----------------------------------------------------------------") # TODO remove
-    println("About to run") # TODO remove
-    println("----------------------------------------------------------------\n") # TODO remove
     run!(e)
 end
