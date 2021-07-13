@@ -46,8 +46,8 @@ logid = encoder_cfg.id
 function play_atari(
     encoder::CGPInd,
     reducer::Reducer,
-    controller::CGPInd;
-    lck::ReentrantLock,
+    controller::CGPInd,
+    lck::ReentrantLock;
     seed=seed,
     max_frames=1000
 )
