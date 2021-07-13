@@ -15,6 +15,29 @@ using Hungarian
 
 ##
 
+using ArcadeLearningEnvironment
+seed = 0
+
+g1 = Game("pong", seed)
+g2 = Game("pong", seed)
+actions = g1.actions
+
+rgb1 = get_rgb(g1)
+rgb2 = get_rgb(g2)
+
+for _ in 1:100
+    act(g1.ale, actions[rand(1:length(actions))])
+end
+
+implot(rgb1[1])
+implot(rgb2[1])
+
+close!(g1)
+
+
+
+##
+
 function remove_nan!(
     c::Array{Tuple{Float64,Float64},1},
     a::Array{Int64,1}
