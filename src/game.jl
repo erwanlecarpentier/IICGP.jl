@@ -19,10 +19,16 @@ struct Game
     actions::Array{Int32}
 end
 
-function Game(romfile::String, seed::Int64)
+function Game(romfile::String, seed::Int64; lck::ReentrantLock=nothing)
     ale = ALE_new()
     setInt(ale, "random_seed", Cint(seed))
-    loadROM(ale, romfile)
+    if lck == nothing
+        loadROM(ale, romfile)
+    else
+        lock(lck) do
+            loadROM(ale, game_name)
+        end
+    end
     w = getScreenWidth(ale)
     h = getScreenHeight(ale)
     actions = getMinimalActionSet(ale)

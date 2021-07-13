@@ -1,11 +1,12 @@
 using ArcadeLearningEnvironment
 
-
 """ Random walk in a single Atari game """
-function play_atari(game_name="pong", seed=0, max_frames=1000)
+function play_atari(lck, game_name="pong", seed=0, max_frames=3000)
     println("\n\n\nThread $(Threads.threadid()) is playing $game_name")
     ale = ALE_new()
-    loadROM(ale, game_name)
+    lock(lck) do
+        loadROM(ale, game_name)
+    end
     actions = getMinimalActionSet(ale)
     reward = 0.0
     frames = 0
@@ -24,9 +25,10 @@ end
 """ Launch multiple threads, each playing Atari """
 function play_atari_multithreaded(n::Int64)
     results = zeros(n)
+    lck = ReentrantLock()
     @sync for i in 1:n
         Threads.@spawn begin
-            results[i] = play_atari()
+            results[i] = play_atari(lck)
         end
     end
     println("\n\n\n$n runs completed, results: $results")
