@@ -7,4 +7,5 @@ games = Array{String,1}()
 reducers = ["pooling"]
 exp_dirs, games = exp_dir(min_date=min_date, max_date=max_date, games=games,
                           reducers=reducers)
+# exp_dirs, games = exp_dir()
 print_results(exp_dirs, games)

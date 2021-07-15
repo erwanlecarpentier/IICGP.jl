@@ -1,4 +1,4 @@
-export exp_dir, find_yaml, cfg_from_exp_dir, print_results
+export exp_dir, find_yaml, cfg_from_exp_dir, log_from_exp_dir, print_results
 
 using CSV
 using YAML
@@ -68,11 +68,15 @@ function cfg_from_exp_dir(exp_dir::String)
     YAML.load_file(cfg_path)
 end
 
+function log_from_exp_dir(exp_dir::String)
+    log_file = joinpath(exp_dir, "logs/encoders.csv")
+    CSV.File(log_file, header=LOG_HEADER)
+end
+
 function print_results(exp_dirs::Array{String,1}, games::Array{String,1})
     for i in eachindex(exp_dirs)
         cfg = cfg_from_exp_dir(exp_dirs[i])
-        log_file = string(exp_dirs[i], "/logs/encoders.csv")
-        log = CSV.File(log_file, header=LOG_HEADER)
+        log = log_from_exp_dir(exp_dirs[i])
 
         # Print everything
         p = []
