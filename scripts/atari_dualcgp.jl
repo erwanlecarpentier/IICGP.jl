@@ -49,7 +49,7 @@ function play_atari(
     controller::CGPInd,
     lck::ReentrantLock;
     seed=seed,
-    max_frames=1000
+    max_frames=12000
 )
     game = Game(args["game"], seed, lck=lck)
     reward = 0.0
