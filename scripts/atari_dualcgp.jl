@@ -87,5 +87,5 @@ else
     e = IICGP.DualCGPEvolution(encoder_cfg, controller_cfg, fit,
                                encoder_init_function=IPCGPInd, logid=logid)
     # Run evolution
-    run!(e)
+    # run!(e)  # TODO put back
 end

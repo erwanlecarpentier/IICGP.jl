@@ -4,6 +4,7 @@ d_fitness: 1
 n_gen: 50000
 log_gen: 10
 save_gen: 10
+bootstrap: true
 
 # Encoder's parameters
 encoder:

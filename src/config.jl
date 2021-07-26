@@ -53,25 +53,6 @@ function dualcgp_config(
 
     # Reducer
     reducer = Reducer(reducer_cfg, n_in=encoder_cfg.n_out, img_size=img_size)
-    #=
-    if reducer_type == "pooling"
-        pooling_function = reducer_cfg["pooling_function"]
-        if pooling_function == "mean"
-            pf = Statistics.mean
-        elseif pooling_function == "max"
-            pf = maximum
-        elseif pooling_function == "min"
-            pf = minimum
-        else
-            throw(ArgumentError("Pooling function $pooling_function not implemented."))
-        end
-        reducer = PoolingReducer(pf, reducer_cfg["features_size"])
-    elseif reducer_type == "centroid"
-        reducer = CentroidReducer(reducer_cfg["n_centroids"], encoder_cfg.n_out, img_size)
-    else
-        throw(ArgumentError("Reducer type $reducer_type not implemented."))
-    end
-    =#
 
     # Forward pass to retrieve the number of input of the controller
     enco = IPCGPInd(encoder_cfg)
