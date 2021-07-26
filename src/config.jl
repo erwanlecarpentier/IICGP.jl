@@ -12,6 +12,7 @@ using Dates
 
 Retrieve the encoder and controller configuration files from the main dual CGP
 configuration file.
+Return both config dictionaries along with the corresponding reducer.
 """
 function dualcgp_config(
     dualcgp_cfg_filename::String,
