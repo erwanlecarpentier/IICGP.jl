@@ -1,4 +1,5 @@
-export get_exp_dir, get_bootstrap_paths, find_yaml, cfg_from_exp_dir, log_from_exp_dir
+export get_exp_dir, get_bootstrap_paths, get_best_individuals_paths
+export find_yaml, cfg_from_exp_dir, log_from_exp_dir
 
 using CSV
 using YAML
@@ -74,6 +75,26 @@ function are_same_cfg(cfg_a::NamedTuple, cfg_b::NamedTuple)
         end
     end
     true
+end
+
+"""
+    get_best_individuals_paths(exp_dir::String)
+
+Given the experiment directory, return the paths of the last saved encoder and
+controller.
+"""
+function get_best_individuals_paths(exp_dir::String)
+    gens_dir = joinpath(exp_dir, "gens")
+    n_gen = readdir(gens_dir)[end]  # Last subdir in alphabetical order
+    n_gen = n_gen[length("encoder_")+1:end]  # Gen number as a String
+    enco_dna_path = joinpath(exp_dir, "gens", string("encoder_", n_gen))
+    cont_dna_path = joinpath(exp_dir, "gens", string("controller_", n_gen))
+    n_indiv = length(readdir(enco_dna_path))
+    dna_file_length = maximum([length(p) for p in readdir(enco_dna_path)]) - length(".dna")
+    dna_file = string(lpad(n_indiv, dna_file_length, "0"), ".dna")
+    enco_dna_path = joinpath(enco_dna_path, dna_file)
+    cont_dna_path = joinpath(cont_dna_path, dna_file)
+    enco_dna_path, cont_dna_path
 end
 
 """

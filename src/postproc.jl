@@ -38,6 +38,9 @@ function process_results(
         plot!(plt_best, best, label=label_i)
         plot!(plt_mean, mean, ribbon=std, label=label_i)
 
+        # Get last best individuals
+        enco, reducer, cont = get_best_individuals(exp_dirs[i], games[i], cfg)
+
         # Print everything
         p = []
         push!(p, ["Game", games[i]])
@@ -65,4 +68,7 @@ function process_results(
     end
     display(plt_best)
     display(plt_mean)
+
+    savefig(plt_best, "best.png")
+    savefig(plt_mean, "mean.png")
 end

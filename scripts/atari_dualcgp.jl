@@ -36,7 +36,7 @@ end
 args = parse_args(ARGS, s)
 seed = args["seed"]
 Random.seed!(seed)
-addprocs(Threads.nthreads())
+# addprocs(Threads.nthreads())
 
 encoder_cfg, controller_cfg, reducer, bootstrap = IICGP.dualcgp_config(args["cfg"],
                                                             args["game"])
