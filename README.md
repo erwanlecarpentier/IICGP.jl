@@ -70,3 +70,9 @@ Image functions:
 # Features extraction
 
 ![](gifs/freeway_centroids_cropped.gif)
+
+# TODOs
+
+- Fix saving path issues
+- Centralize saving paths
+- Allow bootstrap of either encoder or controller (not both at the same time)

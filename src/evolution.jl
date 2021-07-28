@@ -22,15 +22,42 @@ evaluate(e::IICGP.DualCGPEvolution) = IICGP.fitness_evaluate(e, e.fitness)
 """
 TODO
 """
-function init_with_bootstrap(
-    itype::Type,
-    ind_type::String,
-    cfg::NamedTuple;
-    kwargs...
+function get_bootstrap_chromosomes(
+    enco_cfg::NamedTuple,
+    cont_cfg::NamedTuple,
+    game::String
 )
-    population = Array{itype}(undef, cfg.n_population)
-    kwargs_dict = Dict(kwargs)
-    chromosome = get_bootstrap_chromosome()
+    enco_bs_path, cont_bs_path = get_bootstrap_paths(enco_cfg, cont_cfg, game)
+    println(string("-> enco_bs_path = ", enco_bs_path))
+    println(string("-> cont_bs_path = ", cont_bs_path))
+    println()
+end
+
+"""
+TODO
+"""
+function bootstrap_init(
+    enco_cfg::NamedTuple,
+    cont_cfg::NamedTuple,
+    kwargs_dict::Dict
+)
+    enco_pop = Array{CGPInd}(undef, enco_cfg.n_population)
+    cont_pop = Array{CGPInd}(undef, cont_cfg.n_population)
+    if haskey(kwargs_dict, :game)
+        game = kwargs_dict[:game]
+    else
+        throw(ArgumentError("No game specified in kwargs"))
+    end
+    chromosome = get_bootstrap_chromosomes(enco_cfg, cont_cfg, game)
+    return enco_pop, cont_pop  # TODO remove
+    # TODO here
+
+
+
+
+
+    # TODO put back and reimplemente
+    #=
     if haskey(kwargs_dict, :init_function)
         population[1] = kwargs_dict[:init_function](cfg, chromosome)
     else
@@ -40,6 +67,7 @@ function init_with_bootstrap(
         population[i] = mutate(population[1], ind_type)
     end
     population
+    =#
 end
 
 """
@@ -75,10 +103,9 @@ function DualCGPEvolution(
 
     # CGP populations
     if bootstrap
-        encoder_population = init_with_bootstrap(CGPInd, "encoder",
-                                                 encoder_config, kwargs...)
-        controller_population = init_with_bootstrap(CGPInd, "controller",
-                                                    controller_config, kwargs...)
+        encoder_population, controller_population = bootstrap_init(
+            encoder_config, controller_config, kwargs_dict
+        )
     else
         if haskey(kwargs_dict, :encoder_init_function)
             encoder_population = Cambrian.initialize(CGPInd, encoder_config,

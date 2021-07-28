@@ -38,9 +38,8 @@ seed = args["seed"]
 Random.seed!(seed)
 addprocs(Threads.nthreads())
 
-encoder_cfg, controller_cfg, reducer = IICGP.dualcgp_config(
-    args["cfg"], args["game"], seed=seed
-)
+encoder_cfg, controller_cfg, reducer, bootstrap = IICGP.dualcgp_config(args["cfg"],
+                                                            args["game"])
 logid = encoder_cfg.id
 
 function play_atari(
@@ -85,7 +84,8 @@ else
                                                           controller, lck)
     # Create an evolution framework
     e = IICGP.DualCGPEvolution(encoder_cfg, controller_cfg, fit,
-                               encoder_init_function=IPCGPInd, logid=logid)
+                               encoder_init_function=IPCGPInd, logid=logid,
+                               bootstrap=bootstrap, game=args["game"])
     # Run evolution
     # run!(e)  # TODO put back
 end

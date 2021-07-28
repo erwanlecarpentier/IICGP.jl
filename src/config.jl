@@ -3,24 +3,27 @@ export dualcgp_config
 using Dates
 
 
+function dualcgp_config(dualcgp_cfg_filename::String, game_name::String)
+    cfg = YAML.load_file(dualcgp_cfg_filename)
+    dualcgp_config(cfg, game_name)
+end
+
+function dualcgp_config(cfg::NamedTuple, game_name::String)
+    cfg_dict = Dict(pairs(cfg))
+    dualcgp_config(cfg_dict, game_name)
+end
+
 """
-    function dualcgp_config(
-        dualcgp_cfg_filename::String,
-        game_name::String;
-        seed::Int64=0
-    )
+    dualcgp_config(cfg::Dict, game_name::String)
 
 Retrieve the encoder and controller configuration files from the main dual CGP
 configuration file.
 Return both config dictionaries along with the corresponding reducer.
 """
-function dualcgp_config(
-    dualcgp_cfg_filename::String,
-    game_name::String;
-    seed::Int64=0
-)
+function dualcgp_config(cfg::Dict, game_name::String)
     # Temporarily open a game to retrieve parameters
-    game = Game(game_name, 0)
+    seed = cfg["seed"]
+    game = Game(game_name, seed)
     rgb = get_rgb(game)
     img_size = size(rgb[1])
     n_in = 3  # RGB images
@@ -28,7 +31,7 @@ function dualcgp_config(
     close!(game)
 
     # Main config and  initialize sub-configs
-    cfg = YAML.load_file(dualcgp_cfg_filename)
+    bootstrap = cfg["bootstrap"]
     d_fitness = cfg["d_fitness"]
     n_gen = cfg["n_gen"]
     log_gen = cfg["log_gen"]
@@ -38,7 +41,7 @@ function dualcgp_config(
     controller_cfg = cfg["controller"]
     reducer_type = reducer_cfg["type"]
     logid = string(Dates.now(), "_", game_name, "_", reducer_type, "_", seed)
-    for k in ["d_fitness", "n_gen", "log_gen", "save_gen"]
+    for k in ["seed", "d_fitness", "n_gen", "log_gen", "save_gen"]
         encoder_cfg[k] = cfg[k]
         controller_cfg[k] = cfg[k]
     end
@@ -47,7 +50,6 @@ function dualcgp_config(
     encoder_cfg["function_module"] = IICGP.CGPFunctions
     encoder_cfg["n_in"] = n_in
     encoder_cfg["img_size"] = img_size
-    encoder_cfg["seed"] = seed
     encoder_cfg["id"] = logid
     encoder_cfg = get_config(encoder_cfg) # dict to named tuple
 
@@ -65,9 +67,8 @@ function dualcgp_config(
     controller_cfg["function_module"] = IICGP.CGPFunctions
     controller_cfg["n_in"] = cont_n_in
     controller_cfg["n_out"] = n_out
-    controller_cfg["seed"] = seed
     controller_cfg["id"] = logid
     controller_cfg = get_config(controller_cfg) # dict to named tuple
 
-    encoder_cfg, controller_cfg, reducer
+    encoder_cfg, controller_cfg, reducer, bootstrap
 end
