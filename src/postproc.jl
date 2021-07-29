@@ -3,6 +3,51 @@ export process_results
 using Plots
 using ImageFiltering
 using OffsetArrays
+using BenchmarkTools
+using TimerOutputs
+
+
+"""
+    function time_individuals_ms(
+        enco::CGPInd,
+        reducer::Reducer,
+        cont::CGPInd,
+        game_name::String
+    )
+
+Time forward pass of complete architecture.
+Return time in ms.
+"""
+function time_individuals_ms(
+    enco::CGPInd,
+    reducer::Reducer,
+    cont::CGPInd,
+    game_name::String
+)
+    # Generate input
+    game = Game(game_name, 0)
+    rgb = get_rgb(game)
+    # Pre-compile
+    process(enco, reducer, cont, rgb)
+    n_iter = 100
+    # Time
+    enco_time = 0.0
+    redu_time = 0.0
+    flat_time = 0.0
+    cont_time = 0.0
+    for _ in 1:n_iter
+        enco_time += @elapsed enco_out = CartesianGeneticProgramming.process(enco, rgb)
+        redu_time += @elapsed features = reducer.reduct(enco_out, reducer.parameters)
+        flat_time += @elapsed features_flatten = collect(Iterators.flatten(Iterators.flatten(features)))
+        cont_time += @elapsed cont_out = CartesianGeneticProgramming.process(cont, features_flatten)
+    end
+    to_ms = 1000 / n_iter
+    enco_time *= to_ms
+    redu_time *= to_ms
+    flat_time *= to_ms
+    cont_time *= to_ms
+    enco_time, redu_time, flat_time, cont_time
+end
 
 """
     function process_results(
@@ -40,6 +85,7 @@ function process_results(
 
         # Get last best individuals
         enco, reducer, cont = get_best_individuals(exp_dirs[i], games[i], cfg)
+        enco_time, redu_time, flat_time, cont_time = time_individuals_ms(enco, reducer, cont, games[i])
 
         # Print everything
         p = []
@@ -60,6 +106,11 @@ function process_results(
             push!(p, ["  - features_size", cfg["reducer"]["features_size"]])
             push!(p, ["  - pooling_function", cfg["reducer"]["pooling_function"]])
         end
+        push!(p, ["Forward pass timing (ms):", ""])
+        push!(p, ["  - Encoder", enco_time])
+        push!(p, ["  - Reducer", redu_time])
+        push!(p, ["  - Flattening", flat_time])
+        push!(p, ["  - Controller", cont_time])
         l = maximum([length(k) for k in [pr[1] for pr in p]])
         println()
         for k in p
