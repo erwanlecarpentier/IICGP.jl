@@ -20,7 +20,7 @@ s = ArgParseSettings()
 @add_arg_table! s begin
     "--cfg"
     help = "configuration script"
-    default = "cfg/dualcgp_atari_centroid.yaml" # dualcgp_atari_pooling | dualcgp_atari_centroid
+    default = "cfg/dualcgp_test.yaml" # dualcgp_atari_pooling | dualcgp_atari_centroid
     "--game"
     help = "game rom name"
     default = "centipede"
@@ -35,6 +35,7 @@ s = ArgParseSettings()
 end
 args = parse_args(ARGS, s)
 seed = args["seed"]
+seed = args["max_frames"]
 Random.seed!(seed)
 # addprocs(Threads.nthreads())
 
@@ -48,7 +49,7 @@ function play_atari(
     controller::CGPInd,
     lck::ReentrantLock;
     seed=seed,
-    max_frames=12000
+    max_frames=max_frames
 )
     game = Game(args["game"], seed, lck=lck)
     reward = 0.0

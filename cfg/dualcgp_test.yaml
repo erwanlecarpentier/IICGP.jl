@@ -2,17 +2,17 @@
 seed: 0
 max_frames: 100
 d_fitness: 1
-n_gen: 50000
-log_gen: 10
-save_gen: 10
-bootstrap: true
+n_gen: 10
+log_gen: 1
+save_gen: 1
+bootstrap: false
 
 # Encoder's parameters
 encoder:
   n_population: 5
   n_elite: 1
   rows: 1
-  columns: 20
+  columns: 3
   recur: 0.0
   m_rate: 0.1
   out_m_rate: 0.3
@@ -51,7 +51,7 @@ encoder:
 
 # Reducer's parameters
 reducer:
-  type: "centroid" # "pooling" or "centroid"
+  type: "pooling" # "pooling" or "centroid"
   pooling_function: "mean" # POOLING: "mean", "max", or "min"
   features_size: 5 # POOLING: size of the square down-sampled image
   n_centroids: 15 # CENTROID: number of biggest objects tracked
@@ -61,7 +61,7 @@ controller:
   n_population: 5
   n_elite: 1
   rows: 1
-  columns: 40
+  columns: 10
   recur: 0.0
   m_rate: 0.1
   out_m_rate: 0.5
