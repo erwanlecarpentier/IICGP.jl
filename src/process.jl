@@ -70,3 +70,14 @@ function process_full(
     cont_out = CartesianGeneticProgramming.process(controller, features_flatten)
     return enco_out, features, cont_out
 end
+
+
+function process(
+    reducer::AbstractReducer,
+    controller::CGPInd,
+    inp::AbstractArray
+)
+    features = reducer.reduct(inp, reducer.parameters)
+    features_flatten = collect(Iterators.flatten(Iterators.flatten(features)))
+    CartesianGeneticProgramming.process(controller, features_flatten)
+end

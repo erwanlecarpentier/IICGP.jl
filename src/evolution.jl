@@ -51,11 +51,6 @@ function bootstrap_init(
     chromosome = get_bootstrap_chromosomes(enco_cfg, cont_cfg, game)
     return enco_pop, cont_pop  # TODO remove
     # TODO here
-
-
-
-
-
     # TODO put back and reimplemente
     #=
     if haskey(kwargs_dict, :init_function)

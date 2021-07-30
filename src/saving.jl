@@ -16,6 +16,31 @@ LOG_HEADER = ["date", "lib", "type", "gen_number", "best", "mean", "std"]
 """
 Fetch the saved results and reorganise them.
 """
+function reorg_results(logid::String, cfg_path::String)
+    ind_log = string(logid, ".csv")
+    log_path = joinpath("logs", ind_log)
+    gens_dir = joinpath("gens", logid)
+
+    new_resu_dir = joinpath(RES_DIR, logid)
+    new_log_dir = joinpath(new_resu_dir, "logs")
+    new_gens_dir = joinpath(new_resu_dir, "gens/")
+    mkdir(new_resu_dir)
+    mkdir(new_log_dir)
+    mkdir(new_gens_dir)
+    new_cfg_path = joinpath(new_resu_dir, cfg_path[length("cfg/")+1:end])
+    cp(cfg_path, new_cfg_path, force=true)
+    new_log_path = joinpath(new_log_dir, "controller.csv")
+    cp(log_path, new_log_path, force=true)
+    for g in readdir(gens_dir)
+        g_dir = joinpath(new_gens_dir, string("controller_", g))
+        mkdir(g_dir)
+        mv(joinpath(gens_dir, g), g_dir, force=true)
+    end
+end
+
+"""
+Fetch the saved results and reorganise them.
+"""
 function reorg_results(logid::String, ind_name::String, cfg_path::String)
     ind_log = string(ind_name, ".csv")
     logs_path = joinpath("logs", logid, ind_log)
@@ -37,8 +62,6 @@ function reorg_results(logid::String, ind_name::String, cfg_path::String)
             mv(joinpath(gens_path, g), g_dir, force=true)
         end
     end
-    rm(joinpath("logs", logid), force=true, recursive=true)
-    rm(joinpath("gens", logid), force=true, recursive=true)
 end
 
 """

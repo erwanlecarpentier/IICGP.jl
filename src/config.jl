@@ -1,4 +1,4 @@
-export dualcgp_config
+export dualcgp_config, monocgp_config
 
 using Dates
 
@@ -84,4 +84,63 @@ function dualcgp_config(cfg::Dict, game_name::String)
     controller_cfg = get_config(controller_cfg) # dict to named tuple
 
     main_cfg, encoder_cfg, controller_cfg, reducer, bootstrap
+end
+
+function monocgp_config(monocgp_cfg_filename::String, game_name::String)
+    cfg = YAML.load_file(monocgp_cfg_filename)
+    monocgp_config(cfg, game_name)
+end
+
+"""
+TODO
+"""
+function monocgp_config(cfg::Dict, game_name::String)
+    # Temporarily open a game to retrieve parameters
+    seed = cfg["seed"]
+    game = Game(game_name, seed)
+    rgb = get_rgb(game)
+    img_size = size(rgb[1])
+    n_in = 3  # RGB images
+    n_out = length(getMinimalActionSet(game.ale))  # One output per legal action
+    close!(game)
+
+    # Main config and  initialize sub-configs
+    bootstrap = cfg["bootstrap"]
+    d_fitness = cfg["d_fitness"]
+    n_gen = cfg["n_gen"]
+    log_gen = cfg["log_gen"]
+    save_gen = cfg["save_gen"]
+    reducer_cfg = cfg["reducer"]
+    controller_cfg = cfg["controller"]
+    reducer_type = reducer_cfg["type"]
+    logid = string(Dates.now(), "_", game_name)
+    for k in ["seed", "d_fitness", "n_gen", "log_gen", "save_gen"]
+        controller_cfg[k] = cfg[k]
+    end
+
+    # Main config
+    main_cfg = Dict()
+    for k in keys(cfg)
+        if k ∉ ["encoder", "reducer", "controller"]
+            main_cfg[k] = cfg[k]
+        end
+    end
+    # main_cfg = dict_to_namedtuple(main_cfg)
+
+    # Reducer
+    reducer = Reducer(reducer_cfg, n_in=n_in, img_size=img_size)
+
+    # Forward pass to retrieve the number of input of the controller
+    features = reducer.reduct(rgb, reducer.parameters)
+    features_flatten = collect(Iterators.flatten(Iterators.flatten(features)))
+    cont_n_in = length(features_flatten)
+
+    # Controller config
+    controller_cfg["function_module"] = IICGP.CGPFunctions
+    controller_cfg["n_in"] = cont_n_in
+    controller_cfg["n_out"] = n_out
+    controller_cfg["id"] = logid
+    controller_cfg = get_config(controller_cfg) # dict to named tuple
+
+    main_cfg, controller_cfg, reducer, bootstrap
 end
