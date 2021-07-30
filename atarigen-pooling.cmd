@@ -6,7 +6,7 @@
 # Subset 9 representative games
 # boxing centipede demon_attack enduro freeway kung_fu_master space_invaders riverraid pong
 
-for GAME in kung_fu_master pong
+for GAME in boxing assault freeway
 do
 	# sbatch atari-single.cmd $GAME
 	echo "#!/bin/bash" > atari_pooling_$GAME.cmd
