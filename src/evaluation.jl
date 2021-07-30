@@ -10,6 +10,20 @@ function null_evaluate(i::CGPInd, j::CGPInd)
 end
 
 """
+    function fitness_evaluate(e::CGPEvolution; fitness::Function=null_evaluate)
+
+Sets the fitness of each individual to the Array of values returned by fitness.
+Multithreaded option enabled in this version.
+"""
+function fitness_evaluate(e::CGPEvolution, fitness::Function=null_evaluate)
+    @sync for i in eachindex(e.population)
+        Threads.@spawn begin
+            e.population[i].fitness[:] = fitness(e.population[i])[:]
+        end
+    end
+end
+
+"""
     function fitness_evaluate(e::DualCGPEvolution, fitness::Function=null_evaluate)
 
 Sets the fitness of each individual to the maximum value of the fitness matrix

@@ -6,7 +6,8 @@ using Dates
 using IICGP
 using Distributed
 import Random
-import Cambrian.mutate  # mutate function scope definition
+import Cambrian.mutate  # to extend the function
+import Cambrian.evaluate  # to extend the function
 
 
 s = ArgParseSettings()
@@ -67,6 +68,7 @@ else
     mutate(ind::CGPInd) = goldman_mutate(cont_cfg, ind)
     lck = ReentrantLock()
     fit(controller::CGPInd) = play_atari(reducer, controller, lck)
+    evaluate(e::CGPEvolution) = IICGP.fitness_evaluate(e, e.fitness)
 
     e = CartesianGeneticProgramming.CGPEvolution(cont_cfg, fit)
 
