@@ -114,7 +114,7 @@ function get_bootstrap_paths(
     for dir in dirs
         exp_dir = joinpath(RES_DIR, dir)
         cfg_dir = cfg_from_exp_dir(exp_dir)
-        ecfg, ccfg, _, _ = dualcgp_config(cfg_dir, game)
+        _, ecfg, ccfg, _, _ = dualcgp_config(cfg_dir, game)
         println()
         println("________________________________________________")
         println(are_same_cfg(enco_cfg, ecfg))

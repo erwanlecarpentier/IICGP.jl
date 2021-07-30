@@ -1,6 +1,6 @@
 # General parameters
 seed: 0
-max_frames: 100
+max_frames: 10
 d_fitness: 1
 n_gen: 10
 log_gen: 1
@@ -9,7 +9,7 @@ bootstrap: false
 
 # Encoder's parameters
 encoder:
-  n_population: 5
+  n_population: 2
   n_elite: 1
   rows: 1
   columns: 3
@@ -58,7 +58,7 @@ reducer:
 
 # Controller's parameters
 controller:
-  n_population: 5
+  n_population: 2
   n_elite: 1
   rows: 1
   columns: 10

@@ -35,13 +35,12 @@ s = ArgParseSettings()
 end
 args = parse_args(ARGS, s)
 seed = args["seed"]
-seed = args["max_frames"]
 Random.seed!(seed)
-# addprocs(Threads.nthreads())
 
-encoder_cfg, controller_cfg, reducer, bootstrap = IICGP.dualcgp_config(args["cfg"],
-                                                            args["game"])
-logid = encoder_cfg.id
+main_cfg, enco_cfg, cont_cfg, reducer, bootstrap = IICGP.dualcgp_config(args["cfg"],
+                                                                        args["game"])
+max_frames = main_cfg["max_frames"]
+logid = enco_cfg.id
 
 function play_atari(
     encoder::CGPInd,
@@ -75,18 +74,18 @@ else
     # Define mutate and fit functions
     function mutate(ind::CGPInd, ind_type::String)
         if ind_type == "encoder"
-            return goldman_mutate(encoder_cfg, ind, init_function=IPCGPInd)
+            return goldman_mutate(enco_cfg, ind, init_function=IPCGPInd)
         elseif ind_type == "controller"
-            return goldman_mutate(controller_cfg, ind)
+            return goldman_mutate(cont_cfg, ind)
         end
     end
     lck = ReentrantLock()
     fit(encoder::CGPInd, controller::CGPInd) = play_atari(encoder, reducer,
                                                           controller, lck)
     # Create an evolution framework
-    e = IICGP.DualCGPEvolution(encoder_cfg, controller_cfg, fit,
+    e = IICGP.DualCGPEvolution(enco_cfg, cont_cfg, fit,
                                encoder_init_function=IPCGPInd, logid=logid,
                                bootstrap=bootstrap, game=args["game"])
     # Run evolution
-    # run!(e)  # TODO put back
+    run!(e)
 end

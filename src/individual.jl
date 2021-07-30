@@ -75,7 +75,7 @@ end
 
 function get_best_individuals(path::String, game::String, cfg::Dict)
     enco_dna_path, cont_dna_path = get_best_individuals_paths(path)
-    enco_cfg, cont_cfg, reducer, _ = dualcgp_config(cfg, game)
+    _, enco_cfg, cont_cfg, reducer, _ = dualcgp_config(cfg, game)
     enco = IPCGPInd(enco_cfg, read(enco_dna_path, String))
     cont = CGPInd(cont_cfg, read(cont_dna_path, String))
     enco, reducer, cont

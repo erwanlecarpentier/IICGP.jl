@@ -3,6 +3,10 @@ export dualcgp_config
 using Dates
 
 
+function dict_to_namedtuple(d::Dict)
+    NamedTuple{Tuple(keys(d))}(values(d))
+end
+
 function dualcgp_config(dualcgp_cfg_filename::String, game_name::String)
     cfg = YAML.load_file(dualcgp_cfg_filename)
     dualcgp_config(cfg, game_name)
@@ -46,6 +50,15 @@ function dualcgp_config(cfg::Dict, game_name::String)
         controller_cfg[k] = cfg[k]
     end
 
+    # Main config
+    main_cfg = Dict()
+    for k in keys(cfg)
+        if k ∉ ["encoder", "reducer", "controller"]
+            main_cfg[k] = cfg[k]
+        end
+    end
+    # main_cfg = dict_to_namedtuple(main_cfg)
+
     # Encoder config
     encoder_cfg["function_module"] = IICGP.CGPFunctions
     encoder_cfg["n_in"] = n_in
@@ -70,5 +83,5 @@ function dualcgp_config(cfg::Dict, game_name::String)
     controller_cfg["id"] = logid
     controller_cfg = get_config(controller_cfg) # dict to named tuple
 
-    encoder_cfg, controller_cfg, reducer, bootstrap
+    main_cfg, encoder_cfg, controller_cfg, reducer, bootstrap
 end
