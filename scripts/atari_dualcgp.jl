@@ -88,4 +88,7 @@ else
                                bootstrap=bootstrap, game=args["game"])
     # Run evolution
     run!(e)
+
+    # Reorg
+    reorg_results(logid, "encoder", args["cfg"])
 end

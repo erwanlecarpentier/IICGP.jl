@@ -44,7 +44,7 @@ function dualcgp_config(cfg::Dict, game_name::String)
     reducer_cfg = cfg["reducer"]
     controller_cfg = cfg["controller"]
     reducer_type = reducer_cfg["type"]
-    logid = string(Dates.now(), "_", game_name, "_", reducer_type, "_", seed)
+    logid = string(Dates.now(), "_", game_name)
     for k in ["seed", "d_fitness", "n_gen", "log_gen", "save_gen"]
         encoder_cfg[k] = cfg[k]
         controller_cfg[k] = cfg[k]

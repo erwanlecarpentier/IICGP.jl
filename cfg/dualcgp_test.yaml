@@ -2,7 +2,7 @@
 seed: 0
 max_frames: 10
 d_fitness: 1
-n_gen: 10
+n_gen: 3
 log_gen: 1
 save_gen: 1
 bootstrap: false

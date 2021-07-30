@@ -1,4 +1,5 @@
-export get_exp_dir, get_bootstrap_paths, get_best_individuals_paths
+export get_exp_dir, get_exp_path, get_bootstrap_paths, get_best_individuals_paths
+export reorg_results
 export find_yaml, cfg_from_exp_dir, log_from_exp_dir
 
 using CSV
@@ -10,6 +11,45 @@ using Plots
 # Global variables, never changed
 RES_DIR = string(string(@__DIR__)[1:end-length("src/")], "/results/")
 LOG_HEADER = ["date", "lib", "type", "gen_number", "best", "mean", "std"]
+
+
+"""
+Fetch the saved results and reorganise them.
+"""
+function reorg_results(logid::String, ind_name::String, cfg_path::String)
+    ind_log = string(ind_name, ".csv")
+    logs_path = joinpath("logs", logid, ind_log)
+    gens_path = joinpath("gens", logid)
+    new_resu_dir = joinpath(RES_DIR, logid)
+    new_logs_dir = joinpath(new_resu_dir, "logs")
+    new_gens_dir = joinpath(new_resu_dir, "gens/")
+    mkdir(new_resu_dir)
+    mkdir(new_logs_dir)
+    mkdir(new_gens_dir)
+    new_logs_path = joinpath(new_logs_dir, ind_log)
+    new_cfg_path = joinpath(new_resu_dir, cfg_path[length("cfg/")+1:end])
+    cp(cfg_path, new_cfg_path, force=true)
+    mv(logs_path, new_logs_path, force=true)
+    for g in readdir(gens_path)
+        if g[1:length(ind_name)] == ind_name
+            g_dir = joinpath(new_gens_dir, g)
+            mkdir(g_dir)
+            mv(joinpath(gens_path, g), g_dir, force=true)
+        end
+    end
+    rm(joinpath("logs", logid), force=true, recursive=true)
+    rm(joinpath("gens", logid), force=true, recursive=true)
+end
+
+"""
+    get_exp_dir(game_name::String)
+
+Get a new experiment directory.
+"""
+function get_exp_path(game_name::String)
+    exp_dir = string(Dates.now(), "_", game_name)
+    joinpath(RES_DIR, exp_dir)
+end
 
 """
     function get_exp_dir(
@@ -153,10 +193,10 @@ end
 """
     cfg_from_exp_dir(exp_dir::String)
 
-Get log file at specified experiment directory. Precisely, eturn the encoder's
+Get log file at specified experiment directory. Precisely, return the encoder's
 log file.
 """
 function log_from_exp_dir(exp_dir::String)
-    log_file = joinpath(exp_dir, "logs/encoders.csv")
+    log_file = joinpath(exp_dir, "logs/encoder.csv")
     CSV.File(log_file, header=LOG_HEADER)
 end

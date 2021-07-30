@@ -96,7 +96,7 @@ function DualCGPEvolution(
     else
         logid = encoder_config.id
     end
-    encoder_logfile = string("logs/", logid, "/encoders.csv")
+    encoder_logfile = string("logs/", logid, "/encoder.csv")
     controller_logfile = string("logs/", logid, "/controller.csv")
     encoder_logger = CambrianLogger(encoder_logfile)
     controller_logger = CambrianLogger(controller_logfile)
