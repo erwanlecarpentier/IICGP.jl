@@ -12,8 +12,8 @@ do
 	echo "#!/bin/bash" > atari_centroid_$GAME.cmd
 	echo "#SBATCH -J atari-centroid-$GAME" >> atari_centroid_$GAME.cmd
 	echo "#SBATCH -N 1" >> atari_centroid_$GAME.cmd
-	echo "#SBATCH -n 5" >> atari_centroid_$GAME.cmd
-	echo "#SBATCH --ntasks-per-node=5" >> atari_centroid_$GAME.cmd
+	echo "#SBATCH -n 25" >> atari_centroid_$GAME.cmd
+	echo "#SBATCH --ntasks-per-node=25" >> atari_centroid_$GAME.cmd
 	echo "#SBATCH --ntasks-per-core=1" >> atari_centroid_$GAME.cmd
 	echo "#SBATCH -o atari-centroid-$GAME.out" >> atari_centroid_$GAME.cmd
 	echo "#SBATCH -e atari-centroid-$GAME.log" >> atari_centroid_$GAME.cmd
@@ -21,7 +21,7 @@ do
 	echo "#SBATCH --mail-user=erwanlecarpentier@mailbox.org" >> atari_centroid_$GAME.cmd
 	echo "#SBATCH --mail-type=END" >> atari_centroid_$GAME.cmd
 	echo "" >> atari_centroid_$GAME.cmd
-	echo "julia --threads 5 --project=/users/p21001/lecarpen/IICGP.jl scripts/atari_monocgp.jl --cfg=cfg/monocgp_atari_centroid.yaml --game=$GAME" >> atari_centroid_$GAME.cmd
+	echo "julia --threads 25 --project=/users/p21001/lecarpen/IICGP.jl scripts/atari_dualcgp.jl --cfg=cfg/dualcgp_atari_centroid.yaml --game=$GAME" >> atari_centroid_$GAME.cmd
 
 	sbatch atari_centroid_$GAME.cmd
 

@@ -9,7 +9,7 @@ bootstrap: false
 
 # Reducer's parameters
 reducer:
-  type: "pooling" # "pooling" or "centroid"
+  type: "centroid" # "pooling" or "centroid"
   pooling_function: "mean" # POOLING: "mean", "max", or "min"
   features_size: 5 # POOLING: size of the square down-sampled image
   n_centroids: 15 # CENTROID: number of biggest objects tracked
