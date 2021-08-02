@@ -14,7 +14,7 @@ s = ArgParseSettings()
 @add_arg_table! s begin
     "--cfg"
     help = "configuration script"
-    default = "cfg/test.yaml"
+    default = "cfg/test_mono.yaml"
     "--game"
     help = "game rom name"
     default = "centipede"
@@ -71,5 +71,5 @@ else
     e = CartesianGeneticProgramming.CGPEvolution(cont_cfg, fit)
     init_backup(logid, args["cfg"])
     run!(e)
-    fetch_backup(logid, args["cfg"])
+    # fetch_backup()
 end

@@ -10,14 +10,72 @@ using Plots
 
 # Global variables, never changed
 RES_DIR = string(string(@__DIR__)[1:end-length("src/")], "/results/")
+# LOGS_DIR = string(string(@__DIR__)[1:end-length("src/")], "/logs/")
+# GENS_DIR = string(string(@__DIR__)[1:end-length("src/")], "/gens/")
 LOG_HEADER = ["date", "lib", "type", "gen_number", "best", "mean", "std"]
 
 
 function init_backup(logid::String, cfg_path::String)
-    println("init")
+    new_resu_dir = joinpath(RES_DIR, logid)
+    new_logs_dir = joinpath(new_resu_dir, "logs")
+    new_gens_dir = joinpath(new_resu_dir, "gens")
+    mkdir(new_resu_dir)
+    mkdir(new_logs_dir)
+    mkdir(new_gens_dir)
+    new_cfg_path = joinpath(new_resu_dir, cfg_path[length("cfg/")+1:end])
+    cp(cfg_path, new_cfg_path, force=true)
 end
 
+logsdir_from_logid(logid::String) = joinpath(RES_DIR, logid, "logs")
+gensdir_from_logid(logid::String) = joinpath(RES_DIR, logid, "gens")
 
+"""
+    fetch_backup()
+
+Fetch all the data in `logs/` and `gens/` and copy them to `results/`.
+Assumes the function `init_backup` to be run previously to the evolution.
+Corresponding files are found using unique logid.
+"""
+function fetch_backup()
+    each_log_name = Array{String,1}()
+    each_log_id = Array{String,1}()
+    each_log_new_name = Array{String,1}()
+    for l in readdir("logs")
+        is_csv = endswith(l, ".csv")
+        id = is_csv ? l[1:end-length(".csv")] : l
+        if is_csv
+            push!(each_log_name, l)
+            push!(each_log_id, id)
+            push!(each_log_new_name, "controller.csv")
+        else
+            for p in readdir(joinpath("logs", l))
+                push!(each_log_name, joinpath(l, p))
+                push!(each_log_id, id)
+                push!(each_log_new_name, p)
+            end
+        end
+    end
+    for i in eachindex(each_log_name)
+        old_logfile = joinpath("logs", each_log_name[i])
+        new_logfile = joinpath(logsdir_from_logid(each_log_id[i]), each_log_new_name[i])
+        cp(old_logfile, new_logfile, force=true)
+    end
+    for id in readdir("gens")
+        for g in readdir(joinpath("gens", id))
+            old_genpath = joinpath("gens", id, g)
+            if startswith(g, "encoder_") || startswith(g, "controller_")
+                new_filename = g
+            else
+                new_filename = string("controller_", g)
+            end
+            new_genpath = joinpath(gensdir_from_logid(id), new_filename)
+            cp(old_genpath, new_genpath, force=true)
+        end
+    end
+end
+
+#=
+# OUTDATED
 """
 Fetch the saved results and reorganise them.
 """
@@ -27,14 +85,14 @@ function fetch_backup(logid::String, cfg_path::String)
     gens_dir = joinpath("gens", logid)
 
     new_resu_dir = joinpath(RES_DIR, logid)
-    new_log_dir = joinpath(new_resu_dir, "logs")
+    new_logs_dir = joinpath(new_resu_dir, "logs")
     new_gens_dir = joinpath(new_resu_dir, "gens/")
     mkdir(new_resu_dir)
-    mkdir(new_log_dir)
+    mkdir(new_logs_dir)
     mkdir(new_gens_dir)
     new_cfg_path = joinpath(new_resu_dir, cfg_path[length("cfg/")+1:end])
     cp(cfg_path, new_cfg_path, force=true)
-    new_log_path = joinpath(new_log_dir, "controller.csv")
+    new_log_path = joinpath(new_logs_dir, "controller.csv")
     cp(log_path, new_log_path, force=true)
     for g in readdir(gens_dir)
         g_dir = joinpath(new_gens_dir, string("controller_", g))
@@ -42,7 +100,10 @@ function fetch_backup(logid::String, cfg_path::String)
         mv(joinpath(gens_dir, g), g_dir, force=true)
     end
 end
+=#
 
+#=
+# OUTDATED
 """
 Fetch the saved results and reorganise them.
 """
@@ -68,6 +129,7 @@ function fetch_backup(logid::String, ind_name::String, cfg_path::String)
         end
     end
 end
+=#
 
 """
     get_exp_dir(game_name::String)
