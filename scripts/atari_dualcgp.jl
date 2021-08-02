@@ -50,6 +50,7 @@ function play_atari(
     seed=seed,
     max_frames=max_frames
 )
+    Random.seed!(seed)
     game = Game(args["game"], seed, lck=lck)
     reward = 0.0
     frames = 0
