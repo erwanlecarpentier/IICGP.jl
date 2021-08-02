@@ -1,4 +1,5 @@
-export get_exp_dir, get_exp_path, get_bootstrap_paths, get_best_individuals_paths
+export get_exp_dir, get_exp_path, get_bootstrap_paths
+export get_last_dualcgp_paths, get_last_ind_path
 export init_backup, fetch_backup
 export find_yaml, cfg_from_exp_dir, log_from_exp_dir
 
@@ -171,7 +172,7 @@ function get_exp_dir(
     games::Array{String,1}=Array{String,1}(),
     reducers::Array{String,1}=Array{String,1}()
 )
-    no_time_lapse = min_date == max_date == DateTime(0)
+    no_time = min_date == max_date == DateTime(0)
     no_specified_games = length(games) == 0
     no_specified_reducers = length(reducers) == 0
     existing_res = readdir(res_dir)
@@ -180,7 +181,7 @@ function get_exp_dir(
     for exp_dir in existing_res
         exp_date = DateTime(exp_dir[1:23])
         exp_game = exp_dir[25:end]
-        if no_time_lapse || (min_date < exp_date < max_date)
+        if no_time || (min_date < exp_date < max_date)
             if no_specified_games || (exp_game in games)
                 exp_full_path = string(res_dir, exp_dir)
                 cfg = cfg_from_exp_dir(exp_full_path)
@@ -208,12 +209,45 @@ function are_same_cfg(cfg_a::NamedTuple, cfg_b::NamedTuple)
 end
 
 """
+    get_last_ind_path(exp_dir::String, indname::String)
+
+Given the experiment directory, return the path of the last saved individual.
+The argument `indname` specifies the name of the individual, which should have
+the following form: `string(indname, "_", max_gen_str)``.
+"""
+function get_last_ind_path(exp_dir::String, indname::String)
+    gens_dir = joinpath(exp_dir, "gens")
+    max_gen = 0
+    max_gen_str = ""
+    for g in readdir(gens_dir)
+        if startswith(g, indname)
+            gen_str = g[length(indname)+2:end]
+            gen = parse(Int64, gen_str)
+            if gen > max_gen
+                max_gen = gen
+                max_gen_str = gen_str
+            end
+        end
+    end
+    dna_dir = joinpath(gens_dir, string(indname, "_", max_gen_str))
+    n_ind = length(readdir(dna_dir))
+    dna_filename_length = maximum([length(p) for p in readdir(dna_dir)]) - length(".dna")
+    dna_file = string(lpad(n_ind, dna_filename_length, "0"), ".dna")
+    dna_path = joinpath(dna_dir, dna_file)
+    dna_path
+end
+
+"""
     get_best_individuals_paths(exp_dir::String)
 
 Given the experiment directory, return the paths of the last saved encoder and
 controller.
 """
-function get_best_individuals_paths(exp_dir::String)
+function get_last_dualcgp_paths(exp_dir::String)
+    enco_dna_path = get_last_ind_path(exp_dir, "encoder")
+    cont_dna_path = get_last_ind_path(exp_dir, "controller")
+    enco_dna_path, cont_dna_path
+    #=
     gens_dir = joinpath(exp_dir, "gens")
     n_gen = readdir(gens_dir)[end]  # Last subdir in alphabetical order
     n_gen = n_gen[length("encoder_")+1:end]  # Gen number as a String
@@ -225,6 +259,7 @@ function get_best_individuals_paths(exp_dir::String)
     enco_dna_path = joinpath(enco_dna_path, dna_file)
     cont_dna_path = joinpath(cont_dna_path, dna_file)
     enco_dna_path, cont_dna_path
+    =#
 end
 
 """
@@ -263,7 +298,7 @@ Find first `.yaml` file at given path.
 """
 function find_yaml(path::String)
     for d in readdir(path)
-        if d[end-4:end] == ".yaml"
+        if endswith(d, ".yaml")
             return d
         end
     end
@@ -283,10 +318,10 @@ end
 """
     cfg_from_exp_dir(exp_dir::String)
 
-Get log file at specified experiment directory. Precisely, return the encoder's
-log file.
+Get log file at specified experiment directory. Precisely, return the
+controller's log file.
 """
 function log_from_exp_dir(exp_dir::String)
-    log_file = joinpath(exp_dir, "logs/encoder.csv")
+    log_file = joinpath(exp_dir, "logs/controller.csv")
     CSV.File(log_file, header=LOG_HEADER)
 end

@@ -6,8 +6,10 @@ using Dates
 using IICGP
 using Distributed
 import Random
-import Cambrian.mutate  # to extend the function
-import Cambrian.evaluate  # to extend the function
+
+# function extension
+import Cambrian.mutate
+import Cambrian.evaluate
 
 
 s = ArgParseSettings()
