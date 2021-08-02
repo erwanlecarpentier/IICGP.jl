@@ -14,7 +14,7 @@ s = ArgParseSettings()
 @add_arg_table! s begin
     "--cfg"
     help = "configuration script"
-    default = "cfg/monocgp_atari_pooling.yaml"
+    default = "cfg/test.yaml"
     "--game"
     help = "game rom name"
     default = "centipede"
@@ -64,17 +64,12 @@ if length(args["ind"]) > 0
     ftn = fitness(ind, inps, outs)
     println("Fitness: ", ftn)
 else
-    # Define mutate and fit functions
     mutate(ind::CGPInd) = goldman_mutate(cont_cfg, ind)
     lck = ReentrantLock()
     fit(controller::CGPInd) = play_atari(reducer, controller, lck)
     evaluate(e::CGPEvolution) = IICGP.fitness_evaluate(e, e.fitness)
-
     e = CartesianGeneticProgramming.CGPEvolution(cont_cfg, fit)
-
+    init_backup(logid, args["cfg"])
     run!(e)
-
-    reorg_results(logid, args["cfg"])
-    # rm(joinpath("logs", logid), force=true, recursive=true)
-    # rm(joinpath("gens", logid), force=true, recursive=true)
+    fetch_backup(logid, args["cfg"])
 end

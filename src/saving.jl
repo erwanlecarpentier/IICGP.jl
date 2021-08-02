@@ -1,5 +1,5 @@
 export get_exp_dir, get_exp_path, get_bootstrap_paths, get_best_individuals_paths
-export reorg_results
+export init_backup, fetch_backup
 export find_yaml, cfg_from_exp_dir, log_from_exp_dir
 
 using CSV
@@ -13,10 +13,15 @@ RES_DIR = string(string(@__DIR__)[1:end-length("src/")], "/results/")
 LOG_HEADER = ["date", "lib", "type", "gen_number", "best", "mean", "std"]
 
 
+function init_backup(logid::String, cfg_path::String)
+    println("init")
+end
+
+
 """
 Fetch the saved results and reorganise them.
 """
-function reorg_results(logid::String, cfg_path::String)
+function fetch_backup(logid::String, cfg_path::String)
     ind_log = string(logid, ".csv")
     log_path = joinpath("logs", ind_log)
     gens_dir = joinpath("gens", logid)
@@ -41,7 +46,7 @@ end
 """
 Fetch the saved results and reorganise them.
 """
-function reorg_results(logid::String, ind_name::String, cfg_path::String)
+function fetch_backup(logid::String, ind_name::String, cfg_path::String)
     ind_log = string(ind_name, ".csv")
     logs_path = joinpath("logs", logid, ind_log)
     gens_path = joinpath("gens", logid)
