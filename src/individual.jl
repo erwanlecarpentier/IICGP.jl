@@ -1,4 +1,4 @@
-export IPCGPInd, image_buffer, get_best_individuals
+export IPCGPInd, image_buffer, get_last_dualcgp
 
 using CartesianGeneticProgramming
 using JSON
@@ -73,10 +73,17 @@ function IPCGPInd(cfg::NamedTuple, dna_path::String)::CGPInd
     IPCGPInd(cfg, Array{Float64}(dict["chromosome"]))
 end
 
-function get_best_individuals(path::String, game::String, cfg::Dict)
-    enco_dna_path, cont_dna_path = get_best_individuals_paths(path)
+function get_last_dualcgp(path::String, game::String, cfg::Dict)
+    enco_dna_path, cont_dna_path = get_last_dualcgp_paths(path)
     _, enco_cfg, cont_cfg, reducer, _ = dualcgp_config(cfg, game)
     enco = IPCGPInd(enco_cfg, read(enco_dna_path, String))
     cont = CGPInd(cont_cfg, read(cont_dna_path, String))
     enco, reducer, cont
+end
+
+function get_last_monocgp(path::String, game::String, cfg::Dict)
+    cont_dna_path = get_last_ind_path(path, "controller")
+    _, cont_cfg, reducer, _ = monocgp_config(cfg, game)
+    cont = CGPInd(cont_cfg, read(cont_dna_path, String))
+    reducer, cont
 end

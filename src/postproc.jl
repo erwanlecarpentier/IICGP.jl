@@ -7,8 +7,46 @@ using BenchmarkTools
 using TimerOutputs
 
 
+
 """
-    function time_individuals_ms(
+    function time_monocgp_ms(
+        reducer::Reducer,
+        cont::CGPInd,
+        game_name::String
+    )
+
+Time forward pass of complete architecture.
+Return time in ms.
+"""
+function time_monocgp_ms(
+    reducer::Reducer,
+    cont::CGPInd,
+    game_name::String
+)
+    # Generate input
+    game = Game(game_name, 0)
+    rgb = get_rgb(game)
+    # Pre-compile
+    process(reducer, cont, rgb)
+    n_iter = 1000
+    # Time
+    redu_time = 0.0
+    flat_time = 0.0
+    cont_time = 0.0
+    for _ in 1:n_iter
+        redu_time += @elapsed features = reducer.reduct(rgb, reducer.parameters)
+        flat_time += @elapsed features_flatten = collect(Iterators.flatten(Iterators.flatten(features)))
+        cont_time += @elapsed cont_out = CartesianGeneticProgramming.process(cont, features_flatten)
+    end
+    to_ms = 1000 / n_iter
+    redu_time *= to_ms
+    flat_time *= to_ms
+    cont_time *= to_ms
+    redu_time, flat_time, cont_time
+end
+
+"""
+    function time_dualcgp_ms(
         enco::CGPInd,
         reducer::Reducer,
         cont::CGPInd,
@@ -18,7 +56,7 @@ using TimerOutputs
 Time forward pass of complete architecture.
 Return time in ms.
 """
-function time_individuals_ms(
+function time_dualcgp_ms(
     enco::CGPInd,
     reducer::Reducer,
     cont::CGPInd,
@@ -29,7 +67,7 @@ function time_individuals_ms(
     rgb = get_rgb(game)
     # Pre-compile
     process(enco, reducer, cont, rgb)
-    n_iter = 100
+    n_iter = 1000
     # Time
     enco_time = 0.0
     redu_time = 0.0
@@ -80,14 +118,12 @@ function process_results(
         mean = (ma == 1) ? log.mean : imfilter(log.mean, kernel)
         std = (ma == 1) ? log.std : imfilter(log.std, kernel)
         println(best == log.best)
-        plot!(plt_best, best, label=label_i)
-        plot!(plt_mean, mean, ribbon=std, label=label_i)
+        save_gen = cfg["save_gen"]
+        x = 1:save_gen:save_gen*length(best)
+        plot!(plt_best, x, best, label=label_i)
+        plot!(plt_mean, x, mean, ribbon=std, label=label_i)
 
-        # Get last best individuals
-        enco, reducer, cont = get_best_individuals(exp_dirs[i], games[i], cfg)
-        enco_time, redu_time, flat_time, cont_time = time_individuals_ms(enco, reducer, cont, games[i])
-
-        # Print everything
+        # Append info to print
         p = []
         push!(p, ["Game", games[i]])
         push!(p, ["Number gen", length(log) * cfg["save_gen"]])
@@ -107,10 +143,33 @@ function process_results(
             push!(p, ["  - pooling_function", cfg["reducer"]["pooling_function"]])
         end
         push!(p, ["Forward pass timing (ms):", ""])
-        push!(p, ["  - Encoder", enco_time])
+
+
+        # Timer
+        is_dual = isfile(joinpath(exp_dirs[i], "logs/encoder.csv"))
+        total_time = 0.0
+        if is_dual
+            enco, reducer, cont = get_last_dualcgp(exp_dirs[i], games[i], cfg)
+            enco_time, redu_time, flat_time, cont_time = time_dualcgp_ms(
+                enco, reducer, cont, games[i]
+            )
+            push!(p, ["  - Encoder", enco_time])
+            total_time += enco_time
+        else
+            reducer, cont = get_last_monocgp(exp_dirs[i], games[i], cfg)
+            redu_time, flat_time, cont_time = time_monocgp_ms(
+                reducer, cont, games[i]
+            )
+        end
+        total_time += redu_time
+        total_time += flat_time
+        total_time += cont_time
+
+        # Finish push and print
         push!(p, ["  - Reducer", redu_time])
         push!(p, ["  - Flattening", flat_time])
         push!(p, ["  - Controller", cont_time])
+        push!(p, ["  - Total", total_time])
         l = maximum([length(k) for k in [pr[1] for pr in p]])
         println()
         for k in p
@@ -120,6 +179,6 @@ function process_results(
     display(plt_best)
     display(plt_mean)
 
-    savefig(plt_best, "best.png")
-    savefig(plt_mean, "mean.png")
+    # savefig(plt_best, "best.png")
+    # savefig(plt_mean, "mean.png")
 end

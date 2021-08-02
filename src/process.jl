@@ -71,7 +71,6 @@ function process_full(
     return enco_out, features, cont_out
 end
 
-
 function process(
     reducer::AbstractReducer,
     controller::CGPInd,

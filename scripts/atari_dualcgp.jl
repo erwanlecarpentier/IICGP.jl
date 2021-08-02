@@ -20,7 +20,7 @@ s = ArgParseSettings()
 @add_arg_table! s begin
     "--cfg"
     help = "configuration script"
-    default = "cfg/dualcgp_test.yaml" # dualcgp_atari_pooling | dualcgp_atari_centroid
+    default = "cfg/test_dual.yaml"
     "--game"
     help = "game rom name"
     default = "centipede"
@@ -50,6 +50,7 @@ function play_atari(
     seed=seed,
     max_frames=max_frames
 )
+    Random.seed!(seed)
     game = Game(args["game"], seed, lck=lck)
     reward = 0.0
     frames = 0
@@ -87,11 +88,7 @@ else
                                encoder_init_function=IPCGPInd, logid=logid,
                                bootstrap=bootstrap, game=args["game"])
     # Run evolution
+    init_backup(logid, args["cfg"])
     run!(e)
-
-    # Reorg
-    reorg_results(logid, "encoder", args["cfg"])
-    reorg_results(logid, "controller", args["cfg"])
-    # rm(joinpath("logs", logid), force=true, recursive=true)
-    # rm(joinpath("gens", logid), force=true, recursive=true)
+    # fetch_backup()
 end

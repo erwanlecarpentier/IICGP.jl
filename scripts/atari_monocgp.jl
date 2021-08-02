@@ -6,15 +6,17 @@ using Dates
 using IICGP
 using Distributed
 import Random
-import Cambrian.mutate  # to extend the function
-import Cambrian.evaluate  # to extend the function
+
+# function extension
+import Cambrian.mutate
+import Cambrian.evaluate
 
 
 s = ArgParseSettings()
 @add_arg_table! s begin
     "--cfg"
     help = "configuration script"
-    default = "cfg/monocgp_atari_pooling.yaml"
+    default = "cfg/test_mono.yaml"
     "--game"
     help = "game rom name"
     default = "centipede"
@@ -43,6 +45,7 @@ function play_atari(
     seed=seed,
     max_frames=max_frames
 )
+    Random.seed!(seed)
     game = Game(args["game"], seed, lck=lck)
     reward = 0.0
     frames = 0
@@ -64,17 +67,12 @@ if length(args["ind"]) > 0
     ftn = fitness(ind, inps, outs)
     println("Fitness: ", ftn)
 else
-    # Define mutate and fit functions
     mutate(ind::CGPInd) = goldman_mutate(cont_cfg, ind)
     lck = ReentrantLock()
     fit(controller::CGPInd) = play_atari(reducer, controller, lck)
     evaluate(e::CGPEvolution) = IICGP.fitness_evaluate(e, e.fitness)
-
     e = CartesianGeneticProgramming.CGPEvolution(cont_cfg, fit)
-
+    init_backup(logid, args["cfg"])
     run!(e)
-
-    reorg_results(logid, args["cfg"])
-    # rm(joinpath("logs", logid), force=true, recursive=true)
-    # rm(joinpath("gens", logid), force=true, recursive=true)
+    # fetch_backup()
 end
