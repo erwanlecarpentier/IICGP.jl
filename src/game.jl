@@ -54,11 +54,13 @@ function get_inputs(game::Game)
 end
 
 function get_rgb(game::Game)
-    # TODO: speed this up
-    # rawscreen = Array{Cuchar}(undef, game.width * game.height * 3)
     rawscreen = getScreenRGB(game.ale)
+    #=
+    # Slower
     rgb = reshape(rawscreen, (3, game.width, game.height));
     [Array{UInt8}(rgb[i,:,:]) for i in 1:3]
+    =#
+    [convert(Array{UInt8,2}, reshape(@view(rawscreen[i:3:length(rawscreen)]), (game.width, game.height))) for i in 1:3]
 end
 
 function get_ram(game::Game)
