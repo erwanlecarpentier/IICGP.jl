@@ -1,4 +1,5 @@
-export implot, display_buffer, plot_encoding, plot_centroids
+export implot, plot_encoding, plot_centroids
+export plot_buffer, plot_active_buffer
 
 using Plots
 using Plots.PlotMeasures
@@ -50,16 +51,42 @@ Examples:
     IICGP.display_buffer(ind, indexes=1:3)
     IICGP.display_buffer(ind, 2, indexes=1:3)
 """
-function display_buffer(
-        ind::CGPInd,
-        enlargement::E=1;
-        indexes=eachindex(ind.buffer)
-    ) where {E <: Union{Int64, Float64}}
+function plot_buffer(
+    ind::CGPInd, # enlargement::E=1;
+    indexes=eachindex(ind.buffer)
+) where {E <: Union{Int64, Float64}}
     for i in indexes
-        imshow(ind.buffer[i], enlargement)
+        implot(ind.buffer[i]) # , enlargement)
     end
 end
 
+"""
+    plot_active_buffer(
+        ind::CGPInd,
+        enlargement::E=1
+    ) where {E <: Union{Int64, Float64}}
+
+Display the images contained in each active node in the given IPCGP individual.
+"""
+function plot_active_buffer(ind::CGPInd)
+    for i in eachindex(ind.buffer)
+        if ind.nodes[i].active
+            #plt = implot(ind.buffer[i]) # , enlargement)
+            #=plt = plot(
+                ind.buffer[i], seriestype=:heatmap, flip=true,
+                ratio=:equal, color=:grays, leg=false, framestyle=:none
+            )=#
+            plt = heatmap(
+                ind.buffer[i], yflip=true, color=:grays, clim=(0,255),
+                ratio=:equal, leg=false, framestyle=:none,
+                padding = (0.0, 0.0) # , margin=-5mm
+            )
+            # println(ind.buffer[i][1:3])
+            display(plt)
+            savefig(plt, "buffer.png")
+        end
+    end
+end
 
 """
     plot_encoding(
