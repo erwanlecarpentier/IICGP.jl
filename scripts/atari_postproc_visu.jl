@@ -41,6 +41,8 @@ reducers = ["pooling"] # Array{String,1}() # ["pooling"]
 exp_dirs, games = get_exp_dir(min_date=min_date, max_date=max_date, games=games,
                               reducers=reducers)
 
+##
+
 # Plot for each one of the selected experiments
 for i in eachindex(exp_dirs)
     cfg = cfg_from_exp_dir(exp_dirs[i])

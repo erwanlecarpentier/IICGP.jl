@@ -73,6 +73,19 @@ Image functions:
 
 # TODOs
 
-- Fix saving path issues
-- Centralize saving paths
 - Allow bootstrap of either encoder or controller (not both at the same time)
+
+# Reducing run length
+
+If:
+- time full forward pass = 1ms
+- number of generations = 50000
+- number of frames in Atari (no frameskip) = 10000
+Then it requires 5 days for completion.
+
+Speed-up options:
+- Reduce evaluation time:
+  - reduce `max_frame`
+  - sticky actions to go deeper in the game
+  - prune some evaluations by adding qualifying tests (an individual can only be evaluated if it satisfies preliminary tests, e.g., amount of information in feature vector / things like reconstruction errors)
+- Other?

@@ -5,6 +5,7 @@ using CartesianGeneticProgramming
 using Dates
 using IICGP
 using Distributed
+using BenchmarkTools
 import Random
 
 s = ArgParseSettings()
@@ -50,7 +51,6 @@ function play_atari(
 end
 
 max_frames = 10
-
 s1, a1, r1 = play_atari(game, seed, max_frames)
 s2, a2, r2 = play_atari(game, seed, max_frames)
 
@@ -59,7 +59,26 @@ println("same states  : ", s1 == s2)
 println("same actions : ", a1 == a2)
 println("same rewards : ", r1 == r2)
 
+##
 
+game = Game("pong", seed)
+@btime action = game.actions[rand(1:length(game.actions))] # 140 ns
+@btime r = act(game.ale, action) # 90 ns
+@btime s = get_rgb(game) # 100,000 ns
+
+@btime output = IICGP.process(enco, redu, cont, s) # 1,140,000 ns
+
+@btime out = CartesianGeneticProgramming.process(enco, s) # 970,000 ns
+@btime features = redu.reduct(out, redu.parameters) # 150,000 ns
+# features_flatten = collect(Iterators.flatten(features))
+@btime features_flatten = collect(Iterators.flatten(Iterators.flatten(features))) # 500 ns
+@btime CartesianGeneticProgramming.process(cont, features_flatten) # 5000 ns
+
+
+
+@btime action = game.actions[argmax(output)] # 80 ns
+
+close!(game)
 
 
 ##
