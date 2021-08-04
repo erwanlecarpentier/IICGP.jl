@@ -34,13 +34,15 @@ s = ArgParseSettings()
     default = ""
 end
 args = parse_args(ARGS, s)
-seed = args["seed"]
+const seed = args["seed"]
 Random.seed!(seed)
 
-main_cfg, enco_cfg, cont_cfg, reducer, bootstrap = IICGP.dualcgp_config(args["cfg"],
-                                                                        args["game"])
-max_frames = main_cfg["max_frames"]
-logid = enco_cfg.id
+main_cfg, enco_cfg, cont_cfg, reducer, bootstrap = IICGP.dualcgp_config(
+    args["cfg"], args["game"]
+)
+const max_frames = main_cfg["max_frames"]
+const stickiness = main_cfg["stickiness"]
+const logid = enco_cfg.id
 
 function play_atari(
     encoder::CGPInd,
@@ -48,15 +50,21 @@ function play_atari(
     controller::CGPInd,
     lck::ReentrantLock;
     seed=seed,
-    max_frames=max_frames
+    max_frames=max_frames,
+    stickiness=stickiness
 )
     Random.seed!(seed)
     game = Game(args["game"], seed, lck=lck)
     reward = 0.0
     frames = 0
+    prev_action = 0
     while ~game_over(game.ale)
-        output = IICGP.process(encoder, reducer, controller, get_rgb(game))
-        action = game.actions[argmax(output)]
+        if rand() > stickiness || frames == 0
+            output = IICGP.process(encoder, reducer, controller, get_rgb(game))
+            action = game.actions[argmax(output)]
+        else
+            action = prev_action
+        end
         reward += act(game.ale, action)
         frames += 1
         if frames > max_frames

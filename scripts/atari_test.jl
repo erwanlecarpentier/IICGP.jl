@@ -19,14 +19,13 @@ s = ArgParseSettings()
     default = 0
 end
 args = parse_args(ARGS, s)
-seed = args["seed"]
-game=args["game"]
 Random.seed!(seed)
 
 function play_atari(
     game::String,
     seed::Int64,
-    max_frames::Int64
+    max_frames::Int64,
+    stickiness::Float64
 )
     Random.seed!(seed)
     game = Game(game, seed)
@@ -34,8 +33,13 @@ function play_atari(
     a_traj = Array{Int64,1}()
     r_traj = Array{Float64,1}()
     frames = 0
+    prev_action = 0
     while ~game_over(game.ale)
-        action = game.actions[rand(1:length(game.actions))]
+        if rand() > stickiness || frames == 0
+            action = game.actions[rand(1:length(game.actions))]
+        else
+            action = prev_action
+        end
         r = act(game.ale, action)
         s = get_rgb(game)
         push!(s_traj, s)
@@ -50,9 +54,12 @@ function play_atari(
     s_traj, a_traj, r_traj
 end
 
-max_frames = 10
-s1, a1, r1 = play_atari(game, seed, max_frames)
-s2, a2, r2 = play_atari(game, seed, max_frames)
+game = args["game"]
+seed = args["seed"]
+max_frames = 100
+stickiness = 0.1
+s1, a1, r1 = play_atari(game, seed, max_frames, stickiness)
+s2, a2, r2 = play_atari(game, seed, max_frames, stickiness)
 
 println()
 println("same states  : ", s1 == s2)
