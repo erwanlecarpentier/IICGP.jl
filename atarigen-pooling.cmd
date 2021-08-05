@@ -8,12 +8,11 @@
 
 for GAME in boxing assault freeway
 do
-	# sbatch atari-single.cmd $GAME
 	echo "#!/bin/bash" > atari_pooling_$GAME.cmd
 	echo "#SBATCH -J atari-pooling-$GAME" >> atari_pooling_$GAME.cmd
 	echo "#SBATCH -N 1" >> atari_pooling_$GAME.cmd
-	echo "#SBATCH -n 5" >> atari_pooling_$GAME.cmd
-	echo "#SBATCH --ntasks-per-node=5" >> atari_pooling_$GAME.cmd
+	echo "#SBATCH -n 9" >> atari_pooling_$GAME.cmd
+	echo "#SBATCH --ntasks-per-node=9" >> atari_pooling_$GAME.cmd
 	echo "#SBATCH --ntasks-per-core=1" >> atari_pooling_$GAME.cmd
 	echo "#SBATCH -o atari-pooling-$GAME.out" >> atari_pooling_$GAME.cmd
 	echo "#SBATCH -e atari-pooling-$GAME.log" >> atari_pooling_$GAME.cmd
@@ -21,7 +20,7 @@ do
 	echo "#SBATCH --mail-user=erwanlecarpentier@mailbox.org" >> atari_pooling_$GAME.cmd
 	echo "#SBATCH --mail-type=END" >> atari_pooling_$GAME.cmd
 	echo "" >> atari_pooling_$GAME.cmd
-	echo "julia --threads 5 --project=/users/p21001/lecarpen/IICGP.jl scripts/atari_monocgp.jl --cfg=cfg/monocgp_atari_pooling.yaml --game=$GAME" >> atari_pooling_$GAME.cmd
+	echo "julia --threads 9 --project=/users/p21001/lecarpen/IICGP.jl scripts/atari_monocgp.jl --cfg=cfg/monocgp_atari_pooling.yaml --game=$GAME" >> atari_pooling_$GAME.cmd
 
 	sbatch atari_pooling_$GAME.cmd
 

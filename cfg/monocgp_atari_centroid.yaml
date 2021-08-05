@@ -17,7 +17,7 @@ reducer:
 
 # Controller's parameters
 controller:
-  n_population: 5
+  n_population: 9
   n_elite: 1
   rows: 1
   columns: 60
