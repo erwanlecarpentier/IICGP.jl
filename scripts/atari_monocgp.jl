@@ -39,8 +39,6 @@ const max_frames = main_cfg["max_frames"]
 const stickiness = main_cfg["stickiness"]
 const logid = cont_cfg.id
 
-##
-
 function play_atari(
     reducer::Reducer,
     controller::CGPInd,

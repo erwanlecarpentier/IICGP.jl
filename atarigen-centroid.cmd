@@ -17,7 +17,7 @@ do
 	echo "#SBATCH --ntasks-per-core=1" >> atari_centroid_$GAME.cmd
 	echo "#SBATCH -o atari-centroid-$GAME.out" >> atari_centroid_$GAME.cmd
 	echo "#SBATCH -e atari-centroid-$GAME.log" >> atari_centroid_$GAME.cmd
-	echo "#SBATCH --time=7-00:00:00" >> atari_centroid_$GAME.cmd
+	echo "#SBATCH --time=5-00:00:00" >> atari_centroid_$GAME.cmd
 	echo "#SBATCH --mail-user=erwanlecarpentier@mailbox.org" >> atari_centroid_$GAME.cmd
 	echo "#SBATCH --mail-type=END" >> atari_centroid_$GAME.cmd
 	echo "" >> atari_centroid_$GAME.cmd

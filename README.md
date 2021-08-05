@@ -73,7 +73,7 @@ Image functions:
 
 # TODOs
 
-- Allow bootstrap of either encoder or controller (not both at the same time)
+- Allow bootstrap of both encoder and controller
 
 # Reducing run length
 
@@ -88,4 +88,5 @@ Speed-up options:
   - reduce `max_frame`
   - sticky actions to go deeper in the game
   - prune some evaluations by adding qualifying tests (an individual can only be evaluated if it satisfies preliminary tests, e.g., amount of information in feature vector / things like reconstruction errors)
-- Other?
+  - Lower number of inputs, are RGB always useful compared to gray level?
+- Other than evaluation?

@@ -17,7 +17,7 @@ do
 	echo "#SBATCH --ntasks-per-core=1" >> atari_pooling_$GAME.cmd
 	echo "#SBATCH -o atari-pooling-$GAME.out" >> atari_pooling_$GAME.cmd
 	echo "#SBATCH -e atari-pooling-$GAME.log" >> atari_pooling_$GAME.cmd
-	echo "#SBATCH --time=7-00:00:00" >> atari_pooling_$GAME.cmd
+	echo "#SBATCH --time=5-00:00:00" >> atari_pooling_$GAME.cmd
 	echo "#SBATCH --mail-user=erwanlecarpentier@mailbox.org" >> atari_pooling_$GAME.cmd
 	echo "#SBATCH --mail-type=END" >> atari_pooling_$GAME.cmd
 	echo "" >> atari_pooling_$GAME.cmd
