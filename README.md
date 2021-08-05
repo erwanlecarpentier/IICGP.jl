@@ -89,6 +89,7 @@ Then it requires 5 days for completion.
 
 ### Speed-up options:
 - Reduce evaluation time:
+  - Max out the number of filters that can be used in the encoder (e.g. 4 filters in a row for one output should be enough if we consider that those filters are well chosen)
   - reduce `max_frame`
   - sticky actions to go deeper in the game
   - prune some evaluations by adding qualifying tests (an individual can only be evaluated if it satisfies preliminary tests, e.g., amount of information in feature vector / things like reconstruction errors)
