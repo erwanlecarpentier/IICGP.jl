@@ -77,16 +77,20 @@ Image functions:
 
 # Reducing run length
 
-If:
-- time full forward pass = 1ms
+### Rule of thumb
+
+If we set:
+
+- time full forward pass of individual = 1ms
 - number of generations = 50000
-- number of frames in Atari (no frameskip) = 10000
+- number of frames in Atari (not including frameskip) = 10000
+
 Then it requires 5 days for completion.
 
-Speed-up options:
+### Speed-up options:
 - Reduce evaluation time:
   - reduce `max_frame`
   - sticky actions to go deeper in the game
   - prune some evaluations by adding qualifying tests (an individual can only be evaluated if it satisfies preliminary tests, e.g., amount of information in feature vector / things like reconstruction errors)
   - Lower number of inputs, are RGB always useful compared to gray level?
-- Other than evaluation?
+- Higher `lambda`, lower `n_gen`
