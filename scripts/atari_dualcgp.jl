@@ -4,9 +4,11 @@ using Cambrian
 using CartesianGeneticProgramming
 using Dates
 using IICGP
-using Distributed
+# using Distributed
 import Random
 import Cambrian.mutate  # mutate function scope definition
+
+
 
 ```
 Playing Atari games using DualCGP on screen input values

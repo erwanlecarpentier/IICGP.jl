@@ -58,7 +58,9 @@ function fetch_backup()
     end
     for i in eachindex(each_log_name)
         old_logfile = joinpath("logs", each_log_name[i])
-        new_logfile = joinpath(logsdir_from_logid(each_log_id[i]), each_log_new_name[i])
+        new_logdir = logsdir_from_logid(each_log_id[i])
+        new_logfile = joinpath(new_logdir, each_log_new_name[i])
+        mkpath(new_logdir)  # Make path if not created
         cp(old_logfile, new_logfile, force=true)
     end
     for id in readdir("gens")
@@ -69,11 +71,15 @@ function fetch_backup()
             else
                 new_filename = string("controller_", g)
             end
-            new_genpath = joinpath(gensdir_from_logid(id), new_filename)
+            new_gendir = gensdir_from_logid(id)
+            mkpath(new_gendir)  # Make path if not created
+            new_genpath = joinpath(new_gendir, new_filename)
             cp(old_genpath, new_genpath, force=true)
         end
     end
 end
+
+fetch_backup()
 
 #=
 # OUTDATED
