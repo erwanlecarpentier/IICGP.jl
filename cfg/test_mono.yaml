@@ -1,11 +1,11 @@
 # General parameters
 seed: 0
-max_frames: 30
+max_frames: 10000
 stickiness: 0.25
 d_fitness: 1
-n_gen: 10
-log_gen: 1
-save_gen: 1
+n_gen: 20
+log_gen: 2
+save_gen: 2
 bootstrap: false
 
 # Reducer's parameters
