@@ -4,7 +4,7 @@ using Cambrian
 using CartesianGeneticProgramming
 using Dates
 using IICGP
-using Distributed
+# using Distributed
 import Random
 
 # function extension
@@ -19,7 +19,7 @@ s = ArgParseSettings()
     default = "cfg/test_mono.yaml"
     "--game"
     help = "game rom name"
-    default = "centipede"
+    default = "riverraid"
     "--seed"
     help = "random seed for evolution"
     arg_type = Int
