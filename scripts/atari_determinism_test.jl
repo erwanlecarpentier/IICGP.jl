@@ -51,15 +51,17 @@ const nthreads = Threads.nthreads()
 const verbose = false
 
 roms = getROMList()
-filter!(e->e≠"pacman", roms)
-filter!(e->e≠"surround", roms)
+for trm in ["battle_zone", "pacman", "surround"]
+    filter!(e->e≠trm, roms)
+end
+roms = roms[8:end]
 l = maximum([length(r) for r in roms])
 res = Dict()
 Random.seed!(seed)
 
 for rom in roms
     s1, a1, r1 = play_atari(rom, seed, max_frames, stickiness) # reference
-    n_rep = nthreads
+    n_rep = 2 * nthreads
     is_deterministic = true
     @sync for i in 1:n_rep
         Threads.@spawn begin

@@ -6,8 +6,8 @@
 #SBATCH --ntasks-per-core=1
 #SBATCH -o ataritest.out
 #SBATCH -e ataritest.log
-#SBATCH --time=00:30:00
+#SBATCH --time=01:00:00
 #SBATCH --mail-user=erwanlecarpentier@mailbox.org
 #SBATCH --mail-type=END
 
-julia --threads 7 --project=/users/p21001/lecarpen/IICGP.jl scripts/atari_determinism_test.jl
+julia --threads 3 --project=/users/p21001/lecarpen/IICGP.jl scripts/atari_determinism_test.jl
