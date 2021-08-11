@@ -11,6 +11,7 @@ export
     draw,
     get_inputs,
     get_rgb,
+    get_grayscale,
     get_state_ref
 
 struct Game
@@ -77,6 +78,12 @@ function get_rgb(game::Game)
     [Array{UInt8}(rgb[i,:,:]) for i in 1:3]
     =#
     [convert(Array{UInt8,2}, reshape(@view(rawscreen[i:3:length(rawscreen)]), (game.width, game.height))) for i in 1:3]
+end
+
+function get_grayscale(game::Game)
+    gs = getScreenGrayscale(game.ale)
+    gs = reshape(gs, (game.width, game.height))
+    [gs]
 end
 
 function get_ram(game::Game)

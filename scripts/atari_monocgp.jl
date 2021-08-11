@@ -38,6 +38,7 @@ main_cfg, cont_cfg, reducer, bootstrap = IICGP.monocgp_config(args["cfg"], args[
 
 const max_frames = main_cfg["max_frames"]
 const stickiness = main_cfg["stickiness"]
+const grayscale = main_cfg["grayscale"]
 const logid = cont_cfg.id
 const state_ref = get_state_ref(game, seed)
 
@@ -48,17 +49,19 @@ function play_atari(
     rom=game,
     seed=seed,
     max_frames=max_frames,
+    grayscale=grayscale,
     stickiness=stickiness
 )
     Random.seed!(seed)
-    game = Game(rom, seed, lck=lck) # , state_ref=state_ref)
+    game = Game(rom, seed, lck=lck, state_ref=state_ref)
     rgb = get_rgb(game)
     reward = 0.0
     frames = 0
     prev_action = 0
     while ~game_over(game.ale)
         if rand() > stickiness || frames == 0
-            output = IICGP.process(reducer, controller, get_rgb(game))
+            s = grayscale ? get_grayscale(game) : get_rgb(game)
+            output = IICGP.process(reducer, controller, s)
             action = game.actions[argmax(output)]
         else
             action = prev_action
