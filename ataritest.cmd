@@ -10,4 +10,4 @@
 #SBATCH --mail-user=erwanlecarpentier@mailbox.org
 #SBATCH --mail-type=END
 
-julia --threads 3 --project=/users/p21001/lecarpen/IICGP.jl scripts/atari_monocgp.jl --game=assault
+julia --threads 7 --project=/users/p21001/lecarpen/IICGP.jl scripts/atari_determinism_test.jl

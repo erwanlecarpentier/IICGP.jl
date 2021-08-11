@@ -22,6 +22,9 @@ end
 function Game(romfile::String, seed::Int64; kwargs...)
     ale = ALE_new()
     setInt(ale, "random_seed", Cint(seed))
+    # setBool(ale, "color_averaging", true)
+    # setInt(ale, "frame_skip", Int32(1)) # 1 means no frame skip
+    # setFloat(ale, "repeat_action_probability", Float32(0.))
     kwargs_dict = Dict(kwargs)
     if haskey(kwargs_dict, :lck)  # Thread safe
         lock(kwargs_dict[:lck]) do

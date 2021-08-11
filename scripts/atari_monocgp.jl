@@ -19,7 +19,7 @@ s = ArgParseSettings()
     default = "cfg/test_mono.yaml"
     "--game"
     help = "game rom name"
-    default = "riverraid"
+    default = "assault"
     "--seed"
     help = "random seed for evolution"
     arg_type = Int
@@ -39,6 +39,14 @@ const max_frames = main_cfg["max_frames"]
 const stickiness = main_cfg["stickiness"]
 const logid = cont_cfg.id
 
+# TODO remove START
+game = Game("assault", 0)
+rgb0 = get_rgb(game)
+# plt = implot(rgb0[1])
+# display(plt)
+close!(game)
+# TODO remove END
+
 function play_atari(
     reducer::Reducer,
     controller::CGPInd,
@@ -47,8 +55,17 @@ function play_atari(
     max_frames=max_frames,
     stickiness=stickiness
 )
+    println("-----------------------------------------------------") # TODO remove
+    println("threadid   : ", Threads.threadid()) # TODO remove
+    println("seed       : ", seed) # TODO remove
     Random.seed!(seed)
+    println("seed       : ", seed) # TODO remove
     game = Game(args["game"], seed, lck=lck)
+    println("seed       : ", seed) # TODO remove
+    rgb = get_rgb(game)
+    println("equal rgb0 : ", rgb == rgb0) # TODO remove
+    println("stickiness : ", stickiness) # TODO remove
+    println("-----------------------------------------------------") # TODO remove
     reward = 0.0
     frames = 0
     prev_action = 0
