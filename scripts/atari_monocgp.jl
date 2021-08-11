@@ -30,6 +30,7 @@ s = ArgParseSettings()
     default = ""
 end
 args = parse_args(ARGS, s)
+const game = args["game"]
 const seed = args["seed"]
 Random.seed!(seed)
 
@@ -38,34 +39,20 @@ main_cfg, cont_cfg, reducer, bootstrap = IICGP.monocgp_config(args["cfg"], args[
 const max_frames = main_cfg["max_frames"]
 const stickiness = main_cfg["stickiness"]
 const logid = cont_cfg.id
-
-# TODO remove START
-game = Game("assault", 0)
-rgb0 = get_rgb(game)
-# plt = implot(rgb0[1])
-# display(plt)
-close!(game)
-# TODO remove END
+const state_ref = get_state_ref(game, seed)
 
 function play_atari(
     reducer::Reducer,
     controller::CGPInd,
     lck::ReentrantLock;
+    rom=game,
     seed=seed,
     max_frames=max_frames,
     stickiness=stickiness
 )
-    println("-----------------------------------------------------") # TODO remove
-    println("threadid   : ", Threads.threadid()) # TODO remove
-    println("seed       : ", seed) # TODO remove
     Random.seed!(seed)
-    println("seed       : ", seed) # TODO remove
-    game = Game(args["game"], seed, lck=lck)
-    println("seed       : ", seed) # TODO remove
+    game = Game(rom, seed, lck=lck) # , state_ref=state_ref)
     rgb = get_rgb(game)
-    println("equal rgb0 : ", rgb == rgb0) # TODO remove
-    println("stickiness : ", stickiness) # TODO remove
-    println("-----------------------------------------------------") # TODO remove
     reward = 0.0
     frames = 0
     prev_action = 0

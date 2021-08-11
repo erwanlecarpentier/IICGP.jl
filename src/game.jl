@@ -1,5 +1,5 @@
 # The following was inspired by AtariAlgos.jl
-# Modifications by Dennis Wilson @d9w and Erwan Lecarpentier
+# Modifications by Dennis Wilson @d9w and Erwan Lecarpentier @erwanlecarpentier
 
 using ArcadeLearningEnvironment
 using Colors
@@ -10,7 +10,8 @@ export
     close!,
     draw,
     get_inputs,
-    get_rgb
+    get_rgb,
+    get_state_ref
 
 struct Game
     ale::ALEPtr
@@ -33,10 +34,22 @@ function Game(romfile::String, seed::Int64; kwargs...)
     else
         loadROM(ale, romfile)
     end
+    if haskey(kwargs_dict, :state_ref)  # Initial state
+        ArcadeLearningEnvironment.restoreSystemState(ale, kwargs_dict[:state_ref])
+    end
     w = getScreenWidth(ale)
     h = getScreenHeight(ale)
     actions = getMinimalActionSet(ale)
     Game(ale, w, h, actions)
+end
+
+function get_state_ref(romfile::String, seed::Int64)
+    ale = ALE_new()
+    setInt(ale, "random_seed", Cint(seed))
+    loadROM(ale, romfile)
+    state_ref = ArcadeLearningEnvironment.cloneSystemState(ale)
+    ALE_del(ale)
+    state_ref
 end
 
 function close!(game::Game)

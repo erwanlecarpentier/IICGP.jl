@@ -3,7 +3,7 @@ seed: 0
 max_frames: 10000
 stickiness: 0.0
 d_fitness: 1
-n_gen: 10
+n_gen: 100
 log_gen: 1
 save_gen: 1
 bootstrap: false
