@@ -7,6 +7,12 @@ using BenchmarkTools
 using TimerOutputs
 
 
+function get_input(game_name::String, grayscale::Bool)
+    game = Game(game_name, 0)
+    inp = grayscale ? get_grayscale(game) : get_rgb(game)
+    close!(game)
+    inp
+end
 
 """
     function time_monocgp_ms(
@@ -21,20 +27,20 @@ Return time in ms.
 function time_monocgp_ms(
     reducer::Reducer,
     cont::CGPInd,
-    game_name::String
+    game_name::String,
+    grayscale::Bool
 )
     # Generate input
-    game = Game(game_name, 0)
-    rgb = get_rgb(game)
+    inp = get_input(game_name, grayscale)
     # Pre-compile
-    process(reducer, cont, rgb)
+    process(reducer, cont, inp)
     n_iter = 1000
     # Time
     redu_time = 0.0
     flat_time = 0.0
     cont_time = 0.0
     for _ in 1:n_iter
-        redu_time += @elapsed features = reducer.reduct(rgb, reducer.parameters)
+        redu_time += @elapsed features = reducer.reduct(inp, reducer.parameters)
         flat_time += @elapsed features_flatten = collect(Iterators.flatten(Iterators.flatten(features)))
         cont_time += @elapsed cont_out = CartesianGeneticProgramming.process(cont, features_flatten)
     end
@@ -60,13 +66,13 @@ function time_dualcgp_ms(
     enco::CGPInd,
     reducer::Reducer,
     cont::CGPInd,
-    game_name::String
+    game_name::String,
+    grayscale::Bool
 )
     # Generate input
-    game = Game(game_name, 0)
-    rgb = get_rgb(game)
+    inp = get_input(game_name, grayscale)
     # Pre-compile
-    process(enco, reducer, cont, rgb)
+    process(enco, reducer, cont, inp)
     n_iter = 1000
     # Time
     enco_time = 0.0
@@ -74,7 +80,7 @@ function time_dualcgp_ms(
     flat_time = 0.0
     cont_time = 0.0
     for _ in 1:n_iter
-        enco_time += @elapsed enco_out = CartesianGeneticProgramming.process(enco, rgb)
+        enco_time += @elapsed enco_out = CartesianGeneticProgramming.process(enco, inp)
         redu_time += @elapsed features = reducer.reduct(enco_out, reducer.parameters)
         flat_time += @elapsed features_flatten = collect(Iterators.flatten(Iterators.flatten(features)))
         cont_time += @elapsed cont_out = CartesianGeneticProgramming.process(cont, features_flatten)
@@ -149,17 +155,18 @@ function process_results(
         # Timer
         is_dual = isfile(joinpath(exp_dirs[i], "logs/encoder.csv"))
         total_time = 0.0
+        grayscale = cfg["grayscale"]
         if is_dual
             enco, reducer, cont = get_last_dualcgp(exp_dirs[i], games[i], cfg)
             enco_time, redu_time, flat_time, cont_time = time_dualcgp_ms(
-                enco, reducer, cont, games[i]
+                enco, reducer, cont, games[i], grayscale
             )
             push!(p, ["  - Encoder", enco_time])
             total_time += enco_time
         else
             reducer, cont = get_last_monocgp(exp_dirs[i], games[i], cfg)
             redu_time, flat_time, cont_time = time_monocgp_ms(
-                reducer, cont, games[i]
+                reducer, cont, games[i], grayscale
             )
         end
         total_time += redu_time
