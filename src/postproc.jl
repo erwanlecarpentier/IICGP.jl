@@ -179,6 +179,6 @@ function process_results(
     display(plt_best)
     display(plt_mean)
 
-    # savefig(plt_best, "best.png")
-    # savefig(plt_mean, "mean.png")
+    savefig(plt_best, "best.png")
+    savefig(plt_mean, "mean.png")
 end

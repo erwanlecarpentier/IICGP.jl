@@ -73,7 +73,11 @@ Image functions:
 
 # TODOs
 
+From high priority to low priority:
+
+- Speed-up centroid reducer's reducing function
 - Allow bootstrap of both encoder and controller
+- An R^2 controller reasonning about centroids directly?
 
 # Reducing run length
 
@@ -88,6 +92,7 @@ If we set:
 Then it requires 5 days for completion.
 
 ### Speed-up options:
+
 - Reduce evaluation time:
   - Max out the number of filters that can be used in the encoder (e.g. 4 filters in a row for one output should be enough if we consider that those filters are well chosen)
   - reduce `max_frame`
@@ -96,82 +101,4 @@ Then it requires 5 days for completion.
   - Lower number of inputs, are RGB always useful compared to gray level?
 - Higher `lambda`, lower `n_gen`
 
-# Determinism
-
-| ROM | Deterministic |
-|---|---|
-| air_raid | true |
-| alien | true |
-| amidar | true |
-| assault | ✘ |
-| asterix | true |
-| asteroids | true |
-| atlantis | true |
-| bank_heist | true |
-| battle_zone | true |
-| beam_rider | true |
-| berzerk | true |
-| bowling | true |
-| boxing | true |
-| breakout | true |
-| carnival | true |
-| centipede | true |
-| chopper_command | true |
-| crazy_climber | true |
-| defender | true |
-| demon_attack | ✘ |
-| donkey_kong | true |
-| double_dunk | true |
-| elevator_action | ✘ |
-| enduro | true |
-| fishing_derby | true |
-| freeway | true |
-| frogger | true |
-| frostbite | ✘ |
-| galaxian | true |
-| gopher | true |
-| gravitar | true |
-| hero | true |
-| ice_hockey | ✘ |
-| jamesbond | true |
-| journey_escape | true |
-| kaboom | ✘ |
-| kangaroo | true |
-| keystone_kapers | true |
-| king_kong | true |
-| koolaid | true |
-| krull | true |
-| kung_fu_master | true |
-| laser_gates | true |
-| lost_luggage | true |
-| montezuma_revenge | true |
-| mr_do | true |
-| ms_pacman | true |
-| name_this_game | true |
-| pacman | ? |
-| phoenix | true |
-| pitfall | true |
-| pong | true |
-| pooyan | true |
-| private_eye | ✘ |
-| qbert | true |
-| riverraid | true |
-| robotank | true |
-| seaquest | true |
-| sir_lancelot | ✘ |
-| skiing | true |
-| solaris | ✘ |
-| space_invaders | true |
-| star_gunner | true |
-| surround | ? |
-| tennis | true |
-| time_pilot | true |
-| trondead | true |
-| tutankham | true |
-| up_n_down | true |
-| venture | true |
-| video_pinball | true |
-| wizard_of_wor | true |
-| yars_revenge | ✘ |
-| zaxxon | true |
 
