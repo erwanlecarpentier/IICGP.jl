@@ -99,7 +99,8 @@ Main results plot/print method.
 function process_results(
     exp_dirs::Array{String,1},
     games::Array{String,1};
-    ma::Int64=1
+    ma::Int64=1,
+    save=false
 )
     # Init graphs
     xl = "Generation"
@@ -179,6 +180,8 @@ function process_results(
     display(plt_best)
     display(plt_mean)
 
-    savefig(plt_best, "best.png")
-    savefig(plt_mean, "mean.png")
+    if save
+        savefig(plt_best, "best.png")
+        savefig(plt_mean, "mean.png")
+    end
 end
