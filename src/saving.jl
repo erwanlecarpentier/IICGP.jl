@@ -79,8 +79,6 @@ function fetch_backup()
     end
 end
 
-fetch_backup()
-
 #=
 # OUTDATED
 """
