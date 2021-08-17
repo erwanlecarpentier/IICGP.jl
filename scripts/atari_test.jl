@@ -80,3 +80,88 @@ else
         end
     end
 end
+
+
+
+##
+using BenchmarkTools
+using Images
+using ArcadeLearningEnvironment
+using IICGP
+
+const p = 0.5
+
+function rescale_uint_img(x::AbstractArray)::Array{UInt8}
+    mini, maxi = minimum(x), maximum(x)
+    if mini == maxi
+        return floor.(UInt8, mod.(x, 255))
+    end
+    m = (convert(Array{Float64}, x) .- mini) .* (255 / (maxi - mini))
+    floor.(UInt8, m)
+end
+
+function f1(x::Array{UInt8,2})::Array{UInt8,2}
+    k = Images.Kernel.gaussian(ceil(Int64, 5 * p))
+    out = ImageFiltering.imfilter(x, k)
+    return rescale_uint_img(out)
+end
+
+function f2(x::Array{UInt8,2})# ::Array{UInt8,2}
+    k = Images.Kernel.gaussian(ceil(Int64, 5 * p))
+    return ImageFiltering.imfilter(x, k)
+end
+
+ImType = Base.ReinterpretArray{Normed{UInt8,8},2,UInt8,Array{UInt8,2}}
+
+f3(x) = ImageFiltering.imfilter(x, Images.Kernel.gaussian(ceil(Int64, 5 * p)))
+f4(x) = ImageFiltering.imfilter(x, [-1 1 -1; -1 0 -1; -1 1 -1])
+f5(x) = ImageFiltering.imfilter(x, Images.Kernel.Laplacian())
+f6(x) = Images.canny(x, (Images.Percentile(80), Images.Percentile(20)))
+f7(x) = Images.imedge(x)[3]
+f8(x) = ImageMorphology.dilate(x)
+f9(x) = ImageMorphology.erode(x)
+
+
+game = Game("assault", 0)
+r, g, b = get_rgb(game)
+close!(game)
+
+xr = reinterpret(N0f8, r)
+xg = reinterpret(N0f8, g)
+y3 = f3(x)
+y4 = f4(x)
+y5 = f5(x)
+y6 = f6(x)
+y7 = f7(x)
+y8 = f8(x)
+y9 = f9(x)
+
+functions = [f3, f4, f5, f6, f7, f8, f9]
+for f in functions
+    y = f(x)
+    iplot(y)
+    for g in functions
+        g(y)
+    end
+end
+
+
+y34 = f4(y3)
+y43 = f3(y4)
+
+
+
+@btime f1(r)
+@btime f2(r)
+@btime f3(x)
+@btime o4 = f4(x)
+# display(implot(o1))
+# display(implot(o2))
+
+nplot(x) = display(implot(rawview(x)))
+iplot(x) = display(implot(x, clim="auto"))
+
+iplot(r)
+iplot(y2)
+iplot(y3)
+nplot(x)
