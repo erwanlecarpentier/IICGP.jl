@@ -124,7 +124,6 @@ function process_results(
         best = (ma == 1) ? log.best : imfilter(log.best, kernel)
         mean = (ma == 1) ? log.mean : imfilter(log.mean, kernel)
         std = (ma == 1) ? log.std : imfilter(log.std, kernel)
-        println(best == log.best)
         save_gen = cfg["save_gen"]
         x = 1:save_gen:save_gen*length(best)
         plot!(plt_best, x, best, label=label_i)

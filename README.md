@@ -1,8 +1,8 @@
 # IICGP
 
-[![Build Status](https://travis-ci.com/erwanlecarpentier/IICGP.jl.svg?branch=master)](https://travis-ci.com/erwanlecarpentier/IICGP.jl)
-[![Coverage](https://codecov.io/gh/erwanlecarpentier/IICGP.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/erwanlecarpentier/IICGP.jl)
-[![Coverage](https://coveralls.io/repos/github/erwanlecarpentier/IICGP.jl/badge.svg?branch=master)](https://coveralls.io/github/erwanlecarpentier/IICGP.jl?branch=master)
+[//]: # ([![Build Status](https://travis-ci.com/erwanlecarpentier/IICGP.jl.svg?branch=master)](https://travis-ci.com/erwanlecarpentier/IICGP.jl))
+[//]: # ([![Coverage](https://codecov.io/gh/erwanlecarpentier/IICGP.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/erwanlecarpentier/IICGP.jl))
+[//]: # ([![Coverage](https://coveralls.io/repos/github/erwanlecarpentier/IICGP.jl/badge.svg?branch=master)](https://coveralls.io/github/erwanlecarpentier/IICGP.jl?branch=master))
 
 (Interactive) Interpretable Cartesian Genetic Programming
 
@@ -69,36 +69,35 @@ Image functions:
 
 # Features extraction
 
-![](gifs/freeway_centroids_cropped.gif)
+|Mean-pooling|Centroid|
+|---|---|
+|![](images/downscaled.png)|![](gifs/freeway_centroids_cropped.gif)|
 
 # TODOs
 
-From high priority to low priority:
+High priority to low priority:
 
 - Speed-up centroid reducer's reducing function
 - Allow bootstrap of both encoder and controller
 - An R^2 controller reasonning about centroids directly?
 
-# Reducing run length
+# Reducing experiments length
 
-### Rule of thumb
+### Speed-up evolution
 
-If we set:
+- Less frames for evaluation (curently 10000)
+- Sticky actions, less forward passes in evaluation
+- Add preliminary tests to Atari evaluation, e.g.:
+	- forward-pass < 1ms
+	- Assert that the encoder only applies a limited number of filters before one output
+	- evaluate the quality of the produced feature vector:
+		- measure the amount of information and compare to input image (proxy to entropy measure?)
+		- reconstruction error (without backward pass?)
 
-- time full forward pass of individual = 1ms
-- number of generations = 50000
-- number of frames in Atari (not including frameskip) = 10000
-
-Then it requires 5 days for completion.
-
-### Speed-up options:
-
-- Reduce evaluation time:
-  - Max out the number of filters that can be used in the encoder (e.g. 4 filters in a row for one output should be enough if we consider that those filters are well chosen)
-  - reduce `max_frame`
-  - sticky actions to go deeper in the game
-  - prune some evaluations by adding qualifying tests (an individual can only be evaluated if it satisfies preliminary tests, e.g., amount of information in feature vector / things like reconstruction errors)
-  - Lower number of inputs, are RGB always useful compared to gray level?
-- Higher `lambda`, lower `n_gen`
-
+### Speed-up forward-pass
+	
+- Lower the number of input (e.g. centroid reduction may be as usefull applied on 1 grayscale image as on 3 RGB images)
+- Encoder: max-out number of filters applied sequentially (if we assume our filters are well chosen, few would be enough)
+- Downscale all input images (max-pool dividing the image size by 2)
+- Low-cost image filters (threshold, binary, subtract, erode, dilate, not, and, or, xor)
 
