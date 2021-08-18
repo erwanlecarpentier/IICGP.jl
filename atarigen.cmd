@@ -12,7 +12,7 @@ REDS=("pooling_" "centroid_")
 GAMES="boxing assault"
 SCRIPT="scripts/atari_dualcgp.jl"
 PROJECT="/users/p21001/lecarpen/IICGP.jl"
-N_THREADS="5"
+N_THREADS="25"
 
 for i in "${!CFGS[@]}"; do
 	for GAME in $GAMES; do

@@ -173,7 +173,7 @@ using Interpolations
 
 iplot(x) = display(implot(x, clim="auto"))
 
-game = Game("assault", 0)
+game = Game("solaris", 0)
 r, g, b = get_rgb(game)
 rgb = get_rgb(game)
 gs = get_grayscale(game)
@@ -198,12 +198,31 @@ function prints(s::AbstractArray)
     end
 end
 
+function scale(x::Array{UInt8,2}; factor::Int64=2)
+    outsz = ceil.(Int, size(x)./factor)
+    tilesz = (factor,factor)
+    out = Array{UInt8,2}(undef, outsz)
+    R = TileIterator(axes(x), tilesz)
+    i = 1
+    for tileaxs in R
+        #out[i] = ceil.(UInt8, mean(view(x, tileaxs...)))
+        out[i] = maximum(view(x, tileaxs...))
+        i += 1
+    end
+    out
+end
+
 r_down = downscale(r)
 
 iplot(r)
 iplot(imresize(r, ratio=0.5, method=BSpline(Constant())))
+iplot(scale(r))
 iplot(imresize(r, ratio=0.5, method=Linear()))
 iplot(imresize(r, ratio=0.5, method=BSpline(Linear())))
+
+@btime imresize(r, ratio=0.5, method=Linear())
+@btime imresize(r, ratio=0.5, method=BSpline(Linear()))
+@btime imresize(r, ratio=0.5, method=BSpline(Constant()))
 
 if false
     @btime s = get_state(game, false, false)
@@ -229,14 +248,16 @@ functions = [
     IICGP.CGPFunctions.f_motion_capture
 ]
 
-gs = s[1]
-println()
-for f in functions
-    f_name = string(f)
-    print("| ", f_name, " | ")
-    p = [0.33]
-    f(gs, gs, p)
-    @btime $f($gs, $gs, $p)
+if false
+    gs = s[1]
+    println()
+    for f in functions
+        f_name = string(f)
+        print("| ", f_name, " | ")
+        p = [0.33]
+        f(gs, gs, p)
+        @btime $f($gs, $gs, $p)
+    end
 end
 
 close!(game)

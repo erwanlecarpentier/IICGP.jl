@@ -91,7 +91,8 @@ function get_state(game::Game, grayscale::Bool, downscale::Bool)
         out = Array{Array{UInt8,2},1}(undef, length(s))
         for i in 1:length(s)
             # out[i] = scale(s[i])
-            out[i] = imresize(s[i], ratio=0.5, method=BSpline(Constant()))
+            # out[i] = imresize(s[i], ratio=0.5, method=BSpline(Constant()))
+            out[i] = imresize(s[i], ratio=0.5, method=BSpline(Linear()))
         end
         return out
     else
