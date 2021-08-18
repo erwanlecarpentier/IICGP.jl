@@ -7,8 +7,8 @@ n_gen: 50000
 log_gen: 100
 save_gen: 100
 bootstrap: true
-grayscale: false
-downscale: false
+grayscale: true
+downscale: true
 
 # Encoder's parameters
 encoder:
@@ -25,20 +25,20 @@ encoder:
     - f_dilate
     - f_erode
     - f_subtract
-    - f_remove_details
+    # - f_remove_details
     #- f_make_boxes
     #- f_felzenszwalb_segmentation
-    - f_components_segmentation
+    # - f_components_segmentation
     #- f_box_segmentation
     - f_threshold
     - f_binary
-    - f_corners
+    # - f_corners
     #- f_gaussian
     #- f_laplacian
     #- f_sobel_x
     #- f_sobel_y
     #- f_canny
-    - f_edges
+    # - f_edges
     #- f_opening
     #- f_closing
     #- f_tophat

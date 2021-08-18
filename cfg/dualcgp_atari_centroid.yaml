@@ -7,8 +7,8 @@ n_gen: 50000
 log_gen: 100
 save_gen: 100
 bootstrap: true
-grayscale: false
-downscale: false
+grayscale: true
+downscale: true
 
 # Encoder's parameters
 encoder:
