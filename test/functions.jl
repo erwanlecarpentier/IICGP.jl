@@ -216,7 +216,7 @@ function time_functions(functions::Array{Function}, io_type::String)
     end
 end
 
-do_time = false
+do_time = true
 if do_time
     time_functions(scalar_functions, "scalar")
     time_functions(idempotent_img_functions, "img")

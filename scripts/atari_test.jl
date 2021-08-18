@@ -232,9 +232,11 @@ functions = [
 gs = s[1]
 println()
 for f in functions
-    p = [0.5]
+    f_name = string(f)
+    print("| ", f_name, " | ")
+    p = [0.33]
     f(gs, gs, p)
-    @btime f(gs, gs, p)
+    @btime $f($gs, $gs, $p)
 end
 
 close!(game)
