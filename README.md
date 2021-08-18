@@ -69,6 +69,8 @@ Image functions on full size image:
 
 Image functions on halved-size image:
 
+| Function | @btime |
+|---|---|
 | f_threshold |   19.376 μs (8 allocations: 79.16 KiB)
 | f_subtract |   5.704 μs (1 allocation: 8.38 KiB)
 | f_binary |   25.306 μs (14 allocations: 85.22 KiB)
