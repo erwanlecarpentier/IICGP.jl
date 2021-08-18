@@ -62,7 +62,8 @@ function play_atari(
     prev_action = 0
     while ~game_over(game.ale)
         if rand() > stickiness || frames == 0
-            output = IICGP.process(encoder, reducer, controller, get_rgb(game))
+            s = get_state(game, grayscale, downscale)
+            output = IICGP.process(encoder, reducer, controller, s)
             action = game.actions[argmax(output)]
         else
             action = prev_action

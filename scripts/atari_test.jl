@@ -58,7 +58,6 @@ const state_ref = ArcadeLearningEnvironment.cloneSystemState(g.ale)
 close!(g)
 
 
-
 if inline_test
     for i in 1:n_inline_rep
         s2, a2, r2, e2 = play_atari(game, seed, max_frames, stickiness)
@@ -128,6 +127,7 @@ close!(game)
 
 xr = reinterpret(N0f8, r)
 xg = reinterpret(N0f8, g)
+x = xr
 y3 = f3(x)
 y4 = f4(x)
 y5 = f5(x)
@@ -145,23 +145,96 @@ for f in functions
     end
 end
 
-
 y34 = f4(y3)
 y43 = f3(y4)
 
 
-
-@btime f1(r)
-@btime f2(r)
-@btime f3(x)
-@btime o4 = f4(x)
-# display(implot(o1))
-# display(implot(o2))
+if false
+    @btime f1(r)
+    @btime f2(r)
+    @btime f3(x)
+    @btime o4 = f4(x)
+    # display(implot(o1))
+    # display(implot(o2))
+end
 
 nplot(x) = display(implot(rawview(x)))
 iplot(x) = display(implot(x, clim="auto"))
 
 iplot(r)
-iplot(y2)
-iplot(y3)
-nplot(x)
+
+##
+
+using TiledIteration
+using IICGP
+using Images
+using BenchmarkTools
+using Interpolations
+
+iplot(x) = display(implot(x, clim="auto"))
+
+game = Game("assault", 0)
+r, g, b = get_rgb(game)
+rgb = get_rgb(game)
+gs = get_grayscale(game)
+
+
+function downscale(x::Array{UInt8,2}; factor::Int64=2)
+    outsz = ceil.(Int, size(x)./factor)
+    tilesz = (factor,factor)
+    out = Array{UInt8,2}(undef, outsz)
+    R = TileIterator(axes(x), tilesz)
+    i = 1
+    for tileaxs in R
+       out[i] = maximum(view(x, tileaxs...))
+       i += 1
+    end
+    out
+end
+
+function prints(s::AbstractArray)
+    for si in s
+        iplot(si)
+    end
+end
+
+r_down = downscale(r)
+
+iplot(r)
+iplot(imresize(r, ratio=0.5, method=BSpline(Constant())))
+iplot(imresize(r, ratio=0.5, method=Linear()))
+iplot(imresize(r, ratio=0.5, method=BSpline(Linear())))
+
+if false
+    @btime s = get_state(game, false, false)
+    @btime s = get_state(game, true, false)
+    @btime s = get_state(game, false, true)
+    @btime s = get_state(game, true, true)
+end
+
+# prints(s)
+
+s = get_state(game, true, true)
+
+functions = [
+    IICGP.CGPFunctions.f_threshold,
+    IICGP.CGPFunctions.f_subtract,
+    IICGP.CGPFunctions.f_binary,
+    IICGP.CGPFunctions.f_erode,
+    IICGP.CGPFunctions.f_dilate,
+    IICGP.CGPFunctions.f_bitwise_not,
+    IICGP.CGPFunctions.f_bitwise_and,
+    IICGP.CGPFunctions.f_bitwise_or,
+    IICGP.CGPFunctions.f_bitwise_xor,
+    IICGP.CGPFunctions.f_motion_capture
+]
+
+gs = s[1]
+println()
+for f in functions
+    p = [0.5]
+    f(gs, gs, p)
+    @btime f(gs, gs, p)
+end
+
+close!(game)

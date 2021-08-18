@@ -5,11 +5,13 @@ using ArcadeLearningEnvironment
 using Colors
 using ImageCore
 using ImageTransformations
+using Interpolations
 export
     Game,
     close!,
     draw,
     get_inputs,
+    get_state,
     get_rgb,
     get_grayscale,
     get_state_ref
@@ -68,6 +70,33 @@ function get_inputs(game::Game)
     screen = reshape(screen, (game.width, game.height))'
     # imresize(screen, (42, 32))/256.
     screen
+end
+
+function scale(x::Array{UInt8,2}; factor::Int64=2)
+    outsz = ceil.(Int, size(x)./factor)
+    tilesz = (factor,factor)
+    out = Array{UInt8,2}(undef, outsz)
+    R = TileIterator(axes(x), tilesz)
+    i = 1
+    for tileaxs in R
+       out[i] = maximum(view(x, tileaxs...))
+       i += 1
+    end
+    out
+end
+
+function get_state(game::Game, grayscale::Bool, downscale::Bool)
+    s = grayscale ? get_grayscale(game) : get_rgb(game)
+    if downscale
+        out = Array{Array{UInt8,2},1}(undef, length(s))
+        for i in 1:length(s)
+            # out[i] = scale(s[i])
+            out[i] = imresize(s[i], ratio=0.5, method=BSpline(Constant()))
+        end
+        return out
+    else
+        return s
+    end
 end
 
 function get_rgb(game::Game)

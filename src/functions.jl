@@ -10,7 +10,7 @@ using LinearAlgebra
 global arity = Dict()
 
 SorX = Union{Symbol, Expr}
-ImgType = Array{UInt8,2}
+ImgType = Union{Array{UInt8,2}, Matrix{UInt8}}
 
 function scaled(x::Float64)
     if isnan(x)
