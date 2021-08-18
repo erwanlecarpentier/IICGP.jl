@@ -36,27 +36,35 @@ s = ArgParseSettings()
     default = ""
 end
 args = parse_args(ARGS, s)
+const game = args["game"]
 const seed = args["seed"]
 Random.seed!(seed)
 
 main_cfg, enco_cfg, cont_cfg, reducer, bootstrap = IICGP.dualcgp_config(
-    args["cfg"], args["game"]
+    args["cfg"], game
 )
 const max_frames = main_cfg["max_frames"]
 const stickiness = main_cfg["stickiness"]
+const grayscale = main_cfg["grayscale"]
+const downscale = main_cfg["downscale"]
 const logid = enco_cfg.id
+const state_ref = get_state_ref(game, seed)
 
 function play_atari(
     encoder::CGPInd,
     reducer::Reducer,
     controller::CGPInd,
     lck::ReentrantLock;
+    rom=game,
     seed=seed,
+    rom_state_ref=state_ref,
     max_frames=max_frames,
+    grayscale=grayscale,
+    downscale=downscale,
     stickiness=stickiness
 )
     Random.seed!(seed)
-    game = Game(args["game"], seed, lck=lck)
+    game = Game(rom, seed, lck=lck, state_ref=rom_state_ref)
     reward = 0.0
     frames = 0
     prev_action = 0
@@ -97,9 +105,8 @@ else
     # Create an evolution framework
     e = IICGP.DualCGPEvolution(enco_cfg, cont_cfg, fit,
                                encoder_init_function=IPCGPInd, logid=logid,
-                               bootstrap=bootstrap, game=args["game"])
+                               bootstrap=bootstrap, game=game)
     # Run evolution
     init_backup(logid, args["cfg"])
     run!(e)
-    # fetch_backup()
 end

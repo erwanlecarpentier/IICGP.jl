@@ -34,7 +34,7 @@ const game = args["game"]
 const seed = args["seed"]
 Random.seed!(seed)
 
-main_cfg, cont_cfg, reducer, bootstrap = IICGP.monocgp_config(args["cfg"], args["game"])
+main_cfg, cont_cfg, reducer, bootstrap = IICGP.monocgp_config(args["cfg"], game)
 
 const max_frames = main_cfg["max_frames"]
 const stickiness = main_cfg["stickiness"]
@@ -49,14 +49,14 @@ function play_atari(
     lck::ReentrantLock;
     rom=game,
     seed=seed,
+    rom_state_ref=state_ref,
     max_frames=max_frames,
     grayscale=grayscale,
     downscale=downscale,
     stickiness=stickiness
 )
     Random.seed!(seed)
-    game = Game(rom, seed, lck=lck, state_ref=state_ref)
-    rgb = get_rgb(game)
+    game = Game(rom, seed, lck=lck, state_ref=rom_state_ref)
     reward = 0.0
     frames = 0
     prev_action = 0
@@ -90,5 +90,4 @@ else
     e = CartesianGeneticProgramming.CGPEvolution(cont_cfg, fit)
     init_backup(logid, args["cfg"])
     run!(e)
-    # fetch_backup()
 end
