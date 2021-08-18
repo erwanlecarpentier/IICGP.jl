@@ -173,11 +173,15 @@ using Interpolations
 
 iplot(x) = display(implot(x, clim="auto"))
 
-game = Game("solaris", 0)
+game = Game("assault", 0)
 r, g, b = get_rgb(game)
 rgb = get_rgb(game)
 gs = get_grayscale(game)
 
+s = get_state(game, true, true)
+
+iplot(s[1])
+iplot(gs[1])
 
 function downscale(x::Array{UInt8,2}; factor::Int64=2)
     outsz = ceil.(Int, size(x)./factor)
@@ -230,6 +234,8 @@ if false
     @btime s = get_state(game, false, true)
     @btime s = get_state(game, true, true)
 end
+
+
 
 # prints(s)
 

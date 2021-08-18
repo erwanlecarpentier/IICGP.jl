@@ -28,9 +28,11 @@ function dualcgp_config(cfg::Dict, game_name::String)
     # Temporarily open a game to retrieve parameters
     seed = cfg["seed"]
     game = Game(game_name, seed)
-    rgb = get_rgb(game)
-    img_size = size(rgb[1])
-    n_in = 3  # RGB images
+    grayscale = cfg["grayscale"]
+    downscale = cfg["downscale"]
+    s = get_state(game, grayscale, downscale)
+    img_size = size(s[1])
+    n_in = length(s)
     n_out = length(getMinimalActionSet(game.ale))  # One output per legal action
     close!(game)
 
@@ -71,7 +73,7 @@ function dualcgp_config(cfg::Dict, game_name::String)
 
     # Forward pass to retrieve the number of input of the controller
     enco = IPCGPInd(encoder_cfg)
-    enco_out = CartesianGeneticProgramming.process(enco, rgb)
+    enco_out = CartesianGeneticProgramming.process(enco, s)
     features = reducer.reduct(enco_out, reducer.parameters)
     features_flatten = collect(Iterators.flatten(Iterators.flatten(features)))
     cont_n_in = length(features_flatten)

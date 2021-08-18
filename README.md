@@ -93,6 +93,7 @@ Image functions on halved-size image:
 High priority to low priority:
 
 - Speed-up centroid reducer's reducing function
+- Use `restrict`
 - Allow bootstrap of both encoder and controller
 - An R^2 controller reasonning about centroids directly?
 
