@@ -70,12 +70,14 @@ function play_atari(
     prev_action = 0
     while ~game_over(game.ale)
         if rand() > stickiness || frames == 0
-            s = get_state(game, grayscale, downscale)
-            output = IICGP.process(encoder, reducer, controller, s)
-            action = game.actions[argmax(output)]
+            # s = get_state(game, grayscale, downscale)  # TODO put back
+            # output = IICGP.process(encoder, reducer, controller, s)  # TODO put back
+            # action = game.actions[argmax(output)]  # TODO put back
+            action = game.actions[rand(1:length(game.actions))]  # TODO remove
         else
             action = prev_action
         end
+        println("Thread ", Threads.threadid(), " rand = ", rand(), " frame = ", frames)  # TODO remove
         reward += act(game.ale, action)
         frames += 1
         if frames > max_frames

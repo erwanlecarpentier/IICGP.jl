@@ -24,7 +24,9 @@ function time_monocgp_ms(
     downscale::Bool
 )
     # Generate input
-    inp = get_state(game_name, grayscale, downscale)
+    g = Game(game_name, 0)
+    inp = get_state(g, grayscale, downscale)
+    close!(g)
     # Pre-compile
     process(reducer, cont, inp)
     n_iter = 1000
@@ -64,7 +66,9 @@ function time_dualcgp_ms(
     downscale::Bool
 )
     # Generate input
-    inp = get_state(game_name, grayscale, downscale)
+    g = Game(game_name, 0)
+    inp = get_state(g, grayscale, downscale)
+    close!(g)
     # Pre-compile
     process(enco, reducer, cont, inp)
     n_iter = 1000
