@@ -100,9 +100,11 @@ function monocgp_config(cfg::Dict, game_name::String)
     # Temporarily open a game to retrieve parameters
     seed = cfg["seed"]
     game = Game(game_name, seed)
-    rgb = get_rgb(game)
-    img_size = size(rgb[1])
-    n_in = 3  # RGB images
+    grayscale = cfg["grayscale"]
+    downscale = cfg["downscale"]
+    s = get_state(game, grayscale, downscale)
+    img_size = size(s[1])
+    n_in = length(s)
     n_out = length(getMinimalActionSet(game.ale))  # One output per legal action
     close!(game)
 
