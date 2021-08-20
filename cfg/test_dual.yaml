@@ -1,7 +1,7 @@
 # General parameters
 seed: 0
 max_frames: 2000
-stickiness: 0.5
+stickiness: 0.25
 d_fitness: 1
 n_gen: 20
 log_gen: 1
@@ -12,7 +12,7 @@ downscale: true
 
 # Encoder's parameters
 encoder:
-  n_population: 5
+  n_population: 3
   n_elite: 1
   rows: 1
   columns: 20
@@ -28,7 +28,7 @@ encoder:
     # - f_remove_details
     #- f_make_boxes
     #- f_felzenszwalb_segmentation
-    # - f_components_segmentation
+    #- f_components_segmentation
     #- f_box_segmentation
     - f_threshold
     - f_binary
@@ -61,7 +61,7 @@ reducer:
 
 # Controller's parameters
 controller:
-  n_population: 5
+  n_population: 3
   n_elite: 1
   rows: 1
   columns: 20

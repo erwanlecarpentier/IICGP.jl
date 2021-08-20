@@ -4,11 +4,21 @@ using Cambrian
 using CartesianGeneticProgramming
 using Dates
 using IICGP
-# using Distributed
-import Random
-import Cambrian.mutate  # mutate function scope definition
+using Random
 
+# function extension
+import Cambrian.mutate
 
+# TODO remove START
+#=
+global FIT_ENC = []
+global CHR_ENC = []
+global IID_ENC = []
+global FIT_CTR = []
+global CHR_CTR = []
+global IID_CTR = []
+=#
+# TODO remove END
 
 ```
 Playing Atari games using DualCGP on screen input values
@@ -63,21 +73,20 @@ function play_atari(
     downscale=downscale,
     stickiness=stickiness
 )
-    Random.seed!(seed)
+    # Random.seed!(seed)
+    mt = MersenneTwister(seed)
     game = Game(rom, seed, lck=lck, state_ref=rom_state_ref)
     reward = 0.0
     frames = 0
     prev_action = 0
     while ~game_over(game.ale)
-        if rand() > stickiness || frames == 0
-            # s = get_state(game, grayscale, downscale)  # TODO put back
-            # output = IICGP.process(encoder, reducer, controller, s)  # TODO put back
-            # action = game.actions[argmax(output)]  # TODO put back
-            action = game.actions[rand(1:length(game.actions))]  # TODO remove
+        if rand(mt) > stickiness || frames == 0
+            s = get_state(game, grayscale, downscale)
+            output = IICGP.process(encoder, reducer, controller, s)
+            action = game.actions[argmax(output)]
         else
             action = prev_action
         end
-        println("Thread ", Threads.threadid(), " rand = ", rand(), " frame = ", frames)  # TODO remove
         reward += act(game.ale, action)
         frames += 1
         if frames > max_frames
@@ -95,6 +104,7 @@ if length(args["ind"]) > 0
 else
     # Define mutate and fit functions
     function mutate(ind::CGPInd, ind_type::String)
+        return ind # TODO remove
         if ind_type == "encoder"
             return goldman_mutate(enco_cfg, ind, init_function=IPCGPInd)
         elseif ind_type == "controller"
@@ -112,3 +122,7 @@ else
     init_backup(logid, args["cfg"])
     run!(e)
 end
+
+# TODO remove START
+#println("FIT_ENC:\n", FIT_ENC)
+# TODO remove END

@@ -135,7 +135,7 @@ function monocgp_config(cfg::Dict, game_name::String)
     reducer = Reducer(reducer_cfg, n_in=n_in, img_size=img_size)
 
     # Forward pass to retrieve the number of input of the controller
-    features = reducer.reduct(rgb, reducer.parameters)
+    features = reducer.reduct(s, reducer.parameters)
     features_flatten = collect(Iterators.flatten(Iterators.flatten(features)))
     cont_n_in = length(features_flatten)
 

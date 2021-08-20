@@ -150,12 +150,11 @@ end
 function threshold(x::ImgType, p::Float64)::ImgType
     if p < 0.5
         t = floor(UInt8, 255 * 2 * p)
-        reverse = false
+        threshold(x, t, false)
     else
         t = floor(UInt8, 255 * 2 * (p - 0.5))
-        reverse = true
+        threshold(x, t, true)
     end
-    threshold(x, t, reverse)
 end
 
 function index1d_to_index2d(x::AbstractArray, index::Int64)::Tuple{Int64,Int64}
