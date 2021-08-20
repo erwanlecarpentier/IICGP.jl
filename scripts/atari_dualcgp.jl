@@ -25,7 +25,7 @@ s = ArgParseSettings()
     default = "cfg/test_dual.yaml"
     "--game"
     help = "game rom name"
-    default = "centipede"
+    default = "assault"
     "--seed"
     help = "random seed for evolution"
     arg_type = Int
