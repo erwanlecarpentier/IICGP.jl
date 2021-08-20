@@ -100,9 +100,11 @@ function monocgp_config(cfg::Dict, game_name::String)
     # Temporarily open a game to retrieve parameters
     seed = cfg["seed"]
     game = Game(game_name, seed)
-    rgb = get_rgb(game)
-    img_size = size(rgb[1])
-    n_in = 3  # RGB images
+    grayscale = cfg["grayscale"]
+    downscale = cfg["downscale"]
+    s = get_state(game, grayscale, downscale)
+    img_size = size(s[1])
+    n_in = length(s)
     n_out = length(getMinimalActionSet(game.ale))  # One output per legal action
     close!(game)
 
@@ -133,7 +135,7 @@ function monocgp_config(cfg::Dict, game_name::String)
     reducer = Reducer(reducer_cfg, n_in=n_in, img_size=img_size)
 
     # Forward pass to retrieve the number of input of the controller
-    features = reducer.reduct(rgb, reducer.parameters)
+    features = reducer.reduct(s, reducer.parameters)
     features_flatten = collect(Iterators.flatten(Iterators.flatten(features)))
     cont_n_in = length(features_flatten)
 

@@ -4,11 +4,21 @@ using Cambrian
 using CartesianGeneticProgramming
 using Dates
 using IICGP
-# using Distributed
-import Random
-import Cambrian.mutate  # mutate function scope definition
+using Random
 
+# function extension
+import Cambrian.mutate
 
+# TODO remove START
+#=
+global FIT_ENC = []
+global CHR_ENC = []
+global IID_ENC = []
+global FIT_CTR = []
+global CHR_CTR = []
+global IID_CTR = []
+=#
+# TODO remove END
 
 ```
 Playing Atari games using DualCGP on screen input values
@@ -25,7 +35,7 @@ s = ArgParseSettings()
     default = "cfg/test_dual.yaml"
     "--game"
     help = "game rom name"
-    default = "centipede"
+    default = "assault"
     "--seed"
     help = "random seed for evolution"
     arg_type = Int
@@ -63,13 +73,14 @@ function play_atari(
     downscale=downscale,
     stickiness=stickiness
 )
-    Random.seed!(seed)
+    # Random.seed!(seed)
+    mt = MersenneTwister(seed)
     game = Game(rom, seed, lck=lck, state_ref=rom_state_ref)
     reward = 0.0
     frames = 0
     prev_action = 0
     while ~game_over(game.ale)
-        if rand() > stickiness || frames == 0
+        if rand(mt) > stickiness || frames == 0
             s = get_state(game, grayscale, downscale)
             output = IICGP.process(encoder, reducer, controller, s)
             action = game.actions[argmax(output)]
@@ -93,6 +104,7 @@ if length(args["ind"]) > 0
 else
     # Define mutate and fit functions
     function mutate(ind::CGPInd, ind_type::String)
+        return ind # TODO remove
         if ind_type == "encoder"
             return goldman_mutate(enco_cfg, ind, init_function=IPCGPInd)
         elseif ind_type == "controller"
@@ -110,3 +122,7 @@ else
     init_backup(logid, args["cfg"])
     run!(e)
 end
+
+# TODO remove START
+#println("FIT_ENC:\n", FIT_ENC)
+# TODO remove END

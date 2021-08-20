@@ -4,8 +4,7 @@ using Cambrian
 using CartesianGeneticProgramming
 using Dates
 using IICGP
-# using Distributed
-import Random
+using Random
 
 # function extension
 import Cambrian.mutate
@@ -55,13 +54,14 @@ function play_atari(
     downscale=downscale,
     stickiness=stickiness
 )
-    Random.seed!(seed)
+    # Random.seed!(seed)
+    mt = MersenneTwister(seed)
     game = Game(rom, seed, lck=lck, state_ref=rom_state_ref)
     reward = 0.0
     frames = 0
     prev_action = 0
     while ~game_over(game.ale)
-        if rand() > stickiness || frames == 0
+        if rand(mt) > stickiness || frames == 0
             s = get_state(game, grayscale, downscale)
             output = IICGP.process(reducer, controller, s)
             action = game.actions[argmax(output)]

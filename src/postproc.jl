@@ -6,14 +6,6 @@ using OffsetArrays
 using BenchmarkTools
 using TimerOutputs
 
-
-function get_input(game_name::String, grayscale::Bool)
-    game = Game(game_name, 0)
-    inp = grayscale ? get_grayscale(game) : get_rgb(game)
-    close!(game)
-    inp
-end
-
 """
     function time_monocgp_ms(
         reducer::Reducer,
@@ -28,10 +20,13 @@ function time_monocgp_ms(
     reducer::Reducer,
     cont::CGPInd,
     game_name::String,
-    grayscale::Bool
+    grayscale::Bool,
+    downscale::Bool
 )
     # Generate input
-    inp = get_input(game_name, grayscale)
+    g = Game(game_name, 0)
+    inp = get_state(g, grayscale, downscale)
+    close!(g)
     # Pre-compile
     process(reducer, cont, inp)
     n_iter = 1000
@@ -67,10 +62,13 @@ function time_dualcgp_ms(
     reducer::Reducer,
     cont::CGPInd,
     game_name::String,
-    grayscale::Bool
+    grayscale::Bool,
+    downscale::Bool
 )
     # Generate input
-    inp = get_input(game_name, grayscale)
+    g = Game(game_name, 0)
+    inp = get_state(g, grayscale, downscale)
+    close!(g)
     # Pre-compile
     process(enco, reducer, cont, inp)
     n_iter = 1000
@@ -155,17 +153,18 @@ function process_results(
         is_dual = isfile(joinpath(exp_dirs[i], "logs/encoder.csv"))
         total_time = 0.0
         grayscale = cfg["grayscale"]
+        downscale = cfg["downscale"]
         if is_dual
             enco, reducer, cont = get_last_dualcgp(exp_dirs[i], games[i], cfg)
             enco_time, redu_time, flat_time, cont_time = time_dualcgp_ms(
-                enco, reducer, cont, games[i], grayscale
+                enco, reducer, cont, games[i], grayscale, downscale
             )
             push!(p, ["  - Encoder", enco_time])
             total_time += enco_time
         else
             reducer, cont = get_last_monocgp(exp_dirs[i], games[i], cfg)
             redu_time, flat_time, cont_time = time_monocgp_ms(
-                reducer, cont, games[i], grayscale
+                reducer, cont, games[i], grayscale, downscale
             )
         end
         total_time += redu_time

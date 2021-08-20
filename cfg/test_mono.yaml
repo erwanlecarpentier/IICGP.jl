@@ -1,12 +1,14 @@
 # General parameters
 seed: 0
-max_frames: 10000
-stickiness: 0.0
+max_frames: 2000
+stickiness: 0.25
 d_fitness: 1
-n_gen: 100
+n_gen: 20
 log_gen: 1
 save_gen: 1
 bootstrap: false
+grayscale: true
+downscale: true
 
 # Reducer's parameters
 reducer:
@@ -17,10 +19,10 @@ reducer:
 
 # Controller's parameters
 controller:
-  n_population: 3
+  n_population: 9
   n_elite: 1
   rows: 1
-  columns: 5
+  columns: 20
   recur: 0.0
   m_rate: 0.1
   out_m_rate: 0.5

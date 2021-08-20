@@ -1,9 +1,9 @@
 # General parameters
 seed: 0
-max_frames: 100
+max_frames: 2000
 stickiness: 0.25
 d_fitness: 1
-n_gen: 10
+n_gen: 20
 log_gen: 1
 save_gen: 1
 bootstrap: false
@@ -12,7 +12,7 @@ downscale: true
 
 # Encoder's parameters
 encoder:
-  n_population: 5
+  n_population: 3
   n_elite: 1
   rows: 1
   columns: 20
@@ -25,20 +25,20 @@ encoder:
     - f_dilate
     - f_erode
     - f_subtract
-    - f_remove_details
+    # - f_remove_details
     #- f_make_boxes
     #- f_felzenszwalb_segmentation
-    - f_components_segmentation
+    #- f_components_segmentation
     #- f_box_segmentation
     - f_threshold
     - f_binary
-    - f_corners
+    # - f_corners
     #- f_gaussian
     #- f_laplacian
     #- f_sobel_x
     #- f_sobel_y
     #- f_canny
-    - f_edges
+    # - f_edges
     #- f_opening
     #- f_closing
     #- f_tophat
@@ -49,22 +49,22 @@ encoder:
     - f_bitwise_and
     - f_bitwise_or
     - f_bitwise_xor
-    - f_motion_capture
+    # - f_motion_capture
     #- f_motion_distances
 
 # Reducer's parameters
 reducer:
-  type: "centroid" # "pooling" or "centroid"
+  type: "pooling" # "pooling" or "centroid"
   pooling_function: "mean" # POOLING: "mean", "max", or "min"
   features_size: 5 # POOLING: size of the square down-sampled image
   n_centroids: 15 # CENTROID: number of biggest objects tracked
 
 # Controller's parameters
 controller:
-  n_population: 5
+  n_population: 3
   n_elite: 1
   rows: 1
-  columns: 40
+  columns: 20
   recur: 0.0
   m_rate: 0.1
   out_m_rate: 0.5

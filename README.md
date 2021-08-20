@@ -1,14 +1,12 @@
 # IICGP
 
-[//]: # ([![Build Status](https://travis-ci.com/erwanlecarpentier/IICGP.jl.svg?branch=master)](https://travis-ci.com/erwanlecarpentier/IICGP.jl))
-[//]: # ([![Coverage](https://codecov.io/gh/erwanlecarpentier/IICGP.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/erwanlecarpentier/IICGP.jl))
-[//]: # ([![Coverage](https://coveralls.io/repos/github/erwanlecarpentier/IICGP.jl/badge.svg?branch=master)](https://coveralls.io/github/erwanlecarpentier/IICGP.jl?branch=master))
-
 (Interactive) Interpretable Cartesian Genetic Programming
 
 To build and install a Julia binding for [OpenCV](https://github.com/opencv/opencv), we recommend [the following tutorial](https://docs.opencv.org/master/d8/da4/tutorial_julia.html).
 
-## CGP Functions
+## CGP Functions computational costs
+
+CPU used for measurement: Intel(R) Core(TM) i5-7440HQ CPU @ 2.80GHz
 
 Scalar functions:
 
@@ -33,7 +31,7 @@ Scalar functions:
 | f_xor |   77.220 ns (4 allocations: 64 bytes)
 | f_not |   71.539 ns (4 allocations: 64 bytes)
 
-Image functions on full size image:
+Image functions on full size image (160x210 = 33600 pixels):
 
 | Function | @btime |
 |---|---|
@@ -67,7 +65,7 @@ Image functions on full size image:
 | f_motion_capture |   179.721 μs (9 allocations: 197.41 KiB)
 | f_motion_distances |   3.327 ms (66773 allocations: 3.48 MiB)
 
-Image functions on halved-size image:
+Image functions on halved-size image (80x105 = 8400 pixels):
 
 | Function | @btime |
 |---|---|
