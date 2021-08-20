@@ -1,11 +1,11 @@
 using IICGP
 using Dates
 
-min_date = DateTime(2021, 08, 20)
-max_date = DateTime(2021, 08, 21)
+min_date = DateTime(2021, 08, 18)
+max_date = DateTime(2021, 08, 19)
 # DateTime(2013,7,1,12,30,59,1)
 # games = Array{String,1}()
-games = ["assault"] # ["freeway"]  # pong kung_fu_master freeway assault
+games = ["boxing"] # ["freeway"]  # pong kung_fu_master freeway assault
 reducers = Array{String,1}() # ["pooling"]
 
 fetch_backup()
