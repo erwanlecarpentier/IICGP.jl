@@ -9,17 +9,6 @@ using Random
 # function extension
 import Cambrian.mutate
 
-# TODO remove START
-#=
-global FIT_ENC = []
-global CHR_ENC = []
-global IID_ENC = []
-global FIT_CTR = []
-global CHR_CTR = []
-global IID_CTR = []
-=#
-# TODO remove END
-
 ```
 Playing Atari games using DualCGP on screen input values
 
@@ -120,7 +109,15 @@ else
                                bootstrap=bootstrap, game=game)
     # Run evolution
     init_backup(logid, args["cfg"])
-    run!(e)
+    run!(e) # TODO put back
+
+    # TODO remove START
+    #=
+    for _ in 1:20
+        IICGP.fitness_evaluate(e, fit)
+    end
+    =#
+    # TODO remove END
 end
 
 # TODO remove START
