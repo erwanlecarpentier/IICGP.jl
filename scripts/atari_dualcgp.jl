@@ -93,7 +93,6 @@ if length(args["ind"]) > 0
 else
     # Define mutate and fit functions
     function mutate(ind::CGPInd, ind_type::String)
-        return ind # TODO remove
         if ind_type == "encoder"
             return goldman_mutate(enco_cfg, ind, init_function=IPCGPInd)
         elseif ind_type == "controller"
@@ -113,13 +112,9 @@ else
 
     # TODO remove START
     #=
-    for _ in 1:20
+    for _ in 1:3
         IICGP.fitness_evaluate(e, fit)
     end
     =#
     # TODO remove END
 end
-
-# TODO remove START
-#println("FIT_ENC:\n", FIT_ENC)
-# TODO remove END
