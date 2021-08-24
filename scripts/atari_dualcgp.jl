@@ -86,6 +86,7 @@ function play_atari(
     [reward]
 end
 
+
 if length(args["ind"]) > 0
     ind = CGPInd(cfg, read(args["ind"], String))
     ftn = fitness(ind, inps, outs)
@@ -94,8 +95,10 @@ else
     # Define mutate and fit functions
     function mutate(ind::CGPInd, ind_type::String)
         if ind_type == "encoder"
+            return IICGP.IPCGPCopy(ind) # TODO remove
             return goldman_mutate(enco_cfg, ind, init_function=IPCGPInd)
         elseif ind_type == "controller"
+            return CartesianGeneticProgramming.copy(ind) # TODO remove
             return goldman_mutate(cont_cfg, ind)
         end
     end

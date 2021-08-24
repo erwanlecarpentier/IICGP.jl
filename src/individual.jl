@@ -1,7 +1,18 @@
-export IPCGPInd, image_buffer, get_last_dualcgp
+export IPCGPInd, IPCGPCopy, image_buffer, get_last_dualcgp
 
 using CartesianGeneticProgramming
 using JSON
+
+"""
+    image_buffer(buffer_size::Int64, img_size::Tuple)
+
+Image buffer constructor for IPCGP individuals.
+"""
+function image_buffer(buffer_size::Int64, img_size::Tuple)
+    buffer = Array{Array{UInt8,2}}(undef, buffer_size)
+    fill!(buffer, zeros(UInt8, img_size))
+    return buffer
+end
 
 """
     image_buffer(rows::Int64, columns::Int64, n_in::Int64, img_size)
@@ -9,9 +20,9 @@ using JSON
 Image buffer constructor for IPCGP individuals.
 """
 function image_buffer(rows::Int64, columns::Int64, n_in::Int64, img_size::Tuple)
-    buffer = Array{Array{UInt8,2}}(undef, rows * columns + n_in)
-    fill!(buffer, zeros(UInt8, img_size))
-    return buffer
+    # buffer = Array{Array{UInt8,2}}(undef, rows * columns + n_in)
+    # fill!(buffer, zeros(UInt8, img_size))
+    return image_buffer(rows * columns + n_in, img_size)
 end
 
 """
@@ -71,6 +82,20 @@ Constructor for IPCGP individuals based on DNA path.
 function IPCGPInd(cfg::NamedTuple, dna_path::String)::CGPInd
     dict = JSON.parse(dna_path)
     IPCGPInd(cfg, Array{Float64}(dict["chromosome"]))
+end
+
+function IPCGPCopy(ind::CGPInd)
+    img_size = size(ind.buffer[1])
+    buffer = image_buffer(length(ind.buffer), img_size)
+    nodes = Array{Node}(undef, length(ind.nodes))
+    for i in eachindex(ind.nodes)
+        nodes[i] = copy(ind.nodes[i])
+    end
+    CartesianGeneticProgramming.CGPInd(
+        ind.n_in, ind.n_out, ind.n_parameters,
+        copy(ind.chromosome), copy(ind.genes), copy(ind.outputs), nodes, buffer,
+        copy(ind.fitness)
+    )
 end
 
 function get_last_dualcgp(path::String, game::String, cfg::Dict)
