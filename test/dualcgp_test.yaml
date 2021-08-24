@@ -1,9 +1,12 @@
 # General parameters
 seed: 0
 d_fitness: 1
-n_gen: 1
-log_gen: 10
-save_gen: 10
+n_gen: 10
+log_gen: 1
+save_gen: 1
+bootstrap: false
+grayscale: true
+downscale: true
 
 # Encoder's parameters
 encoder:

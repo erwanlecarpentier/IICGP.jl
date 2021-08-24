@@ -94,7 +94,7 @@ function monocgp_config(monocgp_cfg_filename::String, game_name::String)
 end
 
 """
-TODO
+TODO doc
 """
 function monocgp_config(cfg::Dict, game_name::String)
     # Temporarily open a game to retrieve parameters

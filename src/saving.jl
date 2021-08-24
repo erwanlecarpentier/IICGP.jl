@@ -267,7 +267,7 @@ function get_last_dualcgp_paths(exp_dir::String)
 end
 
 """
-TODO
+TODO doc
 """
 function get_bootstrap_paths(
     enco_cfg::NamedTuple,

@@ -35,6 +35,21 @@ function image_buffer(cfg::NamedTuple)
 end
 
 """
+    reset(ind::CGPInd)
+
+Generic function for reseting buffer.
+"""
+function reset_buffer(ind::CGPInd)
+    if typeof(ind.buffer[1]) == Array{UInt8,2}
+        ind.buffer .= image_buffer(length(ind.buffer), size(ind.buffer[1]))
+    elseif typeof(ind.buffer[1]) == Float64
+        ind.buffer .= zeros(length(ind.buffer))
+    else
+        throw(ArgumentError("Buffer elements type $(typeof(ind.buffer[1])) not recognized."))
+    end
+end
+
+"""
     IPCGPInd(cfg::NamedTuple)
 
 Constructor for IPCGP individual based on configuration.

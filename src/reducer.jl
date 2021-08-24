@@ -1,4 +1,4 @@
-export Reducer, PoolingReducer, CentroidReducer, AbstractReducer
+export Reducer, PoolingReducer, CentroidReducer, AbstractReducer, reset!
 
 # using OpenCV
 using Statistics
@@ -21,7 +21,7 @@ end
 Pooling reducer constructor.
 """
 function PoolingReducer(f::Function, size::Int64)
-    p = Dict("pooling_function"=>f, "size"=>size)
+    p = Dict("type"=>"pooling", "pooling_function"=>f, "size"=>size)
     Reducer(pooling_reduction, p)
 end
 
@@ -37,12 +37,21 @@ Centroid reducer constructor.
 function CentroidReducer(n_centroids::Int64, n_in::Int64,
                          img_size::Tuple{Int64,Int64})
     p = Dict(
+        "type"=>"centroid",
         "n"=>n_centroids,
         "c_prev"=>Array{Array{Tuple{Float64,Float64},1},1}(undef, n_in),
         "a_prev"=>Array{Array{Int64,1},1}(undef, n_in),
         "img_size"=>img_size
     )
     Reducer(centroid_reduction, p)
+end
+
+function reset!(r::Reducer)
+    if r.parameters["type"] == "centroid"
+        n_in = length(r.parameters["c_prev"])
+        r.parameters["c_prev"] = Array{Array{Tuple{Float64,Float64},1},1}(undef, n_in)
+        r.parameters["a_prev"] = Array{Array{Int64,1},1}(undef, n_in)
+    end
 end
 
 """

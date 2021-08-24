@@ -20,7 +20,7 @@ populate(e::IICGP.DualCGPEvolution) = IICGP.oneplus_populate(e)
 evaluate(e::IICGP.DualCGPEvolution) = IICGP.fitness_evaluate(e, e.fitness)
 
 """
-TODO
+TODO doc
 """
 function get_bootstrap_chromosomes(
     enco_cfg::NamedTuple,
@@ -34,7 +34,7 @@ function get_bootstrap_chromosomes(
 end
 
 """
-TODO
+TODO doc
 """
 function bootstrap_init(
     enco_cfg::NamedTuple,
@@ -49,9 +49,8 @@ function bootstrap_init(
         throw(ArgumentError("No game specified in kwargs"))
     end
     chromosome = get_bootstrap_chromosomes(enco_cfg, cont_cfg, game)
-    return enco_pop, cont_pop  # TODO remove
-    # TODO here
-    # TODO put back and reimplemente
+    return enco_pop, cont_pop  # TODO (bootstrap_init) remove
+    # TODO (bootstrap_init) put back and reimplemente
     #=
     if haskey(kwargs_dict, :init_function)
         population[1] = kwargs_dict[:init_function](cfg, chromosome)
