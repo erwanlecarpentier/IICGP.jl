@@ -13,7 +13,7 @@ fetch_backup()
 exp_dirs, games = get_exp_dir(min_date=min_date, max_date=max_date, games=games,
                               reducers=reducers)
 
-process_results(exp_dirs, games, ma=1, save=false)
+process_results(exp_dirs, games, ma=1, save=true)
 
 #=
 exp_dirs = get_exp_dir()

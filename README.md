@@ -90,8 +90,9 @@ Image functions on halved-size image (80x105 = 8400 pixels):
 
 High priority to low priority:
 
+- Fix determinism issues (see results from 2021-08-24)
+- Fix slow down issue in experiment from 2021-08-24
 - Speed-up centroid reducer's reducing function
-- Use `restrict`
 - Allow bootstrap of both encoder and controller
 - An R^2 controller reasonning about centroids directly?
 
@@ -114,4 +115,27 @@ High priority to low priority:
 - Encoder: max-out number of filters applied sequentially (if we assume our filters are well chosen, few would be enough)
 - Downscale all input images (max-pool dividing the image size by 2)
 - Low-cost image filters (threshold, binary, subtract, erode, dilate, not, and, or, xor)
+
+# Results
+
+2021-08-11:
+- Reducer + controller (no encoder)
+- 3 RGB images
+
+|Best score|Mean score|
+|---|---|
+|![](graphs/20210811-monocgp/assault_best.png)|![](graphs/20210811-monocgp/assault_mean.png)|
+|![](graphs/20210811-monocgp/boxing_best.png)|![](graphs/20210811-monocgp/boxing_mean.png)|
+|![](graphs/20210811-monocgp/freeway_best.png)|![](graphs/20210811-monocgp/freeway_mean.png)|
+
+2021-08-24:
+- Encoder + Reducer + controller
+- Downscale
+- Grayscale
+
+|Best score|Mean score|
+|---|---|
+|![](graphs/20210824-dualcgp-downscale-grayscale/assault_best.png)|![](graphs/20210824-dualcgp-downscale-grayscale/assault_mean.png)|
+|![](graphs/20210824-dualcgp-downscale-grayscale/boxing_best.png)|![](graphs/20210824-dualcgp-downscale-grayscale/boxing_mean.png)|
+
 
