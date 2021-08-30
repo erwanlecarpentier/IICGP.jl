@@ -26,6 +26,7 @@ end
 function Game(romfile::String, seed::Int64; kwargs...)
     ale = ALE_new()
     setInt(ale, "random_seed", Cint(seed))
+    setInt(ale, "repeat_action_probability", Cint(0))
     # setBool(ale, "color_averaging", true)
     # setInt(ale, "frame_skip", Int32(1)) # 1 means no frame skip
     # setFloat(ale, "repeat_action_probability", Float32(0.))

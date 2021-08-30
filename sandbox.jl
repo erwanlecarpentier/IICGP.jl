@@ -48,24 +48,22 @@ end
 
 
 
-#=
+##
 ### MWE for multithreading with same RNG / seeding
 
 using Random
 
-# Job to be parallelized
+# Job to be parallelized, each thread using the same random numbers sequence
 function job()
     # Random.seed!(0) # Does not work
     mt = MersenneTwister(0) # Does work
     for i in 1:2
-        println(i, " ", rand(mt))
+        println("Random number n° $i in the sequence = $(rand(mt))")
     end
 end
 
 @sync for i in 1:Threads.nthreads()+1
     Threads.@spawn begin
-        # Random.seed!(0) # Does not work
         job()
     end
 end
-=#
