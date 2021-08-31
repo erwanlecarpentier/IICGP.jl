@@ -7,9 +7,9 @@
 # boxing centipede demon_attack enduro freeway kung_fu_master space_invaders riverraid pong
 
 CMD_PREFIX="atari_"
-CFGS=("cfg/dualcgp_atari_pooling.yaml" "cfg/dualcgp_atari_centroid.yaml") # WARNING: sync with REDS
-REDS=("pooling_" "centroid_") # WARNING: sync with CFGS
-GAMES="boxing assault"
+CFGS=("cfg/dualcgp_atari_pooling.yaml") # WARNING: sync with REDS
+REDS=("pooling_") # WARNING: sync with CFGS
+GAMES="assault"
 SCRIPT="scripts/atari_dualcgp.jl"
 PROJECT="/users/p21001/lecarpen/IICGP.jl"
 N_THREADS="25"
@@ -35,7 +35,6 @@ for i in "${!CFGS[@]}"; do
 		echo "julia --threads $N_THREADS --project=$PROJECT $SCRIPT --cfg=${CFGS[i]} --game=$GAME" >> $CM
 
 		sbatch $CM
-		rm $CM
 	done
 done
 

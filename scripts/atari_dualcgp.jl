@@ -21,7 +21,7 @@ s = ArgParseSettings()
 @add_arg_table! s begin
     "--cfg"
     help = "configuration script"
-    default = "cfg/test_dual.yaml"
+    default = "cfg/dualcgp_atari_pooling.yaml"
     "--game"
     help = "game rom name"
     default = "assault"
@@ -65,7 +65,7 @@ function play_atari(
     # Random.seed!(seed)
     mt = MersenneTwister(seed)
     game = Game(rom, seed, lck=lck, state_ref=rom_state_ref)
-    IICGP.reset!(reducer) # remove centroid buffer
+    IICGP.reset!(reducer) # zero the buffers
     reward = 0.0
     frames = 0
     prev_action = 0
@@ -86,6 +86,7 @@ function play_atari(
     close!(game)
     [reward]
 end
+
 
 if length(args["ind"]) > 0
     ind = CGPInd(cfg, read(args["ind"], String))

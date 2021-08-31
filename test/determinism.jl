@@ -75,7 +75,7 @@ function play_atari(
         if frames > max_frames
             break
         end
-        # Buffers
+        # Fill buffers
         push!(stts, s)
         push!(rgbs, rgb)
         push!(grss, gs)
