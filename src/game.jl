@@ -14,7 +14,8 @@ export
     get_state,
     get_rgb,
     get_grayscale,
-    get_state_ref
+    get_state_ref,
+    get_ram
 
 struct Game
     ale::ALEPtr
@@ -29,7 +30,7 @@ function Game(romfile::String, seed::Int64; kwargs...)
     setInt(ale, "repeat_action_probability", Cint(0))
     # setBool(ale, "color_averaging", true)
     # setInt(ale, "frame_skip", Int32(1)) # 1 means no frame skip
-    # setFloat(ale, "repeat_action_probability", Float32(0.))
+    setFloat(ale, "repeat_action_probability", Float32(0.0))
     kwargs_dict = Dict(kwargs)
     if haskey(kwargs_dict, :lck)  # Thread safe
         lock(kwargs_dict[:lck]) do
@@ -44,6 +45,7 @@ function Game(romfile::String, seed::Int64; kwargs...)
     w = getScreenWidth(ale)
     h = getScreenHeight(ale)
     actions = getMinimalActionSet(ale)
+    act(ale, 0) # 1st action is noop
     Game(ale, w, h, actions)
 end
 
