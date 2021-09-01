@@ -36,8 +36,12 @@ function fitness_evaluate(e::DualCGPEvolution, fitness::Function=null_evaluate)
     n_encoders = e.encoder_config.n_population
     n_controllers = e.controller_config.n_population
     fitness_matrix = Array{Float64}(undef, n_encoders, n_controllers)
+    println("###### Enter fitness evaluate") # TODO remove
+    flush(stdout) # TODO remove
     @sync for i in 1:n_encoders
         for j in 1:n_controllers
+	    println("###### About to do evaluation $i $j") # TODO remove
+	    flush(stdout) # TODO remove
             encoder_i = IPCGPInd(e.encoder_config, e.encoder_population[i].chromosome)
             controller_j = CGPInd(e.controller_config, e.controller_population[j].chromosome)
             Threads.@spawn begin
@@ -45,6 +49,8 @@ function fitness_evaluate(e::DualCGPEvolution, fitness::Function=null_evaluate)
             end
         end
     end
+    println("###### Completed evaluation") # TODO remove
+    flush(stdout) # TODO remove
 
     for i in eachindex(e.encoder_population)
         e.encoder_population[i].fitness[1] = maximum(fitness_matrix[i,:])
@@ -52,4 +58,6 @@ function fitness_evaluate(e::DualCGPEvolution, fitness::Function=null_evaluate)
     for j in eachindex(e.controller_population)
         e.controller_population[j].fitness[1] = maximum(fitness_matrix[:,j])
     end
+    println("###### Exit fitness evaluate") # TODO remove
+    flush(stdout) # TODO remove
 end

@@ -9,7 +9,7 @@
 CMD_PREFIX="atari_"
 CFGS=("cfg/dualcgp_atari_pooling.yaml") # WARNING: sync with REDS
 REDS=("pooling_") # WARNING: sync with CFGS
-GAMES="assault"
+GAMES="atlantis"
 SCRIPT="scripts/atari_dualcgp.jl"
 PROJECT="/users/p21001/lecarpen/IICGP.jl"
 N_THREADS="25"
@@ -28,7 +28,7 @@ for i in "${!CFGS[@]}"; do
 		echo "#SBATCH --ntasks-per-core=1" >> $CM
 		echo "#SBATCH -o $OU" >> $CM
 		echo "#SBATCH -e $LO" >> $CM
-		echo "#SBATCH --time=5-00:00:00" >> $CM
+		echo "#SBATCH --time=00:15:00" >> $CM
 		echo "#SBATCH --mail-user=erwanlecarpentier@mailbox.org" >> $CM
 		echo "#SBATCH --mail-type=END" >> $CM
 		echo "" >> $CM
