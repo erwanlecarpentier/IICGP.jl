@@ -23,6 +23,19 @@ function fitness_evaluate(e::CGPEvolution, fitness::Function=null_evaluate)
     end
 end
 
+function fitness_evaluate_ij(
+	e::DualCGPEvolution,
+	f::Array{Float64, 2},
+	i::Int64,
+	j::Int64,
+	fitness::Function=null_evaluate
+)
+	println("###### About to do evaluation $i $j") # TODO remove
+	flush(stdout) # TODO remove
+	enco_i = IPCGPInd(e.encoder_config, e.encoder_population[i].chromosome)
+	cont_j = CGPInd(e.controller_config, e.controller_population[j].chromosome)
+	f[i,j] = fitness(enco_i, cont_j)[1] # Currently, only pick 1st fitness dimension
+end
 """
     function fitness_evaluate(e::DualCGPEvolution, fitness::Function=null_evaluate)
 
@@ -32,12 +45,12 @@ in the dual CGP evolution framework.
 TODOs:
 - handle multi dimensional fitness in coevolution
 """
-function fitness_evaluate(e::DualCGPEvolution, fitness::Function=null_evaluate)
+function fitness_evaluate(e::DualCGPEvolution)
     n_enco = e.encoder_config.n_population
     n_cont = e.controller_config.n_population
-    fitness_matrix = Array{Float64}(undef, n_enco, n_cont)
+    fitness_matrix = zeros(n_enco, n_cont)
 
-    println("###### Enter fitness evaluate") # TODO remove
+    println("\n\n###### Enter fitness evaluate, gen $(e.gen)") # TODO remove
     flush(stdout) # TODO remove
 
 	# FORMER method with @sync
@@ -59,11 +72,7 @@ function fitness_evaluate(e::DualCGPEvolution, fitness::Function=null_evaluate)
 	indexes = [(i, j) for i in 1:n_enco for j in 1:n_cont]
     Threads.@threads for l in 1:(n_enco+n_cont)
         i, j = indexes[l]
-		println("###### About to do evaluation $i $j") # TODO remove
-		flush(stdout) # TODO remove
-		enco_i = IPCGPInd(e.encoder_config, e.encoder_population[i].chromosome)
-		cont_j = CGPInd(e.controller_config, e.controller_population[j].chromosome)
-		fitness_matrix[i,j] = fitness(enco_i, cont_j)[1] # Currently, only pick 1st fitness dimension
+		fitness_evaluate_ij(e, fitness_matrix, i, j)
     end
 
     println("###### Completed evaluation") # TODO remove
@@ -75,6 +84,6 @@ function fitness_evaluate(e::DualCGPEvolution, fitness::Function=null_evaluate)
     for j in eachindex(e.controller_population)
         e.controller_population[j].fitness[1] = maximum(fitness_matrix[:,j])
     end
-    println("###### Exit fitness evaluate") # TODO remove
+    println("###### Exit fitness evaluate\n\n") # TODO remove
     flush(stdout) # TODO remove
 end
