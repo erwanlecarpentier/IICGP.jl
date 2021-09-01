@@ -41,7 +41,7 @@ function fetch_backup()
     each_log_name = Array{String,1}()
     each_log_id = Array{String,1}()
     each_log_new_name = Array{String,1}()
-    for l in readdir("logs")
+    for l in setdiff(readdir("logs"), ["placeholder.txt"])
         is_csv = endswith(l, ".csv")
         id = is_csv ? l[1:end-length(".csv")] : l
         if is_csv
@@ -63,7 +63,7 @@ function fetch_backup()
         mkpath(new_logdir)  # Make path if not created
         cp(old_logfile, new_logfile, force=true)
     end
-    for id in readdir("gens")
+    for id in setdiff(readdir("gens"), ["placeholder.txt"])
         for g in readdir(joinpath("gens", id))
             old_genpath = joinpath("gens", id, g)
             if startswith(g, "encoder_") || startswith(g, "controller_")

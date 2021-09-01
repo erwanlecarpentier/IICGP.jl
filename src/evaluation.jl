@@ -36,8 +36,11 @@ function fitness_evaluate(e::DualCGPEvolution, fitness::Function=null_evaluate)
     n_encoders = e.encoder_config.n_population
     n_controllers = e.controller_config.n_population
     fitness_matrix = Array{Float64}(undef, n_encoders, n_controllers)
+
     println("###### Enter fitness evaluate") # TODO remove
     flush(stdout) # TODO remove
+
+	# FORMER method with @sync
     @sync for i in 1:n_encoders
         for j in 1:n_controllers
 	    println("###### About to do evaluation $i $j") # TODO remove
@@ -49,6 +52,9 @@ function fitness_evaluate(e::DualCGPEvolution, fitness::Function=null_evaluate)
             end
         end
     end
+
+	# NEW method with Threads.@threads
+
     println("###### Completed evaluation") # TODO remove
     flush(stdout) # TODO remove
 
