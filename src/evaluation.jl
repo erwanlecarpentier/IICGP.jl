@@ -15,7 +15,7 @@ end
 Sets the fitness of each individual to the Array of values returned by fitness.
 Multithreaded option enabled in this version.
 """
-function fitness_evaluate(e::CGPEvolution, fitness::Function=null_evaluate)
+function fitness_evaluate(e::CGPEvolution, fitness::Function)
     @sync for i in eachindex(e.population)
         Threads.@spawn begin
             e.population[i].fitness[:] = fitness(e.population[i])[:]
@@ -45,7 +45,7 @@ in the dual CGP evolution framework.
 TODOs:
 - handle multi dimensional fitness in coevolution
 """
-function fitness_evaluate(e::DualCGPEvolution)
+function fitness_evaluate(e::DualCGPEvolution, fitness::Function=null_evaluate)
     n_enco = e.encoder_config.n_population
     n_cont = e.controller_config.n_population
     fitness_matrix = zeros(n_enco, n_cont)
@@ -72,7 +72,7 @@ function fitness_evaluate(e::DualCGPEvolution)
 	indexes = [(i, j) for i in 1:n_enco for j in 1:n_cont]
     Threads.@threads for l in 1:(n_enco+n_cont)
         i, j = indexes[l]
-		fitness_evaluate_ij(e, fitness_matrix, i, j)
+		fitness_evaluate_ij(e, fitness_matrix, i, j, fitness)
     end
 
     println("###### Completed evaluation") # TODO remove
