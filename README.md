@@ -138,4 +138,9 @@ High priority to low priority:
 |![](graphs/20210824-dualcgp-downscale-grayscale/assault_best.png)|![](graphs/20210824-dualcgp-downscale-grayscale/assault_mean.png)|
 |![](graphs/20210824-dualcgp-downscale-grayscale/boxing_best.png)|![](graphs/20210824-dualcgp-downscale-grayscale/boxing_mean.png)|
 
+2021-09-01:
+- Encoder + Reducer + controller
+- Downscale
+- Grayscale
+- Faster multithreading + initial action fix for determinism
 
