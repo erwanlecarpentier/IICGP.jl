@@ -45,7 +45,9 @@ function Game(romfile::String, seed::Int64; kwargs...)
     w = getScreenWidth(ale)
     h = getScreenHeight(ale)
     actions = getMinimalActionSet(ale)
-    act(ale, 0) # 1st action is noop
+    for _ in 1:3 # 1st actions are noop
+        act(ale, 0)
+    end
     Game(ale, w, h, actions)
 end
 
