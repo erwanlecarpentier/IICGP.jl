@@ -70,7 +70,7 @@ function fitness_evaluate(e::DualCGPEvolution, fitness::Function=null_evaluate)
 
 	# NEW method with Threads.@threads
 	indexes = [(i, j) for i in 1:n_enco for j in 1:n_cont]
-    Threads.@threads for l in 1:(n_enco+n_cont)
+    Threads.@threads for l in 1:(n_enco*n_cont)
         i, j = indexes[l]
 		fitness_evaluate_ij(e, fitness_matrix, i, j, fitness)
     end
