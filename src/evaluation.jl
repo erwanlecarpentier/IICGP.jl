@@ -30,8 +30,6 @@ function fitness_evaluate_ij(
 	j::Int64,
 	fitness::Function=null_evaluate
 )
-	println("###### About to do evaluation $i $j") # TODO remove
-	flush(stdout) # TODO remove
 	enco_i = IPCGPInd(e.encoder_config, e.encoder_population[i].chromosome)
 	cont_j = CGPInd(e.controller_config, e.controller_population[j].chromosome)
 	f[i,j] = fitness(enco_i, cont_j)[1] # Currently, only pick 1st fitness dimension
@@ -50,15 +48,10 @@ function fitness_evaluate(e::DualCGPEvolution, fitness::Function=null_evaluate)
     n_cont = e.controller_config.n_population
     fitness_matrix = zeros(n_enco, n_cont)
 
-    println("\n\n###### Enter fitness evaluate, gen $(e.gen)") # TODO remove
-    flush(stdout) # TODO remove
-
 	# FORMER method with @sync
     #=
 	@sync for i in 1:n_enco
         for j in 1:n_cont
-		    println("###### About to do evaluation $i $j") # TODO remove
-		    flush(stdout) # TODO remove
             encoder_i = IPCGPInd(e.encoder_config, e.encoder_population[i].chromosome)
             controller_j = CGPInd(e.controller_config, e.controller_population[j].chromosome)
             Threads.@spawn begin
@@ -75,15 +68,10 @@ function fitness_evaluate(e::DualCGPEvolution, fitness::Function=null_evaluate)
 		fitness_evaluate_ij(e, fitness_matrix, i, j, fitness)
     end
 
-    println("###### Completed evaluation") # TODO remove
-    flush(stdout) # TODO remove
-
     for i in eachindex(e.encoder_population)
         e.encoder_population[i].fitness[1] = maximum(fitness_matrix[i,:])
     end
     for j in eachindex(e.controller_population)
         e.controller_population[j].fitness[1] = maximum(fitness_matrix[:,j])
     end
-    println("###### Exit fitness evaluate\n\n") # TODO remove
-    flush(stdout) # TODO remove
 end

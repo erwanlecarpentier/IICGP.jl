@@ -4,8 +4,8 @@ max_frames: 10000
 stickiness: 0.25
 d_fitness: 1
 n_gen: 50000
-log_gen: 100
-save_gen: 100
+log_gen: 20
+save_gen: 20
 bootstrap: false
 grayscale: true
 downscale: true
@@ -64,7 +64,7 @@ controller:
   n_population: 5
   n_elite: 1
   rows: 1
-  columns: 40
+  columns: 60
   recur: 0.0
   m_rate: 0.1
   out_m_rate: 0.5

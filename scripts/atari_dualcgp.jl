@@ -62,8 +62,6 @@ function play_atari(
     downscale=downscale,
     stickiness=stickiness
 )
-    println("### Play Atari: thread $(Threads.threadid())") # TODO remove
-    flush(stdout) # TODO remove
     # Random.seed!(seed)
     mt = MersenneTwister(seed)
     game = Game(rom, seed, lck=lck, state_ref=rom_state_ref)
