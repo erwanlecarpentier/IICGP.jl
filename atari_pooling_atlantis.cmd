@@ -6,7 +6,7 @@
 #SBATCH --ntasks-per-core=1
 #SBATCH -o atari_pooling_atlantis.out
 #SBATCH -e atari_pooling_atlantis.log
-#SBATCH --time=00:15:00
+#SBATCH --time=00:05:00
 #SBATCH --mail-user=erwanlecarpentier@mailbox.org
 #SBATCH --mail-type=END
 
