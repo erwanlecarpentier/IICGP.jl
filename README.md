@@ -90,8 +90,6 @@ Image functions on halved-size image (80x105 = 8400 pixels):
 
 High priority to low priority:
 
-- Fix determinism issues (see results from 2021-08-24)
-- Fix slow down issue in experiment from 2021-08-24
 - Speed-up centroid reducer's reducing function
 - Allow bootstrap of both encoder and controller
 - An R^2 controller reasonning about centroids directly?
@@ -136,8 +134,6 @@ Forward pass timing (ms)
 |boxing|0.33|0.7|
 |freeway|0.3|0.8|
 
----
-
 ## 2021-08-24:
 - Encoder + Reducer + controller
 - Downscale (1/2 image)
@@ -153,8 +149,6 @@ Forward pass timing (ms)
 |---|---|---|
 |assault|0.18|0.46|
 |boxing|0.2|1.22|
-
----
 
 ## 2021-09-01 (only 20h results):
 - Encoder + Reducer + controller
@@ -172,4 +166,13 @@ Forward pass timing (ms)
 |---|---|---|
 |assault|0.2|1.0|
 |boxing|0.2|0.6|
+
+# Q
+
+- Centroid:
+	- too slow?
+	- R^2 controller?
+- Pooling:
+	- More experiments?
+	- Interpretability
 
