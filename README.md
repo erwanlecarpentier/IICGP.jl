@@ -118,7 +118,7 @@ High priority to low priority:
 
 # Results
 
-2021-08-11:
+### 2021-08-11:
 - Reducer + controller (no encoder)
 - 3 RGB images
 
@@ -128,7 +128,14 @@ High priority to low priority:
 |![](graphs/20210811-monocgp/boxing_best.png)|![](graphs/20210811-monocgp/boxing_mean.png)|
 |![](graphs/20210811-monocgp/freeway_best.png)|![](graphs/20210811-monocgp/freeway_mean.png)|
 
-2021-08-24:
+Forward pass timing (ms)
+||Centroid|Pooling|
+|---|---|---|
+|assault|0.7|0.27|
+|boxing|0.7|0.33|
+|freeway|0.8|0.3|
+
+### 2021-08-24:
 - Encoder + Reducer + controller
 - Downscale
 - Grayscale
@@ -138,9 +145,27 @@ High priority to low priority:
 |![](graphs/20210824-dualcgp-downscale-grayscale/assault_best.png)|![](graphs/20210824-dualcgp-downscale-grayscale/assault_mean.png)|
 |![](graphs/20210824-dualcgp-downscale-grayscale/boxing_best.png)|![](graphs/20210824-dualcgp-downscale-grayscale/boxing_mean.png)|
 
-2021-09-01:
+Forward pass timing (ms)
+||Centroid|Pooling|
+|---|---|---|
+|assault|0.46|0.18|
+|boxing|1.22|0.2|
+
+### 2021-09-01 (20h results):
 - Encoder + Reducer + controller
 - Downscale
 - Grayscale
 - Faster multithreading + initial action fix for determinism
+- 
+
+|Best score|Mean score|
+|---|---|
+|![](graphs/20210901-dualcgp-downscale-grayscale/assault_best.png)|![](graphs/20210901-dualcgp-downscale-grayscale/assault_mean.png)|
+|![](graphs/20210901-dualcgp-downscale-grayscale/boxing_best.png)|![](graphs/20210901-dualcgp-downscale-grayscale/boxing_mean.png)|
+
+Forward pass timing (ms)
+||Centroid|Pooling|
+|---|---|---|
+|assault|1.0|0.2|
+|boxing|0.6|0.2|
 
