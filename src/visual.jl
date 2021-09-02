@@ -1,8 +1,9 @@
 export implot, plot_encoding, plot_centroids
-export plot_buffer, plot_active_buffer
+export plot_buffer, plot_active_buffer, plot_pipeline
 
 using Plots
 using Plots.PlotMeasures
+using ImageView
 
 """
     function implot(img::AbstractArray; kwargs...)
@@ -59,6 +60,16 @@ function plot_buffer(
     for i in indexes
         implot(ind.buffer[i]) # , enlargement)
     end
+end
+
+"""
+    plot_pipeline
+
+Generic pipeline plotting function.
+"""
+function plot_pipeline(s::Array{UInt8,3}) #, enco::CGPInd)
+    # display(implot(s[1]))
+    imshow(s, canvassize=(500, 500))
 end
 
 """

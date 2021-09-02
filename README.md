@@ -108,7 +108,7 @@ High priority to low priority:
 		- reconstruction error (without backward pass?)
 
 ### Speed-up forward-pass
-	
+
 - Lower the number of input (e.g. centroid reduction may be as usefull applied on 1 grayscale image as on 3 RGB images)
 - Encoder: max-out number of filters applied sequentially (if we assume our filters are well chosen, few would be enough)
 - Downscale all input images (max-pool dividing the image size by 2)
@@ -175,4 +175,4 @@ Forward pass timing (ms)
 - Pooling:
 	- More experiments?
 	- Interpretability
-
+- Visu
