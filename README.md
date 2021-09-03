@@ -116,7 +116,7 @@ High priority to low priority:
 
 # Results
 
-## 2021-08-11:
+## 2021-08-11 (5 days run):
 - Reducer + controller (no encoder)
 - 3 RGB images for pooling
 - 1 Grayscale image for centroid
@@ -134,7 +134,7 @@ Forward pass timing (ms)
 |boxing|0.33|0.7|
 |freeway|0.3|0.8|
 
-## 2021-08-24:
+## 2021-08-24 (5 days run):
 - Encoder + Reducer + controller
 - Downscale (1/2 image)
 - Grayscale
@@ -150,7 +150,7 @@ Forward pass timing (ms)
 |assault|0.18|0.46|
 |boxing|0.2|1.22|
 
-## 2021-09-01 (only 30h results):
+## 2021-09-01 (30h run):
 - Encoder + Reducer + controller
 - Downscale (halved images)
 - Grayscale
@@ -174,5 +174,4 @@ Forward pass timing (ms)
 	- R^2 controller?
 - Pooling:
 	- More experiments?
-	- Interpretability
 - Visu
