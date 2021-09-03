@@ -150,9 +150,9 @@ Forward pass timing (ms)
 |assault|0.18|0.46|
 |boxing|0.2|1.22|
 
-## 2021-09-01 (only 20h results):
+## 2021-09-01 (only 30h results):
 - Encoder + Reducer + controller
-- Downscale (1/2 image)
+- Downscale (halved images)
 - Grayscale
 - Faster multithreading + initial action fix for determinism
 
