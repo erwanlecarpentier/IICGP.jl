@@ -90,8 +90,6 @@ Image functions on halved-size image (80x105 = 8400 pixels):
 
 High priority to low priority:
 
-- Fix determinism issues (see results from 2021-08-24)
-- Fix slow down issue in experiment from 2021-08-24
 - Speed-up centroid reducer's reducing function
 - Allow bootstrap of both encoder and controller
 - An R^2 controller reasonning about centroids directly?
@@ -110,7 +108,7 @@ High priority to low priority:
 		- reconstruction error (without backward pass?)
 
 ### Speed-up forward-pass
-	
+
 - Lower the number of input (e.g. centroid reduction may be as usefull applied on 1 grayscale image as on 3 RGB images)
 - Encoder: max-out number of filters applied sequentially (if we assume our filters are well chosen, few would be enough)
 - Downscale all input images (max-pool dividing the image size by 2)
@@ -118,9 +116,10 @@ High priority to low priority:
 
 # Results
 
-2021-08-11:
+## 2021-08-11:
 - Reducer + controller (no encoder)
-- 3 RGB images
+- 3 RGB images for pooling
+- 1 Grayscale image for centroid
 
 |Best score|Mean score|
 |---|---|
@@ -128,9 +127,16 @@ High priority to low priority:
 |![](graphs/20210811-monocgp/boxing_best.png)|![](graphs/20210811-monocgp/boxing_mean.png)|
 |![](graphs/20210811-monocgp/freeway_best.png)|![](graphs/20210811-monocgp/freeway_mean.png)|
 
-2021-08-24:
+Forward pass timing (ms)
+||Pooling|Centroid|
+|---|---|---|
+|assault|0.27|0.7|
+|boxing|0.33|0.7|
+|freeway|0.3|0.8|
+
+## 2021-08-24:
 - Encoder + Reducer + controller
-- Downscale
+- Downscale (1/2 image)
 - Grayscale
 
 |Best score|Mean score|
@@ -138,9 +144,35 @@ High priority to low priority:
 |![](graphs/20210824-dualcgp-downscale-grayscale/assault_best.png)|![](graphs/20210824-dualcgp-downscale-grayscale/assault_mean.png)|
 |![](graphs/20210824-dualcgp-downscale-grayscale/boxing_best.png)|![](graphs/20210824-dualcgp-downscale-grayscale/boxing_mean.png)|
 
-2021-09-01:
+Forward pass timing (ms)
+||Pooling|Centroid|
+|---|---|---|
+|assault|0.18|0.46|
+|boxing|0.2|1.22|
+
+## 2021-09-01 (only 20h results):
 - Encoder + Reducer + controller
-- Downscale
+- Downscale (1/2 image)
 - Grayscale
 - Faster multithreading + initial action fix for determinism
 
+|Best score|Mean score|
+|---|---|
+|![](graphs/20210901-dualcgp-downscale-grayscale/assault_best.png)|![](graphs/20210901-dualcgp-downscale-grayscale/assault_mean.png)|
+|![](graphs/20210901-dualcgp-downscale-grayscale/boxing_best.png)|![](graphs/20210901-dualcgp-downscale-grayscale/boxing_mean.png)|
+
+Forward pass timing (ms)
+||Pooling|Centroid|
+|---|---|---|
+|assault|0.2|1.0|
+|boxing|0.2|0.6|
+
+# Q
+
+- Centroid:
+	- too slow?
+	- R^2 controller?
+- Pooling:
+	- More experiments?
+	- Interpretability
+- Visu
