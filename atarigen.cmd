@@ -17,7 +17,7 @@ CFGS=("cfg/dualcgp_atari_pooling.yaml" "cfg/dualcgp_atari_centroid.yaml") # WARN
 REDS=("pooling_" "centroid_") # WARNING: sync with CFGS
 GAMES="freeway solaris"
 SCRIPT="scripts/atari_dualcgp.jl"
-PROJECT="/users/p21001/lecarpen/IICGP.jl"
+PROJECT="$PWD/IICGP.jl" # "/users/p21001/lecarpen/IICGP.jl"
 N_THREADS="25"
 
 for i in "${!CFGS[@]}"; do
@@ -40,8 +40,8 @@ for i in "${!CFGS[@]}"; do
 		echo "" >> $CM
 		echo "julia --threads $N_THREADS --project=$PROJECT $SCRIPT --cfg=${CFGS[i]} --game=$GAME" >> $CM
 
-		sbatch $CM
-		rm $CM
+		# sbatch $CM
+		# rm $CM
 	done
 done
 
