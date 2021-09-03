@@ -118,31 +118,15 @@ end
 
 
 
-min_date = DateTime(2021, 09, 01)
-max_date = DateTime(2021, 09, 02)
+min_date = DateTime(2021, 08, 24)
+max_date = DateTime(2021, 08, 25)
 games = ["boxing"] # ["freeway"]  # pong kung_fu_master freeway assault
 reducers = ["pooling"] # Array{String,1}() # ["pooling"]
 exp_dirs, games = get_exp_dir(min_date=min_date, max_date=max_date, games=games,
                               reducers=reducers)
-max_frames = 300
+max_frames = 500
 
 # Plot for each one of the selected experiments
 for i in eachindex(exp_dirs)
     plot_agent_ingame(exp_dirs[i], games[i], max_frames)
 end
-
-
-## TRM
-exp_dir = exp_dirs[1]
-game = games[1]
-cfg = cfg_from_exp_dir(exp_dir)
-enco, redu, cont = get_last_dualcgp(exp_dir, game, cfg)
-is_dualcgp = haskey(cfg, "encoder")
-
-seed = cfg["seed"]
-stickiness = cfg["stickiness"]
-grayscale = cfg["grayscale"]
-downscale = cfg["downscale"]
-
-
-##
