@@ -90,6 +90,7 @@ Image functions on halved-size image (80x105 = 8400 pixels):
 
 High priority to low priority:
 
+- Save state_ref
 - Speed-up centroid reducer's reducing function
 - Allow bootstrap of both encoder and controller
 - An R^2 controller reasonning about centroids directly?
@@ -101,7 +102,7 @@ High priority to low priority:
 - Less frames for evaluation (curently 10000)
 - Sticky actions, less forward passes in evaluation
 - Add preliminary tests to Atari evaluation, e.g.:
-	- forward-pass < 1ms
+	- forward-pass less than 1ms
 	- Assert that the encoder only applies a limited number of filters before one output
 	- evaluate the quality of the produced feature vector:
 		- measure the amount of information and compare to input image (proxy to entropy measure?)

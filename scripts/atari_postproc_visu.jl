@@ -118,13 +118,13 @@ end
 
 
 
-min_date = DateTime(2021, 08, 24)
-max_date = DateTime(2021, 08, 25)
+min_date = DateTime(2021, 09, 01)
+max_date = DateTime(2021, 09, 02)
 games = ["boxing"] # ["freeway"]  # pong kung_fu_master freeway assault
 reducers = ["pooling"] # Array{String,1}() # ["pooling"]
 exp_dirs, games = get_exp_dir(min_date=min_date, max_date=max_date, games=games,
                               reducers=reducers)
-max_frames = 500
+max_frames = 1000
 
 # Plot for each one of the selected experiments
 for i in eachindex(exp_dirs)

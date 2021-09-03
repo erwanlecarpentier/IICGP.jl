@@ -6,10 +6,16 @@
 # Subset 9 representative games
 # boxing centipede demon_attack enduro freeway kung_fu_master space_invaders riverraid pong
 
+# Minatar benchmark
+# seaquest breakout asterix freeway space_invaders
+
+# Selected games
+# boxing assault freeway defender solaris space_invaders private_eye asteroids breakout frostbite
+
 CMD_PREFIX="atari_"
 CFGS=("cfg/dualcgp_atari_pooling.yaml" "cfg/dualcgp_atari_centroid.yaml") # WARNING: sync with REDS
 REDS=("pooling_" "centroid_") # WARNING: sync with CFGS
-GAMES="boxing assault"
+GAMES="freeway solaris"
 SCRIPT="scripts/atari_dualcgp.jl"
 PROJECT="/users/p21001/lecarpen/IICGP.jl"
 N_THREADS="25"
