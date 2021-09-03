@@ -3,7 +3,7 @@ export plot_buffer, plot_active_buffer, plot_pipeline
 
 using Plots
 using Plots.PlotMeasures
-using ImageView
+# using ImageView
 
 """
     function implot(img::AbstractArray; kwargs...)
