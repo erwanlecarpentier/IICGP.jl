@@ -168,11 +168,16 @@ Forward pass timing (ms)
 |assault|0.2|1.0|
 |boxing|0.2|0.6|
 
-# Q
+# Julia Install
 
-- Centroid:
-	- too slow?
-	- R^2 controller?
-- Pooling:
-	- More experiments?
-- Visu
+- Activate `.`, `instantiate`, `update`, `precompile`, `resolve`
+- `rm Cambrian`
+- `rm CartesianGeneticProgramming`
+- `add https://github.com/erwanlecarpentier/Cambrian.jl.git#ipcgp`
+- `add https://github.com/erwanlecarpentier/CartesianGeneticProgramming.jl.git#ipcgp`
+
+# Python Install
+
+	source /path/to/my/birtual/environment/bin/activate
+	pip install -r py-requirements.txt
+
