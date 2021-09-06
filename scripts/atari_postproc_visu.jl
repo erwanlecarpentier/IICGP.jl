@@ -45,7 +45,7 @@ function buffer_snapshot(enco::CGPInd, active::Vector{Bool})
     cat(s_cat, b_cat, dims=1)
 end
 
-function plot_dualcgp_ingame(
+function visu_dualcgp_ingame(
     enco::CGPInd,
     redu::Reducer,
     cont::CGPInd,
@@ -54,7 +54,9 @@ function plot_dualcgp_ingame(
     max_frames::Int64,
     grayscale::Bool,
     downscale::Bool,
-    stickiness::Float64
+    stickiness::Float64;
+    do_save::Bool,
+    do_display::Bool
 )
     Random.seed!(seed)
     mt = MersenneTwister(seed)
@@ -66,10 +68,10 @@ function plot_dualcgp_ingame(
     prev_action = 0
     active = [enco.nodes[i].active for i in eachindex(enco.nodes)]
 
-    # Init rendering
-    # visu = buffer_snapshot(enco, active)
-    visu = []
-    # states = get_state(g, grayscale, downscale)[1]
+    # Init rendering buffer
+    if do_display
+        visu = []
+    end
 
     while ~game_over(g.ale)
         s = get_state(g, grayscale, downscale)
@@ -81,11 +83,13 @@ function plot_dualcgp_ingame(
         end
 
         # Rendering
-        snap = buffer_snapshot(enco, active)
-        if frames == 0
-            visu = snap
-        else
-            visu = cat(visu, snap, dims=3)
+        if do_display
+            snap = buffer_snapshot(enco, active)
+            if frames == 0
+                visu = snap
+            else
+                visu = cat(visu, snap, dims=3)
+            end
         end
 
         reward += act(g.ale, action)
@@ -95,11 +99,48 @@ function plot_dualcgp_ingame(
         end
     end
     close!(g)
-    plot_pipeline(visu)
+    if do_display
+        plot_pipeline(visu)
+    end
     [reward]
 end
 
-function plot_agent_ingame(exp_dir::String, game::String, max_frames::Int64)
+function save_graph_struct(
+    enco::CGPInd,
+    redu::Reducer,
+    cont::CGPInd,
+    graph_struct_save_dir::String
+)
+    data = Dict()
+    data["nodes"] = []
+    data["fs"] = []
+    data["edges"] = []
+    for i in eachindex(enco.nodes)
+        is_active = enco.nodes[i].active
+        if is_active
+            x = enco.nodes[i].x
+            fname = String(Symbol(enco.nodes[i].f))
+            arity = IICGP.CGPFunctions.arity[fname]
+            push!(data["nodes"], i)
+            push!(data["fs"], fname)
+            push!(data["edges"], (x, i))
+            if arity == 2
+                y = enco.nodes[i].y
+                push!(data["edges"], (y, i))
+            end
+        end
+    end
+    graph_path = joinpath(graph_struct_save_dir, "graph.yaml")
+    YAML.write_file(graph_path, data)
+end
+
+function visu_ingame(
+    exp_dir::String,
+    game::String,
+    max_frames::Int64;
+    do_save::Bool,
+    do_display::Bool
+)
     cfg = cfg_from_exp_dir(exp_dir)
     enco, redu, cont = get_last_dualcgp(exp_dir, game, cfg)
     is_dualcgp = haskey(cfg, "encoder")
@@ -109,13 +150,20 @@ function plot_agent_ingame(exp_dir::String, game::String, max_frames::Int64)
     grayscale = cfg["grayscale"]
     downscale = cfg["downscale"]
 
+    if do_save
+        # Create saving directory
+        graph_struct_save_dir = joinpath(exp_dir, "visu")
+        mkpath(graph_struct_save_dir)
+        # Save graph structure
+        save_graph_struct(enco, redu, cont, graph_struct_save_dir)
+    end
+
     if is_dualcgp
-        plot_dualcgp_ingame(enco, redu, cont, game, seed, max_frames, grayscale,
-                            downscale, stickiness)
+        visu_dualcgp_ingame(enco, redu, cont, game, seed, max_frames, grayscale,
+                            downscale, stickiness, do_save=do_save,
+                            do_display=do_display)
     end
 end
-
-
 
 
 min_date = DateTime(2021, 09, 01)
@@ -126,7 +174,20 @@ exp_dirs, games = get_exp_dir(min_date=min_date, max_date=max_date, games=games,
                               reducers=reducers)
 max_frames = 10
 
+# TODO remove START
+i = 1
+exp_dir , game = exp_dirs[i], games[i]
+cfg = cfg_from_exp_dir(exp_dir)
+enco, redu, cont = get_last_dualcgp(exp_dir, game, cfg)
+is_dualcgp = haskey(cfg, "encoder")
+seed = cfg["seed"]
+stickiness = cfg["stickiness"]
+grayscale = cfg["grayscale"]
+downscale = cfg["downscale"]
+# TODO remove END
+
 # Plot for each one of the selected experiments
 for i in eachindex(exp_dirs)
-    plot_agent_ingame(exp_dirs[i], games[i], max_frames)
+    visu_ingame(exp_dirs[i], games[i], max_frames,
+                do_save=true, do_display=false)
 end
