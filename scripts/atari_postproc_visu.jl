@@ -3,6 +3,7 @@ using CartesianGeneticProgramming
 using Dates
 using IICGP
 using Random
+using YAML
 
 
 function fill_width_with_zeros(x::Matrix{UInt8}, width::Int64)
@@ -112,9 +113,12 @@ function save_graph_struct(
     graph_struct_save_dir::String
 )
     data = Dict()
+    data["n_in"] = enco.n_in
+    data["n_out"] = enco.n_out
     data["nodes"] = []
     data["fs"] = []
     data["edges"] = []
+    data["outputs"] = enco.outputs
     for i in eachindex(enco.nodes)
         is_active = enco.nodes[i].active
         if is_active
@@ -174,20 +178,11 @@ exp_dirs, games = get_exp_dir(min_date=min_date, max_date=max_date, games=games,
                               reducers=reducers)
 max_frames = 10
 
-# TODO remove START
-i = 1
-exp_dir , game = exp_dirs[i], games[i]
-cfg = cfg_from_exp_dir(exp_dir)
-enco, redu, cont = get_last_dualcgp(exp_dir, game, cfg)
-is_dualcgp = haskey(cfg, "encoder")
-seed = cfg["seed"]
-stickiness = cfg["stickiness"]
-grayscale = cfg["grayscale"]
-downscale = cfg["downscale"]
-# TODO remove END
-
-# Plot for each one of the selected experiments
 for i in eachindex(exp_dirs)
+    # Generate images
     visu_ingame(exp_dirs[i], games[i], max_frames,
                 do_save=true, do_display=false)
+
+    # Launch python script
+    run(`python graphgen.py "$"exp_dir"["i"]"`)
 end

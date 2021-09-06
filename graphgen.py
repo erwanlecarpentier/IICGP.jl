@@ -1,6 +1,5 @@
 import networkx as nx
 import matplotlib.pyplot as plt
-import PIL
 import os
 
 DIR_PATH = os.path.dirname(os.path.realpath(__file__))

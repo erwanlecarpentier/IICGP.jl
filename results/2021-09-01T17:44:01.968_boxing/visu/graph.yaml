@@ -14,6 +14,11 @@ fs:
   - "f_bitwise_or"
   - "f_bitwise_and"
   - "f_motion_capture"
+n_in: 1
+n_out: 2
+outputs:
+  - 1
+  - 19
 edges:
   - (2, 2)
   - (1, 3)
