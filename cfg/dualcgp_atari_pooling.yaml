@@ -4,8 +4,8 @@ max_frames: 10000
 stickiness: 0.25
 d_fitness: 1
 n_gen: 50000
-log_gen: 20
-save_gen: 20
+log_gen: 200
+save_gen: 200
 bootstrap: false
 grayscale: true
 downscale: true
