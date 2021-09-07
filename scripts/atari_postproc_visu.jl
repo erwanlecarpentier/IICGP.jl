@@ -168,7 +168,6 @@ function visu_ingame(
     end
 end
 
-
 min_date = DateTime(2021, 09, 01)
 max_date = DateTime(2021, 09, 02)
 games = ["boxing"] # ["freeway"]  # pong kung_fu_master freeway assault
@@ -184,5 +183,8 @@ for i in eachindex(exp_dirs)
 
     # Launch python script
     exp_dir = exp_dirs[i]
-    run(`python graphgen.py $exp_dir`)
+    run(`python3 py-graph.py $exp_dir`)
 end
+
+
+# python3 py-graph.py /home/wahara/.julia/dev/IICGP/results/2021-09-01T17:44:01.968_boxing

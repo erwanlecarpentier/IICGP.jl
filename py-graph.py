@@ -1,7 +1,30 @@
+#!/usr/bin/python
+
+import sys
+import os
 import networkx as nx
 import matplotlib.pyplot as plt
-import os
+import yaml
 
+
+def get_g_paths_dict(exp_dir):
+	g_dir = exp_dir + "/graphs"
+	dct = {}
+	for f in  os.listdir(g_dir):
+		ind_name = f[0:len(f)-len(".yaml")]
+		dct[ind_name] = g_dir + "/" + f
+	return dct
+
+if __name__ == "__main__":
+	exp_dir = sys.argv[1]
+
+	g_paths_dict = get_g_paths_dict(exp_dir)
+
+	for k, v in g_paths_dict.items():
+		print(k, v)
+
+
+'''
 DIR_PATH = os.path.dirname(os.path.realpath(__file__))
 IMG_DIR = DIR_PATH + "/images/"
 fname = IMG_DIR + "lost_luggage_frame_31.png"
@@ -86,3 +109,4 @@ ax = plt.gca()
 ax.margins(0.20)
 plt.axis("off")
 plt.show()
+'''
