@@ -107,35 +107,37 @@ function visu_dualcgp_ingame(
 end
 
 function save_graph_struct(
-    enco::CGPInd,
-    redu::Reducer,
-    cont::CGPInd,
-    graph_struct_save_dir::String
+    inds::Array{CGPInd,1},
+    saving_dir::String
 )
-    data = Dict()
-    data["n_in"] = enco.n_in
-    data["n_out"] = enco.n_out
-    data["nodes"] = []
-    data["fs"] = []
-    data["edges"] = []
-    data["outputs"] = enco.outputs
-    for i in eachindex(enco.nodes)
-        is_active = enco.nodes[i].active
-        if is_active
-            x = enco.nodes[i].x
-            fname = String(Symbol(enco.nodes[i].f))
-            arity = IICGP.CGPFunctions.arity[fname]
-            push!(data["nodes"], i)
-            push!(data["fs"], fname)
-            push!(data["edges"], (x, i))
-            if arity == 2
-                y = enco.nodes[i].y
-                push!(data["edges"], (y, i))
+    for ind in inds
+        data = Dict()
+        data["n_in"] = ind.n_in
+        data["n_out"] = ind.n_out
+        data["nodes"] = []
+        data["fs"] = []
+        data["edges"] = []
+        data["outputs"] = ind.outputs
+        for i in eachindex(ind.nodes)
+            is_active = ind.nodes[i].active
+            if is_active
+                x = ind.nodes[i].x
+                fname = String(Symbol(ind.nodes[i].f))
+                arity = IICGP.CGPFunctions.arity[fname]
+                push!(data["nodes"], i)
+                push!(data["fs"], fname)
+                push!(data["edges"], (x, i))
+                if arity == 2
+                    y = ind.nodes[i].y
+                    push!(data["edges"], (y, i))
+                end
             end
         end
+        is_controller = typeof(ind.buffer[1]) == Float64
+        graph_name = is_controller ? "controller_graph.yaml" : "encoder_graph.yaml"
+        graph_path = joinpath(saving_dir, graph_name)
+        YAML.write_file(graph_path, data)
     end
-    graph_path = joinpath(graph_struct_save_dir, "graph.yaml")
-    YAML.write_file(graph_path, data)
 end
 
 function visu_ingame(
@@ -146,23 +148,18 @@ function visu_ingame(
     do_display::Bool
 )
     cfg = cfg_from_exp_dir(exp_dir)
-    enco, redu, cont = get_last_dualcgp(exp_dir, game, cfg)
-    is_dualcgp = haskey(cfg, "encoder")
-
     seed = cfg["seed"]
     stickiness = cfg["stickiness"]
     grayscale = cfg["grayscale"]
     downscale = cfg["downscale"]
-
-    if do_save
-        # Create saving directory
-        graph_struct_save_dir = joinpath(exp_dir, "visu")
-        mkpath(graph_struct_save_dir)
-        # Save graph structure
-        save_graph_struct(enco, redu, cont, graph_struct_save_dir)
-    end
-
+    is_dualcgp = haskey(cfg, "encoder")
     if is_dualcgp
+        enco, redu, cont = get_last_dualcgp(exp_dir, game, cfg)
+
+        if do_save
+            save_graph_struct([enco, cont], exp_dir)
+        end
+
         visu_dualcgp_ingame(enco, redu, cont, game, seed, max_frames, grayscale,
                             downscale, stickiness, do_save=do_save,
                             do_display=do_display)
@@ -184,5 +181,5 @@ for i in eachindex(exp_dirs)
                 do_save=true, do_display=false)
 
     # Launch python script
-    run(`python graphgen.py "$"exp_dir"["i"]"`)
+    # run(`python graphgen.py "$"exp_dir"["i"]"`)
 end
