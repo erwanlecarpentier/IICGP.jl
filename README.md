@@ -90,6 +90,7 @@ Image functions on halved-size image (80x105 = 8400 pixels):
 
 High priority to low priority:
 
+- Save state_ref
 - Speed-up centroid reducer's reducing function
 - Allow bootstrap of both encoder and controller
 - An R^2 controller reasonning about centroids directly?
@@ -101,7 +102,7 @@ High priority to low priority:
 - Less frames for evaluation (curently 10000)
 - Sticky actions, less forward passes in evaluation
 - Add preliminary tests to Atari evaluation, e.g.:
-	- forward-pass < 1ms
+	- forward-pass less than 1ms
 	- Assert that the encoder only applies a limited number of filters before one output
 	- evaluate the quality of the produced feature vector:
 		- measure the amount of information and compare to input image (proxy to entropy measure?)
@@ -116,7 +117,7 @@ High priority to low priority:
 
 # Results
 
-## 2021-08-11:
+## 2021-08-11 (5 days):
 - Reducer + controller (no encoder)
 - 3 RGB images for pooling
 - 1 Grayscale image for centroid
@@ -134,7 +135,7 @@ Forward pass timing (ms)
 |boxing|0.33|0.7|
 |freeway|0.3|0.8|
 
-## 2021-08-24:
+## 2021-08-24 (5 days):
 - Encoder + Reducer + controller
 - Downscale (1/2 image)
 - Grayscale
@@ -150,9 +151,13 @@ Forward pass timing (ms)
 |assault|0.18|0.46|
 |boxing|0.2|1.22|
 
-## 2021-09-01 (only 20h results):
+## 2021-09-01 (30h run): TODO update
+
+lecarpen: assault boxing
+
+Setting A:
 - Encoder + Reducer + controller
-- Downscale (1/2 image)
+- Downscale (halved images)
 - Grayscale
 - Faster multithreading + initial action fix for determinism
 
@@ -167,12 +172,28 @@ Forward pass timing (ms)
 |assault|0.2|1.0|
 |boxing|0.2|0.6|
 
-# Q
+## 2021-09-03
 
-- Centroid:
-	- too slow?
-	- R^2 controller?
-- Pooling:
-	- More experiments?
-	- Interpretability
-- Visu
+p21049le: freeway solaris
+
+Setting A
+
+## 2021-09-07
+
+lecarpen: defender gravitar
+
+Setting A
+
+# Julia Install
+
+- Activate `.`, `instantiate`, `update`, `precompile`, `resolve`
+- `rm Cambrian`
+- `rm CartesianGeneticProgramming`
+- `add https://github.com/erwanlecarpentier/Cambrian.jl.git#ipcgp`
+- `add https://github.com/erwanlecarpentier/CartesianGeneticProgramming.jl.git#ipcgp`
+
+# Python Install
+
+	source /path/to/my/birtual/environment/bin/activate
+	pip install -r py-requirements.txt
+
