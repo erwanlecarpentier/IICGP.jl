@@ -15,9 +15,9 @@
 CMD_PREFIX="atari_"
 CFGS=("cfg/dualcgp_atari_pooling.yaml" "cfg/dualcgp_atari_centroid.yaml") # WARNING: sync with REDS
 REDS=("pooling_" "centroid_") # WARNING: sync with CFGS
-GAMES="freeway solaris"
+GAMES="defender gravitar"
 SCRIPT="scripts/atari_dualcgp.jl"
-PROJECT="$PWD" # "/users/p21001/lecarpen/IICGP.jl"
+PROJECT="$PWD"
 N_THREADS="25"
 
 for i in "${!CFGS[@]}"; do

@@ -117,7 +117,7 @@ High priority to low priority:
 
 # Results
 
-## 2021-08-11 (5 days run):
+## 2021-08-11 (5 days):
 - Reducer + controller (no encoder)
 - 3 RGB images for pooling
 - 1 Grayscale image for centroid
@@ -135,7 +135,7 @@ Forward pass timing (ms)
 |boxing|0.33|0.7|
 |freeway|0.3|0.8|
 
-## 2021-08-24 (5 days run):
+## 2021-08-24 (5 days):
 - Encoder + Reducer + controller
 - Downscale (1/2 image)
 - Grayscale
@@ -151,7 +151,11 @@ Forward pass timing (ms)
 |assault|0.18|0.46|
 |boxing|0.2|1.22|
 
-## 2021-09-01 (30h run):
+## 2021-09-01 (30h run): TODO update
+
+lecarpen: assault boxing
+
+Setting A:
 - Encoder + Reducer + controller
 - Downscale (halved images)
 - Grayscale
@@ -167,6 +171,18 @@ Forward pass timing (ms)
 |---|---|---|
 |assault|0.2|1.0|
 |boxing|0.2|0.6|
+
+## 2021-09-03
+
+p21049le: freeway solaris
+
+Setting A
+
+## 2021-09-07
+
+lecarpen: defender gravitar
+
+Setting A
 
 # Julia Install
 
