@@ -6,6 +6,9 @@ import networkx as nx
 import matplotlib.pyplot as plt
 import yaml
 
+DIR_PATH = os.path.dirname(os.path.realpath(__file__))
+SEED = 123
+
 
 def get_g_paths_dict(exp_dir):
 	g_dir = exp_dir + "/graphs"
@@ -15,69 +18,64 @@ def get_g_paths_dict(exp_dir):
 		dct[ind_name] = g_dir + "/" + f
 	return dct
 
+def g_dict_from_g_paths_dict(g_paths_dict):
+	g_dict = {}
+	for k, v in g_paths_dict.items():
+		with open(v, 'r') as stream:
+			try:
+				g = yaml.safe_load(stream)
+				g_dict[k] = g
+			except yaml.YAMLError as exc:
+				print(exc)
+	return g_dict
+
+def make_graph(g):
+	G = nx.Graph()
+	for n in g["nodes"]:
+		G.add_node(n)
+	return G
+
+def draw_graph(G):
+	fig, ax = plt.subplots()
+	ax.set_aspect('equal')
+	plt.xlim(-1.5,1.5)
+	plt.ylim(-1.5,1.5)
+	pos = nx.spring_layout(G, seed=SEED)
+	edge_options = {
+		"pos": pos,
+		"ax": ax,
+		"arrows": True,
+		"arrowstyle": "-"
+	}
+
+	# Note: the min_source/target_margin kwargs only work with FancyArrowPatch objects.
+	# Force the use of FancyArrowPatch for edge drawing by setting `arrows=True`,
+	# but suppress arrowheads with `arrowstyle="-"`
+	nx.draw_networkx_edges(G, **edge_options)
+	# nx.draw_networkx(G, **graph_options)
+
+	# Transform from data coordinates (scaled between xlim and ylim) to display coordinates
+	tr_figure = ax.transData.transform
+	# Transform from display to figure coordinates
+	tr_axes = fig.transFigure.inverted().transform
+
+	ax.axis("off")
+	plt.show()
+
 if __name__ == "__main__":
 	exp_dir = sys.argv[1]
 
 	g_paths_dict = get_g_paths_dict(exp_dir)
+	g_dict = g_dict_from_g_paths_dict(g_paths_dict)
 
-	for k, v in g_paths_dict.items():
-		print(k, v)
+	g_enco = make_graph(g_dict["encoder"])
+	draw_graph(g_enco)
+	
+
 
 
 '''
-DIR_PATH = os.path.dirname(os.path.realpath(__file__))
-IMG_DIR = DIR_PATH + "/images/"
-fname = IMG_DIR + "lost_luggage_frame_31.png"
-
-img = plt.imread(fname)
-
-
-G = nx.Graph()
-G.add_node(0, image=img)
-G.add_node(1, image=img)
-G.add_node(2, image=img)
-G.add_edge(0, 1)
-G.add_edge(1, 2)
-G.add_edge(2, 0)
-
-# Get a reproducible layout and create figure
-pos = nx.spring_layout(G, seed=123)
-# pos = {1: (0, 0), 2: (-1, 0.3)}
-fig, ax = plt.subplots()
-ax.set_aspect('equal')
-plt.xlim(-1.5,1.5)
-plt.ylim(-1.5,1.5)
-
-
-graph_options = {
-	"pos": pos,
-	"ax": ax,
- 	"font_size": 36,
-	"node_size": 3000,
-	"node_color": "white",
-	"edgecolors": "black",
-	"linewidths": 5,
-	"width": 5,
-}
-edge_options = {
-	"pos": pos,
-	"ax": ax,
-	"arrows": True,
-	"arrowstyle": "-",
-#	"min_source_margin"=15,
-#	"min_target_margin"=15,
-}
-
-# Note: the min_source/target_margin kwargs only work with FancyArrowPatch objects.
-# Force the use of FancyArrowPatch for edge drawing by setting `arrows=True`,
-# but suppress arrowheads with `arrowstyle="-"`
-nx.draw_networkx_edges(G, **edge_options)
-# nx.draw_networkx(G, **graph_options)
-
-# Transform from data coordinates (scaled between xlim and ylim) to display coordinates
-tr_figure = ax.transData.transform
-# Transform from display to figure coordinates
-tr_axes = fig.transFigure.inverted().transform
+# IMAGE IN GRAPH
 
 # Select the size of the image (relative to the X axis)
 img_size = (ax.get_xlim()[1] - ax.get_xlim()[0]) * 0.1
@@ -97,12 +95,24 @@ for n in G.nodes:
 ax.axis("off")
 plt.show()
 
-
 exit()
+'''
 
 
 
 
+
+'''
+graph_options = {
+	"pos": pos,
+	"ax": ax,
+ 	"font_size": 36,
+	"node_size": 3000,
+	"node_color": "white",
+	"edgecolors": "black",
+	"linewidths": 5,
+	"width": 5,
+}
 
 # Set margins for the axes so that nodes aren't clipped
 ax = plt.gca()
