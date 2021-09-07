@@ -134,7 +134,7 @@ function save_graph_struct(
             end
         end
         is_controller = typeof(ind.buffer[1]) == Float64
-        graph_name = is_controller ? "controller_graph.yaml" : "encoder_graph.yaml"
+        graph_name = is_controller ? "controller.yaml" : "encoder.yaml"
         graph_path = joinpath(saving_dir, graph_name)
         YAML.write_file(graph_path, data)
     end
@@ -157,7 +157,9 @@ function visu_ingame(
         enco, redu, cont = get_last_dualcgp(exp_dir, game, cfg)
 
         if do_save
-            save_graph_struct([enco, cont], exp_dir)
+            graph_path = joinpath(exp_dir, "graphs")
+            mkpath(graph_path)
+            save_graph_struct([enco, cont], graph_path)
         end
 
         visu_dualcgp_ingame(enco, redu, cont, game, seed, max_frames, grayscale,
@@ -181,5 +183,6 @@ for i in eachindex(exp_dirs)
                 do_save=true, do_display=false)
 
     # Launch python script
-    # run(`python graphgen.py "$"exp_dir"["i"]"`)
+    exp_dir = exp_dirs[i]
+    run(`python graphgen.py $exp_dir`)
 end
