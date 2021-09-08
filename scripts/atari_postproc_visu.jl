@@ -174,7 +174,7 @@ games = ["boxing"] # ["freeway"]  # pong kung_fu_master freeway assault
 reducers = ["pooling"] # Array{String,1}() # ["pooling"]
 exp_dirs, games = get_exp_dir(min_date=min_date, max_date=max_date, games=games,
                               reducers=reducers)
-max_frames = 10
+max_frames = 3
 
 for i in eachindex(exp_dirs)
     # Generate images
@@ -183,8 +183,9 @@ for i in eachindex(exp_dirs)
 
     # Launch python script
     exp_dir = exp_dirs[i]
-    run(`python3 py-graph.py $exp_dir`)
+    seed = 1256
+    # run(`python3.7 py-graph.py $exp_dir $seed`)
 end
 
 
-# python3 py-graph.py /home/wahara/.julia/dev/IICGP/results/2021-09-01T17:44:01.968_boxing
+# python3.7 py-graph.py /home/wahara/.julia/dev/IICGP/results/2021-09-01T17:44:01.968_boxing
