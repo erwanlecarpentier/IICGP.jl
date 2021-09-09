@@ -2,6 +2,7 @@ using ArcadeLearningEnvironment
 using CartesianGeneticProgramming
 using Dates
 using IICGP
+using Images
 using Random
 using YAML
 
@@ -46,6 +47,13 @@ function buffer_snapshot(enco::CGPInd, active::Vector{Bool})
     cat(s_cat, b_cat, dims=1)
 end
 
+function save_state(s::Vector{Matrix{UInt8}}, buffer_path::String, frame::Int64)
+    for i in eachindex(s)
+        fname = joinpath(buffer_path, string(frame, "_e", i, ".png"))
+        save(fname, s[i])
+    end
+end
+
 function visu_dualcgp_ingame(
     enco::CGPInd,
     redu::Reducer,
@@ -57,7 +65,8 @@ function visu_dualcgp_ingame(
     downscale::Bool,
     stickiness::Float64;
     do_save::Bool,
-    do_display::Bool
+    do_display::Bool,
+    buffer_path::String
 )
     Random.seed!(seed)
     mt = MersenneTwister(seed)
@@ -81,6 +90,11 @@ function visu_dualcgp_ingame(
             action = g.actions[argmax(output)]
         else
             action = prev_action
+        end
+
+        # Saving
+        if do_save
+            save_state(s, buffer_path, frames)
         end
 
         # Rendering
@@ -159,12 +173,14 @@ function visu_ingame(
         if do_save
             graph_path = joinpath(exp_dir, "graphs")
             mkpath(graph_path)
+            buffer_path = joinpath(exp_dir, "buffers")
+            mkpath(buffer_path)
             save_graph_struct([enco, cont], graph_path)
         end
 
         visu_dualcgp_ingame(enco, redu, cont, game, seed, max_frames, grayscale,
                             downscale, stickiness, do_save=do_save,
-                            do_display=do_display)
+                            do_display=do_display, buffer_path=buffer_path)
     end
 end
 
@@ -174,10 +190,10 @@ games = ["boxing"] # ["freeway"]  # pong kung_fu_master freeway assault
 reducers = ["pooling"] # Array{String,1}() # ["pooling"]
 exp_dirs, games = get_exp_dir(min_date=min_date, max_date=max_date, games=games,
                               reducers=reducers)
-max_frames = 3
+max_frames = 2
 
 for i in eachindex(exp_dirs)
-    # Generate images
+    # Generate images (may display / save)
     visu_ingame(exp_dirs[i], games[i], max_frames,
                 do_save=true, do_display=false)
 

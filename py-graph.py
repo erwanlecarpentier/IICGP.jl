@@ -58,7 +58,6 @@ def make_graph(g):
 			edgecolors.append(OUT_NODE_COLOR)
 		else:
 			edgecolors.append(INN_NODE_COLOR)
-	print(edgecolors)
 	return G, edgelabels, edgecolors
 
 def draw_graph_structure(G, edgelabels, edgecolors, seed=123):
@@ -126,6 +125,10 @@ def draw_graph(G, seed=123):
 	plt.show()
 '''
 
+def makedraw_graph(g):
+	g, lab, col = make_graph(g)
+	draw_graph_structure(g, lab, col, seed)
+
 if __name__ == "__main__":
 	exp_dir = sys.argv[1]
 	seed = 0 if (len(sys.argv) < 3) else int(sys.argv[2])
@@ -139,6 +142,6 @@ if __name__ == "__main__":
 	print()
 	# TODO rm END
 
-	g_enco, enco_edgelabels, enco_edgecolors = make_graph(g_dict["encoder"])
-	draw_graph_structure(g_enco, enco_edgelabels, enco_edgecolors, seed)
+	makedraw_graph(g_dict["encoder"])
+	# makedraw_graph(g_dict["controller"])
 
