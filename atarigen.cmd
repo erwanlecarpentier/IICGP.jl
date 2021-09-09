@@ -34,7 +34,7 @@ for i in "${!CFGS[@]}"; do
 		echo "#SBATCH --ntasks-per-core=1" >> $CM
 		echo "#SBATCH -o $OU" >> $CM
 		echo "#SBATCH -e $LO" >> $CM
-		echo "#SBATCH --time=5-00:00:00" >> $CM
+		echo "#SBATCH --time=7-00:00:00" >> $CM
 		echo "#SBATCH --mail-user=erwanlecarpentier@mailbox.org" >> $CM
 		echo "#SBATCH --mail-type=END" >> $CM
 		echo "" >> $CM
