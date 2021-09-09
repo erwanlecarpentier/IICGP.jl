@@ -32,16 +32,18 @@ def open_yaml(path):
 
 def retrieve_buffer(ind_name, path, frame):
 	if ind_name == "encoder":
-		return retrieve_enco_buffer(path, frame)
+		return retrieve_img_buffer(path, frame, "e")
+	elif ind_name == "reducer":
+		return retrieve_img_buffer(path, frame, "f")
 	elif ind_name == "controller":
 		return retrieve_cont_buffer(path, frame)
 	else:
-		raise NameError("ind_name ", ind_name, " not implemented")
+		raise NameError(ind_name)
 
-def retrieve_enco_buffer(path, frame):
+def retrieve_img_buffer(path, frame, key):
 	b = {}
 	for f in os.listdir(path):
-		if int(f[0]) == frame and f[2] == "e":
+		if int(f[0]) == frame and f[2] == key:
 			node = int(f[3:-len(IMG_TYPE)])
 			b[node] = Image.open(path + f)
 	return b
@@ -51,24 +53,35 @@ def retrieve_cont_buffer(path, frame):
 	b = open_yaml(fname)
 	return b
 
+def retrieve_metadata(path, frame):
+	fname = path + str(frame) + "_m.yaml"
+	return open_yaml(fname)
+
 def get_paths(exp_dir):
 	g_dir = exp_dir + "/graphs"
-	dct = {}
+	paths = {}
 	for f in os.listdir(g_dir):
 		ind_name = f[0:len(f)-len(".yaml")]
-		dct[ind_name] = {}
-		dct[ind_name]["graph"] = g_dir + "/" + f
-		dct[ind_name]["buffer"] = exp_dir + "/buffers/"
-	return dct
+		paths[ind_name] = {}
+		paths[ind_name]["graph"] = g_dir + "/" + f
+		paths[ind_name]["buffer"] = exp_dir + "/buffers/"
+	paths["reducer"] = {}
+	paths["reducer"]["buffer"] = exp_dir + "/buffers/"
+	paths["meta"] = exp_dir + "/buffers/"
+	return paths
 
-def g_dict_from_paths(paths, frame):
-	g_dict = {}
-	for ind_name, v in paths.items():
+def gdict_from_paths(paths, frame):
+	gdict = {}
+	for ind_name in ["encoder", "controller"]:
+		v = paths[ind_name]
 		g = open_yaml(v["graph"])
 		g["edges"] = [str_to_tuple(e) for e in g["edges"]]
 		g["buffer"] = retrieve_buffer(ind_name, v["buffer"], frame)
-		g_dict[ind_name] = g
-	return g_dict
+		gdict[ind_name] = g
+	gdict["reducer"] = {}
+	gdict["reducer"]["buffer"] = retrieve_buffer("reducer", paths["reducer"]["buffer"], frame)
+	gdict["meta"] = retrieve_metadata(paths["meta"], frame)
+	return gdict
 
 def make_graph(g):
 	G = nx.DiGraph()
@@ -157,13 +170,25 @@ def makedraw_graph(g):
 	g, lab, col = make_graph(g)
 	draw_graph_structure(g, lab, col, seed)
 
-def show_enco_buffer(g_dict, node):
-	image = g_dict["encoder"]["buffer"][node]
+def show_img_buffer(gdict, elt="encoder", node=1):
+	image = gdict[elt]["buffer"][node]
 	print(image.format)
 	print(image.mode)
 	print(image.size)
 	# show the image
 	image.show()
+
+def print_gdict(gdict):
+	print("\nLoaded graph dict:")
+	print("\nencoder:")
+	print(gdict["encoder"])
+	print("\nreducer:")
+	print(gdict["reducer"])
+	print("\ncontroller:")
+	print(gdict["controller"])
+	print("\nmeta:")
+	print(gdict["meta"])
+	print()
 
 if __name__ == "__main__":
 	exp_dir = sys.argv[1]
@@ -172,17 +197,10 @@ if __name__ == "__main__":
 	frame = 1
 
 	paths = get_paths(exp_dir)
-	g_dict = g_dict_from_paths(paths, frame)
+	gdict = gdict_from_paths(paths, frame)
 
-	# TODO rm START
-	print("\nLoaded graph dict:")
-	print("\nencoder:")
-	print(g_dict["encoder"])
-	print("\ncontroller:")
-	print(g_dict["controller"])
-	print()
-	# TODO rm END
+	print_gdict(gdict)
 
-	# makedraw_graph(g_dict["encoder"])
-	# makedraw_graph(g_dict["controller"])
+	# makedraw_graph(gdict["encoder"])
+	# makedraw_graph(gdict["controller"])
 
