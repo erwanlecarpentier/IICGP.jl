@@ -8,6 +8,9 @@ import yaml
 
 
 DIR_PATH = os.path.dirname(os.path.realpath(__file__))
+INP_NODE_COLOR = "red"
+INN_NODE_COLOR = "black"
+OUT_NODE_COLOR = "blue"
 
 
 def str_to_tuple(s):
@@ -42,25 +45,35 @@ def make_graph(g):
 	G.add_nodes_from(list(range(1, g["n_in"] + 1))) # Input nodes
 	G.add_nodes_from(g["nodes"])
 	G.add_edges_from(g["edges"])
-	edge_labels = {}
+	edgelabels = {}
 	for e in g["edges"]:
 		dest_node = e[1]
 		dest_node_index = g["nodes"].index(dest_node)
-		edge_labels[e] = g["fs"][dest_node_index]
-	return G, edge_labels
+		edgelabels[e] = g["fs"][dest_node_index]
+	edgecolors = []
+	for n in G:
+		if n <= g["n_in"]:
+			edgecolors.append(INP_NODE_COLOR)
+		elif n in g["outputs"]:
+			edgecolors.append(OUT_NODE_COLOR)
+		else:
+			edgecolors.append(INN_NODE_COLOR)
+	print(edgecolors)
+	return G, edgelabels, edgecolors
 
-def draw_graph_structure(G, edge_labels, seed=123):
+def draw_graph_structure(G, edgelabels, edgecolors, seed=123):
 	pos = nx.spring_layout(G, seed=seed)
 	options = {
 		"font_size": 15,
 		# "node_size": 1000,
+		"node_shape": 's',
 		"node_color": "white",
-		"edgecolors": "black",
+		"edgecolors": edgecolors,
 		"linewidths": 1,
 		"width": 1 # , "with_labels": True
 	}
 	nx.draw_networkx(G, pos, **options)
-	nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels, font_color='red')
+	nx.draw_networkx_edge_labels(G, pos, edge_labels=edgelabels, font_color='black')
 
 	# Set margins for the axes so that nodes aren't clipped
 	ax = plt.gca()
@@ -126,6 +139,6 @@ if __name__ == "__main__":
 	print()
 	# TODO rm END
 
-	g_enco, enco_edge_labels = make_graph(g_dict["encoder"])
-	draw_graph_structure(g_enco, enco_edge_labels, seed)
+	g_enco, enco_edgelabels, enco_edgecolors = make_graph(g_dict["encoder"])
+	draw_graph_structure(g_enco, enco_edgelabels, enco_edgecolors, seed)
 
