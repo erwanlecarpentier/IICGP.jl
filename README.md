@@ -178,9 +178,15 @@ p21049le: freeway solaris
 
 Setting A
 
-## 2021-09-07
+## 2021-09-07 (TODO: confirm launch date)
 
 lecarpen: defender gravitar
+
+Setting A
+
+## 2021-09-09 (TODO: confirm launch date)
+
+p21049le: space_invaders private_eye
 
 Setting A
 
