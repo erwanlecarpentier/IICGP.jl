@@ -5,6 +5,7 @@ import os
 import networkx as nx
 import matplotlib.pyplot as plt
 import yaml
+from PIL import Image
 
 
 # Meta parameters
@@ -42,13 +43,12 @@ def retrieve_enco_buffer(path, frame):
 	for f in os.listdir(path):
 		if int(f[0]) == frame and f[2] == "e":
 			node = int(f[3:-len(IMG_TYPE)])
-			b[node] = node # TODO load image
+			b[node] = Image.open(path + f)
 	return b
 
 def retrieve_cont_buffer(path, frame):
 	fname = path + str(frame) + "_c.yaml"
 	b = open_yaml(fname)
-	
 	return b
 
 def get_paths(exp_dir):
@@ -156,6 +156,14 @@ def draw_graph(G, seed=123):
 def makedraw_graph(g):
 	g, lab, col = make_graph(g)
 	draw_graph_structure(g, lab, col, seed)
+
+def show_enco_buffer(g_dict, node):
+	image = g_dict["encoder"]["buffer"][node]
+	print(image.format)
+	print(image.mode)
+	print(image.size)
+	# show the image
+	image.show()
 
 if __name__ == "__main__":
 	exp_dir = sys.argv[1]
