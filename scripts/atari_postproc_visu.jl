@@ -47,27 +47,39 @@ function buffer_snapshot(enco::CGPInd, active::Vector{Bool})
     cat(s_cat, b_cat, dims=1)
 end
 
-function save_state(s::Vector{Matrix{UInt8}}, path::String, frame::Int64)
+function save_state(s::Vector{Matrix{UInt8}}, dir::String, frame::Int64)
     for i in eachindex(s)
-        fname = joinpath(path, string(frame, "_s", i, ".png"))
+        fname = joinpath(dir, string(frame, "_s", i, ".png"))
         save(fname, transpose(s[i]))
     end
 end
 
-function save_enco_buffer(enco::CGPInd, path::String, frame::Int64)
+function save_enco_buffer(enco::CGPInd, dir::String, frame::Int64)
     for i in eachindex(enco.buffer)
         if i < enco.n_in + 1 || enco.nodes[i].active
-            fname = joinpath(path, string(frame, "_e", i, ".png"))
+            fname = joinpath(dir, string(frame, "_e", i, ".png"))
             save(fname, transpose(enco.buffer[i]))
         end
     end
 end
 
-function save_features(f::Vector{Matrix{Float64}}, path::String, frame::Int64)
+function save_features(f::Vector{Matrix{Float64}}, dir::String, frame::Int64)
     for i in eachindex(f)
-        fname = joinpath(path, string(frame, "_f", i, ".png"))
+        fname = joinpath(dir, string(frame, "_f", i, ".png"))
         save(fname, transpose(f[i]))
     end
+end
+
+function save_cont_buffer(cont::CGPInd, dir::String, frame::Int64)
+    data = Dict()
+    for i in eachindex(cont.buffer)
+        if i < cont.n_in + 1 || cont.nodes[i].active
+            data[string(i)] = cont.buffer[i]
+        end
+    end
+    println(data)
+    fname = joinpath(dir, string(frame, "_c.yaml"))
+    YAML.write_file(fname, data)
 end
 
 function visu_dualcgp_ingame(
@@ -115,6 +127,7 @@ function visu_dualcgp_ingame(
             # save_state(s, buffer_path, frames)
             save_enco_buffer(enco, buffer_path, frames)
             save_features(features, buffer_path, frames)
+            save_cont_buffer(cont, buffer_path, frames)
         end
 
         # Rendering
