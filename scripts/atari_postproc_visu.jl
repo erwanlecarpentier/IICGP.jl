@@ -50,7 +50,7 @@ end
 function save_state(s::Vector{Matrix{UInt8}}, buffer_path::String, frame::Int64)
     for i in eachindex(s)
         fname = joinpath(buffer_path, string(frame, "_e", i, ".png"))
-        save(fname, s[i])
+        save(fname, transpose(s[i])
     end
 end
 
