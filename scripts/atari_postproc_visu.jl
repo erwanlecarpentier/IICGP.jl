@@ -50,7 +50,7 @@ end
 function save_state(s::Vector{Matrix{UInt8}}, buffer_path::String, frame::Int64)
     for i in eachindex(s)
         fname = joinpath(buffer_path, string(frame, "_e", i, ".png"))
-        save(fname, transpose(s[i])
+        save(fname, transpose(s[i]))
     end
 end
 
@@ -74,7 +74,7 @@ function visu_dualcgp_ingame(
     img_size = size(get_state(g, grayscale, downscale)[1])
     IICGP.reset!(redu) # zero the buffers
     reward = 0.0
-    frames = 0
+    frames = 1
     prev_action = 0
     active = [enco.nodes[i].active for i in eachindex(enco.nodes)]
 
@@ -85,7 +85,7 @@ function visu_dualcgp_ingame(
 
     while ~game_over(g.ale)
         s = get_state(g, grayscale, downscale)
-        if rand(mt) > stickiness || frames == 0
+        if rand(mt) > stickiness || frames == 1
             output = IICGP.process(enco, redu, cont, s)
             action = g.actions[argmax(output)]
         else
@@ -100,7 +100,7 @@ function visu_dualcgp_ingame(
         # Rendering
         if do_display
             snap = buffer_snapshot(enco, active)
-            if frames == 0
+            if frames == 1
                 visu = snap
             else
                 visu = cat(visu, snap, dims=3)
