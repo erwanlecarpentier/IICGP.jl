@@ -47,10 +47,26 @@ function buffer_snapshot(enco::CGPInd, active::Vector{Bool})
     cat(s_cat, b_cat, dims=1)
 end
 
-function save_state(s::Vector{Matrix{UInt8}}, buffer_path::String, frame::Int64)
+function save_state(s::Vector{Matrix{UInt8}}, path::String, frame::Int64)
     for i in eachindex(s)
-        fname = joinpath(buffer_path, string(frame, "_e", i, ".png"))
+        fname = joinpath(path, string(frame, "_s", i, ".png"))
         save(fname, transpose(s[i]))
+    end
+end
+
+function save_enco_buffer(enco::CGPInd, path::String, frame::Int64)
+    for i in eachindex(enco.buffer)
+        if i < enco.n_in + 1 || enco.nodes[i].active
+            fname = joinpath(path, string(frame, "_e", i, ".png"))
+            save(fname, transpose(enco.buffer[i]))
+        end
+    end
+end
+
+function save_features(f::Vector{Matrix{Float64}}, path::String, frame::Int64)
+    for i in eachindex(f)
+        fname = joinpath(path, string(frame, "_f", i, ".png"))
+        save(fname, transpose(f[i]))
     end
 end
 
@@ -76,6 +92,7 @@ function visu_dualcgp_ingame(
     reward = 0.0
     frames = 1
     prev_action = 0
+    features = Vector{Matrix{Float64}}()
     active = [enco.nodes[i].active for i in eachindex(enco.nodes)]
 
     # Init rendering buffer
@@ -85,8 +102,9 @@ function visu_dualcgp_ingame(
 
     while ~game_over(g.ale)
         s = get_state(g, grayscale, downscale)
-        if rand(mt) > stickiness || frames == 1
-            output = IICGP.process(enco, redu, cont, s)
+        is_sticky = rand(mt) > stickiness
+        if is_sticky || frames == 1
+            features, output = IICGP.process_f(enco, redu, cont, s)
             action = g.actions[argmax(output)]
         else
             action = prev_action
@@ -94,7 +112,9 @@ function visu_dualcgp_ingame(
 
         # Saving
         if do_save
-            save_state(s, buffer_path, frames)
+            # save_state(s, buffer_path, frames)
+            save_enco_buffer(enco, buffer_path, frames)
+            save_features(features, buffer_path, frames)
         end
 
         # Rendering
