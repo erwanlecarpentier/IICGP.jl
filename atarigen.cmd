@@ -15,9 +15,9 @@
 CMD_PREFIX="atari_"
 CFGS=("cfg/dualcgp_atari_pooling.yaml" "cfg/dualcgp_atari_centroid.yaml") # WARNING: sync with REDS
 REDS=("pooling_" "centroid_") # WARNING: sync with CFGS
-GAMES="freeway solaris"
+GAMES="space_invaders private_eye"
 SCRIPT="scripts/atari_dualcgp.jl"
-PROJECT="$PWD" # "/users/p21001/lecarpen/IICGP.jl"
+PROJECT="$PWD"
 N_THREADS="25"
 
 for i in "${!CFGS[@]}"; do
@@ -34,7 +34,7 @@ for i in "${!CFGS[@]}"; do
 		echo "#SBATCH --ntasks-per-core=1" >> $CM
 		echo "#SBATCH -o $OU" >> $CM
 		echo "#SBATCH -e $LO" >> $CM
-		echo "#SBATCH --time=5-00:00:00" >> $CM
+		echo "#SBATCH --time=7-00:00:00" >> $CM
 		echo "#SBATCH --mail-user=erwanlecarpentier@mailbox.org" >> $CM
 		echo "#SBATCH --mail-type=END" >> $CM
 		echo "" >> $CM
