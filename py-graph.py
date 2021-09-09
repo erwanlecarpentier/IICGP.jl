@@ -42,9 +42,14 @@ def make_graph(g):
 	G.add_nodes_from(list(range(1, g["n_in"] + 1))) # Input nodes
 	G.add_nodes_from(g["nodes"])
 	G.add_edges_from(g["edges"])
-	return G
+	edge_labels = {}
+	for e in g["edges"]:
+		dest_node = e[1]
+		dest_node_index = g["nodes"].index(dest_node)
+		edge_labels[e] = g["fs"][dest_node_index]
+	return G, edge_labels
 
-def draw_graph_structure(G, seed=123):
+def draw_graph_structure(G, edge_labels, seed=123):
 	pos = nx.spring_layout(G, seed=seed)
 	options = {
 		"font_size": 15,
@@ -55,6 +60,7 @@ def draw_graph_structure(G, seed=123):
 		"width": 1 # , "with_labels": True
 	}
 	nx.draw_networkx(G, pos, **options)
+	nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels, font_color='red')
 
 	# Set margins for the axes so that nodes aren't clipped
 	ax = plt.gca()
@@ -62,6 +68,7 @@ def draw_graph_structure(G, seed=123):
 	plt.axis("off")
 	plt.show()
 
+'''
 def draw_graph(G, seed=123):
 	fig, ax = plt.subplots()
 	ax.set_aspect('equal')
@@ -104,36 +111,21 @@ def draw_graph(G, seed=123):
 
 	ax.axis("off")
 	plt.show()
-
-def mwe_self_loop():
-	# Create a graph and add a self-loop to node 0
-	G = nx.complete_graph(3, create_using=nx.DiGraph)
-	G.add_edge(0, 0)
-	pos = nx.circular_layout(G)
-
-	# As of version 2.6, self-loops are drawn by default with the same styling as
-	# other edges
-	nx.draw(G, pos, with_labels=True)
-
-	# Add self-loops to the remaining nodes
-	edgelist = [(1, 1), (2, 2)]
-	G.add_edges_from(edgelist)
-
-	# Draw the newly added self-loops with different formatting
-	nx.draw_networkx_edges(G, pos, edgelist=edgelist, arrowstyle="<|-", style="dashed")
-
-	plt.show()
-	exit()
+'''
 
 if __name__ == "__main__":
 	exp_dir = sys.argv[1]
-	seed = 0 if (len(sys.argv) < 2) else int(sys.argv[2])
+	seed = 0 if (len(sys.argv) < 3) else int(sys.argv[2])
 
 	g_paths_dict = get_g_paths_dict(exp_dir)
 	g_dict = g_dict_from_g_paths_dict(g_paths_dict)
 
+	# TODO rm START
+	print("\nLoaded graph dict:")
 	print(g_dict["encoder"])
+	print()
+	# TODO rm END
 
-	g_enco = make_graph(g_dict["encoder"])
-	draw_graph_structure(g_enco, seed)
+	g_enco, enco_edge_labels = make_graph(g_dict["encoder"])
+	draw_graph_structure(g_enco, enco_edge_labels, seed)
 
