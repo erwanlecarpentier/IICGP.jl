@@ -7,7 +7,9 @@ import matplotlib.pyplot as plt
 import yaml
 
 
+# Meta parameters
 DIR_PATH = os.path.dirname(os.path.realpath(__file__))
+IMG_TYPE = ".png"
 INP_NODE_COLOR = "red"
 INN_NODE_COLOR = "black"
 OUT_NODE_COLOR = "blue"
@@ -20,24 +22,52 @@ def str_to_tuple(s):
 		s = s[0:-2]
 	return tuple(map(int, s.split(', ')))
 
-def get_g_paths_dict(exp_dir):
+def open_yaml(path):
+	with open(path, 'r') as stream:
+		try:
+			return yaml.safe_load(stream)
+		except yaml.YAMLError as exc:
+			print(exc)
+
+def retrieve_buffer(ind_name, path, frame):
+	if ind_name == "encoder":
+		return retrieve_enco_buffer(path, frame)
+	elif ind_name == "controller":
+		return retrieve_cont_buffer(path, frame)
+	else:
+		raise NameError("ind_name ", ind_name, " not implemented")
+
+def retrieve_enco_buffer(path, frame):
+	b = {}
+	for f in os.listdir(path):
+		if int(f[0]) == frame and f[2] == "e":
+			node = int(f[3:-len(IMG_TYPE)])
+			b[node] = node # TODO load image
+	return b
+
+def retrieve_cont_buffer(path, frame):
+	fname = path + str(frame) + "_c.yaml"
+	b = open_yaml(fname)
+	
+	return b
+
+def get_paths(exp_dir):
 	g_dir = exp_dir + "/graphs"
 	dct = {}
-	for f in  os.listdir(g_dir):
+	for f in os.listdir(g_dir):
 		ind_name = f[0:len(f)-len(".yaml")]
-		dct[ind_name] = g_dir + "/" + f
+		dct[ind_name] = {}
+		dct[ind_name]["graph"] = g_dir + "/" + f
+		dct[ind_name]["buffer"] = exp_dir + "/buffers/"
 	return dct
 
-def g_dict_from_g_paths_dict(g_paths_dict):
+def g_dict_from_paths(paths, frame):
 	g_dict = {}
-	for k, v in g_paths_dict.items():
-		with open(v, 'r') as stream:
-			try:
-				g = yaml.safe_load(stream)
-				g["edges"] = [str_to_tuple(e) for e in g["edges"]]
-				g_dict[k] = g
-			except yaml.YAMLError as exc:
-				print(exc)		
+	for ind_name, v in paths.items():
+		g = open_yaml(v["graph"])
+		g["edges"] = [str_to_tuple(e) for e in g["edges"]]
+		g["buffer"] = retrieve_buffer(ind_name, v["buffer"], frame)
+		g_dict[ind_name] = g
 	return g_dict
 
 def make_graph(g):
@@ -80,7 +110,6 @@ def draw_graph_structure(G, edgelabels, edgecolors, seed=123):
 	plt.axis("off")
 	plt.show()
 
-'''
 def draw_graph(G, seed=123):
 	fig, ax = plt.subplots()
 	ax.set_aspect('equal')
@@ -123,7 +152,6 @@ def draw_graph(G, seed=123):
 
 	ax.axis("off")
 	plt.show()
-'''
 
 def makedraw_graph(g):
 	g, lab, col = make_graph(g)
@@ -133,15 +161,20 @@ if __name__ == "__main__":
 	exp_dir = sys.argv[1]
 	seed = 0 if (len(sys.argv) < 3) else int(sys.argv[2])
 
-	g_paths_dict = get_g_paths_dict(exp_dir)
-	g_dict = g_dict_from_g_paths_dict(g_paths_dict)
+	frame = 1
+
+	paths = get_paths(exp_dir)
+	g_dict = g_dict_from_paths(paths, frame)
 
 	# TODO rm START
 	print("\nLoaded graph dict:")
+	print("\nencoder:")
 	print(g_dict["encoder"])
+	print("\ncontroller:")
+	print(g_dict["controller"])
 	print()
 	# TODO rm END
 
-	makedraw_graph(g_dict["encoder"])
+	# makedraw_graph(g_dict["encoder"])
 	# makedraw_graph(g_dict["controller"])
 

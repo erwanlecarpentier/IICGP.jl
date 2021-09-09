@@ -70,19 +70,20 @@ function save_features(f::Vector{Matrix{Float64}}, dir::String, frame::Int64)
     end
 end
 
-function save_cont_buffer(cont::CGPInd, dir::String, frame::Int64, metadata::Dict)
+function save_cont_buffer(cont::CGPInd, dir::String, frame::Int64)
     data = Dict()
     for i in eachindex(cont.buffer)
         if i < cont.n_in + 1 || cont.nodes[i].active
             data[string(i)] = cont.buffer[i]
         end
     end
-    for k in keys(metadata)
-        data[k] = metadata[k]
-    end
-    println(data)
     fname = joinpath(dir, string(frame, "_c.yaml"))
     YAML.write_file(fname, data)
+end
+
+function save_metadata(metadata::Dict, dir::String, frame::Int64)
+    fname = joinpath(dir, string(frame, "_m.yaml"))
+    YAML.write_file(fname, metadata)
 end
 
 function visu_dualcgp_ingame(
@@ -128,10 +129,11 @@ function visu_dualcgp_ingame(
         # Saving
         if do_save
             metadata = Dict("action"=>action, "is_sticky"=>is_sticky)
+            save_metadata(metadata, buffer_path, frames)
             # save_state(s, buffer_path, frames)
             save_enco_buffer(enco, buffer_path, frames)
             save_features(features, buffer_path, frames)
-            save_cont_buffer(cont, buffer_path, frames, metadata)
+            save_cont_buffer(cont, buffer_path, frames)
         end
 
         # Rendering
