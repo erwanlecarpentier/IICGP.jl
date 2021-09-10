@@ -101,9 +101,15 @@ def make_graph(g):
 			edgecolors.append(OUT_NODE_COLOR)
 		else:
 			edgecolors.append(INN_NODE_COLOR)
+	for n in G:
+		G.nodes[n]["img"] = g["buffer"][n]
 	return G, edgelabels, edgecolors
 
-def draw_graph_structure(G, edgelabels, edgecolors, seed=123):
+def draw_graph(G, edgelabels, edgecolors, seed=123):
+	fig, ax = plt.subplots()
+	ax.set_aspect('equal')
+	plt.xlim(-1.5,1.5)
+	plt.ylim(-1.5,1.5)
 	pos = nx.spring_layout(G, seed=seed)
 	options = {
 		"font_size": 15,
@@ -117,58 +123,33 @@ def draw_graph_structure(G, edgelabels, edgecolors, seed=123):
 	nx.draw_networkx(G, pos, **options)
 	nx.draw_networkx_edge_labels(G, pos, edge_labels=edgelabels, font_color='black')
 
-	# Set margins for the axes so that nodes aren't clipped
-	ax = plt.gca()
-	ax.margins(0.20)
-	plt.axis("off")
-	plt.show()
-
-def draw_graph(G, seed=123):
-	fig, ax = plt.subplots()
-	ax.set_aspect('equal')
-	plt.xlim(-1.5,1.5)
-	plt.ylim(-1.5,1.5)
-	pos = nx.spring_layout(G, seed=seed)
-	edge_options = {
-		"pos": pos,
-		"ax": ax,
-		"arrows": True,
-		"arrowstyle": "-"
-	}
-
-	# Note: the min_source/target_margin kwargs only work with FancyArrowPatch objects.
-	# Force the use of FancyArrowPatch for edge drawing by setting `arrows=True`,
-	# but suppress arrowheads with `arrowstyle="-"`
-	nx.draw_networkx_edges(G, **edge_options)
-	# nx.draw_networkx(G, **graph_options)
-
 	# Transform from data coordinates (scaled between xlim and ylim) to display coordinates
 	tr_figure = ax.transData.transform
 	# Transform from display to figure coordinates
 	tr_axes = fig.transFigure.inverted().transform
 
 	# Select the size of the image (relative to the X axis)
-	img_size = (ax.get_xlim()[1] - ax.get_xlim()[0]) * 0.1
+	img_size = (ax.get_xlim()[1] - ax.get_xlim()[0]) * 0.05
 	img_center = img_size / 2.0
 
 	# Add the respective image to each node
 	for n in G.nodes:
 		xf, yf = tr_figure(pos[n])
-		print(pos[n])
-		print(xf, yf)
-		print()
 		xa, ya = tr_axes((xf, yf))
-		# get overlapped axes and plot icon
 		a = plt.axes([xa - img_center, ya - img_center, img_size, img_size])
-		a.imshow(G.nodes[n]["image"])
+		a.imshow(G.nodes[n]["img"])
 		a.axis("off")
 
+	# Set margins for the axes so that nodes aren't clipped
+	ax = plt.gca()
+	ax.margins(0.20)
 	ax.axis("off")
+	plt.axis("off")
 	plt.show()
 
 def makedraw_graph(g):
 	g, lab, col = make_graph(g)
-	draw_graph_structure(g, lab, col, seed)
+	draw_graph(g, lab, col, seed)
 
 def show_img_buffer(gdict, elt="encoder", node=1):
 	image = gdict[elt]["buffer"][node]
@@ -186,7 +167,7 @@ def print_gdict(gdict):
 	print(gdict["reducer"])
 	print("\ncontroller:")
 	print(gdict["controller"])
-	print("\nmeta:")
+	print("\nmetadata:")
 	print(gdict["meta"])
 	print()
 
@@ -201,6 +182,6 @@ if __name__ == "__main__":
 
 	print_gdict(gdict)
 
-	# makedraw_graph(gdict["encoder"])
+	makedraw_graph(gdict["encoder"])
 	# makedraw_graph(gdict["controller"])
 
