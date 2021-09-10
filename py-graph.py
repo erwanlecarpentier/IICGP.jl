@@ -14,6 +14,7 @@ IMG_TYPE = ".png"
 INP_NODE_COLOR = "red"
 INN_NODE_COLOR = "black"
 OUT_NODE_COLOR = "blue"
+INCR = 1000 # increment for controller's nodes
 
 
 def str_to_tuple(s):
@@ -75,6 +76,7 @@ def gdict_from_paths(paths, frame):
 	for ind_name in ["encoder", "controller"]:
 		v = paths[ind_name]
 		g = open_yaml(v["graph"])
+		g["inputs"] = list(range(1,1+g["n_in"]))
 		g["edges"] = [str_to_tuple(e) for e in g["edges"]]
 		g["buffer"] = retrieve_buffer(ind_name, v["buffer"], frame)
 		gdict[ind_name] = g
@@ -83,10 +85,21 @@ def gdict_from_paths(paths, frame):
 	gdict["meta"] = retrieve_metadata(paths["meta"], frame)
 	return gdict
 
-def make_graph(g):
-	G = nx.DiGraph()
-	G.add_nodes_from(list(range(1, g["n_in"] + 1))) # Input nodes
-	G.add_nodes_from(g["nodes"])
+def incr_nodes(g, incr):
+	for k in ["nodes", "inputs", "outputs"]:
+		g[k] = [n + incr for n in g[k]]
+	g["edges"] = [(e[0]+incr, e[1]+incr) for e in g["edges"]]
+	init_keys = [k for k in g["buffer"].keys()]
+	for k in init_keys:
+		g["buffer"][k+incr] = g["buffer"].pop(k)
+	return g
+
+'''
+{1: array([ 0.19499569, -0.5975821 ]), 2: array([-0.22511674, -0.61363882]), 3: array([-0.16223497,  0.43870938]), 4: array([-0.00090061, -0.56816039]), 6: array([-0.05442491, -0.72599157]), 9: array([0.01825008, 0.43466652]), 11: array([0.07411702, 0.63199698]), 14: array([0.15531443, 1.        ])}
+'''
+	
+def set_graph(G, g):
+	G.add_nodes_from(g["buffer"].keys())
 	G.add_edges_from(g["edges"])
 	edgelabels = {}
 	for e in g["edges"]:
@@ -95,12 +108,28 @@ def make_graph(g):
 		edgelabels[e] = g["fs"][dest_node_index]
 	edgecolors = []
 	for n in G:
-		if n <= g["n_in"]:
+		if n in g["inputs"]:
 			edgecolors.append(INP_NODE_COLOR)
 		elif n in g["outputs"]:
 			edgecolors.append(OUT_NODE_COLOR)
 		else:
 			edgecolors.append(INN_NODE_COLOR)
+	return G, edgelabels, edgecolors
+
+def make_dualcgp_graph(gdict, incr=INCR):
+	ge = gdict["encoder"]
+	gc = incr_nodes(gdict["controller"], incr)
+	G = nx.DiGraph()
+	edgelabels, edgecolors = {}, []
+	for g in [ge, gc]:
+		G, lab, col = set_graph(G, g)
+		edgecolors += col
+		edgelabels.update(lab)
+	return G, edgelabels, edgecolors
+
+def make_single_graph(g):
+	G = nx.DiGraph()
+	G, edgelabels, edgecolors = set_graph(G, g)
 	for n in G:
 		G.nodes[n]["img"] = g["buffer"][n]
 	return G, edgelabels, edgecolors
@@ -108,9 +137,13 @@ def make_graph(g):
 def draw_graph(G, edgelabels, edgecolors, seed=123):
 	fig, ax = plt.subplots()
 	ax.set_aspect('equal')
+	ax.margins(0.20)
+	ax.axis("off")
+	plt.axis("off")
 	plt.xlim(-1.5,1.5)
 	plt.ylim(-1.5,1.5)
 	pos = nx.spring_layout(G, seed=seed)
+	print("\n\n\n", nx.spring_layout(G, seed=seed))
 	options = {
 		"font_size": 15,
 		# "node_size": 1000,
@@ -123,13 +156,14 @@ def draw_graph(G, edgelabels, edgecolors, seed=123):
 	nx.draw_networkx(G, pos, **options)
 	nx.draw_networkx_edge_labels(G, pos, edge_labels=edgelabels, font_color='black')
 
+	'''
 	# Transform from data coordinates (scaled between xlim and ylim) to display coordinates
 	tr_figure = ax.transData.transform
 	# Transform from display to figure coordinates
 	tr_axes = fig.transFigure.inverted().transform
 
 	# Select the size of the image (relative to the X axis)
-	img_size = (ax.get_xlim()[1] - ax.get_xlim()[0]) * 0.05
+	img_size = (ax.get_xlim()[1] - ax.get_xlim()[0]) * 0.01
 	img_center = img_size / 2.0
 
 	# Add the respective image to each node
@@ -139,24 +173,15 @@ def draw_graph(G, edgelabels, edgecolors, seed=123):
 		a = plt.axes([xa - img_center, ya - img_center, img_size, img_size])
 		a.imshow(G.nodes[n]["img"])
 		a.axis("off")
+	'''
 
-	# Set margins for the axes so that nodes aren't clipped
-	ax = plt.gca()
-	ax.margins(0.20)
-	ax.axis("off")
-	plt.axis("off")
 	plt.show()
-
-def makedraw_graph(g):
-	g, lab, col = make_graph(g)
-	draw_graph(g, lab, col, seed)
 
 def show_img_buffer(gdict, elt="encoder", node=1):
 	image = gdict[elt]["buffer"][node]
 	print(image.format)
 	print(image.mode)
 	print(image.size)
-	# show the image
 	image.show()
 
 def print_gdict(gdict):
@@ -180,8 +205,11 @@ if __name__ == "__main__":
 	paths = get_paths(exp_dir)
 	gdict = gdict_from_paths(paths, frame)
 
-	print_gdict(gdict)
+	# print_gdict(gdict)
 
-	makedraw_graph(gdict["encoder"])
-	# makedraw_graph(gdict["controller"])
+	g, lab, col = make_dualcgp_graph(gdict)
+	draw_graph(g, lab, col, seed)
+
+	# g, lab, col = make_single_graph(gdict["encoder"])
+	# draw_graph(g, lab, col, seed)
 
