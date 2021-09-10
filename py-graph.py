@@ -4,6 +4,7 @@ import sys
 import os
 import networkx as nx
 import matplotlib.pyplot as plt
+# import random
 import yaml
 from PIL import Image
 
@@ -14,8 +15,7 @@ IMG_TYPE = ".png"
 INP_NODE_COLOR = "red"
 INN_NODE_COLOR = "black"
 OUT_NODE_COLOR = "blue"
-INCR = 1000 # increment for controller's nodes
-
+INCR = 100 # increment for controller's nodes names
 
 def str_to_tuple(s):
 	if s[0] == "(":
@@ -85,6 +85,33 @@ def gdict_from_paths(paths, frame):
 	gdict["meta"] = retrieve_metadata(paths["meta"], frame)
 	return gdict
 
+def test_gdict():
+	gdict = {
+		'encoder': {
+			'nodes': [4, 5, 6],
+			'fs': ['f_compare', 'f_motion_tracking', 'f_dilate'],
+			'n_in': 3,
+			'n_out': 2,
+			'inputs': [1, 2, 3],
+			'outputs': [4, 6],
+			'edges': [(1, 4), (2, 4), (3, 5), (5, 6)],
+			'buffer': {1:1, 2:2, 3:3, 4:4, 5:5, 6:6}
+		},
+		'controller': {
+			'nodes': [6, 7, 8, 9, 10],
+			'fs': 5*["f"],
+			'n_in': 5,
+			'n_out': 5,
+			'inputs': [1, 2, 3, 4, 5],
+			'outputs': [1, 2, 6, 8, 10],
+			'edges': [(1, 6), (2, 6), (3, 7), (7, 8), (4, 10)],
+			'buffer': {1:1, 2:2, 3:3, 4:4, 5:5, 6:6, 7:7, 8:8, 9:9, 10:10}
+		},
+		'reducer': {'buffer': {1:1, 2:2}},
+		'meta': {'action':1, 'is_sticky': True}
+	}
+	return gdict
+
 def incr_nodes(g, incr):
 	for k in ["nodes", "inputs", "outputs"]:
 		g[k] = [n + incr for n in g[k]]
@@ -94,9 +121,56 @@ def incr_nodes(g, incr):
 		g["buffer"][k+incr] = g["buffer"].pop(k)
 	return g
 
-'''
-{1: array([ 0.19499569, -0.5975821 ]), 2: array([-0.22511674, -0.61363882]), 3: array([-0.16223497,  0.43870938]), 4: array([-0.00090061, -0.56816039]), 6: array([-0.05442491, -0.72599157]), 9: array([0.01825008, 0.43466652]), 11: array([0.07411702, 0.63199698]), 14: array([0.15531443, 1.        ])}
-'''
+def dualcgp_colors(G, gdict):
+	colors = []
+	for n in G:
+		print(n)
+		if n in gdict["encoder"]["inputs"] + gdict["controller"]["inputs"]:
+			c = INP_NODE_COLOR
+		elif n in gdict["encoder"]["outputs"] + gdict["controller"]["outputs"]:
+			c = OUT_NODE_COLOR
+		else:
+			c = INN_NODE_COLOR
+		colors.append(c)
+	return colors
+
+def dualcgp_pos(gdict):
+	ge = gdict["encoder"]
+	gc = gdict["controller"]
+	e_mid = [n for n in ge["buffer"].keys() if n not in ge["inputs"]]
+	c_mid = [n for n in gc["buffer"].keys() if n not in gc["inputs"]]
+	e_n_mid = len(e_mid)
+	c_n_mid = len(c_mid)
+	e_n_inp = len(ge["inputs"])
+	e_n_out = len(ge["outputs"])
+	c_n_inp = len(gc["inputs"])
+	c_n_out = len(gc["outputs"])
+	d = 2.0 # space between nodes
+	pos = {}
+	# Encoder pos
+	e_xs = [(x-0.5*(e_n_mid+1))*d for x in range(e_n_mid+2)]
+	e_inp_ys = [d*(y-(e_n_inp-1)/2) for y in range(e_n_inp)]
+	e_out_ys = [d*(y-(e_n_out-1)/2) for y in range(e_n_out)]
+	for i in range(len(ge["inputs"])):
+		pos[ge["inputs"][i]] = (e_xs[0], e_inp_ys[i])
+	for i in range(len(e_mid)):
+		pos[e_mid[i]] = (e_xs[i+1], 0.0)
+	#for i in range(len(ge["outputs"])):
+	#	if ge["outputs"][i] not in ge["inputs"] and ge["outputs"][i] not in e_mid:
+	#		pos[ge["outputs"][i]] = (e_xs[-1], e_out_ys[i])
+	# Controller pos
+	y_drift = 0.5 * d * max(e_n_inp+c_n_inp, e_n_out+c_n_out)
+	c_xs = [(x-0.5*(c_n_mid+1))*d for x in range(c_n_mid+2)]
+	c_inp_ys = [d*(y-(c_n_inp-1)/2)-y_drift for y in range(c_n_inp)]
+	c_out_ys = [d*(y-(c_n_out-1)/2)-y_drift for y in range(c_n_out)]
+	for i in range(len(gc["inputs"])):
+		pos[gc["inputs"][i]] = (c_xs[0], c_inp_ys[i])
+	for i in range(len(c_mid)):
+		pos[c_mid[i]] = (c_xs[i+1], -y_drift)
+	#for i in range(len(gc["outputs"])):
+	#	if gc["outputs"][i] not in gc["inputs"] and gc["outputs"][i] not in c_mid:
+	#		pos[gc["outputs"][i]] = (c_xs[-1], c_out_ys[i])
+	return pos
 	
 def set_graph(G, g):
 	G.add_nodes_from(g["buffer"].keys())
@@ -122,10 +196,11 @@ def make_dualcgp_graph(gdict, incr=INCR):
 	G = nx.DiGraph()
 	edgelabels, edgecolors = {}, []
 	for g in [ge, gc]:
-		G, lab, col = set_graph(G, g)
-		edgecolors += col
+		G, lab, _ = set_graph(G, g)
 		edgelabels.update(lab)
-	return G, edgelabels, edgecolors
+	edgecolors = dualcgp_colors(G, gdict)
+	pos = dualcgp_pos(gdict)
+	return G, edgelabels, edgecolors, pos
 
 def make_single_graph(g):
 	G = nx.DiGraph()
@@ -134,16 +209,15 @@ def make_single_graph(g):
 		G.nodes[n]["img"] = g["buffer"][n]
 	return G, edgelabels, edgecolors
 
-def draw_graph(G, edgelabels, edgecolors, seed=123):
+def draw_graph(G, edgelabels, edgecolors, pos=None, seed=123):
 	fig, ax = plt.subplots()
 	ax.set_aspect('equal')
 	ax.margins(0.20)
 	ax.axis("off")
 	plt.axis("off")
-	plt.xlim(-1.5,1.5)
-	plt.ylim(-1.5,1.5)
-	pos = nx.spring_layout(G, seed=seed)
-	print("\n\n\n", nx.spring_layout(G, seed=seed))
+	# plt.xlim(-1.5,1.5)
+	# plt.ylim(-1.5,1.5)
+	pos = nx.spring_layout(G, seed=seed) if pos is None else pos
 	options = {
 		"font_size": 15,
 		# "node_size": 1000,
@@ -202,13 +276,15 @@ if __name__ == "__main__":
 
 	frame = 1
 
-	paths = get_paths(exp_dir)
-	gdict = gdict_from_paths(paths, frame)
+	#paths = get_paths(exp_dir)
+	#gdict = gdict_from_paths(paths, frame)
+
+	gdict = test_gdict()
 
 	# print_gdict(gdict)
 
-	g, lab, col = make_dualcgp_graph(gdict)
-	draw_graph(g, lab, col, seed)
+	g, lab, col, pos = make_dualcgp_graph(gdict)
+	draw_graph(g, lab, col, pos, seed)
 
 	# g, lab, col = make_single_graph(gdict["encoder"])
 	# draw_graph(g, lab, col, seed)
