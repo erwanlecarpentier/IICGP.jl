@@ -86,6 +86,11 @@ def gdict_from_paths(paths, frame):
 	return gdict
 
 def test_gdict():
+	bpath = DIR_PATH + '/results/2021-09-01T17:44:01.968_boxing/buffers/'
+	eb = retrieve_img_buffer(bpath, 1, "e")
+	rb = retrieve_img_buffer(bpath, 1, "f")
+	img = eb[1]
+	red = rb[1]
 	gdict = {
 		'encoder': {
 			'nodes': [4, 5, 6],
@@ -95,7 +100,7 @@ def test_gdict():
 			'inputs': [1, 2, 3],
 			'outputs': [4, 6],
 			'edges': [(1, 4), (2, 4), (3, 5), (5, 6)],
-			'buffer': {1:1, 2:2, 3:3, 4:4, 5:5, 6:6}
+			'buffer': {1:img, 2:img, 3:img, 4:img, 5:img, 6:img}
 		},
 		'controller': {
 			'nodes': [6, 7, 8, 9, 10],
@@ -107,7 +112,7 @@ def test_gdict():
 			'edges': [(1, 6), (2, 6), (3, 7), (7, 8), (4, 10)],
 			'buffer': {1:1, 2:2, 3:3, 4:4, 5:5, 6:6, 7:7, 8:8, 9:9, 10:10}
 		},
-		'reducer': {'buffer': {1:1, 2:2}},
+		'reducer': {'buffer': {1:red, 2:red}},
 		'meta': {'action':1, 'is_sticky': True}
 	}
 	return gdict
@@ -270,21 +275,27 @@ def print_gdict(gdict):
 	print(gdict["meta"])
 	print()
 
+# python3.7 py-graph.py /home/wahara/.julia/dev/IICGP/results/2021-09-01T17:44:01.968_boxing
+
 if __name__ == "__main__":
 	exp_dir = sys.argv[1]
 	seed = 0 if (len(sys.argv) < 3) else int(sys.argv[2])
 
 	frame = 1
 
-	#paths = get_paths(exp_dir)
-	#gdict = gdict_from_paths(paths, frame)
+	'''
+	paths = get_paths(exp_dir)
+	gdict = gdict_from_paths(paths, frame)
+	print_gdict(gdict)
+	'''
 
 	gdict = test_gdict()
+	print_gdict(gdict)
 
 	# print_gdict(gdict)
 
-	g, lab, col, pos = make_dualcgp_graph(gdict)
-	draw_graph(g, lab, col, pos, seed)
+	# g, lab, col, pos = make_dualcgp_graph(gdict)
+	# draw_graph(g, lab, col, pos, seed)
 
 	# g, lab, col = make_single_graph(gdict["encoder"])
 	# draw_graph(g, lab, col, seed)
