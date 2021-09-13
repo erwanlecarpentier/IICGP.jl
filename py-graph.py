@@ -219,13 +219,15 @@ def make_single_graph(g):
 	return G, edgelabels, edgecolors
 
 def draw_graph(G, edgelabels, edgecolors, pos=None, seed=123):
-	fig, ax = plt.subplots()
+	#fig, ax = plt.subplots()
+	fig=plt.figure(figsize=(5,5))
+	ax=plt.subplot(111)
 	ax.set_aspect('equal')
-	ax.margins(0.20)
+	# ax.margins(0.20)
 	ax.axis("off")
 	plt.axis("off")
-	# plt.xlim(-1.5,1.5)
-	# plt.ylim(-1.5,1.5)
+	plt.xlim(-5,5)
+	plt.ylim(-5,5)
 	pos = nx.spring_layout(G, seed=seed) if pos is None else pos
 	options = {
 		"font_size": 15,
@@ -253,6 +255,14 @@ def draw_graph(G, edgelabels, edgecolors, pos=None, seed=123):
 		if type(G.nodes[n]["buffer"]) == IMG_TYPE:
 			xf, yf = tr_figure(pos[n])
 			xa, ya = tr_axes((xf, yf))
+
+			# TODO rm STARS
+			print()
+			print(pos[n])
+			print(xf, yf)
+			print(xa, ya)
+			# TODO rm END
+
 			a = plt.axes([xa - img_center, ya - img_center, img_size, img_size])
 			a.imshow(G.nodes[n]["buffer"])
 			a.axis("off")
