@@ -6,12 +6,13 @@ import networkx as nx
 import matplotlib.pyplot as plt
 # import random
 import yaml
-from PIL import Image
+import PIL
 
 
 # Meta parameters
 DIR_PATH = os.path.dirname(os.path.realpath(__file__))
-IMG_TYPE = ".png"
+IMG_EXT = ".png"
+IMG_TYPE = PIL.PngImagePlugin.PngImageFile
 INP_NODE_COLOR = "red"
 INN_NODE_COLOR = "black"
 OUT_NODE_COLOR = "blue"
@@ -45,8 +46,8 @@ def retrieve_img_buffer(path, frame, key):
 	b = {}
 	for f in os.listdir(path):
 		if int(f[0]) == frame and f[2] == key:
-			node = int(f[3:-len(IMG_TYPE)])
-			b[node] = Image.open(path + f)
+			node = int(f[3:-len(IMG_EXT)])
+			b[node] = PIL.Image.open(path + f)
 	return b
 
 def retrieve_cont_buffer(path, frame):
@@ -110,7 +111,7 @@ def test_gdict():
 			'inputs': [1, 2, 3, 4, 5],
 			'outputs': [1, 2, 6, 8, 10],
 			'edges': [(1, 6), (2, 6), (3, 7), (7, 8), (4, 10)],
-			'buffer': {1:1, 2:2, 3:3, 4:4, 5:5, 6:6, 7:7, 8:8, 9:9, 10:10}
+			'buffer': {1:0.0, 2:0.2, 3:0.3, 4:0.4, 5:0.5, 6:0.6, 7:0.7, 8:0.8, 9:0.9, 10:1.0}
 		},
 		'reducer': {'buffer': {1:red, 2:red}},
 		'meta': {'action':1, 'is_sticky': True}
@@ -129,7 +130,6 @@ def incr_nodes(g, incr):
 def dualcgp_colors(G, gdict):
 	colors = []
 	for n in G:
-		print(n)
 		if n in gdict["encoder"]["inputs"] + gdict["controller"]["inputs"]:
 			c = INP_NODE_COLOR
 		elif n in gdict["encoder"]["outputs"] + gdict["controller"]["outputs"]:
@@ -185,6 +185,7 @@ def set_graph(G, g):
 		dest_node = e[1]
 		dest_node_index = g["nodes"].index(dest_node)
 		edgelabels[e] = g["fs"][dest_node_index]
+	# Set colors
 	edgecolors = []
 	for n in G:
 		if n in g["inputs"]:
@@ -193,6 +194,9 @@ def set_graph(G, g):
 			edgecolors.append(OUT_NODE_COLOR)
 		else:
 			edgecolors.append(INN_NODE_COLOR)
+	# Set buffer
+	for n in g["buffer"].keys():
+		G.nodes[n]["buffer"] = g["buffer"][n]
 	return G, edgelabels, edgecolors
 
 def make_dualcgp_graph(gdict, incr=INCR):
@@ -235,7 +239,6 @@ def draw_graph(G, edgelabels, edgecolors, pos=None, seed=123):
 	nx.draw_networkx(G, pos, **options)
 	nx.draw_networkx_edge_labels(G, pos, edge_labels=edgelabels, font_color='black')
 
-	'''
 	# Transform from data coordinates (scaled between xlim and ylim) to display coordinates
 	tr_figure = ax.transData.transform
 	# Transform from display to figure coordinates
@@ -247,12 +250,12 @@ def draw_graph(G, edgelabels, edgecolors, pos=None, seed=123):
 
 	# Add the respective image to each node
 	for n in G.nodes:
-		xf, yf = tr_figure(pos[n])
-		xa, ya = tr_axes((xf, yf))
-		a = plt.axes([xa - img_center, ya - img_center, img_size, img_size])
-		a.imshow(G.nodes[n]["img"])
-		a.axis("off")
-	'''
+		if type(G.nodes[n]["buffer"]) == IMG_TYPE:
+			xf, yf = tr_figure(pos[n])
+			xa, ya = tr_axes((xf, yf))
+			a = plt.axes([xa - img_center, ya - img_center, img_size, img_size])
+			a.imshow(G.nodes[n]["buffer"])
+			a.axis("off")
 
 	plt.show()
 
@@ -294,8 +297,8 @@ if __name__ == "__main__":
 
 	# print_gdict(gdict)
 
-	# g, lab, col, pos = make_dualcgp_graph(gdict)
-	# draw_graph(g, lab, col, pos, seed)
+	g, lab, col, pos = make_dualcgp_graph(gdict)
+	draw_graph(g, lab, col, pos, seed)
 
 	# g, lab, col = make_single_graph(gdict["encoder"])
 	# draw_graph(g, lab, col, seed)
