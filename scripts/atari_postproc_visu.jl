@@ -63,9 +63,10 @@ function save_enco_buffer(enco::CGPInd, dir::String, frame::Int64)
     end
 end
 
-function save_features(f::Vector{Matrix{Float64}}, dir::String, frame::Int64)
+function save_features(f::Vector{Matrix{Float64}}, dir::String, frame::Int64,
+                       outputs::Vector{Int16})
     for i in eachindex(f)
-        fname = joinpath(dir, string(frame, "_f", i, ".png"))
+        fname = joinpath(dir, string(frame, "_f", outputs[i], ".png"))
         save(fname, transpose(f[i]))
     end
 end
@@ -132,7 +133,7 @@ function visu_dualcgp_ingame(
             save_metadata(metadata, buffer_path, frames)
             # save_state(s, buffer_path, frames)
             save_enco_buffer(enco, buffer_path, frames)
-            save_features(features, buffer_path, frames)
+            save_features(features, buffer_path, frames, enco.outputs)
             save_cont_buffer(cont, buffer_path, frames)
         end
 
@@ -229,7 +230,8 @@ games = ["boxing"] # ["freeway"]  # pong kung_fu_master freeway assault
 reducers = ["pooling"] # Array{String,1}() # ["pooling"]
 exp_dirs, games = get_exp_dir(min_date=min_date, max_date=max_date, games=games,
                               reducers=reducers)
-max_frames = 2
+max_frames = 3
+render_graph = false
 
 for i in eachindex(exp_dirs)
     # Generate images (may display / save)
@@ -237,9 +239,11 @@ for i in eachindex(exp_dirs)
                 do_save=true, do_display=false)
 
     # Launch python script
-    exp_dir = exp_dirs[i]
-    seed = 1256
-    # run(`python3.7 py-graph.py $exp_dir $seed`)
+    if render_graph
+        exp_dir = exp_dirs[i]
+        seed = 1256
+        run(`python3.8 py-graph.py $exp_dir $seed`)
+    end
 end
 
 

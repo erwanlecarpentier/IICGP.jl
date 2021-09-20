@@ -173,14 +173,12 @@ def dualcgp_pos(gdict, out_incr=OUT_INCR):
 	for i in range(len(gc["outputs"])):
 		pos[gc["outputs"][i]+out_incr] = (c_xs[-1], c_out_ys[i])
 	
-	for k, v in pos.items():
-		print(k, v)
-	exit()
 	return pos
 	
-def set_graph(G, g, out_incr=OUT_INCR):
+def set_graph(G, g, gr=None, out_incr=OUT_INCR):
 	G.add_nodes_from(g["buffer"].keys())
-	G.add_nodes_from([n+out_incr for n in g["outputs"]])
+	output_nodes = [n+out_incr for n in g["outputs"]]
+	G.add_nodes_from(output_nodes)
 	G.add_edges_from(g["edges"])
 	edgelabels = {}
 	for e in g["edges"]:
@@ -196,9 +194,20 @@ def set_graph(G, g, out_incr=OUT_INCR):
 			edgecolors.append(OUT_NODE_COLOR)
 		else:
 			edgecolors.append(INN_NODE_COLOR)
-	# Set buffer
+	# Set inner buffer
 	for n in g["buffer"].keys():
 		G.nodes[n]["buffer"] = g["buffer"][n]
+	# Set output buffer
+	if gdict["encoder"] is None:
+		print("TODO")
+		exit()
+	else:
+		print(output_nodes)
+		print(gr)
+		for n in output_nodes:
+			G.nodes[n]["buffer"] = 5 # TODO
+			print(G.nodes[n])
+		exit()
 	return G, edgelabels, edgecolors
 
 def make_dualcgp_graph(gdict, incr=CTR_INCR):
@@ -206,9 +215,10 @@ def make_dualcgp_graph(gdict, incr=CTR_INCR):
 	gc = incr_nodes(gdict["controller"], incr)
 	G = nx.DiGraph()
 	edgelabels, edgecolors = {}, []
-	for g in [ge, gc]:
-		G, lab, _ = set_graph(G, g)
-		edgelabels.update(lab)
+	G, lab, _ = set_graph(G, ge, gdict["reducer"])
+	edgelabels.update(lab)
+	G, lab, _ = set_graph(G, gc)
+	edgelabels.update(lab)
 	edgecolors = dualcgp_colors(G, gdict)
 	pos = dualcgp_pos(gdict)
 	return G, edgelabels, edgecolors, pos
@@ -217,7 +227,7 @@ def make_single_graph(g):
 	G = nx.DiGraph()
 	G, edgelabels, edgecolors = set_graph(G, g)
 	for n in G:
-		G.nodes[n]["img"] = g["buffer"][n]
+		G.nodes[n]["buffer"] = g["buffer"][n]
 	return G, edgelabels, edgecolors
 
 def draw_graph(G, edgelabels, edgecolors, pos=None, seed=123):
@@ -254,12 +264,13 @@ def draw_graph(G, edgelabels, edgecolors, pos=None, seed=123):
 
 	# Add the respective image to each node
 	for n in G.nodes:
+		print() # TODO rm
+		print(n) # TODO rm
 		if type(G.nodes[n]["buffer"]) == IMG_TYPE:
 			xf, yf = tr_figure(pos[n])
 			xa, ya = tr_axes((xf, yf))
 
 			# TODO rm STARS
-			print()
 			print(pos[n])
 			print(xf, yf)
 			print(xa, ya)
