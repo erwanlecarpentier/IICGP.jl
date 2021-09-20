@@ -91,8 +91,8 @@ def test_gdict():
 	bpath = DIR_PATH + '/results/2021-09-01T17:44:01.968_boxing/buffers/'
 	eb = retrieve_img_buffer(bpath, 1, "e")
 	rb = retrieve_img_buffer(bpath, 1, "f")
-	img = eb[1]
-	red = rb[1]
+	img = eb[list(eb.keys())[1]]
+	red = rb[list(rb.keys())[1]]
 	gdict = {
 		'encoder': {
 			'nodes': [4, 5, 6],
@@ -114,7 +114,7 @@ def test_gdict():
 			'edges': [(1, 6), (2, 6), (3, 7), (7, 8), (4, 10)],
 			'buffer': {1:0.0, 2:0.2, 3:0.3, 4:0.4, 5:0.5, 6:0.6, 7:0.7, 8:0.8, 9:0.9, 10:1.0}
 		},
-		'reducer': {'buffer': {1:red, 2:red}},
+		'reducer': {'buffer': {4:red, 6:red}},
 		'meta': {'action':1, 'is_sticky': True}
 	}
 	return gdict
@@ -197,17 +197,14 @@ def set_graph(G, g, gr=None, out_incr=OUT_INCR):
 	# Set inner buffer
 	for n in g["buffer"].keys():
 		G.nodes[n]["buffer"] = g["buffer"][n]
+	
 	# Set output buffer
-	if gdict["encoder"] is None:
-		print("TODO")
-		exit()
-	else:
-		print(output_nodes)
-		print(gr)
-		for n in output_nodes:
-			G.nodes[n]["buffer"] = 5 # TODO
-			print(G.nodes[n])
-		exit()
+	for i in range(len(output_nodes)):
+		out_node_i = output_nodes[i]
+		out_i = g["outputs"][i]
+		r_buffer_i = g["buffer"][out_i] if gr is None else gr["buffer"][out_i]
+		G.nodes[out_node_i]["buffer"] = r_buffer_i
+		
 	return G, edgelabels, edgecolors
 
 def make_dualcgp_graph(gdict, incr=CTR_INCR):
