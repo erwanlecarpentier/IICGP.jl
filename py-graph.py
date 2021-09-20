@@ -91,8 +91,8 @@ def test_gdict():
 	bpath = DIR_PATH + '/results/2021-09-01T17:44:01.968_boxing/buffers/'
 	eb = retrieve_img_buffer(bpath, 1, "e")
 	rb = retrieve_img_buffer(bpath, 1, "f")
-	img = eb[list(eb.keys())[1]]
-	red = rb[list(rb.keys())[1]]
+	img = eb[1]
+	red = rb[list(rb.keys())[0]]
 	gdict = {
 		'encoder': {
 			'nodes': [4, 5, 6],
@@ -176,15 +176,21 @@ def dualcgp_pos(gdict, out_incr=OUT_INCR):
 	return pos
 	
 def set_graph(G, g, gr=None, out_incr=OUT_INCR):
+	# Nodes
 	G.add_nodes_from(g["buffer"].keys())
 	output_nodes = [n+out_incr for n in g["outputs"]]
 	G.add_nodes_from(output_nodes)
+
+	# Edges
 	G.add_edges_from(g["edges"])
+	print(g["edges"])
+	exit()
 	edgelabels = {}
 	for e in g["edges"]:
 		dest_node = e[1]
 		dest_node_index = g["nodes"].index(dest_node)
 		edgelabels[e] = g["fs"][dest_node_index]
+
 	# Set colors
 	edgecolors = []
 	for n in G:
@@ -194,6 +200,7 @@ def set_graph(G, g, gr=None, out_incr=OUT_INCR):
 			edgecolors.append(OUT_NODE_COLOR)
 		else:
 			edgecolors.append(INN_NODE_COLOR)
+
 	# Set inner buffer
 	for n in g["buffer"].keys():
 		G.nodes[n]["buffer"] = g["buffer"][n]
@@ -261,18 +268,9 @@ def draw_graph(G, edgelabels, edgecolors, pos=None, seed=123):
 
 	# Add the respective image to each node
 	for n in G.nodes:
-		print() # TODO rm
-		print(n) # TODO rm
 		if type(G.nodes[n]["buffer"]) == IMG_TYPE:
 			xf, yf = tr_figure(pos[n])
 			xa, ya = tr_axes((xf, yf))
-
-			# TODO rm STARS
-			print(pos[n])
-			print(xf, yf)
-			print(xa, ya)
-			# TODO rm END
-
 			a = plt.axes([xa - img_center, ya - img_center, img_size, img_size])
 			a.imshow(G.nodes[n]["buffer"])
 			a.axis("off")
