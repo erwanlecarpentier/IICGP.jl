@@ -16,7 +16,8 @@ IMG_TYPE = PIL.PngImagePlugin.PngImageFile
 INP_NODE_COLOR = "red"
 INN_NODE_COLOR = "black"
 OUT_NODE_COLOR = "blue"
-INCR = 100 # increment for controller's nodes names
+CTR_INCR = 200 # increment for controller's nodes names
+OUT_INCR = 100 # increment for outputs's nodes names
 
 def str_to_tuple(s):
 	if s[0] == "(":
@@ -139,19 +140,16 @@ def dualcgp_colors(G, gdict):
 		colors.append(c)
 	return colors
 
-def dualcgp_pos(gdict):
+def dualcgp_pos(gdict, out_incr=OUT_INCR):
 	ge = gdict["encoder"]
 	gc = gdict["controller"]
 	e_mid = [n for n in ge["buffer"].keys() if n not in ge["inputs"]]
 	c_mid = [n for n in gc["buffer"].keys() if n not in gc["inputs"]]
-	e_n_mid = len(e_mid)
-	c_n_mid = len(c_mid)
-	e_n_inp = len(ge["inputs"])
-	e_n_out = len(ge["outputs"])
-	c_n_inp = len(gc["inputs"])
-	c_n_out = len(gc["outputs"])
+	e_n_mid, e_n_inp, e_n_out = len(e_mid), len(ge["inputs"]), len(ge["outputs"])
+	c_n_mid, c_n_inp, c_n_out = len(c_mid), len(gc["inputs"]), len(gc["outputs"])
 	d = 2.0 # space between nodes
 	pos = {}
+	
 	# Encoder pos
 	e_xs = [(x-0.5*(e_n_mid+1))*d for x in range(e_n_mid+2)]
 	e_inp_ys = [d*(y-(e_n_inp-1)/2) for y in range(e_n_inp)]
@@ -160,9 +158,9 @@ def dualcgp_pos(gdict):
 		pos[ge["inputs"][i]] = (e_xs[0], e_inp_ys[i])
 	for i in range(len(e_mid)):
 		pos[e_mid[i]] = (e_xs[i+1], 0.0)
-	#for i in range(len(ge["outputs"])):
-	#	if ge["outputs"][i] not in ge["inputs"] and ge["outputs"][i] not in e_mid:
-	#		pos[ge["outputs"][i]] = (e_xs[-1], e_out_ys[i])
+	for i in range(len(ge["outputs"])):
+		pos[ge["outputs"][i]+out_incr] = (e_xs[-1], e_out_ys[i])
+	
 	# Controller pos
 	y_drift = 0.5 * d * max(e_n_inp+c_n_inp, e_n_out+c_n_out)
 	c_xs = [(x-0.5*(c_n_mid+1))*d for x in range(c_n_mid+2)]
@@ -172,13 +170,17 @@ def dualcgp_pos(gdict):
 		pos[gc["inputs"][i]] = (c_xs[0], c_inp_ys[i])
 	for i in range(len(c_mid)):
 		pos[c_mid[i]] = (c_xs[i+1], -y_drift)
-	#for i in range(len(gc["outputs"])):
-	#	if gc["outputs"][i] not in gc["inputs"] and gc["outputs"][i] not in c_mid:
-	#		pos[gc["outputs"][i]] = (c_xs[-1], c_out_ys[i])
+	for i in range(len(gc["outputs"])):
+		pos[gc["outputs"][i]+out_incr] = (c_xs[-1], c_out_ys[i])
+	
+	for k, v in pos.items():
+		print(k, v)
+	exit()
 	return pos
 	
-def set_graph(G, g):
+def set_graph(G, g, out_incr=OUT_INCR):
 	G.add_nodes_from(g["buffer"].keys())
+	G.add_nodes_from([n+out_incr for n in g["outputs"]])
 	G.add_edges_from(g["edges"])
 	edgelabels = {}
 	for e in g["edges"]:
@@ -199,7 +201,7 @@ def set_graph(G, g):
 		G.nodes[n]["buffer"] = g["buffer"][n]
 	return G, edgelabels, edgecolors
 
-def make_dualcgp_graph(gdict, incr=INCR):
+def make_dualcgp_graph(gdict, incr=CTR_INCR):
 	ge = gdict["encoder"]
 	gc = incr_nodes(gdict["controller"], incr)
 	G = nx.DiGraph()
@@ -220,8 +222,8 @@ def make_single_graph(g):
 
 def draw_graph(G, edgelabels, edgecolors, pos=None, seed=123):
 	#fig, ax = plt.subplots()
-	fig=plt.figure(figsize=(5,5))
-	ax=plt.subplot(111)
+	fig = plt.figure(figsize=(5,5))
+	ax = plt.subplot(111)
 	ax.set_aspect('equal')
 	# ax.margins(0.20)
 	ax.axis("off")
@@ -289,6 +291,7 @@ def print_gdict(gdict):
 	print()
 
 # python3.7 py-graph.py /home/wahara/.julia/dev/IICGP/results/2021-09-01T17:44:01.968_boxing
+# python3.8 py-graph.py /home/opaweynch/.julia/environments/v1.6/dev/IICGP/results/2021-09-01T17:44:01.968_boxing
 
 if __name__ == "__main__":
 	exp_dir = sys.argv[1]
@@ -304,8 +307,6 @@ if __name__ == "__main__":
 
 	gdict = test_gdict()
 	print_gdict(gdict)
-
-	# print_gdict(gdict)
 
 	g, lab, col, pos = make_dualcgp_graph(gdict)
 	draw_graph(g, lab, col, pos, seed)
