@@ -4,7 +4,6 @@ import sys
 import os
 import networkx as nx
 import matplotlib.pyplot as plt
-# import random
 import yaml
 import PIL
 
@@ -17,14 +16,18 @@ CTR_INCR = 200 # increment for controller's nodes names
 OUT_INCR = 100 # increment for outputs's nodes names
 
 # Graph Layout
-INP_NODE_COLOR = "red"
+FRW_NODE_COLOR = "red"
+INP_NODE_COLOR = "green"
 INN_NODE_COLOR = "black"
 OUT_NODE_COLOR = "blue"
-POSITIONING = "dual" # circular spring dual
+POSITIONING = "single" # circular spring dual single
 MERGE_CONTROLLER_INPUT = False
-XLIM = 100
-YLIM = 100
-NODES_SPACING = 10
+FIGSIZE = (5, 5)
+XLIM, YLIM = 100, 100
+E_XLIM, E_YLIM = 100, 20
+C_XLIM, C_YLIM = 200, 200
+NODES_SIZE = 500
+NODES_SPACING = 20
 
 def str_to_tuple(s):
 	if s[0] == "(":
@@ -155,13 +158,15 @@ def merge_cinpos(pos, gdict):
 		pos[o] = refpos
 	return pos
 	
-def get_pos(G, gdict, seed, verbose=False):
+def get_pos(G, gdict, seed, key=None, verbose=False):
 	if POSITIONING == "spring":
 		pos = nx.spring_layout(G, seed=seed)
 	elif POSITIONING == "circular":
 		pos = nx.circular_layout(G)
 	elif POSITIONING == "dual":
 		pos = dual_pos(G, gdict)
+	elif POSITIONING == "single":
+		pos = single_pos(G, gdict, key)
 	else:
 		raise NameError(POSITIONING)
 	if MERGE_CONTROLLER_INPUT:
@@ -208,6 +213,25 @@ def dual_pos(G, gdict):
 	for i in range(len(c_out)):
 		pos[c_out[i]] = (c_xs[-1], c_out_ys[i])
 
+	return pos
+
+def single_pos(G, gdict, key):
+	g = gdict[key]
+	out = get_output_nodes_labels(G, g["outputs"])
+	mid = [n for n in g["buffer"].keys() if n not in g["inputs"]]
+	n_mid, n_inp, n_out = len(mid), len(g["inputs"]), len(g["outputs"])
+	d = NODES_SPACING
+	pos = {}
+	xs = [(x-0.5*(n_mid+1))*d for x in range(n_mid+2)]
+	inp_ys = [d*(y-(n_inp-1)/2) for y in range(n_inp)]
+	out_ys = [d*(y-(n_out-1)/2) for y in range(n_out)]
+	for i in range(len(g["inputs"])):
+		inp_y_i = inp_ys[i] if key == "encoder" else 5*d
+		pos[g["inputs"][i]] = (xs[0], inp_y_i)
+	for i in range(len(mid)):
+		pos[mid[i]] = (xs[i+1], 0.0)
+	for i in range(len(out)):
+		pos[out[i]] = (xs[-1], out_ys[i])
 	return pos
 	
 def get_output_nodes_labels(G, outputs):
@@ -287,34 +311,29 @@ def make_dualcgp_graph(gdict):
 	edgecolors = dualcgp_colors(G, gdict)
 	return G, edgelabels, edgecolors
 
-def draw_graph(G, edgelabels, edgecolors, pos):
-	#fig, ax = plt.subplots()
-	fig = plt.figure(figsize=(5,5))
-	ax = plt.subplot(111)
+def draw_graph(G, edgelabels, edgecolors, pos, ax, lim):
+	#fig = plt.figure(figsize=(5,5))
+	#ax = plt.subplot(111)
+	plt.sca(ax)
 	ax.set_aspect('equal')
-	ax.margins(0.20)
+	#ax.margins(0.20)
 	#ax.axis("off")
 	#plt.axis("off")
-	
-	plt.xlim(-XLIM, XLIM)
-	plt.ylim(-2.2*YLIM, 0.4*YLIM)
-	'''
-	plt.xlim(-2, 2)
-	plt.ylim(-2, 2)
-	'''	
+	plt.xlim(-lim[0],lim[0])
+	plt.ylim(-lim[1],lim[1])
 	
 	options = {
 		"with_labels": True,
 		"font_size": 10,
-		"node_size": 100,
+		"node_size": NODES_SIZE,
 		"node_shape": 'o', # s o
 		"node_color": "white",
 		"edgecolors": edgecolors,
 		"linewidths": 1,
 		"width": 1 # , "with_labels": True
 	}
-	nx.draw_networkx(G, pos, **options)
-	nx.draw_networkx_edge_labels(G, pos, edge_labels=edgelabels, font_color='black')
+	nx.draw_networkx(G, pos, **options, ax=ax)
+	nx.draw_networkx_edge_labels(G, pos, edge_labels=edgelabels, font_color='black', ax=ax)
 	
 	"""
 	# Transform from data coordinates (scaled between xlim and ylim) to display coordinates
@@ -335,7 +354,7 @@ def draw_graph(G, edgelabels, edgecolors, pos):
 			a.imshow(G.nodes[n]["buffer"])
 			a.axis("off")
 	"""
-	plt.show()
+	#plt.show()
 
 def show_img_buffer(gdict, elt="encoder", node=1):
 	image = gdict[elt]["buffer"][node]
@@ -355,6 +374,11 @@ def print_gdict(gdict):
 	print("\nmetadata:")
 	print(gdict["meta"])
 	print()
+	
+def forward_coloring(G, gdict, col):
+	print("TODO")
+	exit()
+	return col
 
 if __name__ == "__main__":
 	exp_dir = sys.argv[1]
@@ -371,19 +395,33 @@ if __name__ == "__main__":
 		if verbose:
 			print_gdict(gdict)
 
+		"""
+		fig, ax = plt.subplots(1, 1, figsize=FIGSIZE)
 		G, lab, col = make_dualcgp_graph(gdict)
 		pos = get_pos(G, gdict, seed, verbose=False)
-		draw_graph(G, lab, col, pos)
-
+		lim = (XLIM, YLIM)
+		draw_graph(G, lab, col, pos, ax[0], lim)
 		"""
+		
+		fig, ax = plt.subplots(2, 1, figsize=FIGSIZE)
+		for a in ax:
+			a.set_xticklabels([])
+			a.set_yticklabels([])
+			a.set_aspect('equal')
+		fig.tight_layout()
+		
 		G, lab, col = make_enco_graph(gdict)
-		pos = get_pos(G, gdict, seed, verbose=False)
-		draw_graph(G, lab, col, pos)
-
+		pos = get_pos(G, gdict, seed, key="encoder", verbose=False)
+		lim = (E_XLIM, E_YLIM)
+		draw_graph(G, lab, col, pos, ax[0], lim)
+		
 		G, lab, col = make_cont_graph(gdict)
-		pos = get_pos(G, gdict, seed, verbose=False)
-		draw_graph(G, lab, col, pos)
-		"""
+		pos = get_pos(G, gdict, seed, key="controller", verbose=False)
+		lim = (C_XLIM, C_YLIM)
+		draw_graph(G, lab, col, pos, ax[1], lim)
+		
+		plt.subplots_adjust(wspace=0, hspace=0)
+		plt.show()
 
 # python3.7 py-graph.py /home/wahara/.julia/dev/IICGP/results/2021-09-01T17:44:01.968_boxing
 # python3.8 py-graph.py /home/opaweynch/.julia/environments/v1.6/dev/IICGP/results/2021-09-01T17:44:01.968_boxing
