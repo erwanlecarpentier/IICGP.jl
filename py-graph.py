@@ -311,7 +311,7 @@ def make_dualcgp_graph(gdict):
 	edgecolors = dualcgp_colors(G, gdict)
 	return G, edgelabels, edgecolors
 
-def draw_graph(G, edgelabels, edgecolors, pos, ax, lim):
+def draw_graph(G, edgelabels, col, pos, ax, lim, edgecolors=None):
 	#fig = plt.figure(figsize=(5,5))
 	#ax = plt.subplot(111)
 	plt.sca(ax)
@@ -328,10 +328,12 @@ def draw_graph(G, edgelabels, edgecolors, pos, ax, lim):
 		"node_size": NODES_SIZE,
 		"node_shape": 'o', # s o
 		"node_color": "white",
-		"edgecolors": edgecolors,
+		"edgecolors": col,
 		"linewidths": 1,
 		"width": 1 # , "with_labels": True
 	}
+	if edgecolors is not None:
+		options["edge_color"] = edgecolors
 	nx.draw_networkx(G, pos, **options, ax=ax)
 	nx.draw_networkx_edge_labels(G, pos, edge_labels=edgelabels, font_color='black', ax=ax)
 	
@@ -375,10 +377,29 @@ def print_gdict(gdict):
 	print(gdict["meta"])
 	print()
 	
-def forward_coloring(G, gdict, col):
-	print("TODO")
-	exit()
-	return col
+def set_active_color(G, col, n):
+	index = list(G.nodes).index(n)
+	col[index] = FRW_NODE_COLOR
+	
+def set_active_edge_color(G, edges_col, e):
+	index = list(G.edges).index(e)
+	edges_col[index] = FRW_NODE_COLOR
+	
+def recur_active(G, col, edges_col, n):
+	set_active_color(G, col, n)
+	for e in G.in_edges(n):
+		set_active_edge_color(G, edges_col, e)
+		in_node = e[0]
+		recur_active(G, col, edges_col, in_node)
+
+def forward_coloring(G, gdict, col, key):
+	g = gdict[key]
+	a = gdict["meta"]["action"]
+	outputs = get_output_nodes_labels(G, g["outputs"])
+	active_output = outputs[a]
+	edges_col = len(G.edges) * ["black"]
+	recur_active(G, col, edges_col, outputs[a])
+	return col, edges_col
 
 if __name__ == "__main__":
 	exp_dir = sys.argv[1]
@@ -404,21 +425,21 @@ if __name__ == "__main__":
 		"""
 		
 		fig, ax = plt.subplots(2, 1, figsize=FIGSIZE)
-		for a in ax:
-			a.set_xticklabels([])
-			a.set_yticklabels([])
-			a.set_aspect('equal')
 		fig.tight_layout()
 		
+		key = "encoder"
 		G, lab, col = make_enco_graph(gdict)
-		pos = get_pos(G, gdict, seed, key="encoder", verbose=False)
+		pos = get_pos(G, gdict, seed, key=key, verbose=False)
+		# col, edgecolors = forward_coloring(G, gdict, col, key) # TODO pb
 		lim = (E_XLIM, E_YLIM)
-		draw_graph(G, lab, col, pos, ax[0], lim)
+		draw_graph(G, lab, col, pos, ax[0], lim) #, edgecolors=edgecolors)
 		
+		key = "controller"
 		G, lab, col = make_cont_graph(gdict)
-		pos = get_pos(G, gdict, seed, key="controller", verbose=False)
+		pos = get_pos(G, gdict, seed, key=key, verbose=False)
+		col, edgecolors = forward_coloring(G, gdict, col, key)
 		lim = (C_XLIM, C_YLIM)
-		draw_graph(G, lab, col, pos, ax[1], lim)
+		draw_graph(G, lab, col, pos, ax[1], lim, edgecolors=edgecolors)
 		
 		plt.subplots_adjust(wspace=0, hspace=0)
 		plt.show()
