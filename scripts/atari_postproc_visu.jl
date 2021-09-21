@@ -119,8 +119,8 @@ function visu_dualcgp_ingame(
 
     while ~game_over(g.ale)
         s = get_state(g, grayscale, downscale)
-        is_sticky = rand(mt) > stickiness
-        if is_sticky || frames == 1
+        is_sticky = rand(mt) < stickiness
+        if !is_sticky || frames == 1
             features, output = IICGP.process_f(enco, redu, cont, s)
             action = g.actions[argmax(output)]
         else
@@ -241,7 +241,7 @@ for i in eachindex(exp_dirs)
     # Launch python script
     if render_graph
         exp_dir = exp_dirs[i]
-        seed = 1256
+        seed = 1234
         run(`python3.8 py-graph.py $exp_dir $seed`)
     end
 end
