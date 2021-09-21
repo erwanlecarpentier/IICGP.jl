@@ -359,32 +359,31 @@ def print_gdict(gdict):
 if __name__ == "__main__":
 	exp_dir = sys.argv[1]
 	seed = 0 if (len(sys.argv) < 3) else int(sys.argv[2])
-
-	frame = 1
+	max_frame = 1
 	
 	paths = get_paths(exp_dir)
 	is_test = False
 	verbose = True
-
-	gdict = test_gdict() if is_test else gdict_from_paths(paths, frame)
-
-	if verbose:
-		print_gdict(gdict)
-
-	G, lab, col = make_dualcgp_graph(gdict)
-	pos = get_pos(G, gdict, seed, verbose=False)
 	
-	draw_graph(G, lab, col, pos)
+	for frame in range(1, max_frame + 1):
+		gdict = test_gdict() if is_test else gdict_from_paths(paths, frame)
 
-	"""
-	G, lab, col = make_enco_graph(gdict)
-	pos = get_pos(G, gdict, seed, verbose=False)
-	draw_graph(G, lab, col, pos)
+		if verbose:
+			print_gdict(gdict)
 
-	G, lab, col = make_cont_graph(gdict)
-	pos = get_pos(G, gdict, seed, verbose=False)
-	draw_graph(G, lab, col, pos)
-	"""
+		G, lab, col = make_dualcgp_graph(gdict)
+		pos = get_pos(G, gdict, seed, verbose=False)
+		draw_graph(G, lab, col, pos)
+
+		"""
+		G, lab, col = make_enco_graph(gdict)
+		pos = get_pos(G, gdict, seed, verbose=False)
+		draw_graph(G, lab, col, pos)
+
+		G, lab, col = make_cont_graph(gdict)
+		pos = get_pos(G, gdict, seed, verbose=False)
+		draw_graph(G, lab, col, pos)
+		"""
 
 # python3.7 py-graph.py /home/wahara/.julia/dev/IICGP/results/2021-09-01T17:44:01.968_boxing
 # python3.8 py-graph.py /home/opaweynch/.julia/environments/v1.6/dev/IICGP/results/2021-09-01T17:44:01.968_boxing
