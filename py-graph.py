@@ -13,9 +13,9 @@ import PIL
 DIR_PATH = os.path.dirname(os.path.realpath(__file__))
 IMG_EXT = ".png"
 IMG_TYPE = PIL.PngImagePlugin.PngImageFile
-INP_NODE_COLOR = "red"
+INP_NODE_COLOR = "black"
 INN_NODE_COLOR = "black"
-OUT_NODE_COLOR = "blue"
+OUT_NODE_COLOR = "black"
 CTR_INCR = 200 # increment for controller's nodes names
 OUT_INCR = 100 # increment for outputs's nodes names
 
@@ -96,7 +96,7 @@ def test_gdict():
 	gdict = {
 		'encoder': {
 			'nodes': [4, 5, 6],
-			'fs': ['f_compare', 'f_motion_tracking', 'f_dilate'],
+			'fs': ['f1', 'f2', 'f3'],
 			'n_in': 3,
 			'n_out': 2,
 			'inputs': [1, 2, 3],
@@ -115,7 +115,7 @@ def test_gdict():
 			'buffer': {1:0.0, 2:0.2, 3:0.3, 4:0.4, 5:0.5, 6:0.6, 7:0.7, 8:0.8, 9:0.9, 10:1.0}
 		},
 		'reducer': {'buffer': {4:red, 6:red}},
-		'meta': {'action':1, 'is_sticky': True}
+		'meta': {'action':1, 'is_sticky': False}
 	}
 	return gdict
 
@@ -149,7 +149,7 @@ def dualcgp_pos(gdict, out_incr=OUT_INCR):
 	c_n_mid, c_n_inp, c_n_out = len(c_mid), len(gc["inputs"]), len(gc["outputs"])
 	d = 2.0 # space between nodes
 	pos = {}
-	
+
 	# Encoder pos
 	e_xs = [(x-0.5*(e_n_mid+1))*d for x in range(e_n_mid+2)]
 	e_inp_ys = [d*(y-(e_n_inp-1)/2) for y in range(e_n_inp)]
@@ -160,19 +160,20 @@ def dualcgp_pos(gdict, out_incr=OUT_INCR):
 		pos[e_mid[i]] = (e_xs[i+1], 0.0)
 	for i in range(len(ge["outputs"])):
 		pos[ge["outputs"][i]+out_incr] = (e_xs[-1], e_out_ys[i])
-	
+
 	# Controller pos
 	y_drift = 0.5 * d * max(e_n_inp+c_n_inp, e_n_out+c_n_out)
 	c_xs = [(x-0.5*(c_n_mid+1))*d for x in range(c_n_mid+2)]
 	c_inp_ys = [d*(y-(c_n_inp-1)/2)-y_drift for y in range(c_n_inp)]
 	c_out_ys = [d*(y-(c_n_out-1)/2)-y_drift for y in range(c_n_out)]
 	for i in range(len(gc["inputs"])):
-		pos[gc["inputs"][i]] = (c_xs[0], c_inp_ys[i])
+		# pos[gc["inputs"][i]] = (c_xs[0], c_inp_ys[i])  # Equally spanned input
+		pos[gc["inputs"][i]] = (c_xs[0], d-y_drift)  # Single input node
 	for i in range(len(c_mid)):
 		pos[c_mid[i]] = (c_xs[i+1], -y_drift)
 	for i in range(len(gc["outputs"])):
 		pos[gc["outputs"][i]+out_incr] = (c_xs[-1], c_out_ys[i])
-	
+
 	return pos
 	
 def set_graph(G, g, gr=None, out_incr=OUT_INCR):
@@ -218,10 +219,15 @@ def make_dualcgp_graph(gdict, incr=CTR_INCR):
 	gc = incr_nodes(gdict["controller"], incr)
 	G = nx.DiGraph()
 	edgelabels, edgecolors = {}, []
+	
+	# Fetch encoder graph info
 	G, lab, _ = set_graph(G, ge, gdict["reducer"])
 	edgelabels.update(lab)
+	
+	# Fetch controller graph info
 	G, lab, _ = set_graph(G, gc)
 	edgelabels.update(lab)
+	
 	edgecolors = dualcgp_colors(G, gdict)
 	pos = dualcgp_pos(gdict)
 	return G, edgelabels, edgecolors, pos
@@ -238,16 +244,17 @@ def draw_graph(G, edgelabels, edgecolors, pos=None, seed=123):
 	fig = plt.figure(figsize=(5,5))
 	ax = plt.subplot(111)
 	ax.set_aspect('equal')
-	# ax.margins(0.20)
+	#ax.margins(0.20)
 	ax.axis("off")
 	plt.axis("off")
-	plt.xlim(-5,5)
-	plt.ylim(-5,5)
+	plt.xlim(-10,10)
+	plt.ylim(-15,5)
 	pos = nx.spring_layout(G, seed=seed) if pos is None else pos
 	options = {
+		"with_labels": True,
 		"font_size": 15,
-		# "node_size": 1000,
-		"node_shape": 's',
+		"node_size": 800,
+		"node_shape": 'o', # s o
 		"node_color": "white",
 		"edgecolors": edgecolors,
 		"linewidths": 1,
@@ -255,14 +262,15 @@ def draw_graph(G, edgelabels, edgecolors, pos=None, seed=123):
 	}
 	nx.draw_networkx(G, pos, **options)
 	nx.draw_networkx_edge_labels(G, pos, edge_labels=edgelabels, font_color='black')
-
+	
+	"""
 	# Transform from data coordinates (scaled between xlim and ylim) to display coordinates
 	tr_figure = ax.transData.transform
 	# Transform from display to figure coordinates
 	tr_axes = fig.transFigure.inverted().transform
 
 	# Select the size of the image (relative to the X axis)
-	img_size = (ax.get_xlim()[1] - ax.get_xlim()[0]) * 0.01
+	img_size = (ax.get_xlim()[1] - ax.get_xlim()[0]) * 0.002
 	img_center = img_size / 2.0
 
 	# Add the respective image to each node
@@ -273,7 +281,7 @@ def draw_graph(G, edgelabels, edgecolors, pos=None, seed=123):
 			a = plt.axes([xa - img_center, ya - img_center, img_size, img_size])
 			a.imshow(G.nodes[n]["buffer"])
 			a.axis("off")
-
+	"""
 	plt.show()
 
 def show_img_buffer(gdict, elt="encoder", node=1):
