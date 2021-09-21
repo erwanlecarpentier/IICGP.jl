@@ -183,8 +183,7 @@ def set_graph(G, g, gr=None, out_incr=OUT_INCR):
 
 	# Edges
 	G.add_edges_from(g["edges"])
-	print(g["edges"])
-	exit()
+	G.add_edges_from([(n,n+out_incr) for n in g["outputs"]])
 	edgelabels = {}
 	for e in g["edges"]:
 		dest_node = e[1]
@@ -296,9 +295,6 @@ def print_gdict(gdict):
 	print(gdict["meta"])
 	print()
 
-# python3.7 py-graph.py /home/wahara/.julia/dev/IICGP/results/2021-09-01T17:44:01.968_boxing
-# python3.8 py-graph.py /home/opaweynch/.julia/environments/v1.6/dev/IICGP/results/2021-09-01T17:44:01.968_boxing
-
 if __name__ == "__main__":
 	exp_dir = sys.argv[1]
 	seed = 0 if (len(sys.argv) < 3) else int(sys.argv[2])
@@ -319,4 +315,7 @@ if __name__ == "__main__":
 
 	# g, lab, col = make_single_graph(gdict["encoder"])
 	# draw_graph(g, lab, col, seed)
+
+# python3.7 py-graph.py /home/wahara/.julia/dev/IICGP/results/2021-09-01T17:44:01.968_boxing
+# python3.8 py-graph.py /home/opaweynch/.julia/environments/v1.6/dev/IICGP/results/2021-09-01T17:44:01.968_boxing
 
