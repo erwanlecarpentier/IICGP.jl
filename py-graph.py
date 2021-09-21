@@ -379,18 +379,21 @@ def print_gdict(gdict):
 	
 def set_active_color(G, col, n):
 	index = list(G.nodes).index(n)
+	already_colored = col[index] == FRW_NODE_COLOR
 	col[index] = FRW_NODE_COLOR
+	return already_colored
 	
 def set_active_edge_color(G, edges_col, e):
 	index = list(G.edges).index(e)
 	edges_col[index] = FRW_NODE_COLOR
 	
 def recur_active(G, col, edges_col, n):
-	set_active_color(G, col, n)
+	already_colored = set_active_color(G, col, n)
 	for e in G.in_edges(n):
 		set_active_edge_color(G, edges_col, e)
 		in_node = e[0]
-		recur_active(G, col, edges_col, in_node)
+		if not already_colored:
+			recur_active(G, col, edges_col, in_node)
 
 def forward_coloring(G, gdict, col, key):
 	g = gdict[key]
@@ -404,7 +407,7 @@ def forward_coloring(G, gdict, col, key):
 if __name__ == "__main__":
 	exp_dir = sys.argv[1]
 	seed = 0 if (len(sys.argv) < 3) else int(sys.argv[2])
-	max_frame = 1
+	max_frame = 3
 	
 	paths = get_paths(exp_dir)
 	is_test = False
