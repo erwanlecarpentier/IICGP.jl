@@ -161,7 +161,7 @@ def get_pos(G, gdict, seed, verbose=False):
 	elif POSITIONING == "circular":
 		pos = nx.circular_layout(G)
 	elif POSITIONING == "dual":
-		pos = dual_pos(gdict)
+		pos = dual_pos(G, gdict)
 	else:
 		raise NameError(POSITIONING)
 	if MERGE_CONTROLLER_INPUT:
@@ -172,17 +172,18 @@ def get_pos(G, gdict, seed, verbose=False):
 			print(k, v)
 	return pos
 
-def dual_pos(gdict):
+def dual_pos(G, gdict):
 	ge = gdict["encoder"]
 	gc = gdict["controller"]
+	e_out = get_output_nodes_labels(G, ge["outputs"])
+	c_out = get_output_nodes_labels(G, gc["outputs"])
 	e_mid = [n for n in ge["buffer"].keys() if n not in ge["inputs"]]
 	c_mid = [n for n in gc["buffer"].keys() if n not in gc["inputs"]]
 	e_n_mid, e_n_inp, e_n_out = len(e_mid), len(ge["inputs"]), len(ge["outputs"])
 	c_n_mid, c_n_inp, c_n_out = len(c_mid), len(gc["inputs"]), len(gc["outputs"])
 	d = NODES_SPACING
-	out_incr = OUT_INCR
 	pos = {}
-
+	
 	# Encoder pos
 	e_xs = [(x-0.5*(e_n_mid+1))*d for x in range(e_n_mid+2)]
 	e_inp_ys = [d*(y-(e_n_inp-1)/2) for y in range(e_n_inp)]
@@ -191,8 +192,8 @@ def dual_pos(gdict):
 		pos[ge["inputs"][i]] = (e_xs[0], e_inp_ys[i])
 	for i in range(len(e_mid)):
 		pos[e_mid[i]] = (e_xs[i+1], 0.0)
-	for i in range(len(ge["outputs"])):
-		pos[ge["outputs"][i]+out_incr] = (e_xs[-1], e_out_ys[i])
+	for i in range(len(e_out)):
+		pos[e_out[i]] = (e_xs[-1], e_out_ys[i])
 
 	# Controller pos
 	y_drift = 0.6 * d * (e_n_out+c_n_out) # max(e_n_inp+c_n_inp, e_n_out+c_n_out)
@@ -204,20 +205,30 @@ def dual_pos(gdict):
 		pos[gc["inputs"][i]] = (c_xs[0], 5*d-y_drift)  # Single input node
 	for i in range(len(c_mid)):
 		pos[c_mid[i]] = (c_xs[i+1], -y_drift)
-	for i in range(len(gc["outputs"])):
-		pos[gc["outputs"][i]+out_incr] = (c_xs[-1], c_out_ys[i])
+	for i in range(len(c_out)):
+		pos[c_out[i]] = (c_xs[-1], c_out_ys[i])
 
 	return pos
 	
-def set_graph(G, g, gr=None, out_incr=OUT_INCR):
+def get_output_nodes_labels(G, outputs):
+	out = []
+	for i in range(len(outputs)):
+		out_i = outputs[i] + OUT_INCR
+		while out_i in out:
+			out_i += 1
+		out.append(out_i)
+	return out
+	
+def set_graph(G, g, gr=None):
 	# Nodes
 	G.add_nodes_from(g["buffer"].keys())
-	output_nodes = [n+out_incr for n in g["outputs"]]
+	output_nodes = get_output_nodes_labels(G, g["outputs"])
 	G.add_nodes_from(output_nodes)
 
 	# Edges
 	G.add_edges_from(g["edges"])
-	G.add_edges_from([(n,n+out_incr) for n in g["outputs"]])
+	for i in range(len(output_nodes)):
+		G.add_edge(g["outputs"][i], output_nodes[i])
 	edgelabels = {}
 	for e in g["edges"]:
 		dest_node = e[1]
@@ -290,11 +301,10 @@ def draw_graph(G, edgelabels, edgecolors, pos):
 	'''
 	plt.xlim(-2, 2)
 	plt.ylim(-2, 2)
-	'''
-	
+	'''	
 	
 	options = {
-		"with_labels": False,
+		"with_labels": True,
 		"font_size": 10,
 		"node_size": 100,
 		"node_shape": 'o', # s o
@@ -363,8 +373,10 @@ if __name__ == "__main__":
 
 	G, lab, col = make_dualcgp_graph(gdict)
 	pos = get_pos(G, gdict, seed, verbose=False)
+	
 	draw_graph(G, lab, col, pos)
 
+	"""
 	G, lab, col = make_enco_graph(gdict)
 	pos = get_pos(G, gdict, seed, verbose=False)
 	draw_graph(G, lab, col, pos)
@@ -372,9 +384,7 @@ if __name__ == "__main__":
 	G, lab, col = make_cont_graph(gdict)
 	pos = get_pos(G, gdict, seed, verbose=False)
 	draw_graph(G, lab, col, pos)
-
-	#g, lab, col = make_single_graph(gdict["encoder"])
-	#draw_graph(g, lab, col, seed)
+	"""
 
 # python3.7 py-graph.py /home/wahara/.julia/dev/IICGP/results/2021-09-01T17:44:01.968_boxing
 # python3.8 py-graph.py /home/opaweynch/.julia/environments/v1.6/dev/IICGP/results/2021-09-01T17:44:01.968_boxing
