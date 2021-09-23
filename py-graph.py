@@ -366,7 +366,7 @@ def show_img_buffer(gdict, elt="encoder", node=1):
 	image.show()
 
 def print_gdict(gdict):
-	print("\nLoaded graph dict:")
+	print("\nLoaded gdict:")
 	print("\nencoder:")
 	print(gdict["encoder"])
 	print("\nreducer:")
@@ -377,37 +377,38 @@ def print_gdict(gdict):
 	print(gdict["meta"])
 	print()
 	
-def set_active_color(G, col, n):
+def set_active_color(G, nodes_col, n):
 	index = list(G.nodes).index(n)
-	already_colored = col[index] == FRW_NODE_COLOR
-	col[index] = FRW_NODE_COLOR
-	return already_colored
+	is_already_colored = nodes_col[index] == FRW_NODE_COLOR
+	nodes_col[index] = FRW_NODE_COLOR
+	return is_already_colored
 	
 def set_active_edge_color(G, edges_col, e):
 	index = list(G.edges).index(e)
 	edges_col[index] = FRW_NODE_COLOR
 	
-def recur_active(G, col, edges_col, n):
-	already_colored = set_active_color(G, col, n)
+def recur_active(G, nodes_col, edges_col, n):
+	is_already_colored = set_active_color(G, nodes_col, n)
 	for e in G.in_edges(n):
-		set_active_edge_color(G, edges_col, e)
-		in_node = e[0]
-		if not already_colored:
-			recur_active(G, col, edges_col, in_node)
+		set_active_edge_color(G, edges_col, e) # Color all incoming edges
+		input_node = e[0]
+		if not is_already_colored:
+			recur_active(G, nodes_col, edges_col, input_node)
 
-def forward_coloring(G, gdict, col, key):
+def forward_coloring(G, gdict, nodes_col, key):
 	g = gdict[key]
-	a = gdict["meta"]["action"]
+	action = gdict["meta"]["action"]
+	is_sticky = gdict["meta"]["is_sticky"]
 	outputs = get_output_nodes_labels(G, g["outputs"])
-	active_output = outputs[a]
-	edges_col = len(G.edges) * ["black"]
-	recur_active(G, col, edges_col, outputs[a])
-	return col, edges_col
+	active_output = outputs[action]
+	edges_col = len(G.edges) * ["black"] # Init black edges
+	recur_active(G, nodes_col, edges_col, active_output)
+	return nodes_col, edges_col
 
 if __name__ == "__main__":
 	exp_dir = sys.argv[1]
 	seed = 0 if (len(sys.argv) < 3) else int(sys.argv[2])
-	max_frame = 3
+	max_frame = 1
 	
 	paths = get_paths(exp_dir)
 	is_test = False
@@ -433,16 +434,16 @@ if __name__ == "__main__":
 		key = "encoder"
 		G, lab, col = make_enco_graph(gdict)
 		pos = get_pos(G, gdict, seed, key=key, verbose=False)
-		# col, edgecolors = forward_coloring(G, gdict, col, key) # TODO pb
+		# col, edgecolors = forward_coloring(G, gdict, col, key)
 		lim = (E_XLIM, E_YLIM)
 		draw_graph(G, lab, col, pos, ax[0], lim) #, edgecolors=edgecolors)
 		
 		key = "controller"
 		G, lab, col = make_cont_graph(gdict)
 		pos = get_pos(G, gdict, seed, key=key, verbose=False)
-		col, edgecolors = forward_coloring(G, gdict, col, key)
+		nodescolors, edgecolors = forward_coloring(G, gdict, col, key)
 		lim = (C_XLIM, C_YLIM)
-		draw_graph(G, lab, col, pos, ax[1], lim, edgecolors=edgecolors)
+		draw_graph(G, lab, nodescolors, pos, ax[1], lim, edgecolors=edgecolors)
 		
 		plt.subplots_adjust(wspace=0, hspace=0)
 		plt.show()
