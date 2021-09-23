@@ -342,7 +342,6 @@ def draw_graph(G, edgelabels, col, pos, ax, lim, edgecolors=None):
 	nx.draw_networkx(G, pos, **options, ax=ax)
 	nx.draw_networkx_edge_labels(G, pos, edge_labels=edgelabels, font_color='black', ax=ax)
 	
-	"""
 	# Transform from data coordinates (scaled between xlim and ylim) to display coordinates
 	tr_figure = ax.transData.transform
 	# Transform from display to figure coordinates
@@ -360,7 +359,7 @@ def draw_graph(G, edgelabels, col, pos, ax, lim, edgecolors=None):
 			a = plt.axes([xa - img_center, ya - img_center, img_size, img_size])
 			a.imshow(G.nodes[n]["buffer"])
 			a.axis("off")
-	"""
+	
 	#plt.show()
 
 def show_img_buffer(gdict, elt="encoder", node=1):
@@ -488,7 +487,7 @@ if __name__ == "__main__":
 		pos = get_pos(G, gdict, seed, key=key, verbose=False)
 		nodescolors, edgecolors = forward_coloring(G, gdict, nodescolors, key)
 		lim = (E_XLIM, E_YLIM)
-		draw_graph(G, lab, nodescolors, pos, ax[0], lim) #, edgecolors=edgecolors)
+		draw_graph(G, lab, nodescolors, pos, ax[0], lim, edgecolors=edgecolors)
 		
 		# Print with active inputs
 		print_gdict(gdict)
