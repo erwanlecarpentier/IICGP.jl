@@ -2,10 +2,13 @@
 
 import sys
 import os
+import numpy as np
 import networkx as nx
 import matplotlib.pyplot as plt
 import yaml
 import PIL
+import matplotlib.animation as animation
+from matplotlib.widgets import Slider
 
 
 # Meta parameters
@@ -425,6 +428,16 @@ def clear_input(G, gdict):
 	remove = gdict["controller"]["inputs"]
 	G.remove_nodes_from(remove)
 
+"""
+def update(val):
+	# amp is the current value of the slider
+	frame = sld.val
+	# update curve
+	l.set_ydata(frame*np.sin(t))
+	# redraw canvas while idle
+	fig.canvas.draw_idle()
+"""
+
 if __name__ == "__main__":
 	exp_dir = sys.argv[1]
 	seed = 0 if (len(sys.argv) < 3) else int(sys.argv[2])
@@ -448,23 +461,30 @@ if __name__ == "__main__":
 		fig, ax = plt.subplots(2, 1, figsize=FIGSIZE)
 		fig.tight_layout()
 
+		# Controller
+		key = "controller"
+		G, lab, col = make_cont_graph(gdict)
+		pos = get_pos(G, gdict, seed, key=key, verbose=False)
+		nodescolors, edgecolors = forward_coloring(G, gdict, col, key)
+		lim = (C_XLIM, C_YLIM)
+		draw_graph(G, lab, nodescolors, pos, ax[1], lim, edgecolors=edgecolors)
+
+		# Encoder
 		key = "encoder"
 		G, lab, col = make_enco_graph(gdict)
 		pos = get_pos(G, gdict, seed, key=key, verbose=False)
 		# col, edgecolors = forward_coloring(G, gdict, col, key)
 		lim = (E_XLIM, E_YLIM)
 		draw_graph(G, lab, col, pos, ax[0], lim) #, edgecolors=edgecolors)
-
-		key = "controller"
-		G, lab, col = make_cont_graph(gdict)
-		pos = get_pos(G, gdict, seed, key=key, verbose=False)
-		nodescolors, edgecolors = forward_coloring(G, gdict, col, key)
-		# draw_input(G, gdict)
-		lim = (C_XLIM, C_YLIM)
-		draw_graph(G, lab, nodescolors, pos, ax[1], lim, edgecolors=edgecolors)
 		
 		# Print with active inputs
 		print_gdict(gdict)
+		
+		"""
+		sldax = plt.axes([0.25, .03, 0.50, 0.02])
+		sld = Slider(ax=sldax, label="Frame", valmin=1, valmax=max_frame, valinit=1, valstep=1)
+		sld.on_changed(update)
+		"""
 
 		plt.subplots_adjust(wspace=0, hspace=0)
 		plt.show()
