@@ -190,6 +190,12 @@ p21049le: space_invaders private_eye
 
 Setting A
 
+## 2021-09-23 (TODO: confirm launch date and retrieve results)
+
+lecarpen: asteroids breakout
+
+Setting A
+
 # Julia Install
 
 - Activate `.`, `instantiate`, `update`, `precompile`, `resolve`

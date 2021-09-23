@@ -15,7 +15,7 @@
 CMD_PREFIX="atari_"
 CFGS=("cfg/dualcgp_atari_pooling.yaml" "cfg/dualcgp_atari_centroid.yaml") # WARNING: sync with REDS
 REDS=("pooling_" "centroid_") # WARNING: sync with CFGS
-GAMES="space_invaders private_eye"
+GAMES="asteroids breakout"
 SCRIPT="scripts/atari_dualcgp.jl"
 PROJECT="$PWD"
 N_THREADS="25"
