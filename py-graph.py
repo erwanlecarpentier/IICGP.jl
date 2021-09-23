@@ -364,15 +364,26 @@ def show_img_buffer(gdict, elt="encoder", node=1):
 	print(image.mode)
 	print(image.size)
 	image.show()
+	
+def print_inddict(g, verbose=True):
+	spacing = "  "
+	if verbose:
+		for k, v in g.items():
+			print(spacing, k, ":", v)
+	else:
+		for k in ["inputs", "nodes", "outputs"]:
+			print(spacing, k, ":", g[k])
 
 def print_gdict(gdict):
 	print("\nLoaded gdict:")
 	print("\nencoder:")
-	print(gdict["encoder"])
+	#print(gdict["encoder"])
+	print_inddict(gdict["encoder"])
 	print("\nreducer:")
 	print(gdict["reducer"])
 	print("\ncontroller:")
-	print(gdict["controller"])
+	#print(gdict["controller"])
+	print_inddict(gdict["controller"])
 	print("\nmetadata:")
 	print(gdict["meta"])
 	print()
@@ -387,13 +398,16 @@ def set_active_edge_color(G, edges_col, e):
 	index = list(G.edges).index(e)
 	edges_col[index] = FRW_NODE_COLOR
 	
-def recur_active(G, nodes_col, edges_col, n):
+def recur_active(G, g, nodes_col, edges_col, n, active_inputs):
+	if n in g["inputs"]:
+		index = g["inputs"].index(n)
+		active_inputs[index] = True
 	is_already_colored = set_active_color(G, nodes_col, n)
 	for e in G.in_edges(n):
 		set_active_edge_color(G, edges_col, e) # Color all incoming edges
 		input_node = e[0]
 		if not is_already_colored:
-			recur_active(G, nodes_col, edges_col, input_node)
+			recur_active(G, g, nodes_col, edges_col, input_node, active_inputs)
 
 def forward_coloring(G, gdict, nodes_col, key):
 	g = gdict[key]
@@ -401,24 +415,27 @@ def forward_coloring(G, gdict, nodes_col, key):
 	is_sticky = gdict["meta"]["is_sticky"]
 	outputs = get_output_nodes_labels(G, g["outputs"])
 	active_output = outputs[action]
+	active_inputs = len(g["inputs"]) * [False]
 	edges_col = len(G.edges) * ["black"] # Init black edges
-	recur_active(G, nodes_col, edges_col, active_output)
+	recur_active(G, g, nodes_col, edges_col, active_output, active_inputs)
+	gdict[key]["active_inputs"] = active_inputs
 	return nodes_col, edges_col
+	
+def clear_input(G, gdict):
+	remove = gdict["controller"]["inputs"]
+	G.remove_nodes_from(remove)
 
 if __name__ == "__main__":
 	exp_dir = sys.argv[1]
 	seed = 0 if (len(sys.argv) < 3) else int(sys.argv[2])
 	max_frame = 1
-	
+
 	paths = get_paths(exp_dir)
 	is_test = False
 	verbose = True
-	
+
 	for frame in range(1, max_frame + 1):
 		gdict = test_gdict() if is_test else gdict_from_paths(paths, frame)
-
-		if verbose:
-			print_gdict(gdict)
 
 		"""
 		fig, ax = plt.subplots(1, 1, figsize=FIGSIZE)
@@ -427,24 +444,28 @@ if __name__ == "__main__":
 		lim = (XLIM, YLIM)
 		draw_graph(G, lab, col, pos, ax[0], lim)
 		"""
-		
+
 		fig, ax = plt.subplots(2, 1, figsize=FIGSIZE)
 		fig.tight_layout()
-		
+
 		key = "encoder"
 		G, lab, col = make_enco_graph(gdict)
 		pos = get_pos(G, gdict, seed, key=key, verbose=False)
 		# col, edgecolors = forward_coloring(G, gdict, col, key)
 		lim = (E_XLIM, E_YLIM)
 		draw_graph(G, lab, col, pos, ax[0], lim) #, edgecolors=edgecolors)
-		
+
 		key = "controller"
 		G, lab, col = make_cont_graph(gdict)
 		pos = get_pos(G, gdict, seed, key=key, verbose=False)
 		nodescolors, edgecolors = forward_coloring(G, gdict, col, key)
+		# draw_input(G, gdict)
 		lim = (C_XLIM, C_YLIM)
 		draw_graph(G, lab, nodescolors, pos, ax[1], lim, edgecolors=edgecolors)
 		
+		# Print with active inputs
+		print_gdict(gdict)
+
 		plt.subplots_adjust(wspace=0, hspace=0)
 		plt.show()
 
