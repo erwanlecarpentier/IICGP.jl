@@ -5,6 +5,7 @@ import os
 import numpy as np
 import networkx as nx
 import matplotlib.pyplot as plt
+import math
 import yaml
 import PIL
 import matplotlib.animation as animation
@@ -17,6 +18,7 @@ IMG_EXT = ".png"
 IMG_TYPE = PIL.PngImagePlugin.PngImageFile
 CTR_INCR = 200 # increment for controller's nodes names
 OUT_INCR = 100 # increment for outputs's nodes names
+FEATURE_SIZE = 25 # 5*5 mean-pooling features
 
 # Graph Layout
 FRW_NODE_COLOR = "red"
@@ -391,38 +393,48 @@ def print_gdict(gdict):
 	print(gdict["meta"])
 	print()
 	
-def set_active_color(G, nodes_col, n):
+def set_active_color(G, nodescolors, n):
 	index = list(G.nodes).index(n)
-	is_already_colored = nodes_col[index] == FRW_NODE_COLOR
-	nodes_col[index] = FRW_NODE_COLOR
+	is_already_colored = nodescolors[index] == FRW_NODE_COLOR
+	nodescolors[index] = FRW_NODE_COLOR
 	return is_already_colored
 	
-def set_active_edge_color(G, edges_col, e):
+def set_active_edge_color(G, edgescolors, e):
 	index = list(G.edges).index(e)
-	edges_col[index] = FRW_NODE_COLOR
+	edgescolors[index] = FRW_NODE_COLOR
 	
-def recur_active(G, g, nodes_col, edges_col, n, active_inputs):
+def recur_active(G, g, nodescolors, edgescolors, n, active_inputs):
 	if n in g["inputs"]:
 		index = g["inputs"].index(n)
 		active_inputs[index] = True
-	is_already_colored = set_active_color(G, nodes_col, n)
+	is_already_colored = set_active_color(G, nodescolors, n)
 	for e in G.in_edges(n):
-		set_active_edge_color(G, edges_col, e) # Color all incoming edges
+		set_active_edge_color(G, edgescolors, e) # Color all incoming edges
 		input_node = e[0]
 		if not is_already_colored:
-			recur_active(G, g, nodes_col, edges_col, input_node, active_inputs)
+			recur_active(G, g, nodescolors, edgescolors, input_node, active_inputs)
 
-def forward_coloring(G, gdict, nodes_col, key):
+def forward_coloring(G, gdict, nodescolors, key):
 	g = gdict[key]
-	action = gdict["meta"]["action"]
-	is_sticky = gdict["meta"]["is_sticky"]
-	outputs = get_output_nodes_labels(G, g["outputs"])
-	active_output = outputs[action]
+	edgescolors = len(G.edges) * ["black"] # Init black edges
 	active_inputs = len(g["inputs"]) * [False]
-	edges_col = len(G.edges) * ["black"] # Init black edges
-	recur_active(G, g, nodes_col, edges_col, active_output, active_inputs)
-	gdict[key]["active_inputs"] = active_inputs
-	return nodes_col, edges_col
+	if key == "controller":
+		action = gdict["meta"]["action"]
+		is_sticky = gdict["meta"]["is_sticky"]
+		outputs = get_output_nodes_labels(G, g["outputs"])
+		active_output = outputs[action]
+		recur_active(G, g, nodescolors, edgescolors, active_output, active_inputs)
+		gdict[key]["active_inputs"] = active_inputs
+	else:
+		cont_active_inputs = gdict["controller"]["active_inputs"]
+		outputs = get_output_nodes_labels(G, g["outputs"])
+		if sum(cont_active_inputs) > 0: # Some controller input are active
+			# Iterate over index of active nodes in controller input
+			for index in [i for i, e in enumerate(cont_active_inputs) if e]:
+				enco_out_index = math.floor(index / FEATURE_SIZE)
+				active_output = outputs[enco_out_index]
+				recur_active(G, g, nodescolors, edgescolors, active_output, active_inputs)
+	return nodescolors, edgescolors
 	
 def clear_input(G, gdict):
 	remove = gdict["controller"]["inputs"]
@@ -460,22 +472,23 @@ if __name__ == "__main__":
 
 		fig, ax = plt.subplots(2, 1, figsize=FIGSIZE)
 		fig.tight_layout()
+		
 
 		# Controller
 		key = "controller"
-		G, lab, col = make_cont_graph(gdict)
+		G, lab, nodescolors = make_cont_graph(gdict)
 		pos = get_pos(G, gdict, seed, key=key, verbose=False)
-		nodescolors, edgecolors = forward_coloring(G, gdict, col, key)
+		nodescolors, edgecolors = forward_coloring(G, gdict, nodescolors, key)
 		lim = (C_XLIM, C_YLIM)
 		draw_graph(G, lab, nodescolors, pos, ax[1], lim, edgecolors=edgecolors)
 
 		# Encoder
 		key = "encoder"
-		G, lab, col = make_enco_graph(gdict)
+		G, lab, nodescolors = make_enco_graph(gdict)
 		pos = get_pos(G, gdict, seed, key=key, verbose=False)
-		# col, edgecolors = forward_coloring(G, gdict, col, key)
+		nodescolors, edgecolors = forward_coloring(G, gdict, nodescolors, key)
 		lim = (E_XLIM, E_YLIM)
-		draw_graph(G, lab, col, pos, ax[0], lim) #, edgecolors=edgecolors)
+		draw_graph(G, lab, nodescolors, pos, ax[0], lim) #, edgecolors=edgecolors)
 		
 		# Print with active inputs
 		print_gdict(gdict)
