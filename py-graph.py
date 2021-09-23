@@ -13,6 +13,7 @@ from matplotlib.widgets import Slider
 
 
 # Meta parameters
+SEED = 1234
 DIR_PATH = os.path.dirname(os.path.realpath(__file__))
 IMG_EXT = ".png"
 IMG_TYPE = PIL.PngImagePlugin.PngImageFile
@@ -25,14 +26,16 @@ FRW_NODE_COLOR = "red"
 INP_NODE_COLOR = "green"
 INN_NODE_COLOR = "black"
 OUT_NODE_COLOR = "blue"
-POSITIONING = "single" # circular spring dual single
+POSITIONING = "spring" # circular spring dual single
 MERGE_CONTROLLER_INPUT = False
+WITH_LABELS = False
 FIGSIZE = (5, 5)
 XLIM, YLIM = 100, 100
-E_XLIM, E_YLIM = 100, 20
-C_XLIM, C_YLIM = 200, 200
-NODES_SIZE = 500
-NODES_SPACING = 20
+E_XLIM, E_YLIM = 1, 1
+C_XLIM, C_YLIM = 1, 1
+IMG_SIZE_PROPORTION = 0.01
+NODES_SIZE = 30
+NODES_SPACING = 1
 
 def str_to_tuple(s):
 	if s[0] == "(":
@@ -328,7 +331,7 @@ def draw_graph(G, edgelabels, col, pos, ax, lim, edgecolors=None):
 	plt.ylim(-lim[1],lim[1])
 	
 	options = {
-		"with_labels": True,
+		"with_labels": WITH_LABELS,
 		"font_size": 10,
 		"node_size": NODES_SIZE,
 		"node_shape": 'o', # s o
@@ -348,7 +351,7 @@ def draw_graph(G, edgelabels, col, pos, ax, lim, edgecolors=None):
 	tr_axes = fig.transFigure.inverted().transform
 
 	# Select the size of the image (relative to the X axis)
-	img_size = (ax.get_xlim()[1] - ax.get_xlim()[0]) * 0.002
+	img_size = (ax.get_xlim()[1] - ax.get_xlim()[0]) * IMG_SIZE_PROPORTION
 	img_center = img_size / 2.0
 
 	# Add the respective image to each node
@@ -452,6 +455,7 @@ def update(val):
 if __name__ == "__main__":
 	exp_dir = sys.argv[1]
 	seed = 0 if (len(sys.argv) < 3) else int(sys.argv[2])
+	seed = SEED # Bypass arg
 	max_frame = 1
 
 	paths = get_paths(exp_dir)
