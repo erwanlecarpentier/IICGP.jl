@@ -87,6 +87,46 @@ function save_metadata(metadata::Dict, dir::String, frame::Int64)
     YAML.write_file(fname, metadata)
 end
 
+function get_metadata(
+    action::T,
+    is_sticky::Bool,
+    c_activated::Vector{Any}
+) where {T <: Union{Int32, Int64}}
+    metadata = Dict(
+        "action"=>action,
+        "is_sticky"=>is_sticky,
+        "c_activated"=>c_activated
+    )
+    metadata
+end
+
+function recur_activated!(ind, n, activated)
+    if !activated[n] # first time seeing this node
+        activated[n] = true
+        is_input = ind.nodes[n].f == CartesianGeneticProgramming.f_null
+        if !is_input
+            recur_activated!(ind, ind.nodes[n].x, activated)
+            fname = String(Symbol(ind.nodes[n].f))
+            arity = IICGP.CGPFunctions.arity[fname]
+            if arity > 1
+                recur_activated!(ind, ind.nodes[n].y, activated)
+            end
+        end
+    end
+end
+
+function find_activated_nodes(ind, chosen_output)
+    activated = falses(length(ind.nodes))
+    recur_activated!(ind, chosen_output, activated)
+    activated_nodes = []
+    for i in eachindex(activated)
+        if activated[i]
+            push!(activated_nodes, i)
+        end
+    end
+    activated_nodes
+end
+
 function visu_dualcgp_ingame(
     enco::CGPInd,
     redu::Reducer,
@@ -109,6 +149,7 @@ function visu_dualcgp_ingame(
     reward = 0.0
     frames = 1
     prev_action = 0
+    prev_chosen_output = 1
     features = Vector{Matrix{Float64}}()
     active = [enco.nodes[i].active for i in eachindex(enco.nodes)]
 
@@ -122,14 +163,22 @@ function visu_dualcgp_ingame(
         is_sticky = rand(mt) < stickiness
         if !is_sticky || frames == 1
             features, output = IICGP.process_f(enco, redu, cont, s)
-            action = g.actions[argmax(output)]
+            chosen_output = argmax(output)
+            action = g.actions[chosen_output]
         else
+            chosen_output = prev_chosen_output
             action = prev_action
         end
 
+        # Scan which nodes were activated
+        #e_activated = falses(length(enco.nodes))
+        #e_activated = CartesianGeneticProgramming.recur_active(
+        #    e_activated, enco.n_in, outputs[i] - n, xs, ys, fs, cfg.two_arity)
+        c_activated = find_activated_nodes(cont, chosen_output)
+
         # Saving
         if do_save
-            metadata = Dict("action"=>action, "is_sticky"=>is_sticky)
+            metadata = get_metadata(action, is_sticky, c_activated)
             save_metadata(metadata, buffer_path, frames)
             # save_state(s, buffer_path, frames)
             save_enco_buffer(enco, buffer_path, frames)
@@ -149,6 +198,8 @@ function visu_dualcgp_ingame(
 
         reward += act(g.ale, action)
         frames += 1
+        action = prev_action
+        chosen_output = prev_chosen_output
         if frames > max_frames
             break
         end
@@ -230,10 +281,43 @@ games = ["boxing"] # ["freeway"]  # pong kung_fu_master freeway assault
 reducers = ["pooling"] # Array{String,1}() # ["pooling"]
 exp_dirs, games = get_exp_dir(min_date=min_date, max_date=max_date, games=games,
                               reducers=reducers)
-max_frames = 3
+max_frames = 1
 render_graph = false
 
-# exp_dir, game = exp_dirs[i], games[i]
+#=
+i = 1
+exp_dir, game = exp_dirs[i], games[i]
+cfg = cfg_from_exp_dir(exp_dir)
+seed = cfg["seed"]
+stickiness = cfg["stickiness"]
+grayscale = cfg["grayscale"]
+downscale = cfg["downscale"]
+is_dualcgp = haskey(cfg, "encoder")
+enco, redu, cont = get_last_dualcgp(exp_dir, game, cfg)
+
+Random.seed!(seed)
+mt = MersenneTwister(seed)
+g = Game(game, seed)
+img_size = size(get_state(g, grayscale, downscale)[1])
+IICGP.reset!(redu) # zero the buffers
+reward = 0.0
+frames = 1
+prev_action = 0
+prev_chosen_output = 1
+features = Vector{Matrix{Float64}}()
+active = [enco.nodes[i].active for i in eachindex(enco.nodes)]
+
+s = get_state(g, grayscale, downscale)
+is_sticky = rand(mt) < stickiness
+if !is_sticky || frames == 1
+    features, output = IICGP.process_f(enco, redu, cont, s)
+    chosen_output = argmax(output)
+    action = g.actions[chosen_output]
+else
+    chosen_output = prev_chosen_output
+    action = prev_action
+end
+=#
 
 for i in eachindex(exp_dirs)
     # Generate images (may display / save)

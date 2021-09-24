@@ -1,2 +1,4 @@
 action: 1
 is_sticky: false
+c_activated:
+  - 2

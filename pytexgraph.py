@@ -236,11 +236,13 @@ def appendnodes(ts, gdict, expdir):
 		nodename = getnodename(node)
 		pos = getpos(nodename, expdir)
 		nodecontent = "\includegraphics[width=1cm]{"+g["buffer"][node]+"}"
+		# nodecontent = nodename
 		ts.append("\\node["+NDSETTING+"] ("+nodename+") at ("+pos+") {"+nodecontent+"};")
 	for node in g["outputs"]:
 		nodename = getnodename(node, True)
 		pos = getpos(nodename, expdir)
 		nodecontent = "\includegraphics[width=1cm]{"+gdict["reducer"]["buffer"][node]+"}"
+		# nodecontent = nodename
 		ts.append("\\node["+NDSETTING+"] ("+nodename+") at ("+pos+") {"+nodecontent+"};")
 		
 def appendedges(ts, gdict):
