@@ -40,7 +40,7 @@ NODES_SPACING = 1
 NDSETTING = "shape=circle, draw=black"
 
 POS = {
-	"2021-09-01T17:44:01.968_boxing": {
+	"2021-09-01T17:44:01.968_boxin": {
 		"11": (0, 0),
 		"9": (1, 0),
 		"3": (2, 0),
@@ -239,7 +239,7 @@ def getpos(nodename, expdir):
 	if expdir in list(POS.keys()):
 		pos = POS[expdir][nodename]
 	else:
-		pos = (random.random(),random.random())
+		pos = (5*random.random(),5*random.random())
 	return str(pos[0])+","+str(pos[1])
 	
 def appendnodes(ts, gdict, expdir):
@@ -265,13 +265,13 @@ def create_texscript(gdict, paths):
 	# TODO rm START
 	for l in ts:
 		print(l)
-	#exit()
+	exit()
 	# TODO rm END
 	return ts
 	
 def build(texscript, paths, frame):
 	savedir = paths["meta"]
-	fname = "1_enco_graph"
+	fname = "1_graph" # TODO differentiate for controller
 	texsavepath = savedir + fname + ".tex"
 	with open(texsavepath, 'w') as f:
 		for line in texscript:
@@ -297,6 +297,7 @@ if __name__ == "__main__":
 	exp_dir = sys.argv[1]
 	max_frame = 1
 	paths = get_paths(exp_dir)
+	random.seed(SEED)
 
 	for frame in range(1, max_frame + 1):
 		make_graph(paths, frame)
