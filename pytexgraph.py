@@ -46,10 +46,10 @@ POS = {
 		"9": (3, 2),
 		"11": (5.5, 2),
 		"14": (8.5, 2),
-		"1": (0, 0),
-		"2": (3, 0.5),
-		"4": (3, -0.5),
-		"6": (5.5, 0),
+		"1": (-1, 0),
+		"2": (1, 0.5),
+		"4": (1, -0.5),
+		"6": (3, 0),
 		"out6": (10, 0),
 		"out14": (10, 2),
 	}
@@ -236,7 +236,7 @@ def appendnodes(ts, gdict, expdir):
 		pos = getpos(nodename, expdir)
 		ts.append("\\node["+NDSETTING+"] ("+nodename+") at ("+pos+") {"+nodename+"};")
 	for node in g["outputs"]:
-		nodename = getnodename(node, isout=True)
+		nodename = getnodename(node, True)
 		pos = getpos(nodename, expdir)
 		ts.append("\\node["+NDSETTING+"] ("+nodename+") at ("+pos+") {"+nodename+"};")
 		
@@ -250,6 +250,13 @@ def appendedges(ts, gdict):
 		if edge[0] == edge[1]: # self-loop
 			edgeopt += "loop above"
 		ts.append("\\path[->] ("+src+") edge["+edgeopt+"] node[above] {"+edgelabel+"} ("+dst+");")
+	for output in g["outputs"]:
+		src = str(output)
+		dst = getnodename(output, True)
+		ts.append("\\path[->] ("+src+") edge node {} ("+dst+");")
+	
+	#for i in range(len(output_nodes)):
+	#	G.add_edge(g["outputs"][i], output_nodes[i])
 	
 def create_texscript(gdict, paths):
 	ts = [] # texscript
