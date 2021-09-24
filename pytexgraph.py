@@ -42,41 +42,27 @@ NDSETTING = "shape=circle, draw=black"
 POSITIONING = "manual" # manual random
 POS = {
 	"2021-09-01T17:44:01.968_boxing": {
-		"11": (3, 1.5),
-		"9": (2, 1.5),
-		"3": (1, 1.5),
-		"2": (1, 0.5),
+		"3": (1, 2),
+		"9": (3, 2),
+		"11": (5.5, 2),
+		"14": (8.5, 2),
 		"1": (0, 0),
-		"6": (2, 0),
-		"14": (4, 1.5),
-		"4": (1, -0.5),
-		"out6": (5.5, 0),
-		"out14": (5.5, 1.5),
+		"2": (3, 0.5),
+		"4": (3, -0.5),
+		"6": (5.5, 0),
+		"out6": (10, 0),
+		"out14": (10, 2),
 	}
 }
-
-TEST_TEXSCRIPT = [
-	"\\documentclass{article}",
-	"\\usepackage{tikz}",
-	"\\usepackage{verbatim}",
-	"\\usepackage{verbatim}",
-	"\\usepackage[active,tightpage]{preview}",
-	"\\PreviewEnvironment{tikzpicture}",
-	"\\setlength\PreviewBorder{5pt}%",
-	"\\begin{document}",
-	"\\begin{tikzpicture}",
-	"\\def \\n{5}",
-	"\\def \\radius {3cm}",
-	"\\def \\margin {8}",
-	"\\foreach \\s in {1,...,\\n}",
-	"{",
-	"  \\node[draw, circle] at ({360/\\n * (\\s - 1)}:\\radius) {$\\s$};",
-	"  \\draw[->, >=latex] ({360/\\n * (\\s - 1)+\\margin}:\\radius)",
-	"    arc ({360/\\n * (\\s - 1)+\\margin}:{360/\\n * (\\s)-\\margin}:\\radius);",
-	"}",
-	"\\end{tikzpicture}",
-	"\\end{document}"
-]
+EDGENAMES = {
+	"f_binary": "Binary",
+	"f_bitwise_not": "Not",
+	"f_bitwise_and": "And",
+	"f_bitwise_xor": "Xor",
+	"f_subtract": "Subtract",
+	"f_threshold": "Threshold",
+	"f_dilate": "Dilate"
+}
 
 def str_to_tuple(s):
 	if s[0] == "(":
@@ -257,24 +243,13 @@ def appendnodes(ts, gdict, expdir):
 def appendedges(ts, gdict):
 	g = gdict["encoder"]
 	for edge in g["edges"]:
-		src, dst= str(edge[0]), str(edge[1])
+		src, dst = str(edge[0]), str(edge[1])
+		dstindex = g["nodes"].index(edge[1])
 		edgeopt = ""
+		edgelabel = EDGENAMES[g["fs"][dstindex]]
 		if edge[0] == edge[1]: # self-loop
 			edgeopt += "loop above"
-		ts.append("\\path[->] ("+src+") edge["+edgeopt+"] node {} ("+dst+");")
-	
-	
-	# Edges
-	"""
-	G.add_edges_from(g["edges"])
-	for i in range(len(output_nodes)):
-		G.add_edge(g["outputs"][i], output_nodes[i])
-	edgelabels = {}
-	for e in g["edges"]:
-		dest_node = e[1]
-		dest_node_index = g["nodes"].index(dest_node)
-		edgelabels[e] = g["fs"][dest_node_index]
-	"""
+		ts.append("\\path[->] ("+src+") edge["+edgeopt+"] node[above] {"+edgelabel+"} ("+dst+");")
 	
 def create_texscript(gdict, paths):
 	ts = [] # texscript
