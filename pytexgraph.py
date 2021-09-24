@@ -12,7 +12,7 @@ from matplotlib.widgets import Slider
 
 
 # Meta parameters
-SEED = 1234
+SEED = 12356
 DIR_PATH = os.path.dirname(os.path.realpath(__file__))
 IMG_EXT = ".png"
 IMG_TYPE = PIL.PngImagePlugin.PngImageFile
@@ -25,7 +25,7 @@ FRW_NODE_COLOR = "red"
 INP_NODE_COLOR = "green"
 INN_NODE_COLOR = "black"
 OUT_NODE_COLOR = "blue"
-POSITIONING = "spring" # circular spring dual single
+#POSITIONING = "spring" # circular spring dual single
 MERGE_CONTROLLER_INPUT = False
 WITH_LABELS = False
 FIGSIZE = (5, 5)
@@ -39,18 +39,19 @@ NODES_SPACING = 1
 # Tex
 NDSETTING = "shape=circle, draw=black"
 
+POSITIONING = "manual" # manual random
 POS = {
-	"2021-09-01T17:44:01.968_boxin": {
-		"11": (0, 0),
-		"9": (1, 0),
-		"3": (2, 0),
-		"2": (0, 1),
-		"1": (1, 1),
-		"6": (2, 1),
-		"14": (0, 2),
-		"4": (1, 2),
-		"out6": (2, 2),
-		"out14": (3, 3),
+	"2021-09-01T17:44:01.968_boxing": {
+		"11": (3, 1.5),
+		"9": (2, 1.5),
+		"3": (1, 1.5),
+		"2": (1, 0.5),
+		"1": (0, 0),
+		"6": (2, 0),
+		"14": (4, 1.5),
+		"4": (1, -0.5),
+		"out6": (5.5, 0),
+		"out14": (5.5, 1.5),
 	}
 }
 
@@ -236,7 +237,7 @@ def getnodename(node, isout=False):
 	return "out"+str(node) if isout else str(node)
 	
 def getpos(nodename, expdir):
-	if expdir in list(POS.keys()):
+	if POSITIONING == "manual" and expdir in list(POS.keys()):
 		pos = POS[expdir][nodename]
 	else:
 		pos = (5*random.random(),5*random.random())
@@ -252,6 +253,28 @@ def appendnodes(ts, gdict, expdir):
 		nodename = getnodename(node, isout=True)
 		pos = getpos(nodename, expdir)
 		ts.append("\\node["+NDSETTING+"] ("+nodename+") at ("+pos+") {"+nodename+"};")
+		
+def appendedges(ts, gdict):
+	g = gdict["encoder"]
+	for edge in g["edges"]:
+		src, dst= str(edge[0]), str(edge[1])
+		edgeopt = ""
+		if edge[0] == edge[1]: # self-loop
+			edgeopt += "loop above"
+		ts.append("\\path[->] ("+src+") edge["+edgeopt+"] node {} ("+dst+");")
+	
+	
+	# Edges
+	"""
+	G.add_edges_from(g["edges"])
+	for i in range(len(output_nodes)):
+		G.add_edge(g["outputs"][i], output_nodes[i])
+	edgelabels = {}
+	for e in g["edges"]:
+		dest_node = e[1]
+		dest_node_index = g["nodes"].index(dest_node)
+		edgelabels[e] = g["fs"][dest_node_index]
+	"""
 	
 def create_texscript(gdict, paths):
 	ts = [] # texscript
@@ -259,13 +282,14 @@ def create_texscript(gdict, paths):
 	ts.append("\\begin{document}")
 	ts.append("\\begin{tikzpicture}")
 	appendnodes(ts, gdict, paths["exp"])
+	appendedges(ts, gdict)
 	ts.append("\\end{tikzpicture}")
 	ts.append("\\end{document}")
 	
 	# TODO rm START
 	for l in ts:
 		print(l)
-	exit()
+	#exit()
 	# TODO rm END
 	return ts
 	
