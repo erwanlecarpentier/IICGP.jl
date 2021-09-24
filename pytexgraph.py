@@ -37,7 +37,7 @@ NODES_SIZE = 30
 NODES_SPACING = 1
 
 # Tex
-NDSETTING = "shape=circle, draw=black"
+NDSETTING = "shape=rectangle, rounded corners=0.2cm, draw=black"
 
 POSITIONING = "manual" # manual random
 POS = {
@@ -46,11 +46,11 @@ POS = {
 		"9": (3, 2),
 		"11": (5.5, 2),
 		"14": (8.5, 2),
-		"1": (-1, 0),
-		"2": (1, 0.5),
-		"4": (1, -0.5),
-		"6": (3, 0),
-		"out6": (10, 0),
+		"1": (-1, -2),
+		"2": (1, -1),
+		"4": (1, -3),
+		"6": (3, -2),
+		"out6": (10, -2),
 		"out14": (10, 2),
 	}
 }
@@ -93,7 +93,7 @@ def retrieve_img_buffer(path, frame, key):
 	for f in os.listdir(path):
 		if int(f[0]) == frame and f[2] == key:
 			node = int(f[3:-len(IMG_EXT)])
-			b[node] = PIL.Image.open(path + f)
+			b[node] = path+f # PIL.Image.open(path + f)
 	return b
 
 def retrieve_cont_buffer(path, frame):
@@ -208,9 +208,9 @@ def printgdict(gdict):
 	print("\nencoder:")
 	#print(gdict["encoder"])
 	printinddict(gdict["encoder"])
-	"""
 	print("\nreducer:")
 	print(gdict["reducer"])
+	"""
 	print("\ncontroller:")
 	#print(gdict["controller"])
 	printinddict(gdict["controller"])
@@ -231,14 +231,17 @@ def getpos(nodename, expdir):
 	
 def appendnodes(ts, gdict, expdir):
 	g = gdict["encoder"]
+	nodecontent = "O"
 	for node in g["buffer"].keys():
 		nodename = getnodename(node)
 		pos = getpos(nodename, expdir)
-		ts.append("\\node["+NDSETTING+"] ("+nodename+") at ("+pos+") {"+nodename+"};")
+		nodecontent = "\includegraphics[width=1cm]{"+g["buffer"][node]+"}"
+		ts.append("\\node["+NDSETTING+"] ("+nodename+") at ("+pos+") {"+nodecontent+"};")
 	for node in g["outputs"]:
 		nodename = getnodename(node, True)
 		pos = getpos(nodename, expdir)
-		ts.append("\\node["+NDSETTING+"] ("+nodename+") at ("+pos+") {"+nodename+"};")
+		nodecontent = "\includegraphics[width=1cm]{"+gdict["reducer"]["buffer"][node]+"}"
+		ts.append("\\node["+NDSETTING+"] ("+nodename+") at ("+pos+") {"+nodecontent+"};")
 		
 def appendedges(ts, gdict):
 	g = gdict["encoder"]
@@ -261,6 +264,7 @@ def appendedges(ts, gdict):
 def create_texscript(gdict, paths):
 	ts = [] # texscript
 	ts.append("\\documentclass[crop,tikz]{standalone}")
+	ts.append("\\usepackage{graphicx}")
 	ts.append("\\begin{document}")
 	ts.append("\\begin{tikzpicture}")
 	appendnodes(ts, gdict, paths["exp"])
@@ -296,6 +300,7 @@ def build(texscript, paths, frame):
 		
 def make_graph(paths, frame):
 	gdict = gdict_from_paths(paths, frame)
+	printgdict(gdict)
 	texscript = create_texscript(gdict, paths)
 	build(texscript, paths, frame)
 
