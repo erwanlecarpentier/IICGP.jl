@@ -96,8 +96,8 @@ function get_metadata(
     metadata = Dict(
         "action"=>action,
         "is_sticky"=>is_sticky,
-        "e_activated"=>e_activated,
-        "c_activated"=>c_activated
+        "encoder"=>Dict("activated"=>e_activated),
+        "controller"=>Dict("activated"=>c_activated)
     )
     metadata
 end

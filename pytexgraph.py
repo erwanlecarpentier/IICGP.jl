@@ -19,7 +19,7 @@ IMG_TYPE = PIL.PngImagePlugin.PngImageFile
 
 # Graph layout
 NOBUFFER = False
-ACTIVE_NODE_COLOR = "red"
+ACTIVE_COLOR = "red"
 NDSETTING = "shape=rectangle, rounded corners=0.2cm"
 
 POSITIONING = "manual" # manual random
@@ -115,63 +115,6 @@ def gdict_from_paths(paths, frame):
 	gdict["reducer"]["buffer"] = retrieve_buffer("reducer", paths["reducer"]["buffer"], frame)
 	gdict["meta"] = retrieve_metadata(paths["meta"], frame)
 	return gdict
-
-def incr_nodes(g, incr):
-	for k in ["nodes", "inputs", "outputs"]:
-		g[k] = [n + incr for n in g[k]]
-	g["edges"] = [(e[0]+incr, e[1]+incr) for e in g["edges"]]
-	init_keys = [k for k in g["buffer"].keys()]
-	for k in init_keys:
-		g["buffer"][k+incr] = g["buffer"].pop(k)
-	return g
-	
-def get_output_nodes_labels(G, outputs):
-	out = []
-	for i in range(len(outputs)):
-		out_i = outputs[i] + OUT_INCR
-		while out_i in out:
-			out_i += 1
-		out.append(out_i)
-	return out
-
-def set_graph(G, g, gr=None):
-	# Nodes
-	G.add_nodes_from(g["buffer"].keys())
-	output_nodes = get_output_nodes_labels(G, g["outputs"])
-	G.add_nodes_from(output_nodes)
-
-	# Edges
-	G.add_edges_from(g["edges"])
-	for i in range(len(output_nodes)):
-		G.add_edge(g["outputs"][i], output_nodes[i])
-	edgelabels = {}
-	for e in g["edges"]:
-		dest_node = e[1]
-		dest_node_index = g["nodes"].index(dest_node)
-		edgelabels[e] = g["fs"][dest_node_index]
-
-	# Set colors
-	edgecolors = []
-	for n in G:
-		if n in g["inputs"]:
-			edgecolors.append(INP_NODE_COLOR)
-		elif n in g["outputs"]:
-			edgecolors.append(OUT_NODE_COLOR)
-		else:
-			edgecolors.append(INN_NODE_COLOR)
-
-	# Set inner buffer
-	for n in g["buffer"].keys():
-		G.nodes[n]["buffer"] = g["buffer"][n]
-	
-	# Set output buffer
-	for i in range(len(output_nodes)):
-		out_node_i = output_nodes[i]
-		out_i = g["outputs"][i]
-		r_buffer_i = g["buffer"][out_i] if gr is None else gr["buffer"][out_i]
-		G.nodes[out_node_i]["buffer"] = r_buffer_i
-		
-	return G, edgelabels, edgecolors
 	
 def printinddict(g, verbose=True):
 	spacing = "  "
@@ -212,25 +155,26 @@ def getpos(nodename, expdir):
 	
 def appendnodes(ts, gdict, expdir):
 	g = gdict["encoder"]
-	activated = gdict["meta"]["e_activated"]
+	activated = gdict["meta"]["encoder"]["activated"]
 	nodecontent = "O"
 	for node in g["buffer"].keys():
 		nodename = getnodename(node)
 		pos = getpos(nodename, expdir)
 		nodecontent = nodename if NOBUFFER else "\includegraphics[width=1cm]{"+g["buffer"][node]+"}"
-		nodecolor = ACTIVE_NODE_COLOR if node in activated else "black"
+		nodecolor = ACTIVE_COLOR if node in activated else "black"
 		nodeset = NDSETTING+", draw="+nodecolor
 		ts.append("\\node["+nodeset+"] ("+nodename+") at ("+pos+") {"+nodecontent+"};")
 	for node in g["outputs"]:
 		nodename = getnodename(node, True)
 		pos = getpos(nodename, expdir)
 		nodecontent = nodename if NOBUFFER else "\includegraphics[width=1cm]{"+gdict["reducer"]["buffer"][node]+"}"
-		nodecolor = ACTIVE_NODE_COLOR if node in activated else "black"
+		nodecolor = ACTIVE_COLOR if node in activated else "black"
 		nodeset = NDSETTING+", draw="+nodecolor
 		ts.append("\\node["+nodeset+"] ("+nodename+") at ("+pos+") {"+nodecontent+"};")
 		
 def appendedges(ts, gdict):
 	g = gdict["encoder"]
+	activated = gdict["meta"]["encoder"]["activated"]
 	for edge in g["edges"]:
 		src, dst = str(edge[0]), str(edge[1])
 		dstindex = g["nodes"].index(edge[1])
@@ -238,14 +182,15 @@ def appendedges(ts, gdict):
 		edgelabel = EDGENAMES[g["fs"][dstindex]]
 		if edge[0] == edge[1]: # self-loop
 			edgeopt += "loop above"
-		ts.append("\\path[->] ("+src+") edge["+edgeopt+"] node[above] {"+edgelabel+"} ("+dst+");")
+		edgecolor = ACTIVE_COLOR if edge[1] in activated else "black"
+		pathset = "->, color="+edgecolor
+		ts.append("\\path["+pathset+"] ("+src+") edge["+edgeopt+"] node[above] {"+edgelabel+"} ("+dst+");")
 	for output in g["outputs"]:
 		src = str(output)
 		dst = getnodename(output, True)
-		ts.append("\\path[->] ("+src+") edge node {} ("+dst+");")
-	
-	#for i in range(len(output_nodes)):
-	#	G.add_edge(g["outputs"][i], output_nodes[i])
+		edgecolor = ACTIVE_COLOR if output in activated else "black"
+		pathset = "->, color="+edgecolor
+		ts.append("\\path["+pathset+"] ("+src+") edge node {} ("+dst+");")
 	
 def create_texscript(gdict, paths):
 	ts = [] # texscript

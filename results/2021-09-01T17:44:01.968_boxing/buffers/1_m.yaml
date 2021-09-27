@@ -1,10 +1,12 @@
 action: 1
-e_activated:
-  - 1
-  - 2
-  - 4
-  - 6
+controller:
+  activated:
+    - 14
+    - 77
+encoder:
+  activated:
+    - 1
+    - 2
+    - 4
+    - 6
 is_sticky: false
-c_activated:
-  - 14
-  - 77
