@@ -12,32 +12,15 @@ from matplotlib.widgets import Slider
 
 
 # Meta parameters
-SEED = 12356
+SEED = 1234
 DIR_PATH = os.path.dirname(os.path.realpath(__file__))
 IMG_EXT = ".png"
 IMG_TYPE = PIL.PngImagePlugin.PngImageFile
-CTR_INCR = 200 # increment for controller's nodes names
-OUT_INCR = 100 # increment for outputs's nodes names
-FEATURE_SIZE = 25 # 5*5 mean-pooling features
 
-# Graph Layout
-FRW_NODE_COLOR = "red"
-INP_NODE_COLOR = "green"
-INN_NODE_COLOR = "black"
-OUT_NODE_COLOR = "blue"
-#POSITIONING = "spring" # circular spring dual single
-MERGE_CONTROLLER_INPUT = False
-WITH_LABELS = False
-FIGSIZE = (5, 5)
-XLIM, YLIM = 100, 100
-E_XLIM, E_YLIM = 1, 1
-C_XLIM, C_YLIM = 1, 1
-IMG_SIZE_PROPORTION = 0.01
-NODES_SIZE = 30
-NODES_SPACING = 1
-
-# Tex
-NDSETTING = "shape=rectangle, rounded corners=0.2cm, draw=black"
+# Graph layout
+NOBUFFER = False
+ACTIVE_NODE_COLOR = "red"
+NDSETTING = "shape=rectangle, rounded corners=0.2cm"
 
 POSITIONING = "manual" # manual random
 POS = {
@@ -210,13 +193,11 @@ def printgdict(gdict):
 	printinddict(gdict["encoder"])
 	print("\nreducer:")
 	print(gdict["reducer"])
-	"""
 	print("\ncontroller:")
 	#print(gdict["controller"])
 	printinddict(gdict["controller"])
-	print("\nmetadata:")
+	print("\nmeta:")
 	print(gdict["meta"])
-	"""
 	print()
 	
 def getnodename(node, isout=False):
@@ -231,19 +212,22 @@ def getpos(nodename, expdir):
 	
 def appendnodes(ts, gdict, expdir):
 	g = gdict["encoder"]
+	activated = gdict["meta"]["e_activated"]
 	nodecontent = "O"
 	for node in g["buffer"].keys():
 		nodename = getnodename(node)
 		pos = getpos(nodename, expdir)
-		nodecontent = "\includegraphics[width=1cm]{"+g["buffer"][node]+"}"
-		# nodecontent = nodename
-		ts.append("\\node["+NDSETTING+"] ("+nodename+") at ("+pos+") {"+nodecontent+"};")
+		nodecontent = nodename if NOBUFFER else "\includegraphics[width=1cm]{"+g["buffer"][node]+"}"
+		nodecolor = ACTIVE_NODE_COLOR if node in activated else "black"
+		nodeset = NDSETTING+", draw="+nodecolor
+		ts.append("\\node["+nodeset+"] ("+nodename+") at ("+pos+") {"+nodecontent+"};")
 	for node in g["outputs"]:
 		nodename = getnodename(node, True)
 		pos = getpos(nodename, expdir)
-		nodecontent = "\includegraphics[width=1cm]{"+gdict["reducer"]["buffer"][node]+"}"
-		# nodecontent = nodename
-		ts.append("\\node["+NDSETTING+"] ("+nodename+") at ("+pos+") {"+nodecontent+"};")
+		nodecontent = nodename if NOBUFFER else "\includegraphics[width=1cm]{"+gdict["reducer"]["buffer"][node]+"}"
+		nodecolor = ACTIVE_NODE_COLOR if node in activated else "black"
+		nodeset = NDSETTING+", draw="+nodecolor
+		ts.append("\\node["+nodeset+"] ("+nodename+") at ("+pos+") {"+nodecontent+"};")
 		
 def appendedges(ts, gdict):
 	g = gdict["encoder"]
