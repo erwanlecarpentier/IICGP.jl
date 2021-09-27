@@ -22,7 +22,8 @@ NOBUFFER = True
 ACTIVE_COLOR = "red"
 NDSETTING = "shape=rectangle, rounded corners=0.1cm"
 
-POSITIONING = "manual" # manual random
+POSITIONING = "random" # manual random
+ENABLE_MANUAL_POS = True
 POS = {
 	"2021-09-01T17:44:01.968_boxing": {
 		"encoder": {
@@ -30,7 +31,7 @@ POS = {
 			"1": (-1, -2), "2": (1, -1), "4": (1, -3), "6": (3, -2), "out6": (10, -2)
 		},
 		"controller": {
-			"inputs": (0, 0), "outputs": {"x", "y", "span"}
+			"inputs": (0, 0), "outputs": (1, 1)
 		}
 	}
 }
@@ -147,6 +148,8 @@ def randompos():
 	mag = 10
 	return (mag*random.random(), mag*random.random())
 
+# Deprecated
+"""
 def getpos(nodename, expdir, indtype, isinput):
 	if (
 		POSITIONING == "manual" and
@@ -162,6 +165,39 @@ def getpos(nodename, expdir, indtype, isinput):
 	else:
 		pos = randompos()
 	return str(pos[0])+","+str(pos[1])
+"""
+def postostr(pos):
+	for k, v in pos.items():
+		pos[k] = str(v[0])+","+str(v[1])
+	return pos
+
+def getpos(gdict, expdir, indtype):
+	pos = {}
+	g = gdict[indtype]
+	for node in list(g["buffer"].keys()):
+		nodename = getnodename(node, False)
+		pos[nodename] = randompos() # Default to random position
+		if ENABLE_MANUAL_POS:
+			isout = False
+			isinp = node <= g["n_in"]
+			if expdir in list(POS.keys()) and indtype in list(POS[expdir].keys()):
+				if nodename in list(POS[expdir][indtype].keys()):
+					pos[nodename] = POS[expdir][indtype][nodename]
+				elif isinp and "inputs" in list(POS[expdir][indtype].keys()):
+					pos[nodename] = POS[expdir][indtype]["inputs"]
+	for node in g["outputs"]:
+		nodename = getnodename(node, True)
+		pos[nodename] = randompos() # Default to random position
+		if ENABLE_MANUAL_POS:
+			if expdir in list(POS.keys()) and indtype in list(POS[expdir].keys()):
+				if nodename in list(POS[expdir][indtype].keys()):
+					pos[nodename] = POS[expdir][indtype][nodename]
+				elif isinp and "outputs" in list(POS[expdir][indtype].keys()):
+					pos[nodename] = POS[expdir][indtype]["outputs"]
+	pos = postostr(pos)
+	
+	printdict(pos)
+	return pos
 	
 def getnodecontent(gdict, node, nodename, indtype, is_out):
 	if NOBUFFER:
@@ -184,21 +220,22 @@ def appendnodes(ts, gdict, expdir, indtype):
 	g = gdict[indtype]
 	activated = gdict["metadata"][indtype]["activated"]
 	outputs = gdict["metadata"][indtype]["outputs"]
+	pos = getpos(gdict, expdir, indtype)
 	for node in g["buffer"].keys():
 		nodename = getnodename(node)
 		isinput = node <= g["n_in"]
-		pos = getpos(nodename, expdir, indtype, isinput)
+		p = pos[nodename]
 		nodecontent = getnodecontent(gdict, node, nodename, indtype, False)
 		nodecolor = ACTIVE_COLOR if node in activated else "black"
 		nodeset = NDSETTING+", draw="+nodecolor
-		ts.append("\\node["+nodeset+"] ("+nodename+") at ("+pos+") {"+nodecontent+"};")
+		ts.append("\\node["+nodeset+"] ("+nodename+") at ("+p+") {"+nodecontent+"};")
 	for node in g["outputs"]:
 		nodename = getnodename(node, True)
-		pos = getpos(nodename, expdir, indtype, False)
+		p = pos[nodename]
 		nodecontent = getnodecontent(gdict, node, nodename, indtype, True)
 		nodecolor = ACTIVE_COLOR if node in outputs else "black"
 		nodeset = NDSETTING+", draw="+nodecolor
-		ts.append("\\node["+nodeset+"] ("+nodename+") at ("+pos+") {"+nodecontent+"};")
+		ts.append("\\node["+nodeset+"] ("+nodename+") at ("+p+") {"+nodecontent+"};")
 
 def appendedges(ts, gdict, indtype):
 	g = gdict[indtype]
@@ -259,7 +296,7 @@ def build(texscript, paths, frame, indtype):
 
 def make_graph(paths, frame):
 	gdict = gdict_from_paths(paths, frame)
-	for indtype in ["controller"]: # ["encoder", "controller"]:
+	for indtype in ["encoder", "controller"]:
 		texscript = create_texscript(gdict, paths, indtype)
 		build(texscript, paths, frame, indtype)
 
