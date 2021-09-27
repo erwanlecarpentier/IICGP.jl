@@ -28,6 +28,9 @@ POS = {
 		"encoder": {
 			"3": (1, 2), "9": (3, 2), "11": (5.5, 2), "14": (8.5, 2), "out14": (10, 2),
 			"1": (-1, -2), "2": (1, -1), "4": (1, -3), "6": (3, -2), "out6": (10, -2)
+		},
+		"controller": {
+			"inputs": (0, 0)
 		}
 	}
 }
@@ -140,20 +143,27 @@ def printgdict(gdict):
 def getnodename(node, isout=False):
 	return "out"+str(node) if isout else str(node)
 	
-def getpos(nodename, expdir, indtype):
+def randompos():
+	mag = 10
+	return (mag*random.random(), mag*random.random())
+
+def getpos(nodename, expdir, indtype, isinput):
 	if (
 		POSITIONING == "manual" and
 		expdir in list(POS.keys()) and
-		indtype in list(POS[expdir].keys()) and
-		nodename in list(POS[expdir][indtype].keys())
+		indtype in list(POS[expdir].keys())
 	):
-		pos = POS[expdir][indtype][nodename]
+		if nodename in list(POS[expdir][indtype].keys()):
+			pos = POS[expdir][indtype][nodename]
+		elif isinput and "inputs" in list(POS[expdir][indtype].keys()):
+			pos = POS[expdir][indtype]["inputs"]
+		else:
+			pos = randompos()
 	else:
-		mag = 10
-		pos = (mag*random.random(), mag*random.random())
+		pos = randompos()
 	return str(pos[0])+","+str(pos[1])
 	
-def getnodecontent(gdict, nodename, indtype, is_out):
+def getnodecontent(gdict, node, nodename, indtype, is_out):
 	if NOBUFFER:
 		return nodename
 	elif indtype == "encoder":
@@ -162,7 +172,7 @@ def getnodecontent(gdict, nodename, indtype, is_out):
 		else:
 			return "\includegraphics[width=1cm]{"+gdict[indtype]["buffer"][node]+"}"
 	elif indtype == "controller":
-		return "$" + str(gdict["reducer"]["buffer"][node]) + "$" # TODO put back
+		return "$" + str(round(gdict[indtype]["buffer"][node], 2)) + "$"
 
 def getedgelabel(fname):
 	if fname in list(EDGELABELS.keys()):
@@ -176,15 +186,16 @@ def appendnodes(ts, gdict, expdir, indtype):
 	outputs = gdict["metadata"][indtype]["outputs"]
 	for node in g["buffer"].keys():
 		nodename = getnodename(node)
-		pos = getpos(nodename, expdir, indtype)
-		nodecontent = getnodecontent(gdict, nodename, indtype, False)
+		isinput = node <= g["n_in"]
+		pos = getpos(nodename, expdir, indtype, isinput)
+		nodecontent = getnodecontent(gdict, node, nodename, indtype, False)
 		nodecolor = ACTIVE_COLOR if node in activated else "black"
 		nodeset = NDSETTING+", draw="+nodecolor
 		ts.append("\\node["+nodeset+"] ("+nodename+") at ("+pos+") {"+nodecontent+"};")
 	for node in g["outputs"]:
 		nodename = getnodename(node, True)
-		pos = getpos(nodename, expdir, indtype)
-		nodecontent = getnodecontent(gdict, nodename, indtype, True)
+		pos = getpos(nodename, expdir, indtype, False)
+		nodecontent = getnodecontent(gdict, node, nodename, indtype, True)
 		nodecolor = ACTIVE_COLOR if node in outputs else "black"
 		nodeset = NDSETTING+", draw="+nodecolor
 		ts.append("\\node["+nodeset+"] ("+nodename+") at ("+pos+") {"+nodecontent+"};")
@@ -245,14 +256,12 @@ def build(texscript, paths, frame, indtype):
 	# evince
 	subprocess.run(["evince", savedir + fname + ".pdf"])
 	# Turn into png here if required
-		
+
 def make_graph(paths, frame):
 	gdict = gdict_from_paths(paths, frame)
-	# for indtype in ["encoder", "controller"]: # TODO
-	texscript = create_texscript(gdict, paths, "encoder")
-	build(texscript, paths, frame, "encoder")
-	texscript = create_texscript(gdict, paths, "controller")
-	build(texscript, paths, frame, "controller")
+	for indtype in ["controller"]: # ["encoder", "controller"]:
+		texscript = create_texscript(gdict, paths, indtype)
+		build(texscript, paths, frame, indtype)
 
 if __name__ == "__main__":
 	exp_dir = sys.argv[1]
