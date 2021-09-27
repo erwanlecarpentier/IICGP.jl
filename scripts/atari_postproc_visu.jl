@@ -47,6 +47,11 @@ function buffer_snapshot(enco::CGPInd, active::Vector{Bool})
     cat(s_cat, b_cat, dims=1)
 end
 
+function save_rgb(game::Game, dir::String, frame::Int64)
+    fname = joinpath(dir, string(frame, "_rgb.png"))
+    save_screen_png(game, fname)
+end
+
 function save_state(s::Vector{Matrix{UInt8}}, dir::String, frame::Int64)
     for i in eachindex(s)
         fname = joinpath(dir, string(frame, "_s", i, ".png"))
@@ -182,6 +187,7 @@ function visu_dualcgp_ingame(
 
     while ~game_over(g.ale)
         s = get_state(g, grayscale, downscale)
+        rgb = get_rgb(g)
         is_sticky = rand(mt) < stickiness
         if !is_sticky || frames == 1
             features, output = IICGP.process_f(enco, redu, cont, s)
@@ -206,7 +212,7 @@ function visu_dualcgp_ingame(
             metadata = get_metadata(action, is_sticky, e_activated, e_output,
                                     c_activated, c_output)
             save_metadata(metadata, buffer_path, frames)
-            # save_state(s, buffer_path, frames)
+            save_rgb(g, buffer_path, frames)
             save_enco_buffer(enco, buffer_path, frames)
             save_features(features, buffer_path, frames, enco.outputs)
             save_cont_buffer(cont, buffer_path, frames)
@@ -307,7 +313,7 @@ games = ["boxing"] # ["freeway"]  # pong kung_fu_master freeway assault
 reducers = ["pooling"] # Array{String,1}() # ["pooling"]
 exp_dirs, games = get_exp_dir(min_date=min_date, max_date=max_date, games=games,
                               reducers=reducers)
-max_frames = 1
+max_frames = 3
 render_graph = false
 
 #=

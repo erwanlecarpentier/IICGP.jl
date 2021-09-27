@@ -1,2 +1,16 @@
 action: 1
+controller:
+  outputs:
+    - 77
+  activated:
+    - 14
+    - 77
+encoder:
+  outputs:
+    - 6
+  activated:
+    - 1
+    - 2
+    - 4
+    - 6
 is_sticky: false
