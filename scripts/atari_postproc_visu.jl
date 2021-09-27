@@ -115,10 +115,10 @@ function recur_activated!(ind, n, activated)
     end
 end
 
-function find_activated_nodes(ind, chosen_output)
+function find_activated_nodes(ind::CGPInd, chosen_output::Int64)
     activated = falses(length(ind.nodes))
     recur_activated!(ind, chosen_output, activated)
-    activated_nodes = []
+    activated_nodes = Vector{Int64}()
     for i in eachindex(activated)
         if activated[i]
             push!(activated_nodes, i)
@@ -174,7 +174,7 @@ function visu_dualcgp_ingame(
         #e_activated = falses(length(enco.nodes))
         #e_activated = CartesianGeneticProgramming.recur_active(
         #    e_activated, enco.n_in, outputs[i] - n, xs, ys, fs, cfg.two_arity)
-        c_activated = find_activated_nodes(cont, chosen_output)
+        c_activated = find_activated_nodes(cont, cont.outputs[chosen_output])
 
         # Saving
         if do_save
