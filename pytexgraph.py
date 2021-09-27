@@ -18,26 +18,20 @@ IMG_EXT = ".png"
 IMG_TYPE = PIL.PngImagePlugin.PngImageFile
 
 # Graph layout
-NOBUFFER = False
+NOBUFFER = True
 ACTIVE_COLOR = "red"
-NDSETTING = "shape=rectangle, rounded corners=0.2cm"
+NDSETTING = "shape=rectangle, rounded corners=0.1cm"
 
 POSITIONING = "manual" # manual random
 POS = {
 	"2021-09-01T17:44:01.968_boxing": {
-		"3": (1, 2),
-		"9": (3, 2),
-		"11": (5.5, 2),
-		"14": (8.5, 2),
-		"1": (-1, -2),
-		"2": (1, -1),
-		"4": (1, -3),
-		"6": (3, -2),
-		"out6": (10, -2),
-		"out14": (10, 2),
+		"encoder": {
+			"3": (1, 2), "9": (3, 2), "11": (5.5, 2), "14": (8.5, 2), "out14": (10, 2),
+			"1": (-1, -2), "2": (1, -1), "4": (1, -3), "6": (3, -2), "out6": (10, -2)
+		}
 	}
 }
-EDGENAMES = {
+EDGELABELS = {
 	"f_binary": "Binary",
 	"f_bitwise_not": "Not",
 	"f_bitwise_and": "And",
@@ -146,64 +140,86 @@ def printgdict(gdict):
 def getnodename(node, isout=False):
 	return "out"+str(node) if isout else str(node)
 	
-def getpos(nodename, expdir):
-	if POSITIONING == "manual" and expdir in list(POS.keys()):
-		pos = POS[expdir][nodename]
+def getpos(nodename, expdir, indtype):
+	if (
+		POSITIONING == "manual" and
+		expdir in list(POS.keys()) and
+		indtype in list(POS[expdir].keys()) and
+		nodename in list(POS[expdir][indtype].keys())
+	):
+		pos = POS[expdir][indtype][nodename]
 	else:
-		pos = (5*random.random(),5*random.random())
+		pos = (5*random.random(), 5*random.random())
 	return str(pos[0])+","+str(pos[1])
 	
-def appendnodes(ts, gdict, expdir):
-	g = gdict["encoder"]
-	activated = gdict["meta"]["encoder"]["activated"]
-	nodecontent = "O"
+def getnodecontent(gdict, nodename, indtype, is_out):
+	if NOBUFFER:
+		return nodename
+	elif indtype == "encoder":
+		if is_out:
+			return "\includegraphics[width=1cm]{"+gdict["reducer"]["buffer"][node]+"}"
+		else:
+			return "\includegraphics[width=1cm]{"+gdict[indtype]["buffer"][node]+"}"
+	elif indtype == "controller":
+		return gdict["reducer"]["buffer"][node]
+
+def getedgelabel(fname):
+	if fname in list(EDGELABELS.keys()):
+		return EDGELABELS[fname]
+	else:
+		return fname
+	
+def appendnodes(ts, gdict, expdir, indtype):
+	g = gdict[indtype]
+	activated = gdict["meta"][indtype]["activated"]
 	for node in g["buffer"].keys():
 		nodename = getnodename(node)
-		pos = getpos(nodename, expdir)
-		nodecontent = nodename if NOBUFFER else "\includegraphics[width=1cm]{"+g["buffer"][node]+"}"
+		pos = getpos(nodename, expdir, indtype)
+		nodecontent = getnodecontent(gdict, nodename, indtype, False)
 		nodecolor = ACTIVE_COLOR if node in activated else "black"
 		nodeset = NDSETTING+", draw="+nodecolor
 		ts.append("\\node["+nodeset+"] ("+nodename+") at ("+pos+") {"+nodecontent+"};")
 	for node in g["outputs"]:
 		nodename = getnodename(node, True)
-		pos = getpos(nodename, expdir)
-		nodecontent = nodename if NOBUFFER else "\includegraphics[width=1cm]{"+gdict["reducer"]["buffer"][node]+"}"
+		pos = getpos(nodename, expdir, indtype)
+		nodecontent = getnodecontent(gdict, nodename, indtype, True)
 		nodecolor = ACTIVE_COLOR if node in activated else "black"
 		nodeset = NDSETTING+", draw="+nodecolor
 		ts.append("\\node["+nodeset+"] ("+nodename+") at ("+pos+") {"+nodecontent+"};")
-		
-def appendedges(ts, gdict):
-	g = gdict["encoder"]
-	activated = gdict["meta"]["encoder"]["activated"]
+
+def appendedges(ts, gdict, indtype):
+	g = gdict[indtype]
+	activated = gdict["meta"][indtype]["activated"]
 	for edge in g["edges"]:
 		src, dst = str(edge[0]), str(edge[1])
 		dstindex = g["nodes"].index(edge[1])
-		edgeopt = ""
-		edgelabel = EDGENAMES[g["fs"][dstindex]]
-		if edge[0] == edge[1]: # self-loop
-			edgeopt += "loop above"
+		edgelabel = getedgelabel(g["fs"][dstindex])
+		edgeopt = "loop above" if edge[0] == edge[1] else "" # self-loop
 		edgecolor = ACTIVE_COLOR if edge[1] in activated else "black"
 		pathset = "->, color="+edgecolor
 		ts.append("\\path["+pathset+"] ("+src+") edge["+edgeopt+"] node[above] {"+edgelabel+"} ("+dst+");")
+	exit()
 	for output in g["outputs"]:
 		src = str(output)
 		dst = getnodename(output, True)
 		edgecolor = ACTIVE_COLOR if output in activated else "black"
 		pathset = "->, color="+edgecolor
 		ts.append("\\path["+pathset+"] ("+src+") edge node {} ("+dst+");")
-	
-def create_texscript(gdict, paths):
+
+def create_texscript(gdict, paths, indtype):
 	ts = [] # texscript
 	ts.append("\\documentclass[crop,tikz]{standalone}")
 	ts.append("\\usepackage{graphicx}")
 	ts.append("\\begin{document}")
 	ts.append("\\begin{tikzpicture}")
-	appendnodes(ts, gdict, paths["exp"])
-	appendedges(ts, gdict)
+	appendnodes(ts, gdict, paths["exp"], indtype)
+	appendedges(ts, gdict, indtype)
 	ts.append("\\end{tikzpicture}")
 	ts.append("\\end{document}")
 	
 	# TODO rm START
+	print()
+	print(indtype, ":")
 	for l in ts:
 		print(l)
 	#exit()
@@ -231,9 +247,10 @@ def build(texscript, paths, frame):
 		
 def make_graph(paths, frame):
 	gdict = gdict_from_paths(paths, frame)
-	printgdict(gdict)
-	texscript = create_texscript(gdict, paths)
-	build(texscript, paths, frame)
+	# texscript = create_texscript(gdict, paths, "encoder")
+	# build(texscript, paths, frame)
+	texscript = create_texscript(gdict, paths, "controller")
+	# build(texscript, paths, frame)
 
 if __name__ == "__main__":
 	exp_dir = sys.argv[1]

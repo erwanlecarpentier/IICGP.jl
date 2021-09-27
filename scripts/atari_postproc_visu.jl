@@ -91,13 +91,15 @@ function get_metadata(
     action::T,
     is_sticky::Bool,
     e_activated::Vector{Int16},
-    c_activated::Vector{Int16}
+    e_output::Vector{Int16},
+    c_activated::Vector{Int16},
+    c_output::Int16
 ) where {T <: Union{Int32, Int64}}
     metadata = Dict(
         "action"=>action,
         "is_sticky"=>is_sticky,
-        "encoder"=>Dict("activated"=>e_activated),
-        "controller"=>Dict("activated"=>c_activated)
+        "encoder"=>Dict("activated"=>e_activated, "outputs"=>e_output),
+        "controller"=>Dict("activated"=>c_activated, "outputs"=>c_output)
     )
     metadata
 end
@@ -191,17 +193,18 @@ function visu_dualcgp_ingame(
         end
 
         # Scan which nodes were activated
-        c_activated = find_activated_nodes(cont, cont.outputs[chosen_output])
-        activated_enco_output = find_activated_encoder_outputs(enco, redu, cont,
-                                                               c_activated)
+        c_output = cont.outputs[chosen_output]
+        c_activated = find_activated_nodes(cont, c_output)
+        e_output = find_activated_encoder_outputs(enco, redu, cont, c_activated)
         e_activated = Vector{Int16}()
-        for node in activated_enco_output
+        for node in e_output
             push!(e_activated, find_activated_nodes(enco, node)...)
         end
 
         # Saving
         if do_save
-            metadata = get_metadata(action, is_sticky, e_activated, c_activated)
+            metadata = get_metadata(action, is_sticky, e_activated, e_output,
+                                    c_activated, c_output)
             save_metadata(metadata, buffer_path, frames)
             # save_state(s, buffer_path, frames)
             save_enco_buffer(enco, buffer_path, frames)
