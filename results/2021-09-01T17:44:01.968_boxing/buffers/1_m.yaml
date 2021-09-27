@@ -1,4 +1,10 @@
 action: 1
+e_activated:
+  - 1
+  - 2
+  - 4
+  - 6
 is_sticky: false
 c_activated:
-  - 2
+  - 14
+  - 77

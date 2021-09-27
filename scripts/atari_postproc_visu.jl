@@ -90,11 +90,13 @@ end
 function get_metadata(
     action::T,
     is_sticky::Bool,
-    c_activated::Vector{Any}
+    e_activated::Vector{Int16},
+    c_activated::Vector{Int16}
 ) where {T <: Union{Int32, Int64}}
     metadata = Dict(
         "action"=>action,
         "is_sticky"=>is_sticky,
+        "e_activated"=>e_activated,
         "c_activated"=>c_activated
     )
     metadata
@@ -115,16 +117,34 @@ function recur_activated!(ind, n, activated)
     end
 end
 
-function find_activated_nodes(ind::CGPInd, chosen_output::Int64)
+function find_activated_nodes(ind::CGPInd, out_node::Int16)
     activated = falses(length(ind.nodes))
-    recur_activated!(ind, chosen_output, activated)
-    activated_nodes = Vector{Int64}()
+    recur_activated!(ind, out_node, activated)
+    activated_nodes = Vector{Int16}()
     for i in eachindex(activated)
         if activated[i]
-            push!(activated_nodes, i)
+            push!(activated_nodes, convert(Int16, i))
         end
     end
     activated_nodes
+end
+
+function find_activated_encoder_outputs(
+    enco::CGPInd,
+    redu::Reducer,
+    cont::CGPInd,
+    c_activated::Vector{Int16}
+)
+    @assert redu.parameters["type"] == "pooling"
+    fsize = redu.parameters["size"]^2
+    e_activated = Vector{Int16}()
+    for node in c_activated
+        if node < cont.n_in+1 # activated node is a controller input
+            activated_enco_output_index = convert(Int64, ceil(node/fsize))
+            push!(e_activated, enco.outputs[activated_enco_output_index])
+        end
+    end
+    e_activated
 end
 
 function visu_dualcgp_ingame(
@@ -171,14 +191,17 @@ function visu_dualcgp_ingame(
         end
 
         # Scan which nodes were activated
-        #e_activated = falses(length(enco.nodes))
-        #e_activated = CartesianGeneticProgramming.recur_active(
-        #    e_activated, enco.n_in, outputs[i] - n, xs, ys, fs, cfg.two_arity)
         c_activated = find_activated_nodes(cont, cont.outputs[chosen_output])
+        activated_enco_output = find_activated_encoder_outputs(enco, redu, cont,
+                                                               c_activated)
+        e_activated = Vector{Int16}()
+        for node in activated_enco_output
+            push!(e_activated, find_activated_nodes(enco, node)...)
+        end
 
         # Saving
         if do_save
-            metadata = get_metadata(action, is_sticky, c_activated)
+            metadata = get_metadata(action, is_sticky, e_activated, c_activated)
             save_metadata(metadata, buffer_path, frames)
             # save_state(s, buffer_path, frames)
             save_enco_buffer(enco, buffer_path, frames)
