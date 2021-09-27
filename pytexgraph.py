@@ -93,7 +93,7 @@ def get_paths(exp_dir):
 		paths[ind_name]["buffer"] = exp_dir + "/buffers/"
 	paths["reducer"] = {}
 	paths["reducer"]["buffer"] = exp_dir + "/buffers/"
-	paths["meta"] = exp_dir + "/buffers/"
+	paths["metadata"] = exp_dir + "/buffers/"
 	return paths
 
 def gdict_from_paths(paths, frame):
@@ -107,7 +107,7 @@ def gdict_from_paths(paths, frame):
 		gdict[ind_name] = g
 	gdict["reducer"] = {}
 	gdict["reducer"]["buffer"] = retrieve_buffer("reducer", paths["reducer"]["buffer"], frame)
-	gdict["meta"] = retrieve_metadata(paths["meta"], frame)
+	gdict["metadata"] = retrieve_metadata(paths["metadata"], frame)
 	return gdict
 	
 def printinddict(g, verbose=True):
@@ -134,7 +134,7 @@ def printgdict(gdict):
 	#print(gdict["controller"])
 	printinddict(gdict["controller"])
 	print("\nmeta:")
-	print(gdict["meta"])
+	print(gdict["metadata"])
 	print()
 	
 def getnodename(node, isout=False):
@@ -171,7 +171,7 @@ def getedgelabel(fname):
 	
 def appendnodes(ts, gdict, expdir, indtype):
 	g = gdict[indtype]
-	activated = gdict["meta"][indtype]["activated"]
+	activated = gdict["metadata"][indtype]["activated"]
 	for node in g["buffer"].keys():
 		nodename = getnodename(node)
 		pos = getpos(nodename, expdir, indtype)
@@ -189,7 +189,8 @@ def appendnodes(ts, gdict, expdir, indtype):
 
 def appendedges(ts, gdict, indtype):
 	g = gdict[indtype]
-	activated = gdict["meta"][indtype]["activated"]
+	activated = gdict["metadata"][indtype]["activated"]
+	outputs = gdict["metadata"][indtype]["outputs"]
 	for edge in g["edges"]:
 		src, dst = str(edge[0]), str(edge[1])
 		dstindex = g["nodes"].index(edge[1])
@@ -198,11 +199,10 @@ def appendedges(ts, gdict, indtype):
 		edgecolor = ACTIVE_COLOR if edge[1] in activated else "black"
 		pathset = "->, color="+edgecolor
 		ts.append("\\path["+pathset+"] ("+src+") edge["+edgeopt+"] node[above] {"+edgelabel+"} ("+dst+");")
-	exit()
 	for output in g["outputs"]:
 		src = str(output)
 		dst = getnodename(output, True)
-		edgecolor = ACTIVE_COLOR if output in activated else "black"
+		edgecolor = ACTIVE_COLOR if output in outputs else "black"
 		pathset = "->, color="+edgecolor
 		ts.append("\\path["+pathset+"] ("+src+") edge node {} ("+dst+");")
 
@@ -227,7 +227,7 @@ def create_texscript(gdict, paths, indtype):
 	return ts
 	
 def build(texscript, paths, frame):
-	savedir = paths["meta"]
+	savedir = paths["metadata"]
 	fname = "1_graph" # TODO differentiate for controller
 	texsavepath = savedir + fname + ".tex"
 	with open(texsavepath, 'w') as f:
@@ -247,7 +247,7 @@ def build(texscript, paths, frame):
 		
 def make_graph(paths, frame):
 	gdict = gdict_from_paths(paths, frame)
-	# texscript = create_texscript(gdict, paths, "encoder")
+	texscript = create_texscript(gdict, paths, "encoder")
 	# build(texscript, paths, frame)
 	texscript = create_texscript(gdict, paths, "controller")
 	# build(texscript, paths, frame)

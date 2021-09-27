@@ -1,6 +1,7 @@
 action: 1
 controller:
-  outputs: 77
+  outputs:
+    - 77
   activated:
     - 14
     - 77

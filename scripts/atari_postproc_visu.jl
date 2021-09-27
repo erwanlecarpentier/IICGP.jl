@@ -99,7 +99,7 @@ function get_metadata(
         "action"=>action,
         "is_sticky"=>is_sticky,
         "encoder"=>Dict("activated"=>e_activated, "outputs"=>e_output),
-        "controller"=>Dict("activated"=>c_activated, "outputs"=>c_output)
+        "controller"=>Dict("activated"=>c_activated, "outputs"=>[c_output])
     )
     metadata
 end
