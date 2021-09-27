@@ -147,25 +147,7 @@ def getnodename(node, isout=False):
 def randompos():
 	mag = 10
 	return (mag*random.random(), mag*random.random())
-
-# Deprecated
-"""
-def getpos(nodename, expdir, indtype, isinput):
-	if (
-		POSITIONING == "manual" and
-		expdir in list(POS.keys()) and
-		indtype in list(POS[expdir].keys())
-	):
-		if nodename in list(POS[expdir][indtype].keys()):
-			pos = POS[expdir][indtype][nodename]
-		elif isinput and "inputs" in list(POS[expdir][indtype].keys()):
-			pos = POS[expdir][indtype]["inputs"]
-		else:
-			pos = randompos()
-	else:
-		pos = randompos()
-	return str(pos[0])+","+str(pos[1])
-"""
+	
 def postostr(pos):
 	for k, v in pos.items():
 		pos[k] = str(v[0])+","+str(v[1])
