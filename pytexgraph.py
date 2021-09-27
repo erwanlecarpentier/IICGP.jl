@@ -149,7 +149,8 @@ def getpos(nodename, expdir, indtype):
 	):
 		pos = POS[expdir][indtype][nodename]
 	else:
-		pos = (5*random.random(), 5*random.random())
+		mag = 10
+		pos = (mag*random.random(), mag*random.random())
 	return str(pos[0])+","+str(pos[1])
 	
 def getnodecontent(gdict, nodename, indtype, is_out):
@@ -161,17 +162,18 @@ def getnodecontent(gdict, nodename, indtype, is_out):
 		else:
 			return "\includegraphics[width=1cm]{"+gdict[indtype]["buffer"][node]+"}"
 	elif indtype == "controller":
-		return gdict["reducer"]["buffer"][node]
+		return "$" + str(gdict["reducer"]["buffer"][node]) + "$" # TODO put back
 
 def getedgelabel(fname):
 	if fname in list(EDGELABELS.keys()):
 		return EDGELABELS[fname]
 	else:
-		return fname
+		return fname[2:].replace('_', ' ')
 	
 def appendnodes(ts, gdict, expdir, indtype):
 	g = gdict[indtype]
 	activated = gdict["metadata"][indtype]["activated"]
+	outputs = gdict["metadata"][indtype]["outputs"]
 	for node in g["buffer"].keys():
 		nodename = getnodename(node)
 		pos = getpos(nodename, expdir, indtype)
@@ -183,7 +185,7 @@ def appendnodes(ts, gdict, expdir, indtype):
 		nodename = getnodename(node, True)
 		pos = getpos(nodename, expdir, indtype)
 		nodecontent = getnodecontent(gdict, nodename, indtype, True)
-		nodecolor = ACTIVE_COLOR if node in activated else "black"
+		nodecolor = ACTIVE_COLOR if node in outputs else "black"
 		nodeset = NDSETTING+", draw="+nodecolor
 		ts.append("\\node["+nodeset+"] ("+nodename+") at ("+pos+") {"+nodecontent+"};")
 
@@ -206,7 +208,7 @@ def appendedges(ts, gdict, indtype):
 		pathset = "->, color="+edgecolor
 		ts.append("\\path["+pathset+"] ("+src+") edge node {} ("+dst+");")
 
-def create_texscript(gdict, paths, indtype):
+def create_texscript(gdict, paths, indtype, printtex=True):
 	ts = [] # texscript
 	ts.append("\\documentclass[crop,tikz]{standalone}")
 	ts.append("\\usepackage{graphicx}")
@@ -217,18 +219,17 @@ def create_texscript(gdict, paths, indtype):
 	ts.append("\\end{tikzpicture}")
 	ts.append("\\end{document}")
 	
-	# TODO rm START
-	print()
-	print(indtype, ":")
-	for l in ts:
-		print(l)
-	#exit()
-	# TODO rm END
+	if printtex:
+		print("\nPrinting TeX file for", indtype, ":")
+		print(100*"-")
+		for l in ts:
+			print(l)
+		print(100*"-")
 	return ts
 	
-def build(texscript, paths, frame):
+def build(texscript, paths, frame, indtype):
 	savedir = paths["metadata"]
-	fname = "1_graph" # TODO differentiate for controller
+	fname = str(frame) + "_graph_" + indtype
 	texsavepath = savedir + fname + ".tex"
 	with open(texsavepath, 'w') as f:
 		for line in texscript:
@@ -238,7 +239,7 @@ def build(texscript, paths, frame):
 	print(texsavepath)
 	subprocess.run(["pdflatex", "-interaction", "nonstopmode",
 			"-output-directory", savedir, texsavepath])
-	# remove
+	# clean
 	for ext in [".tex", ".aux", ".log"]:
 		os.remove(savedir + fname + ext)
 	# evince
@@ -247,10 +248,11 @@ def build(texscript, paths, frame):
 		
 def make_graph(paths, frame):
 	gdict = gdict_from_paths(paths, frame)
+	# for indtype in ["encoder", "controller"]: # TODO
 	texscript = create_texscript(gdict, paths, "encoder")
-	# build(texscript, paths, frame)
+	build(texscript, paths, frame, "encoder")
 	texscript = create_texscript(gdict, paths, "controller")
-	# build(texscript, paths, frame)
+	build(texscript, paths, frame, "controller")
 
 if __name__ == "__main__":
 	exp_dir = sys.argv[1]
