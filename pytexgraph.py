@@ -20,7 +20,7 @@ IMG_TYPE = PIL.PngImagePlugin.PngImageFile
 # Graph layout
 NOBUFFER = False # Set to True to display nodes names instead of buffers
 ACTIVE_COLOR = "red"
-NDSETTING = "shape=rectangle, rounded corners=0.1cm, minimum width=1cm, minimum height=0.6cm"
+NDSETTING = "shape=rectangle, rounded corners=0.1cm, minimum width=1cm, minimum height=0.6cm, fill=black!10"
 
 POSITIONING = "random" # manual random
 ENABLE_MANUAL_POS = True
@@ -31,7 +31,11 @@ POS = {
 			"1": (-1, -2), "2": (1, -1), "4": (1, -3), "6": (3, -2), "out6": (10, -2)
 		},
 		"controller": {
-			"inputs": (0, 0), "outputs": {"pos": (10, 0), "span": 1}
+			"inputs": (0, 0), "outputs": {"pos": (10, 0), "span": 1},
+			"53": (1, 3),
+			"74": (2, -4), "81": (4, -4),
+			"67": (4, -1.5),
+			"78": (6, -1.7), "59": (6, -1.3), "79": (8, -2),
 		}
 	}
 }
@@ -107,6 +111,19 @@ def open_yaml(path):
 		except yaml.YAMLError as exc:
 			print(exc)
 
+def graphfname(frame, indtype):
+	return str(frame) + "_graph_" + indtype
+
+def canvasfname(frame):
+	return str(frame) + "_canvas"
+	
+def writeat(path, lines):
+	with open(path, 'w') as f:
+		for l in lines:
+			f.write(l)
+			f.write('\n')
+		f.close()
+
 def retrieve_buffer(indtype, path, frame):
 	if indtype == "encoder":
 		return retrieve_img_buffer(path, frame, "e")
@@ -122,7 +139,7 @@ def retrieve_img_buffer(path, frame, key):
 	for f in os.listdir(path):
 		if int(f[0]) == frame and f[2] == key:
 			node = int(f[3:-len(IMG_EXT)])
-			b[node] = path+f # PIL.Image.open(path + f)
+			b[node] = path + f # PIL.Image.open(path + f)
 	return b
 
 def retrieve_cont_buffer(path, frame):
@@ -275,7 +292,7 @@ def appendedges(ts, gdict, indtype):
 		pathset = "->, color="+edgecolor
 		ts.append("\\path["+pathset+"] ("+src+") edge node {} ("+dst+");")
 
-def create_texscript(gdict, paths, indtype, printtex=True):
+def graph_texscript(gdict, paths, indtype, printtex=True):
 	ts = [] # texscript
 	ts.append("\\documentclass[crop,tikz]{standalone}")
 	ts.append("\\usepackage{graphicx}")
@@ -287,38 +304,71 @@ def create_texscript(gdict, paths, indtype, printtex=True):
 	ts.append("\\end{document}")
 	
 	if printtex:
-		print("\nPrinting TeX file for", indtype, ":")
+		print("\nPrinting graph TeX file for", indtype, ":")
+		print(100*"-")
+		for l in ts:
+			print(l)
+		print(100*"-")
+	return ts
+
+def canvas_texscript(paths, frame, printtex=True):
+
+	savedir = paths["metadata"]
+	e_gpath = graphfname(frame, "encoder") + ".pdf"
+	c_gpath = graphfname(frame, "controller") + ".pdf"
+	print(e_gpath)
+	print(c_gpath)
+	
+	ts = []
+	ts.append("\\documentclass[crop,tikz]{standalone}")
+	ts.append("\\usepackage{graphicx}")
+	ts.append("\\begin{document}")
+	ts.append("\\begin{tikzpicture}")
+	ts.append("\\node[] (enco) at (0, 0) {A};")
+	ts.append("\\end{tikzpicture}")
+	ts.append("\\end{document}")
+	
+	if printtex:
+		print("\nPrinting canvas TeX file :")
 		print(100*"-")
 		for l in ts:
 			print(l)
 		print(100*"-")
 	return ts
 	
-def build(texscript, paths, frame, indtype):
-	savedir = paths["metadata"]
-	fname = str(frame) + "_graph_" + indtype
-	texsavepath = savedir + fname + ".tex"
-	with open(texsavepath, 'w') as f:
-		for line in texscript:
-			f.write(line)
-			f.write('\n')
-		f.close()
-	print(texsavepath)
+def runtex(fname, savedir, texsavepath, show=True):
 	subprocess.run(["pdflatex", "-interaction", "nonstopmode",
 			"-output-directory", savedir, texsavepath])
 	# clean
 	for ext in [".tex", ".aux", ".log"]:
 		os.remove(savedir + fname + ext)
 	# evince
-	subprocess.run(["evince", savedir + fname + ".pdf"])
-	# Turn into png here if required
+	if show:
+		subprocess.run(["evince", savedir + fname + ".pdf"])
+	
+def build_graph(texscript, paths, frame, indtype):
+	savedir = paths["metadata"]
+	fname = graphfname(frame, indtype)
+	texsavepath = savedir + fname + ".tex"
+	writeat(texsavepath, texscript)
+	runtex(fname, savedir, texsavepath)
+	
+def build_canvas(texscript, paths, frame):
+	savedir = paths["metadata"]
+	fname = canvasfname(frame)
+	texsavepath = savedir + fname + ".tex"
+	writeat(texsavepath, texscript)
+	runtex(fname, savedir, texsavepath)
 
-def make_graph(paths, frame):
+def make_graphs(paths, frame):
 	gdict = gdict_from_paths(paths, frame)
 	for indtype in ["controller", "encoder"]:
-		texscript = create_texscript(gdict, paths, indtype)
-		build(texscript, paths, frame, indtype)
-		exit()
+		texscript = graph_texscript(gdict, paths, indtype)
+		build_graph(texscript, paths, frame, indtype)
+
+def make_canvas(paths, frame):
+	texscript = canvas_texscript(paths, frame)
+	build_canvas(texscript, paths, frame)
 
 if __name__ == "__main__":
 	exp_dir = sys.argv[1]
@@ -327,7 +377,8 @@ if __name__ == "__main__":
 	random.seed(SEED)
 
 	for frame in range(1, max_frame + 1):
-		make_graph(paths, frame)
+		# make_graphs(paths, frame)
+		make_canvas(paths, frame)
 
 # python3.7 pygraph.py /home/wahara/.julia/dev/IICGP/results/2021-09-01T17:44:01.968_boxing
 # python3.8 pygraph.py /home/opaweynch/.julia/environments/v1.6/dev/IICGP/results/2021-09-01T17:44:01.968_boxing
