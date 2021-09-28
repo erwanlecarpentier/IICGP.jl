@@ -20,7 +20,7 @@ IMG_TYPE = PIL.PngImagePlugin.PngImageFile
 # Graph layout
 NOBUFFER = False # Set to True to display nodes names instead of buffers
 ACTIVE_COLOR = "red"
-NDSETTING = "shape=rectangle, rounded corners=0.1cm"
+NDSETTING = "shape=rectangle, rounded corners=0.1cm, minimum width=1cm, minimum height=0.6cm"
 
 POSITIONING = "random" # manual random
 ENABLE_MANUAL_POS = True
@@ -223,6 +223,11 @@ def getnodecontent(gdict, node, nodename, indtype, is_out, index=None):
 			return ACTIONLABELS[action_name_in_ale]
 		else:
 			return "$" + str(round(gdict[indtype]["buffer"][node], 2)) + "$"
+			
+def getnodesettings(node, activated):
+	nodecolor = ACTIVE_COLOR if node in activated else "black"
+	nodesettings = NDSETTING+", draw="+nodecolor
+	return nodesettings
 
 def getedgelabel(fname):
 	if fname in list(EDGELABELS.keys()):
@@ -240,17 +245,15 @@ def appendnodes(ts, gdict, expdir, indtype):
 		isinput = node <= g["n_in"]
 		p = pos[nodename]
 		nodecontent = getnodecontent(gdict, node, nodename, indtype, False)
-		nodecolor = ACTIVE_COLOR if node in activated else "black"
-		nodeset = NDSETTING+", draw="+nodecolor
-		ts.append("\\node["+nodeset+"] ("+nodename+") at ("+p+") {"+nodecontent+"};")
+		nodesettings = getnodesettings(node, activated)
+		ts.append("\\node["+nodesettings+"] ("+nodename+") at ("+p+") {"+nodecontent+"};")
 	for i in range(len(g["outputs"])):
 		node = g["outputs"][i]
 		nodename = getnodename(i, g, True)
 		p = pos[nodename]
 		nodecontent = getnodecontent(gdict, node, nodename, indtype, True, i)
-		nodecolor = ACTIVE_COLOR if node in outputs else "black"
-		nodeset = NDSETTING+", draw="+nodecolor
-		ts.append("\\node["+nodeset+"] ("+nodename+") at ("+p+") {"+nodecontent+"};")
+		nodesettings = getnodesettings(node, outputs)
+		ts.append("\\node["+nodesettings+"] ("+nodename+") at ("+p+") {"+nodecontent+"};")
 
 def appendedges(ts, gdict, indtype):
 	g = gdict[indtype]
