@@ -245,7 +245,8 @@ end
 
 function save_graph_struct(
     inds::Array{CGPInd,1},
-    saving_dir::String
+    saving_dir::String,
+    actions::Vector{Int32}
 )
     for ind in inds
         data = Dict()
@@ -271,10 +272,20 @@ function save_graph_struct(
             end
         end
         is_controller = typeof(ind.buffer[1]) == Float64
+        if is_controller
+            data["actions"] = actions
+        end
         graph_name = is_controller ? "controller.yaml" : "encoder.yaml"
         graph_path = joinpath(saving_dir, graph_name)
         YAML.write_file(graph_path, data)
     end
+end
+
+function get_minimal_actions_set(game::String)
+    g = Game(game, 0)
+    actions = g.actions
+    close!(g)
+    actions
 end
 
 function visu_ingame(
@@ -292,13 +303,14 @@ function visu_ingame(
     is_dualcgp = haskey(cfg, "encoder")
     if is_dualcgp
         enco, redu, cont = get_last_dualcgp(exp_dir, game, cfg)
+        mini_actions = get_minimal_actions_set(game)
 
         if do_save
             graph_path = joinpath(exp_dir, "graphs")
             mkpath(graph_path)
             buffer_path = joinpath(exp_dir, "buffers")
             mkpath(buffer_path)
-            save_graph_struct([enco, cont], graph_path)
+            save_graph_struct([enco, cont], graph_path, mini_actions)
         end
 
         visu_dualcgp_ingame(enco, redu, cont, game, seed, max_frames, grayscale,

@@ -31,7 +31,7 @@ POS = {
 			"1": (-1, -2), "2": (1, -1), "4": (1, -3), "6": (3, -2), "out6": (10, -2)
 		},
 		"controller": {
-			"inputs": (0, 0), "outputs": (1, 1)
+			"inputs": (0, 0), "outputs": {"pos": (2, 0), "span": 1}
 		}
 	}
 }
@@ -43,6 +43,26 @@ EDGELABELS = {
 	"f_subtract": "Subtract",
 	"f_threshold": "Threshold",
 	"f_dilate": "Dilate"
+}
+ACTIONLABELS = {
+	0: "",
+	1: "$\\cdot$",
+	2: "$\\uparrow$",
+	3: "$\\rightarrow$",
+	4: "$\\leftarrow$",
+	5: "$\\downarrow$",
+	6: "$\\nearrow$",
+	7: "$\\nwarrow$",
+	8: "$\\searrow$",
+	9: "$\\swarrow$",
+	10: "$\\cdot \\uparrow$",
+	11: "$\\cdot \\rightarrow$",
+	12: "$\\cdot \\leftarrow$",
+	13: "$\\cdot \\downarrow$",
+	14: "$\\cdot \\nearrow$",
+	15: "$\\cdot \\nwarrow$",
+	16: "$\\cdot \\searrow$",
+	17: "$\\cdot \\swarrow$"
 }
 
 def str_to_tuple(s):
@@ -167,7 +187,11 @@ def getpos(gdict, expdir, indtype):
 					pos[nodename] = POS[expdir][indtype][nodename]
 				elif isinp and "inputs" in list(POS[expdir][indtype].keys()):
 					pos[nodename] = POS[expdir][indtype]["inputs"]
-	for node in g["outputs"]:
+	n_out = len(g["outputs"])
+	print(g["outputs"])
+	exit()
+	for i in range(n_out):
+		node = g["outputs"][i]
 		nodename = getnodename(node, True)
 		pos[nodename] = randompos() # Default to random position
 		if ENABLE_MANUAL_POS:
@@ -175,10 +199,10 @@ def getpos(gdict, expdir, indtype):
 				if nodename in list(POS[expdir][indtype].keys()):
 					pos[nodename] = POS[expdir][indtype][nodename]
 				elif isinp and "outputs" in list(POS[expdir][indtype].keys()):
-					pos[nodename] = POS[expdir][indtype]["outputs"]
+					orig = POS[expdir][indtype]["outputs"]["pos"]
+					span = POS[expdir][indtype]["outputs"]["span"]
+					pos[nodename] = (orig[0], orig[1] - i*span + 0.5*n_out*span)
 	pos = postostr(pos)
-	
-	printdict(pos)
 	return pos
 	
 def getnodecontent(gdict, node, nodename, indtype, is_out):
@@ -278,9 +302,10 @@ def build(texscript, paths, frame, indtype):
 
 def make_graph(paths, frame):
 	gdict = gdict_from_paths(paths, frame)
-	for indtype in ["encoder", "controller"]:
+	for indtype in ["controller", "encoder"]:
 		texscript = create_texscript(gdict, paths, indtype)
 		build(texscript, paths, frame, indtype)
+		exit()
 
 if __name__ == "__main__":
 	exp_dir = sys.argv[1]
