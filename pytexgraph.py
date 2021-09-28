@@ -111,6 +111,9 @@ def open_yaml(path):
 		except yaml.YAMLError as exc:
 			print(exc)
 
+def rgbfname(frame):
+	return str(frame) + "_rgb.png"
+
 def graphfname(frame, indtype):
 	return str(frame) + "_graph_" + indtype
 
@@ -314,17 +317,22 @@ def graph_texscript(gdict, paths, indtype, printtex=True):
 def canvas_texscript(paths, frame, printtex=True):
 
 	savedir = paths["metadata"]
-	e_gpath = graphfname(frame, "encoder") + ".pdf"
-	c_gpath = graphfname(frame, "controller") + ".pdf"
-	print(e_gpath)
-	print(c_gpath)
+	rgb_path = savedir + rgbfname(frame)
+	e_gpath = savedir + graphfname(frame, "encoder") + ".pdf"
+	c_gpath = savedir + graphfname(frame, "controller") + ".pdf"
+	
+	rgb_content = "\includegraphics[width=1cm]{"+rgb_path+"}"
+	e_content = "\includegraphics[width=1cm]{"+e_gpath+"}"
+	c_content = "\includegraphics[width=1cm]{"+c_gpath+"}"
 	
 	ts = []
 	ts.append("\\documentclass[crop,tikz]{standalone}")
 	ts.append("\\usepackage{graphicx}")
 	ts.append("\\begin{document}")
 	ts.append("\\begin{tikzpicture}")
-	ts.append("\\node[] (enco) at (0, 0) {A};")
+	ts.append("\\node[] (e) at (0, +0.5) {"+rgb_content+"};")
+	ts.append("\\node[] (e) at (0, -0.5) {"+e_content+"};")
+	ts.append("\\node[] (c) at (1, 0) {"+c_content+"};")
 	ts.append("\\end{tikzpicture}")
 	ts.append("\\end{document}")
 	
