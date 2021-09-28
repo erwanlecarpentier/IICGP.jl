@@ -31,7 +31,7 @@ POS = {
 			"1": (-1, -2), "2": (1, -1), "4": (1, -3), "6": (3, -2), "out6": (10, -2)
 		},
 		"controller": {
-			"inputs": (0, 0), "outputs": {"pos": (2, 0), "span": 1}
+			"inputs": (0, 0), "outputs": {"pos": (4, 0), "span": 1}
 		}
 	}
 }
@@ -65,74 +65,6 @@ ACTIONLABELS = {
 	17: "$\\cdot \\swarrow$"
 }
 
-def str_to_tuple(s):
-	if s[0] == "(":
-		s = s[1:-1]
-	if s[-1] == ")":
-		s = s[0:-2]
-	return tuple(map(int, s.split(', ')))
-
-def open_yaml(path):
-	with open(path, 'r') as stream:
-		try:
-			return yaml.safe_load(stream)
-		except yaml.YAMLError as exc:
-			print(exc)
-
-def retrieve_buffer(ind_name, path, frame):
-	if ind_name == "encoder":
-		return retrieve_img_buffer(path, frame, "e")
-	elif ind_name == "reducer":
-		return retrieve_img_buffer(path, frame, "f")
-	elif ind_name == "controller":
-		return retrieve_cont_buffer(path, frame)
-	else:
-		raise NameError(ind_name)
-
-def retrieve_img_buffer(path, frame, key):
-	b = {}
-	for f in os.listdir(path):
-		if int(f[0]) == frame and f[2] == key:
-			node = int(f[3:-len(IMG_EXT)])
-			b[node] = path+f # PIL.Image.open(path + f)
-	return b
-
-def retrieve_cont_buffer(path, frame):
-	fname = path + str(frame) + "_c.yaml"
-	b = open_yaml(fname)
-	return b
-
-def retrieve_metadata(path, frame):
-	fname = path + str(frame) + "_m.yaml"
-	return open_yaml(fname)
-
-def get_paths(exp_dir):
-	paths = {}
-	paths["exp"] = exp_dir.split("results/",1)[1]
-	g_dir = exp_dir + "/graphs"
-	for f in os.listdir(g_dir):
-		ind_name = f[0:len(f)-len(".yaml")]
-		paths[ind_name] = {}
-		paths[ind_name]["graph"] = g_dir + "/" + f
-		paths[ind_name]["buffer"] = exp_dir + "/buffers/"
-	paths["reducer"] = {}
-	paths["reducer"]["buffer"] = exp_dir + "/buffers/"
-	paths["metadata"] = exp_dir + "/buffers/"
-	return paths
-
-def gdict_from_paths(paths, frame):
-	gdict = {}
-	for ind_name in ["encoder", "controller"]:
-		v = paths[ind_name]
-		g = open_yaml(v["graph"])
-		g["inputs"] = list(range(1,1+g["n_in"]))
-		g["edges"] = [str_to_tuple(e) for e in g["edges"]]
-		g["buffer"] = retrieve_buffer(ind_name, v["buffer"], frame)
-		gdict[ind_name] = g
-	gdict["reducer"] = {}
-	gdict["reducer"]["buffer"] = retrieve_buffer("reducer", paths["reducer"]["buffer"], frame)
-	gdict["metadata"] = retrieve_metadata(paths["metadata"], frame)
-	return gdict
 	
 def printinddict(g, verbose=True):
 	spacing = "  "
@@ -160,9 +92,83 @@ def printgdict(gdict):
 	print("\nmeta:")
 	print(gdict["metadata"])
 	print()
+
+def str_to_tuple(s):
+	if s[0] == "(":
+		s = s[1:-1]
+	if s[-1] == ")":
+		s = s[0:-2]
+	return tuple(map(int, s.split(', ')))
+
+def open_yaml(path):
+	with open(path, 'r') as stream:
+		try:
+			return yaml.safe_load(stream)
+		except yaml.YAMLError as exc:
+			print(exc)
+
+def retrieve_buffer(indtype, path, frame):
+	if indtype == "encoder":
+		return retrieve_img_buffer(path, frame, "e")
+	elif indtype == "reducer":
+		return retrieve_img_buffer(path, frame, "f")
+	elif indtype == "controller":
+		return retrieve_cont_buffer(path, frame)
+	else:
+		raise NameError(indtype)
+
+def retrieve_img_buffer(path, frame, key):
+	b = {}
+	for f in os.listdir(path):
+		if int(f[0]) == frame and f[2] == key:
+			node = int(f[3:-len(IMG_EXT)])
+			b[node] = path+f # PIL.Image.open(path + f)
+	return b
+
+def retrieve_cont_buffer(path, frame):
+	fname = path + str(frame) + "_c.yaml"
+	b = open_yaml(fname)
+	return b
+
+def retrieve_metadata(path, frame):
+	fname = path + str(frame) + "_m.yaml"
+	return open_yaml(fname)
+
+def get_paths(exp_dir):
+	paths = {}
+	paths["exp"] = exp_dir.split("results/",1)[1]
+	g_dir = exp_dir + "/graphs"
+	for f in os.listdir(g_dir):
+		indtype = f[0:len(f)-len(".yaml")]
+		paths[indtype] = {}
+		paths[indtype]["graph"] = g_dir + "/" + f
+		paths[indtype]["buffer"] = exp_dir + "/buffers/"
+	paths["reducer"] = {}
+	paths["reducer"]["buffer"] = exp_dir + "/buffers/"
+	paths["metadata"] = exp_dir + "/buffers/"
+	return paths
+
+def gdict_from_paths(paths, frame):
+	gdict = {}
+	for indtype in ["encoder", "controller"]:
+		v = paths[indtype]
+		g = open_yaml(v["graph"])
+		g["inputs"] = list(range(1,1+g["n_in"]))
+		g["edges"] = [str_to_tuple(e) for e in g["edges"]]
+		g["buffer"] = retrieve_buffer(indtype, v["buffer"], frame)
+		gdict[indtype] = g
+	gdict["reducer"] = {}
+	gdict["reducer"]["buffer"] = retrieve_buffer("reducer", paths["reducer"]["buffer"], frame)
+	gdict["metadata"] = retrieve_metadata(paths["metadata"], frame)
+	return gdict
 	
-def getnodename(node, isout=False):
-	return "out"+str(node) if isout else str(node)
+def getnodename(node, g=None, isout=False):
+	if isout:
+		node_index_in_cgp = g["outputs"][node] # node is index in g["output"]
+		n_prev_occurences = g["outputs"][0:node].count(node_index_in_cgp)
+		return "out" + str(node_index_in_cgp) + n_prev_occurences*"'"
+	else: # input or inner node
+		return str(node)
 	
 def randompos():
 	mag = 10
@@ -177,7 +183,7 @@ def getpos(gdict, expdir, indtype):
 	pos = {}
 	g = gdict[indtype]
 	for node in list(g["buffer"].keys()):
-		nodename = getnodename(node, False)
+		nodename = getnodename(node)
 		pos[nodename] = randompos() # Default to random position
 		if ENABLE_MANUAL_POS:
 			isout = False
@@ -188,11 +194,9 @@ def getpos(gdict, expdir, indtype):
 				elif isinp and "inputs" in list(POS[expdir][indtype].keys()):
 					pos[nodename] = POS[expdir][indtype]["inputs"]
 	n_out = len(g["outputs"])
-	print(g["outputs"])
-	exit()
 	for i in range(n_out):
-		node = g["outputs"][i]
-		nodename = getnodename(node, True)
+		# node = g["outputs"][i]
+		nodename = getnodename(i, g, True)
 		pos[nodename] = randompos() # Default to random position
 		if ENABLE_MANUAL_POS:
 			if expdir in list(POS.keys()) and indtype in list(POS[expdir].keys()):
@@ -235,8 +239,9 @@ def appendnodes(ts, gdict, expdir, indtype):
 		nodecolor = ACTIVE_COLOR if node in activated else "black"
 		nodeset = NDSETTING+", draw="+nodecolor
 		ts.append("\\node["+nodeset+"] ("+nodename+") at ("+p+") {"+nodecontent+"};")
-	for node in g["outputs"]:
-		nodename = getnodename(node, True)
+	for i in range(len(g["outputs"])):
+		node = g["outputs"][i]
+		nodename = getnodename(i, g, True)
 		p = pos[nodename]
 		nodecontent = getnodecontent(gdict, node, nodename, indtype, True)
 		nodecolor = ACTIVE_COLOR if node in outputs else "black"
@@ -255,9 +260,10 @@ def appendedges(ts, gdict, indtype):
 		edgecolor = ACTIVE_COLOR if edge[1] in activated else "black"
 		pathset = "->, color="+edgecolor
 		ts.append("\\path["+pathset+"] ("+src+") edge["+edgeopt+"] node[above] {"+edgelabel+"} ("+dst+");")
-	for output in g["outputs"]:
+	for i in range(len(g["outputs"])):
+		output = g["outputs"][i]
 		src = str(output)
-		dst = getnodename(output, True)
+		dst = getnodename(i, g, True)
 		edgecolor = ACTIVE_COLOR if output in outputs else "black"
 		pathset = "->, color="+edgecolor
 		ts.append("\\path["+pathset+"] ("+src+") edge node {} ("+dst+");")
