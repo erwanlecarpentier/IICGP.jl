@@ -18,7 +18,7 @@ IMG_EXT = ".png"
 IMG_TYPE = PIL.PngImagePlugin.PngImageFile
 
 # Graph layout
-NOBUFFER = True
+NOBUFFER = False # Set to True to display nodes names instead of buffers
 ACTIVE_COLOR = "red"
 NDSETTING = "shape=rectangle, rounded corners=0.1cm"
 
@@ -31,7 +31,7 @@ POS = {
 			"1": (-1, -2), "2": (1, -1), "4": (1, -3), "6": (3, -2), "out6": (10, -2)
 		},
 		"controller": {
-			"inputs": (0, 0), "outputs": {"pos": (4, 0), "span": 1}
+			"inputs": (0, 0), "outputs": {"pos": (10, 0), "span": 1}
 		}
 	}
 }
@@ -46,7 +46,7 @@ EDGELABELS = {
 }
 ACTIONLABELS = {
 	0: "",
-	1: "$\\cdot$",
+	1: "$\\bullet$",
 	2: "$\\uparrow$",
 	3: "$\\rightarrow$",
 	4: "$\\leftarrow$",
@@ -55,14 +55,14 @@ ACTIONLABELS = {
 	7: "$\\nwarrow$",
 	8: "$\\searrow$",
 	9: "$\\swarrow$",
-	10: "$\\cdot \\uparrow$",
-	11: "$\\cdot \\rightarrow$",
-	12: "$\\cdot \\leftarrow$",
-	13: "$\\cdot \\downarrow$",
-	14: "$\\cdot \\nearrow$",
-	15: "$\\cdot \\nwarrow$",
-	16: "$\\cdot \\searrow$",
-	17: "$\\cdot \\swarrow$"
+	10: "$\\bullet \\uparrow$",
+	11: "$\\bullet \\rightarrow$",
+	12: "$\\bullet \\leftarrow$",
+	13: "$\\bullet \\downarrow$",
+	14: "$\\bullet \\nearrow$",
+	15: "$\\bullet \\nwarrow$",
+	16: "$\\bullet \\searrow$",
+	17: "$\\bullet \\swarrow$"
 }
 
 	
@@ -209,7 +209,7 @@ def getpos(gdict, expdir, indtype):
 	pos = postostr(pos)
 	return pos
 	
-def getnodecontent(gdict, node, nodename, indtype, is_out):
+def getnodecontent(gdict, node, nodename, indtype, is_out, index=None):
 	if NOBUFFER:
 		return nodename
 	elif indtype == "encoder":
@@ -218,7 +218,11 @@ def getnodecontent(gdict, node, nodename, indtype, is_out):
 		else:
 			return "\includegraphics[width=1cm]{"+gdict[indtype]["buffer"][node]+"}"
 	elif indtype == "controller":
-		return "$" + str(round(gdict[indtype]["buffer"][node], 2)) + "$"
+		if is_out:
+			action_name_in_ale = gdict["controller"]["actions"][index]
+			return ACTIONLABELS[action_name_in_ale]
+		else:
+			return "$" + str(round(gdict[indtype]["buffer"][node], 2)) + "$"
 
 def getedgelabel(fname):
 	if fname in list(EDGELABELS.keys()):
@@ -243,7 +247,7 @@ def appendnodes(ts, gdict, expdir, indtype):
 		node = g["outputs"][i]
 		nodename = getnodename(i, g, True)
 		p = pos[nodename]
-		nodecontent = getnodecontent(gdict, node, nodename, indtype, True)
+		nodecontent = getnodecontent(gdict, node, nodename, indtype, True, i)
 		nodecolor = ACTIVE_COLOR if node in outputs else "black"
 		nodeset = NDSETTING+", draw="+nodecolor
 		ts.append("\\node["+nodeset+"] ("+nodename+") at ("+p+") {"+nodecontent+"};")
