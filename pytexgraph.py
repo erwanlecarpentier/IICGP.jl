@@ -36,6 +36,11 @@ POS = {
 			"74": (2, -4), "81": (4, -4),
 			"67": (4, -1.5),
 			"78": (6, -1.7), "59": (6, -1.3), "79": (8, -2),
+		},
+		"canvas": {
+			"rgbpos": (0, 0.5),
+			"epos": (0, -0.5),
+			"cpos": (1, 0)
 		}
 	}
 }
@@ -198,6 +203,20 @@ def postostr(pos):
 	for k, v in pos.items():
 		pos[k] = str(v[0])+","+str(v[1])
 	return pos
+	
+def twopletostr(t):
+	return "(" + str(t[0]) + ", " + str(t[1]) + ")"
+
+def getcanvaspos(expdir):
+	rgbpos, epos, cpos = "(0, 0)", "(1, 0)", "(2, 0)"
+	if expdir in list(POS.keys()) and "canvas" in list(POS[expdir].keys()):
+		if "rgbpos" in list(POS[expdir]["canvas"].keys()):
+			rgbpos = twopletostr(POS[expdir]["canvas"]["rgbpos"])
+		if "epos" in list(POS[expdir]["canvas"].keys()):
+			epos = twopletostr(POS[expdir]["canvas"]["epos"])
+		if "cpos" in list(POS[expdir]["canvas"].keys()):
+			cpos = twopletostr(POS[expdir]["canvas"]["cpos"])
+	return rgbpos, epos, cpos
 
 def getpos(gdict, expdir, indtype):
 	pos = {}
@@ -317,6 +336,7 @@ def graph_texscript(gdict, paths, indtype, printtex=True):
 def canvas_texscript(paths, frame, printtex=True):
 
 	savedir = paths["metadata"]
+	expdir = paths["exp"]
 	rgb_path = savedir + rgbfname(frame)
 	e_gpath = savedir + graphfname(frame, "encoder") + ".pdf"
 	c_gpath = savedir + graphfname(frame, "controller") + ".pdf"
@@ -325,14 +345,16 @@ def canvas_texscript(paths, frame, printtex=True):
 	e_content = "\includegraphics[width=1cm]{"+e_gpath+"}"
 	c_content = "\includegraphics[width=1cm]{"+c_gpath+"}"
 	
+	rgbpos, epos, cpos = getcanvaspos(expdir)
+	
 	ts = []
 	ts.append("\\documentclass[crop,tikz]{standalone}")
 	ts.append("\\usepackage{graphicx}")
 	ts.append("\\begin{document}")
 	ts.append("\\begin{tikzpicture}")
-	ts.append("\\node[] (e) at (0, +0.5) {"+rgb_content+"};")
-	ts.append("\\node[] (e) at (0, -0.5) {"+e_content+"};")
-	ts.append("\\node[] (c) at (1, 0) {"+c_content+"};")
+	ts.append("\\node[] (e) at "+rgbpos+" {"+rgb_content+"};")
+	ts.append("\\node[] (e) at "+epos+" {"+e_content+"};")
+	ts.append("\\node[] (c) at "+cpos+" {"+c_content+"};")
 	ts.append("\\end{tikzpicture}")
 	ts.append("\\end{document}")
 	
