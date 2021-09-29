@@ -7,6 +7,7 @@ import math
 import yaml
 import PIL
 import random
+import operator
 import matplotlib.animation as animation
 from matplotlib.widgets import Slider
 
@@ -18,11 +19,11 @@ IMG_EXT = ".png"
 IMG_TYPE = PIL.PngImagePlugin.PngImageFile
 
 # Graph layout
-NOBUFFER = False # Set to True to display nodes names instead of buffers
+NOBUFFER = True # Set to True to display nodes names instead of buffers
 ACTIVE_COLOR = "red"
 NDSETTING = "shape=rectangle, rounded corners=0.1cm, minimum width=1cm, minimum height=0.6cm, fill=black!10"
-
 ENABLE_MANUAL_POS = True
+
 """
 Instructions on positioning:
 
@@ -31,7 +32,8 @@ Position by nodename prevails on position "by type", which prevails on random po
 
 Position "by type" apply to either all inputs or all outputs. Here are examples:
 	{"type": "singlenode", "pos": (0, 0)}
-	{"type": "column", "pos": (10, 0), "span": 1} # not yet implemented for input
+	{"type": "column", "pos": (10, 0), "span": 1}
+	{"type": "squares", "pos": (0, 0)} # Only valid for controller input
 """
 POS = {
 	"2021-09-01T17:44:01.968_boxing": {
@@ -40,7 +42,7 @@ POS = {
 			"1": (-1, -2), "2": (1, -1), "4": (1, -3), "6": (3, -2), "out6": (10, -2)
 		},
 		"controller": {
-			"inputs": {"type": "singlenode", "pos": (0, 0)},
+			"inputs": {"type": "squares", "origin": (-5, 0), "innerspan": 1, "squarespan": 7},# {"type": "singlenode", "pos": (0, 0)},
 			"outputs": {"type": "column", "pos": (10, 0), "span": 1},
 			"53": (1, 3),
 			"74": (2, -4), "81": (4, -4),
@@ -54,6 +56,7 @@ POS = {
 		}
 	}
 }
+
 EDGELABELS = {
 	"f_binary": "Binary",
 	"f_bitwise_not": "Not",
@@ -63,6 +66,7 @@ EDGELABELS = {
 	"f_threshold": "Threshold",
 	"f_dilate": "Dilate"
 }
+
 ACTIONLABELS = {
 	0: "",
 	1: "$\\bullet$",
@@ -199,7 +203,7 @@ def gdict_from_paths(paths, frame):
 	
 def getnodename(node, g=None, isout=False):
 	if isout:
-		node_index_in_cgp = g["outputs"][node] # node is index in g["output"]
+		node_index_in_cgp = g["outputs"][node] # here, node is the index in g["output"]
 		n_prev_occurences = g["outputs"][0:node].count(node_index_in_cgp)
 		return "out" + str(node_index_in_cgp) + n_prev_occurences*"'"
 	else: # input or inner node
@@ -232,30 +236,83 @@ def columnpos(posdict, n_nodes, index):
 	orig = posdict["pos"]
 	span = posdict["span"]
 	return (orig[0], orig[1] - index*span + 0.5*n_nodes*span)
+	
+def squarepos(gdict, posdict, n_nodes, index):
+	# TODO remove START
+	#index = 1
+	# TODO remove END
+
+	n_squares = gdict["encoder"]["n_out"]
+	nodes_per_square = gdict["controller"]["n_in"] / n_squares
+	size = math.sqrt(nodes_per_square)
+	assert float(size).is_integer(), "impossible square size: " + str(size)
+	in_square_index = (index-1) % nodes_per_square
+	current_square = math.ceil(index / nodes_per_square)
+	row = int(in_square_index % size)
+	col = math.floor(in_square_index / size)
+	innerspan = posdict["innerspan"]
+	pos = ((col-(size-1)/2)*innerspan, (-row+(size-1)/2)*innerspan)
+	pos = tuple(map(operator.add, pos, posdict["origin"])) # shift to origin
+	sqshift = (0, ((n_squares+1)/2-current_square)*posdict["squarespan"])
+	pos = tuple(map(operator.add, pos, sqshift)) # shift squares
+	
+	
+	# TODO remove START
+	print("index            :", index)
+	print("nodes_per_square :", nodes_per_square)
+	print("current_square   :", current_square)
+	print("sqshift          :", sqshift)
+	print("size             :", size)
+	print("in_square_index  :", in_square_index)
+	print("row              :", row)
+	print("col              :", col)
+	print("pos              :", pos)
+	print(in_square_index)
+	# TODO remove END
+	
+	
+	#exit()
+	return pos
 
 def getpos(gdict, expdir, indtype):
 	pos = {}
 	g = gdict[indtype]
-	for node in list(g["buffer"].keys()): # Position of input and inner nodes
+	n_inp = g["n_in"]
+	
+	# Position of input nodes
+	for i in range(1, n_inp+1):
+		node = i
 		nodename = getnodename(node)
 		pos[nodename] = randompos() # Default to random position
 		if ENABLE_MANUAL_POS:
-			isout = False
-			n_inp = g["n_in"]
-			isinp = node <= n_inp
 			if expdir in list(POS.keys()) and indtype in list(POS[expdir].keys()):
 				if nodename in list(POS[expdir][indtype].keys()):
 					pos[nodename] = POS[expdir][indtype][nodename]
-				elif isinp and "inputs" in list(POS[expdir][indtype].keys()):
+				elif "inputs" in list(POS[expdir][indtype].keys()):
 					input_pos_dict = POS[expdir][indtype]["inputs"]
 					if input_pos_dict["type"] == "singlenode":
 						pos[nodename] = input_pos_dict["pos"]
-					#elif input_pos_dict["type"] == "column":
-					#	pos[nodename] = columnpos(input_pos_dict, n_inp, i)
+					elif input_pos_dict["type"] == "column":
+						pos[nodename] = columnpos(input_pos_dict, n_inp, i)
+					elif input_pos_dict["type"] == "squares":
+						pos[nodename] = squarepos(gdict, input_pos_dict, n_inp, i)
 					else:
 						print("WARNING: input position type", input_pos_dict["type"], "unknown.")
+	
+	# Position of inner nodes
+	for node in list(g["buffer"].keys()):
+		isinp = node <= n_inp
+		if not isinp:
+			nodename = getnodename(node)
+			pos[nodename] = randompos() # Default to random position
+			if ENABLE_MANUAL_POS:
+				if expdir in list(POS.keys()) and indtype in list(POS[expdir].keys()):
+					if nodename in list(POS[expdir][indtype].keys()):
+						pos[nodename] = POS[expdir][indtype][nodename]
+
+	# Position of output nodes
 	n_out = len(g["outputs"])
-	for i in range(n_out): # Position of output nodes
+	for i in range(n_out): 
 		# node = g["outputs"][i]
 		nodename = getnodename(i, g, True)
 		pos[nodename] = randompos() # Default to random position
