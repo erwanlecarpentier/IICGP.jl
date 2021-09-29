@@ -22,6 +22,7 @@ IMG_TYPE = PIL.PngImagePlugin.PngImageFile
 NOBUFFER = False # Set to True to display nodes names instead of buffers
 ACTIVE_COLOR = "red"
 NDSETTING = "shape=rectangle, rounded corners=0.1cm, minimum width=1cm, minimum height=0.6cm, fill=black!10"
+HALOEDGES = True
 ENABLE_MANUAL_POS = True
 
 """
@@ -325,9 +326,21 @@ def getnodecontent(gdict, node, nodename, indtype, is_out, index=None, width="1c
 		else:
 			return "$" + str(round(gdict[indtype]["buffer"][node], 2)) + "$"
 			
-def getnodesettings(node, activated):
-	nodecolor = ACTIVE_COLOR if node in activated else "black"
-	nodesettings = NDSETTING+", draw="+nodecolor
+def getnodesettings(gdict, expdir, node, nodename, activated, indtype):
+	if (
+		indtype == "controller"
+		and ENABLE_MANUAL_POS
+		and node <= gdict[indtype]["n_in"]
+		and nodename[:3] != "out"
+		and expdir in list(POS.keys()) 
+		and indtype in list(POS[expdir].keys())
+		and "inputs" in list(POS[expdir][indtype].keys())
+		and POS[expdir][indtype]["inputs"]["type"] == "squares"
+	): # reduced images as background
+		nodesettings = "draw=none, color=black, fill=white, opacity=0.7, rounded corners=0.1cm, minimum width=0.9cm"
+	else:
+		nodecolor = ACTIVE_COLOR if node in activated else "black"
+		nodesettings = NDSETTING+", draw="+nodecolor
 	return nodesettings
 
 def getedgelabel(fname):
@@ -373,14 +386,14 @@ def appendnodes(ts, gdict, expdir, indtype):
 		isinput = node <= g["n_in"]
 		p = pos[nodename]
 		nodecontent = getnodecontent(gdict, node, nodename, indtype, False)
-		nodesettings = getnodesettings(node, activated)
+		nodesettings = getnodesettings(gdict, expdir, node, nodename, activated, indtype)
 		ts.append("\\node["+nodesettings+"] ("+nodename+") at ("+p+") {"+nodecontent+"};")
 	for i in range(len(g["outputs"])):
 		node = g["outputs"][i]
 		nodename = getnodename(i, g, True)
 		p = pos[nodename]
 		nodecontent = getnodecontent(gdict, node, nodename, indtype, True, i)
-		nodesettings = getnodesettings(node, outputs)
+		nodesettings = getnodesettings(gdict, expdir, node, nodename, outputs, indtype)
 		ts.append("\\node["+nodesettings+"] ("+nodename+") at ("+p+") {"+nodecontent+"};")
 
 def appendedges(ts, gdict, indtype):
@@ -394,6 +407,8 @@ def appendedges(ts, gdict, indtype):
 		edgeopt = "loop above" if edge[0] == edge[1] else "" # self-loop
 		edgecolor = ACTIVE_COLOR if edge[1] in activated else "black"
 		pathset = "->, color="+edgecolor
+		if HALOEDGES:
+			ts.append("\\path[->, color=white, ultra thick] ("+src+") edge["+edgeopt+"] node[above] {"+edgelabel+"} ("+dst+");")
 		ts.append("\\path["+pathset+"] ("+src+") edge["+edgeopt+"] node[above] {"+edgelabel+"} ("+dst+");")
 	for i in range(len(g["outputs"])):
 		output = g["outputs"][i]
@@ -401,6 +416,8 @@ def appendedges(ts, gdict, indtype):
 		dst = getnodename(i, g, True)
 		edgecolor = ACTIVE_COLOR if output in outputs else "black"
 		pathset = "->, color="+edgecolor
+		if HALOEDGES:
+			ts.append("\\path[->, color=white, ultra thick] ("+src+") edge node {} ("+dst+");")
 		ts.append("\\path["+pathset+"] ("+src+") edge node {} ("+dst+");")
 
 def graph_texscript(gdict, paths, indtype, printtex=True):
