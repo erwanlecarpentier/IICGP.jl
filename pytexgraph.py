@@ -166,9 +166,10 @@ def retrieve_buffer(indtype, path, frame):
 
 def retrieve_img_buffer(path, frame, key):
 	b = {}
+	fprefix = str(frame) + "_" + key
 	for f in os.listdir(path):
-		if int(f[0]) == frame and f[2] == key:
-			node = int(f[3:-len(IMG_EXT)])
+		if f.startswith(fprefix):
+			node = int(f[len(fprefix):-len(IMG_EXT)])
 			b[node] = path + f # PIL.Image.open(path + f)
 	return b
 
@@ -533,12 +534,14 @@ def make_canvas(paths, frame):
 
 if __name__ == "__main__":
 	exp_dir = sys.argv[1]
-	max_frame = 1
+	max_frame = 100
 	paths = get_paths(exp_dir)
 	random.seed(SEED)
+	"""
 	for frame in range(1, max_frame + 1):
 		make_graphs(paths, frame)
 		make_canvas(paths, frame)
+	"""
 
 # python3.7 pygraph.py /home/wahara/.julia/dev/IICGP/results/2021-09-01T17:44:01.968_boxing
 # python3.8 pygraph.py /home/opaweynch/.julia/environments/v1.6/dev/IICGP/results/2021-09-01T17:44:01.968_boxing

@@ -325,8 +325,21 @@ games = ["boxing"] # ["freeway"]  # pong kung_fu_master freeway assault
 reducers = ["pooling"] # Array{String,1}() # ["pooling"]
 exp_dirs, games = get_exp_dir(min_date=min_date, max_date=max_date, games=games,
                               reducers=reducers)
-max_frames = 3
+max_frames = 100
 render_graph = false
+
+for i in eachindex(exp_dirs)
+    # Generate images (may display / save)
+    visu_ingame(exp_dirs[i], games[i], max_frames,
+                do_save=true, do_display=false)
+
+    # Launch python script
+    if render_graph
+        exp_dir = exp_dirs[i]
+        seed = 1234
+        run(`python3.8 py-graph.py $exp_dir`)
+    end
+end
 
 #=
 i = 1
@@ -362,19 +375,5 @@ else
     action = prev_action
 end
 =#
-
-for i in eachindex(exp_dirs)
-    # Generate images (may display / save)
-    visu_ingame(exp_dirs[i], games[i], max_frames,
-                do_save=true, do_display=false)
-
-    # Launch python script
-    if render_graph
-        exp_dir = exp_dirs[i]
-        seed = 1234
-        run(`python3.8 py-graph.py $exp_dir $seed`)
-    end
-end
-
 
 # python3.7 py-graph.py /home/wahara/.julia/dev/IICGP/results/2021-09-01T17:44:01.968_boxing
