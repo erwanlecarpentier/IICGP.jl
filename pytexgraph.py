@@ -5,18 +5,18 @@ import os
 import subprocess
 import math
 import yaml
-import PIL
+import cv2
 import random
 import operator
-import matplotlib.animation as animation
-from matplotlib.widgets import Slider
+from pdf2image import convert_from_path
 
 
 # Meta parameters
 SEED = 1234
+MAX_FRAME = 10
 DIR_PATH = os.path.dirname(os.path.realpath(__file__))
 IMG_EXT = ".png"
-IMG_TYPE = PIL.PngImagePlugin.PngImageFile
+# IMG_TYPE = PIL.PngImagePlugin.PngImageFile
 
 # Graph layout
 NOBUFFER = False # Set to True to display nodes names instead of buffers
@@ -25,7 +25,9 @@ NDSETTING = "shape=rectangle, rounded corners=0.1cm, minimum width=1cm, minimum 
 HALOEDGES = True
 ENABLE_MANUAL_POS = True
 SHOW = False
+TOPNG = True # convert pdf canvas to png
 DELETE_GRAPHS = True
+DELETE_CANVAS_PDF = True
 
 """
 Instructions on positioning:
@@ -500,6 +502,14 @@ def runtex(fname, savedir, texsavepath):
 	if SHOW:
 		subprocess.run(["evince", savedir + fname + ".pdf"])
 	
+def canvastopng(fname, savedir):
+	pdffile = savedir + fname + ".pdf"
+	pngfile = savedir + fname + ".png"
+	pages = convert_from_path(pdffile, dpi=2000)
+	pages[0].save(pngfile, 'PNG')
+	if DELETE_CANVAS_PDF:
+		os.remove(pdffile)
+	
 def build_graph(texscript, paths, frame, indtype):
 	savedir = paths["metadata"]
 	fname = graphfname(frame, indtype)
@@ -513,6 +523,8 @@ def build_canvas(texscript, paths, frame):
 	texsavepath = savedir + fname + ".tex"
 	writeat(texsavepath, texscript)
 	runtex(fname, savedir, texsavepath)
+	if TOPNG:
+		canvastopng(fname, savedir)
 
 def make_graphs(paths, frame):
 	gdict = gdict_from_paths(paths, frame)
@@ -531,10 +543,25 @@ def make_canvas(paths, frame):
 	build_canvas(texscript, paths, frame)
 	if DELETE_GRAPHS:
 		delete_graphs(paths, frame)
+		
+def make_video(paths, max_frame):
+	savedir = paths["metadata"]
+	img_array = []
+	for frame in range(1, max_frame + 1):
+		fname = savedir + str(frame) + "_canvas.png"
+		img = cv2.imread(fname)
+		height, width, layers = img.shape
+		size = (width, height)
+		img_array.append(img)
+	videofname = savedir + "../project.avi"
+	out = cv2.VideoWriter(videofname, cv2.VideoWriter_fourcc(*'DIVX'), 15, size)
+	for i in range(len(img_array)):
+		out.write(img_array[i])
+	out.release()
 
 if __name__ == "__main__":
 	exp_dir = sys.argv[1]
-	max_frame = 100
+	max_frame = MAX_FRAME
 	paths = get_paths(exp_dir)
 	random.seed(SEED)
 	"""
@@ -542,6 +569,7 @@ if __name__ == "__main__":
 		make_graphs(paths, frame)
 		make_canvas(paths, frame)
 	"""
+	make_video(paths, max_frame)
 
 # python3.7 pygraph.py /home/wahara/.julia/dev/IICGP/results/2021-09-01T17:44:01.968_boxing
 # python3.8 pygraph.py /home/opaweynch/.julia/environments/v1.6/dev/IICGP/results/2021-09-01T17:44:01.968_boxing
