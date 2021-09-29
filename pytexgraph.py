@@ -24,6 +24,8 @@ ACTIVE_COLOR = "red"
 NDSETTING = "shape=rectangle, rounded corners=0.1cm, minimum width=1cm, minimum height=0.6cm, fill=black!10"
 HALOEDGES = True
 ENABLE_MANUAL_POS = True
+SHOW = False
+DELETE_GRAPHS = True
 
 """
 Instructions on positioning:
@@ -487,14 +489,14 @@ def canvas_texscript(paths, frame, printtex=True):
 		print(100*"-")
 	return ts
 	
-def runtex(fname, savedir, texsavepath, show=True):
+def runtex(fname, savedir, texsavepath):
 	subprocess.run(["pdflatex", "-interaction", "nonstopmode",
 			"-output-directory", savedir, texsavepath])
 	# clean
 	for ext in [".tex", ".aux", ".log"]:
 		os.remove(savedir + fname + ext)
 	# evince
-	if show:
+	if SHOW:
 		subprocess.run(["evince", savedir + fname + ".pdf"])
 	
 def build_graph(texscript, paths, frame, indtype):
@@ -516,19 +518,26 @@ def make_graphs(paths, frame):
 	for indtype in ["encoder", "controller"]:
 		texscript = graph_texscript(gdict, paths, indtype)
 		build_graph(texscript, paths, frame, indtype)
+		
+def delete_graphs(paths, frame):
+	savedir = paths["metadata"]
+	for indtype in ["encoder", "controller"]:
+		fname = graphfname(frame, indtype)
+		os.remove(savedir + fname + ".pdf")
 
 def make_canvas(paths, frame):
 	texscript = canvas_texscript(paths, frame)
 	build_canvas(texscript, paths, frame)
+	if DELETE_GRAPHS:
+		delete_graphs(paths, frame)
 
 if __name__ == "__main__":
 	exp_dir = sys.argv[1]
 	max_frame = 1
 	paths = get_paths(exp_dir)
 	random.seed(SEED)
-
 	for frame in range(1, max_frame + 1):
-		# make_graphs(paths, frame)
+		make_graphs(paths, frame)
 		make_canvas(paths, frame)
 
 # python3.7 pygraph.py /home/wahara/.julia/dev/IICGP/results/2021-09-01T17:44:01.968_boxing
