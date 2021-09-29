@@ -13,7 +13,7 @@ from pdf2image import convert_from_path
 
 # Meta parameters
 SEED = 1234
-MAX_FRAME = 10
+MAX_FRAME = 100
 DIR_PATH = os.path.dirname(os.path.realpath(__file__))
 IMG_EXT = ".png"
 # IMG_TYPE = PIL.PngImagePlugin.PngImageFile
@@ -553,7 +553,7 @@ def make_video(paths, max_frame):
 		height, width, layers = img.shape
 		size = (width, height)
 		img_array.append(img)
-	videofname = savedir + "../project.avi"
+	videofname = savedir + "../canvas.avi"
 	out = cv2.VideoWriter(videofname, cv2.VideoWriter_fourcc(*'DIVX'), 15, size)
 	for i in range(len(img_array)):
 		out.write(img_array[i])
@@ -564,11 +564,9 @@ if __name__ == "__main__":
 	max_frame = MAX_FRAME
 	paths = get_paths(exp_dir)
 	random.seed(SEED)
-	"""
 	for frame in range(1, max_frame + 1):
 		make_graphs(paths, frame)
 		make_canvas(paths, frame)
-	"""
 	make_video(paths, max_frame)
 
 # python3.7 pygraph.py /home/wahara/.julia/dev/IICGP/results/2021-09-01T17:44:01.968_boxing
