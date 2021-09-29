@@ -39,21 +39,26 @@ Position "by type" apply to either all inputs or all outputs. Here are examples:
 POS = {
 	"2021-09-01T17:44:01.968_boxing": {
 		"encoder": {
-			"3": (1, 2), "9": (3, 2), "11": (5.5, 2), "14": (8.5, 2), "out14": (10, 2),
-			"1": (-1, -2), "2": (1, -1), "4": (1, -3), "6": (3, -2), "out6": (10, -2)
+			"1": (-1, 2), "2": (3, 3), "4": (3, 1), "6": (7, 2), "out6": (10, 2),
+			"3": (1, -1), "9": (3, -1), "11": (5.5, -1), "14": (8.5, -1), "out14": (10, -1)
 		},
 		"controller": {
-			"inputs": {"type": "squares", "origin": (-5, 0), "innerspan": 1, "squarespan": 7},# {"type": "singlenode", "pos": (0, 0)},
+			"inputs": {"type": "squares", "origin": (-1, 0), "innerspan": 1, "squarespan": 7},# {"type": "singlenode", "pos": (0, 0)},
 			"outputs": {"type": "column", "pos": (10, 0), "span": 1},
 			"53": (1, 3),
-			"74": (2, -4), "81": (4, -4),
-			"67": (4, -1.5),
-			"78": (6, -1.7), "59": (6, -1.3), "79": (8, -2),
+			"74": (5, -6), "81": (7, -6),
+			"67": (5, -4.5),
+			"78": (5, -2.5), "59": (5, -0.5), "79": (7, -1.5),
+			"85": (8, -3.5),
+			"53": (8, 4),
+			"77": (5, 6),
+			"52": (0, 10),
+			"69": (5, 0.5), "82": (7, 1.5)
 		},
 		"canvas": {
-			"rgbpos": (0, 0.5),
-			"epos": (0, -0.5),
-			"cpos": (1, 0)
+			"rgbpos": (0, 0.4), "hrgbpos": (0, 0.8),
+			"epos": (0, -0.4), "hepos": (0, 0),
+			"cpos": (1.1, 0), "hcpos": (1.1, 0.8)
 		}
 	}
 }
@@ -224,14 +229,21 @@ def twopletostr(t):
 
 def getcanvaspos(expdir):
 	rgbpos, epos, cpos = "(0, 0)", "(1, 0)", "(2, 0)"
+	hrgbpos, hepos, hcpos = "(0, 1)", "(1, 1)", "(2, 1)"
 	if expdir in list(POS.keys()) and "canvas" in list(POS[expdir].keys()):
 		if "rgbpos" in list(POS[expdir]["canvas"].keys()):
 			rgbpos = twopletostr(POS[expdir]["canvas"]["rgbpos"])
+		if "hrgbpos" in list(POS[expdir]["canvas"].keys()):
+			hrgbpos = twopletostr(POS[expdir]["canvas"]["hrgbpos"])
 		if "epos" in list(POS[expdir]["canvas"].keys()):
 			epos = twopletostr(POS[expdir]["canvas"]["epos"])
+		if "hepos" in list(POS[expdir]["canvas"].keys()):
+			hepos = twopletostr(POS[expdir]["canvas"]["hepos"])
 		if "cpos" in list(POS[expdir]["canvas"].keys()):
 			cpos = twopletostr(POS[expdir]["canvas"]["cpos"])
-	return rgbpos, epos, cpos
+		if "hcpos" in list(POS[expdir]["canvas"].keys()):
+			hcpos = twopletostr(POS[expdir]["canvas"]["hcpos"])
+	return rgbpos, hrgbpos, epos, hepos, cpos, hcpos
 	
 def columnpos(posdict, n_nodes, index):
 	orig = posdict["pos"]
@@ -451,16 +463,19 @@ def canvas_texscript(paths, frame, printtex=True):
 	e_content = "\includegraphics[width=1cm]{"+e_gpath+"}"
 	c_content = "\includegraphics[width=1cm]{"+c_gpath+"}"
 	
-	rgbpos, epos, cpos = getcanvaspos(expdir)
+	rgbpos, hrgbpos, epos, hepos, cpos, hcpos = getcanvaspos(expdir)
 	
 	ts = []
 	ts.append("\\documentclass[crop,tikz]{standalone}")
 	ts.append("\\usepackage{graphicx}")
 	ts.append("\\begin{document}")
 	ts.append("\\begin{tikzpicture}")
-	ts.append("\\node[] (e) at "+rgbpos+" {"+rgb_content+"};")
-	ts.append("\\node[] (e) at "+epos+" {"+e_content+"};")
-	ts.append("\\node[] (c) at "+cpos+" {"+c_content+"};")
+	ts.append("\\node[scale=0.3] () at "+hrgbpos+" {RGB Image};")
+	ts.append("\\node[scale=0.8] () at "+rgbpos+" {"+rgb_content+"};")
+	ts.append("\\node[scale=0.3] () at "+hepos+" {Encoder};")
+	ts.append("\\node[] () at "+epos+" {"+e_content+"};")
+	ts.append("\\node[scale=0.3] () at "+hcpos+" {Controller};")
+	ts.append("\\node[] () at "+cpos+" {"+c_content+"};")
 	ts.append("\\end{tikzpicture}")
 	ts.append("\\end{document}")
 	
@@ -498,10 +513,9 @@ def build_canvas(texscript, paths, frame):
 
 def make_graphs(paths, frame):
 	gdict = gdict_from_paths(paths, frame)
-	for indtype in ["controller", "encoder"]:
+	for indtype in ["encoder", "controller"]:
 		texscript = graph_texscript(gdict, paths, indtype)
 		build_graph(texscript, paths, frame, indtype)
-		exit()
 
 def make_canvas(paths, frame):
 	texscript = canvas_texscript(paths, frame)
@@ -514,8 +528,8 @@ if __name__ == "__main__":
 	random.seed(SEED)
 
 	for frame in range(1, max_frame + 1):
-		make_graphs(paths, frame)
-		# make_canvas(paths, frame)
+		# make_graphs(paths, frame)
+		make_canvas(paths, frame)
 
 # python3.7 pygraph.py /home/wahara/.julia/dev/IICGP/results/2021-09-01T17:44:01.968_boxing
 # python3.8 pygraph.py /home/opaweynch/.julia/environments/v1.6/dev/IICGP/results/2021-09-01T17:44:01.968_boxing
