@@ -22,8 +22,17 @@ NOBUFFER = False # Set to True to display nodes names instead of buffers
 ACTIVE_COLOR = "red"
 NDSETTING = "shape=rectangle, rounded corners=0.1cm, minimum width=1cm, minimum height=0.6cm, fill=black!10"
 
-POSITIONING = "random" # manual random
 ENABLE_MANUAL_POS = True
+"""
+Instructions on positioning:
+
+Position by nodename prevails on position "by type", which prevails on random positioning (default).
+	nodename > type > random
+
+Position "by type" apply to either all inputs or all outputs. Here are examples:
+	{"type": "singlenode", "pos": (0, 0)}
+	{"type": "column", "pos": (10, 0), "span": 1} # not yet implemented for input
+"""
 POS = {
 	"2021-09-01T17:44:01.968_boxing": {
 		"encoder": {
@@ -31,7 +40,8 @@ POS = {
 			"1": (-1, -2), "2": (1, -1), "4": (1, -3), "6": (3, -2), "out6": (10, -2)
 		},
 		"controller": {
-			"inputs": (0, 0), "outputs": {"pos": (10, 0), "span": 1},
+			"inputs": {"type": "singlenode", "pos": (0, 0)},
+			"outputs": {"type": "column", "pos": (10, 0), "span": 1},
 			"53": (1, 3),
 			"74": (2, -4), "81": (4, -4),
 			"67": (4, -1.5),
@@ -217,23 +227,35 @@ def getcanvaspos(expdir):
 		if "cpos" in list(POS[expdir]["canvas"].keys()):
 			cpos = twopletostr(POS[expdir]["canvas"]["cpos"])
 	return rgbpos, epos, cpos
+	
+def columnpos(posdict, n_nodes, index):
+	orig = posdict["pos"]
+	span = posdict["span"]
+	return (orig[0], orig[1] - index*span + 0.5*n_nodes*span)
 
 def getpos(gdict, expdir, indtype):
 	pos = {}
 	g = gdict[indtype]
-	for node in list(g["buffer"].keys()):
+	for node in list(g["buffer"].keys()): # Position of input and inner nodes
 		nodename = getnodename(node)
 		pos[nodename] = randompos() # Default to random position
 		if ENABLE_MANUAL_POS:
 			isout = False
-			isinp = node <= g["n_in"]
+			n_inp = g["n_in"]
+			isinp = node <= n_inp
 			if expdir in list(POS.keys()) and indtype in list(POS[expdir].keys()):
 				if nodename in list(POS[expdir][indtype].keys()):
 					pos[nodename] = POS[expdir][indtype][nodename]
 				elif isinp and "inputs" in list(POS[expdir][indtype].keys()):
-					pos[nodename] = POS[expdir][indtype]["inputs"]
+					input_pos_dict = POS[expdir][indtype]["inputs"]
+					if input_pos_dict["type"] == "singlenode":
+						pos[nodename] = input_pos_dict["pos"]
+					#elif input_pos_dict["type"] == "column":
+					#	pos[nodename] = columnpos(input_pos_dict, n_inp, i)
+					else:
+						print("WARNING: input position type", input_pos_dict["type"], "unknown.")
 	n_out = len(g["outputs"])
-	for i in range(n_out):
+	for i in range(n_out): # Position of output nodes
 		# node = g["outputs"][i]
 		nodename = getnodename(i, g, True)
 		pos[nodename] = randompos() # Default to random position
@@ -241,10 +263,14 @@ def getpos(gdict, expdir, indtype):
 			if expdir in list(POS.keys()) and indtype in list(POS[expdir].keys()):
 				if nodename in list(POS[expdir][indtype].keys()):
 					pos[nodename] = POS[expdir][indtype][nodename]
-				elif isinp and "outputs" in list(POS[expdir][indtype].keys()):
-					orig = POS[expdir][indtype]["outputs"]["pos"]
-					span = POS[expdir][indtype]["outputs"]["span"]
-					pos[nodename] = (orig[0], orig[1] - i*span + 0.5*n_out*span)
+				elif "outputs" in list(POS[expdir][indtype].keys()):
+					output_pos_dict = POS[expdir][indtype]["outputs"]
+					if output_pos_dict["type"] == "singlenode":
+						pos[nodename] = output_pos_dict["pos"]
+					elif output_pos_dict["type"] == "column":
+						pos[nodename] = columnpos(output_pos_dict, n_out, i)
+					else:
+						print("WARNING: output position type", output_pos_dict["type"], "unknown.")
 	pos = postostr(pos)
 	return pos
 	
@@ -395,6 +421,7 @@ def make_graphs(paths, frame):
 	for indtype in ["controller", "encoder"]:
 		texscript = graph_texscript(gdict, paths, indtype)
 		build_graph(texscript, paths, frame, indtype)
+		exit()
 
 def make_canvas(paths, frame):
 	texscript = canvas_texscript(paths, frame)
@@ -407,8 +434,8 @@ if __name__ == "__main__":
 	random.seed(SEED)
 
 	for frame in range(1, max_frame + 1):
-		# make_graphs(paths, frame)
-		make_canvas(paths, frame)
+		make_graphs(paths, frame)
+		# make_canvas(paths, frame)
 
 # python3.7 pygraph.py /home/wahara/.julia/dev/IICGP/results/2021-09-01T17:44:01.968_boxing
 # python3.8 pygraph.py /home/opaweynch/.julia/environments/v1.6/dev/IICGP/results/2021-09-01T17:44:01.968_boxing
