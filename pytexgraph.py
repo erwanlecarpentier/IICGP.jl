@@ -19,7 +19,7 @@ IMG_EXT = ".png"
 IMG_TYPE = PIL.PngImagePlugin.PngImageFile
 
 # Graph layout
-NOBUFFER = True # Set to True to display nodes names instead of buffers
+NOBUFFER = False # Set to True to display nodes names instead of buffers
 ACTIVE_COLOR = "red"
 NDSETTING = "shape=rectangle, rounded corners=0.1cm, minimum width=1cm, minimum height=0.6cm, fill=black!10"
 ENABLE_MANUAL_POS = True
@@ -238,10 +238,6 @@ def columnpos(posdict, n_nodes, index):
 	return (orig[0], orig[1] - index*span + 0.5*n_nodes*span)
 	
 def squarepos(gdict, posdict, n_nodes, index):
-	# TODO remove START
-	#index = 1
-	# TODO remove END
-
 	n_squares = gdict["encoder"]["n_out"]
 	nodes_per_square = gdict["controller"]["n_in"] / n_squares
 	size = math.sqrt(nodes_per_square)
@@ -255,23 +251,6 @@ def squarepos(gdict, posdict, n_nodes, index):
 	pos = tuple(map(operator.add, pos, posdict["origin"])) # shift to origin
 	sqshift = (0, ((n_squares+1)/2-current_square)*posdict["squarespan"])
 	pos = tuple(map(operator.add, pos, sqshift)) # shift squares
-	
-	
-	# TODO remove START
-	print("index            :", index)
-	print("nodes_per_square :", nodes_per_square)
-	print("current_square   :", current_square)
-	print("sqshift          :", sqshift)
-	print("size             :", size)
-	print("in_square_index  :", in_square_index)
-	print("row              :", row)
-	print("col              :", col)
-	print("pos              :", pos)
-	print(in_square_index)
-	# TODO remove END
-	
-	
-	#exit()
 	return pos
 
 def getpos(gdict, expdir, indtype):
@@ -331,14 +310,14 @@ def getpos(gdict, expdir, indtype):
 	pos = postostr(pos)
 	return pos
 	
-def getnodecontent(gdict, node, nodename, indtype, is_out, index=None):
+def getnodecontent(gdict, node, nodename, indtype, is_out, index=None, width="1cm"):
 	if NOBUFFER:
 		return nodename
 	elif indtype == "encoder":
 		if is_out:
-			return "\includegraphics[width=1cm]{"+gdict["reducer"]["buffer"][node]+"}"
+			return "\includegraphics[width="+width+"]{"+gdict["reducer"]["buffer"][node]+"}"
 		else:
-			return "\includegraphics[width=1cm]{"+gdict[indtype]["buffer"][node]+"}"
+			return "\includegraphics[width="+width+"]{"+gdict[indtype]["buffer"][node]+"}"
 	elif indtype == "controller":
 		if is_out:
 			action_name_in_ale = gdict["controller"]["actions"][index]
@@ -356,12 +335,39 @@ def getedgelabel(fname):
 		return EDGELABELS[fname]
 	else:
 		return fname[2:].replace('_', ' ')
-	
+
+def appendbackgroundnodes(ts, gdict, expdir, indtype):
+	if (
+		indtype == "controller"
+		and ENABLE_MANUAL_POS
+		and expdir in list(POS.keys()) 
+		and indtype in list(POS[expdir].keys())
+		and "inputs" in list(POS[expdir][indtype].keys())
+		and POS[expdir][indtype]["inputs"]["type"] == "squares"
+	): # reduced images as background
+		posdict = POS[expdir][indtype]["inputs"]
+		n_squares = gdict["encoder"]["n_out"]
+		nodes_per_square = gdict[indtype]["n_in"] / n_squares
+		size = math.sqrt(nodes_per_square)
+		assert float(size).is_integer(), "impossible square size: " + str(size)
+		width = str(posdict["innerspan"]*size)+"cm"
+		for i in range(n_squares):
+			node = gdict["encoder"]["outputs"][i]
+			nodename = getnodename(i, gdict["encoder"], True)
+			nodecontent = getnodecontent(gdict, node, nodename, "encoder", True, i, width=width)
+			pos = posdict["origin"]
+			current_square = i + 1
+			sqshift = (0, ((n_squares+1)/2-current_square)*posdict["squarespan"])
+			pos = tuple(map(operator.add, pos, sqshift)) # shift squares
+			pos = str(pos[0]) + "," + str(pos[1])
+			ts.append("\\node[] () at ("+pos+") {"+nodecontent+"};")
+
 def appendnodes(ts, gdict, expdir, indtype):
 	g = gdict[indtype]
 	activated = gdict["metadata"][indtype]["activated"]
 	outputs = gdict["metadata"][indtype]["outputs"]
 	pos = getpos(gdict, expdir, indtype)
+	appendbackgroundnodes(ts, gdict, expdir, indtype)
 	for node in g["buffer"].keys():
 		nodename = getnodename(node)
 		isinput = node <= g["n_in"]
