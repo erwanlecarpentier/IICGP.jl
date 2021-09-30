@@ -7,13 +7,14 @@ import math
 import yaml
 import cv2
 import random
+from tqdm import tqdm
 import operator
 from pdf2image import convert_from_path
 
 
 # Meta parameters
 SEED = 1234
-MAX_FRAME = 100
+MAX_FRAME = 6711
 DIR_PATH = os.path.dirname(os.path.realpath(__file__))
 IMG_EXT = ".png"
 # IMG_TYPE = PIL.PngImagePlugin.PngImageFile
@@ -541,33 +542,73 @@ def delete_graphs(paths, frame):
 def make_canvas(paths, frame):
 	texscript = canvas_texscript(paths, frame)
 	build_canvas(texscript, paths, frame)
-	if DELETE_GRAPHS:
-		delete_graphs(paths, frame)
+	if DELETE_GRAPHS: delete_graphs(paths, frame)
 		
-def make_video(paths, max_frame):
-	savedir = paths["metadata"]
-	img_array = []
-	for frame in range(1, max_frame + 1):
-		fname = savedir + str(frame) + "_canvas.png"
-		img = cv2.imread(fname)
-		height, width, layers = img.shape
-		size = (width, height)
-		img_array.append(img)
-	videofname = savedir + "../canvas.avi"
-	out = cv2.VideoWriter(videofname, cv2.VideoWriter_fourcc(*'DIVX'), 15, size)
-	for i in range(len(img_array)):
-		out.write(img_array[i])
-	out.release()
+def make_video(paths, max_frame, verbose=True):
+	bufferdir = paths["metadata"]
+	savedir = bufferdir[0:-len("buffers/")]
+	fps = 15
+	fspan = 1000
+	n_vid = math.ceil(max_frame / fspan)
+	subvideofnames = [savedir + "canvas" + str(i+1) + ".avi" for i in range(n_vid)]
+	img = cv2.imread(bufferdir + str(1) + "_canvas.png")
+	height, width, layers = img.shape
+	size = (width, height)
+	ranges = [range(i, i+fspan) for i in range(1, max_frame + 1 - fspan, fspan)]
+	ranges.append(range(len(ranges) * fspan + 1, max_frame + 1))
+	subvid_index = 0
+	if verbose: print("Creating video")
+	
+	# Creating sub-videos
+	for r in ranges:
+		if verbose: print("\nLoading images from", r[0], "to", r[-1], "out of", max_frame, ":")
+		img_array = []
+		for frame in tqdm(r):
+			fname = bufferdir + str(frame) + "_canvas.png"
+			img = cv2.imread(fname)
+			img_array.append(img)
+		if verbose: print("Successfully loaded", len(r), "images")
+		videofname = subvideofnames[subvid_index]
+		out = cv2.VideoWriter(videofname, cv2.VideoWriter_fourcc(*'DIVX'), fps, size)
+		for i in range(len(img_array)):
+			out.write(img_array[i])
+		out.release()
+		if verbose: print("Successfully created sub-video number", subvid_index+1, "at", videofname)
+		subvid_index += 1
+		
+	# Assembling sub-videos
+	finalvideofname = savedir + "canvas.avi"
+	video = cv2.VideoWriter(finalvideofname, cv2.VideoWriter_fourcc(*'DIVX'), fps, size)
+	if verbose: print("\nAssembling sub-videos:")
+	for f in tqdm(subvideofnames):
+		v = cv2.VideoCapture(f)
+		while v.isOpened():
+			r, frame = v.read()
+			if not r:
+				break
+			video.write(frame)
+	video.release()
+	if verbose: print("Successfully assembled video at", finalvideofname)
+	
+	# Removing sub-videos
+	if verbose: print("\nRemoving sub-videos:")
+	for f in tqdm(subvideofnames):
+		os.remove(f)
+	if verbose: print("Successfully created video!")
+
+def make(exp_dir, max_frame, do_frames=True, do_video=True):
+	paths = get_paths(exp_dir)
+	random.seed(SEED)
+	if do_frames:
+		for frame in range(1, max_frame + 1):
+			make_graphs(paths, frame)
+			make_canvas(paths, frame)
+	if do_video: make_video(paths, max_frame)
 
 if __name__ == "__main__":
 	exp_dir = sys.argv[1]
 	max_frame = MAX_FRAME
-	paths = get_paths(exp_dir)
-	random.seed(SEED)
-	for frame in range(1, max_frame + 1):
-		make_graphs(paths, frame)
-		make_canvas(paths, frame)
-	make_video(paths, max_frame)
+	make(exp_dir, max_frame, do_frames=False, do_video=True)
 
 # python3.7 pygraph.py /home/wahara/.julia/dev/IICGP/results/2021-09-01T17:44:01.968_boxing
 # python3.8 pygraph.py /home/opaweynch/.julia/environments/v1.6/dev/IICGP/results/2021-09-01T17:44:01.968_boxing
