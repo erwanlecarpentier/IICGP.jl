@@ -3,8 +3,6 @@ using Dates
 
 fetch_backup()
 
-##
-
 min_date = DateTime(2021, 09, 01)
 max_date = DateTime(2021, 09, 02)
 # DateTime(2013,7,1,12,30,59,1)

@@ -47,6 +47,11 @@ function buffer_snapshot(enco::CGPInd, active::Vector{Bool})
     cat(s_cat, b_cat, dims=1)
 end
 
+function save_rgb(game::Game, dir::String, frame::Int64)
+    fname = joinpath(dir, string(frame, "_rgb.png"))
+    save_screen_png(game, fname)
+end
+
 function save_state(s::Vector{Matrix{UInt8}}, dir::String, frame::Int64)
     for i in eachindex(s)
         fname = joinpath(dir, string(frame, "_s", i, ".png"))
@@ -87,6 +92,68 @@ function save_metadata(metadata::Dict, dir::String, frame::Int64)
     YAML.write_file(fname, metadata)
 end
 
+function get_metadata(
+    action::T,
+    is_sticky::Bool,
+    e_activated::Vector{Int16},
+    e_output::Vector{Int16},
+    c_activated::Vector{Int16},
+    c_output::Int16
+) where {T <: Union{Int32, Int64}}
+    metadata = Dict(
+        "action"=>action,
+        "is_sticky"=>is_sticky,
+        "encoder"=>Dict("activated"=>e_activated, "outputs"=>e_output),
+        "controller"=>Dict("activated"=>c_activated, "outputs"=>[c_output])
+    )
+    metadata
+end
+
+function recur_activated!(ind, n, activated)
+    if !activated[n] # first time seeing this node
+        activated[n] = true
+        is_input = ind.nodes[n].f == CartesianGeneticProgramming.f_null
+        if !is_input
+            recur_activated!(ind, ind.nodes[n].x, activated)
+            fname = String(Symbol(ind.nodes[n].f))
+            arity = IICGP.CGPFunctions.arity[fname]
+            if arity > 1
+                recur_activated!(ind, ind.nodes[n].y, activated)
+            end
+        end
+    end
+end
+
+function find_activated_nodes(ind::CGPInd, out_node::Int16)
+    activated = falses(length(ind.nodes))
+    recur_activated!(ind, out_node, activated)
+    activated_nodes = Vector{Int16}()
+    for i in eachindex(activated)
+        if activated[i]
+            push!(activated_nodes, convert(Int16, i))
+        end
+    end
+    activated_nodes
+end
+
+function find_activated_encoder_outputs(
+    enco::CGPInd,
+    redu::Reducer,
+    cont::CGPInd,
+    c_activated::Vector{Int16}
+)
+    @assert redu.parameters["type"] == "pooling"
+    fsize = redu.parameters["size"]^2
+    e_activated = Vector{Int16}()
+    for node in c_activated
+        if node < cont.n_in+1 # activated node is a controller input
+            activated_enco_output_index = convert(Int64, ceil(node/fsize))
+            push!(e_activated, enco.outputs[activated_enco_output_index])
+        end
+    end
+    e_activated
+end
+
 function visu_dualcgp_ingame(
     enco::CGPInd,
     redu::Reducer,
@@ -109,6 +176,7 @@ function visu_dualcgp_ingame(
     reward = 0.0
     frames = 1
     prev_action = 0
+    prev_chosen_output = 1
     features = Vector{Matrix{Float64}}()
     active = [enco.nodes[i].active for i in eachindex(enco.nodes)]
 
@@ -119,19 +187,32 @@ function visu_dualcgp_ingame(
 
     while ~game_over(g.ale)
         s = get_state(g, grayscale, downscale)
+        rgb = get_rgb(g)
         is_sticky = rand(mt) < stickiness
         if !is_sticky || frames == 1
             features, output = IICGP.process_f(enco, redu, cont, s)
-            action = g.actions[argmax(output)]
+            chosen_output = argmax(output)
+            action = g.actions[chosen_output]
         else
+            chosen_output = prev_chosen_output
             action = prev_action
+        end
+
+        # Scan which nodes were activated
+        c_output = cont.outputs[chosen_output]
+        c_activated = find_activated_nodes(cont, c_output)
+        e_output = find_activated_encoder_outputs(enco, redu, cont, c_activated)
+        e_activated = Vector{Int16}()
+        for node in e_output
+            push!(e_activated, find_activated_nodes(enco, node)...)
         end
 
         # Saving
         if do_save
-            metadata = Dict("action"=>action, "is_sticky"=>is_sticky)
+            metadata = get_metadata(action, is_sticky, e_activated, e_output,
+                                    c_activated, c_output)
             save_metadata(metadata, buffer_path, frames)
-            # save_state(s, buffer_path, frames)
+            save_rgb(g, buffer_path, frames)
             save_enco_buffer(enco, buffer_path, frames)
             save_features(features, buffer_path, frames, enco.outputs)
             save_cont_buffer(cont, buffer_path, frames)
@@ -149,6 +230,8 @@ function visu_dualcgp_ingame(
 
         reward += act(g.ale, action)
         frames += 1
+        action = prev_action
+        chosen_output = prev_chosen_output
         if frames > max_frames
             break
         end
@@ -162,7 +245,8 @@ end
 
 function save_graph_struct(
     inds::Array{CGPInd,1},
-    saving_dir::String
+    saving_dir::String,
+    actions::Vector{Int32}
 )
     for ind in inds
         data = Dict()
@@ -188,10 +272,20 @@ function save_graph_struct(
             end
         end
         is_controller = typeof(ind.buffer[1]) == Float64
+        if is_controller
+            data["actions"] = actions
+        end
         graph_name = is_controller ? "controller.yaml" : "encoder.yaml"
         graph_path = joinpath(saving_dir, graph_name)
         YAML.write_file(graph_path, data)
     end
+end
+
+function get_minimal_actions_set(game::String)
+    g = Game(game, 0)
+    actions = g.actions
+    close!(g)
+    actions
 end
 
 function visu_ingame(
@@ -209,13 +303,14 @@ function visu_ingame(
     is_dualcgp = haskey(cfg, "encoder")
     if is_dualcgp
         enco, redu, cont = get_last_dualcgp(exp_dir, game, cfg)
+        mini_actions = get_minimal_actions_set(game)
 
         if do_save
             graph_path = joinpath(exp_dir, "graphs")
             mkpath(graph_path)
             buffer_path = joinpath(exp_dir, "buffers")
             mkpath(buffer_path)
-            save_graph_struct([enco, cont], graph_path)
+            save_graph_struct([enco, cont], graph_path, mini_actions)
         end
 
         visu_dualcgp_ingame(enco, redu, cont, game, seed, max_frames, grayscale,
@@ -230,10 +325,8 @@ games = ["boxing"] # ["freeway"]  # pong kung_fu_master freeway assault
 reducers = ["pooling"] # Array{String,1}() # ["pooling"]
 exp_dirs, games = get_exp_dir(min_date=min_date, max_date=max_date, games=games,
                               reducers=reducers)
-max_frames = 3
+max_frames = 10000
 render_graph = false
-
-# exp_dir, game = exp_dirs[i], games[i]
 
 for i in eachindex(exp_dirs)
     # Generate images (may display / save)
@@ -244,9 +337,43 @@ for i in eachindex(exp_dirs)
     if render_graph
         exp_dir = exp_dirs[i]
         seed = 1234
-        run(`python3.8 py-graph.py $exp_dir $seed`)
+        run(`python3.8 pytexgraph.py $exp_dir`)
     end
 end
 
+#=
+i = 1
+exp_dir, game = exp_dirs[i], games[i]
+cfg = cfg_from_exp_dir(exp_dir)
+seed = cfg["seed"]
+stickiness = cfg["stickiness"]
+grayscale = cfg["grayscale"]
+downscale = cfg["downscale"]
+is_dualcgp = haskey(cfg, "encoder")
+enco, redu, cont = get_last_dualcgp(exp_dir, game, cfg)
+
+Random.seed!(seed)
+mt = MersenneTwister(seed)
+g = Game(game, seed)
+img_size = size(get_state(g, grayscale, downscale)[1])
+IICGP.reset!(redu) # zero the buffers
+reward = 0.0
+frames = 1
+prev_action = 0
+prev_chosen_output = 1
+features = Vector{Matrix{Float64}}()
+active = [enco.nodes[i].active for i in eachindex(enco.nodes)]
+
+s = get_state(g, grayscale, downscale)
+is_sticky = rand(mt) < stickiness
+if !is_sticky || frames == 1
+    features, output = IICGP.process_f(enco, redu, cont, s)
+    chosen_output = argmax(output)
+    action = g.actions[chosen_output]
+else
+    chosen_output = prev_chosen_output
+    action = prev_action
+end
+=#
 
 # python3.7 py-graph.py /home/wahara/.julia/dev/IICGP/results/2021-09-01T17:44:01.968_boxing

@@ -12,10 +12,12 @@ export
     draw,
     get_inputs,
     get_state,
+    get_screen,
     get_rgb,
     get_grayscale,
     get_state_ref,
-    get_ram
+    get_ram,
+    save_screen_png
 
 struct Game
     ale::ALEPtr
@@ -104,6 +106,15 @@ function get_state(game::Game, grayscale::Bool, downscale::Bool)
     else
         return s
     end
+end
+
+function save_screen_png(game::Game, filename::String)
+    saveScreenPNG(game.ale, filename)
+end
+
+function get_screen(game::Game)
+    rawscreen = getScreen(game.ale)
+    convert(Array{UInt8,2}, reshape(@view(rawscreen[1:length(rawscreen)]), (game.width, game.height)))
 end
 
 function get_rgb(game::Game)

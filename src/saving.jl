@@ -79,63 +79,6 @@ function fetch_backup()
     end
 end
 
-#=
-# OUTDATED
-"""
-Fetch the saved results and reorganise them.
-"""
-function fetch_backup(logid::String, cfg_path::String)
-    ind_log = string(logid, ".csv")
-    log_path = joinpath("logs", ind_log)
-    gens_dir = joinpath("gens", logid)
-
-    new_resu_dir = joinpath(RES_DIR, logid)
-    new_logs_dir = joinpath(new_resu_dir, "logs")
-    new_gens_dir = joinpath(new_resu_dir, "gens/")
-    mkdir(new_resu_dir)
-    mkdir(new_logs_dir)
-    mkdir(new_gens_dir)
-    new_cfg_path = joinpath(new_resu_dir, cfg_path[length("cfg/")+1:end])
-    cp(cfg_path, new_cfg_path, force=true)
-    new_log_path = joinpath(new_logs_dir, "controller.csv")
-    cp(log_path, new_log_path, force=true)
-    for g in readdir(gens_dir)
-        g_dir = joinpath(new_gens_dir, string("controller_", g))
-        mkdir(g_dir)
-        mv(joinpath(gens_dir, g), g_dir, force=true)
-    end
-end
-=#
-
-#=
-# OUTDATED
-"""
-Fetch the saved results and reorganise them.
-"""
-function fetch_backup(logid::String, ind_name::String, cfg_path::String)
-    ind_log = string(ind_name, ".csv")
-    logs_path = joinpath("logs", logid, ind_log)
-    gens_path = joinpath("gens", logid)
-    new_resu_dir = joinpath(RES_DIR, logid)
-    new_logs_dir = joinpath(new_resu_dir, "logs")
-    new_gens_dir = joinpath(new_resu_dir, "gens/")
-    mkdir(new_resu_dir)
-    mkdir(new_logs_dir)
-    mkdir(new_gens_dir)
-    new_logs_path = joinpath(new_logs_dir, ind_log)
-    new_cfg_path = joinpath(new_resu_dir, cfg_path[length("cfg/")+1:end])
-    cp(cfg_path, new_cfg_path, force=true)
-    mv(logs_path, new_logs_path, force=true)
-    for g in readdir(gens_path)
-        if g[1:length(ind_name)] == ind_name
-            g_dir = joinpath(new_gens_dir, g)
-            mkdir(g_dir)
-            mv(joinpath(gens_path, g), g_dir, force=true)
-        end
-    end
-end
-=#
-
 """
     get_exp_dir(game_name::String)
 
