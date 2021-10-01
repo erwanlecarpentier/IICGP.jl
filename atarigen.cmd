@@ -32,8 +32,8 @@ for i in "${!CFGS[@]}"; do
 		echo "#SBATCH -n $N_THREADS" >> $CM
 		echo "#SBATCH --ntasks-per-node=$N_THREADS" >> $CM
 		echo "#SBATCH --ntasks-per-core=1" >> $CM
-		echo "#SBATCH -o $OU" >> $CM
-		echo "#SBATCH -e $LO" >> $CM
+		echo "#SBATCH -o job%J_$FNAME.out" >> $CM
+		echo "#SBATCH -e job%J_$FNAME.log" >> $CM
 		echo "#SBATCH --time=7-00:00:00" >> $CM
 		echo "#SBATCH --mail-user=erwanlecarpentier@mailbox.org" >> $CM
 		echo "#SBATCH --mail-type=END" >> $CM
@@ -41,7 +41,7 @@ for i in "${!CFGS[@]}"; do
 		echo "julia --threads $N_THREADS --project=$PROJECT $SCRIPT --cfg=${CFGS[i]} --game=$GAME" >> $CM
 
 		sbatch $CM
-		# rm $CM
+		rm $CM
 	done
 done
 
