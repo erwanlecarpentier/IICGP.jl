@@ -10,7 +10,7 @@ using Dates
 using Plots
 
 # Global variables, never changed
-RES_DIR = string(string(@__DIR__)[1:end-length("src/")], "/results/")
+# RES_DIR = string(string(@__DIR__)[1:end-length("src/")], "/results/")
 # LOGS_DIR = string(string(@__DIR__)[1:end-length("src/")], "/logs/")
 # GENS_DIR = string(string(@__DIR__)[1:end-length("src/")], "/gens/")
 LOG_HEADER = ["date", "lib", "type", "gen_number", "best", "mean", "std"]
@@ -27,8 +27,8 @@ function init_backup(logid::String, outdir::String, cfg_path::String)
     cp(cfg_path, new_cfg_path, force=true)
 end
 
-logsdir_from_logid(logid::String) = joinpath(RES_DIR, logid, "logs")
-gensdir_from_logid(logid::String) = joinpath(RES_DIR, logid, "gens")
+logsdir_from_logid(logid::String, outdir::String) = joinpath(outdir, "results", logid, "logs")
+gensdir_from_logid(logid::String, outdir::String) = joinpath(outdir, "results", logid, "gens")
 
 """
     fetch_backup()
@@ -37,11 +37,15 @@ Fetch all the data in `logs/` and `gens/` and copy them to `results/`.
 Assumes the function `init_backup` to be run previously to the evolution.
 Corresponding files are found using unique logid.
 """
-function fetch_backup()
+function fetch_backup(outdir::String)
     each_log_name = Array{String,1}()
     each_log_id = Array{String,1}()
+    each_log_dir = Array{String,1}()
+    each_gen_dir = Array{String,1}()
     each_log_new_name = Array{String,1}()
-    for l in setdiff(readdir("logs"), ["placeholder.txt"])
+    logsdir = joinpath(outdir, "logs")
+    gensdir = joinpath(outdir, "gens")
+    for l in setdiff(readdir(logsdir), ["placeholder.txt"])
         is_csv = endswith(l, ".csv")
         id = is_csv ? l[1:end-length(".csv")] : l
         if is_csv
@@ -49,33 +53,47 @@ function fetch_backup()
             push!(each_log_id, id)
             push!(each_log_new_name, "controller.csv")
         else
-            for p in readdir(joinpath("logs", l))
+            log_dir = joinpath(logsdir, l)
+            push!(each_log_dir, log_dir)
+            for p in readdir(log_dir)
                 push!(each_log_name, joinpath(l, p))
                 push!(each_log_id, id)
                 push!(each_log_new_name, p)
             end
         end
     end
+    # Move all logs
     for i in eachindex(each_log_name)
-        old_logfile = joinpath("logs", each_log_name[i])
-        new_logdir = logsdir_from_logid(each_log_id[i])
+        old_logfile = joinpath(logsdir, each_log_name[i])
+        new_logdir = logsdir_from_logid(each_log_id[i], outdir)
         new_logfile = joinpath(new_logdir, each_log_new_name[i])
         mkpath(new_logdir)  # Make path if not created
-        cp(old_logfile, new_logfile, force=true)
+        mv(old_logfile, new_logfile, force=true)
     end
-    for id in setdiff(readdir("gens"), ["placeholder.txt"])
-        for g in readdir(joinpath("gens", id))
-            old_genpath = joinpath("gens", id, g)
+    # Delete all log files
+    for d in each_log_dir
+        rm(d, recursive=true, force=true)
+    end
+
+    for id in setdiff(readdir(gensdir), ["placeholder.txt"])
+        gen_dir = joinpath(gensdir, id)
+        push!(each_gen_dir, gen_dir)
+        for g in readdir(gen_dir)
+            old_genpath = joinpath(gensdir, id, g)
             if startswith(g, "encoder_") || startswith(g, "controller_")
                 new_filename = g
             else
                 new_filename = string("controller_", g)
             end
-            new_gendir = gensdir_from_logid(id)
+            new_gendir = gensdir_from_logid(id, outdir)
             mkpath(new_gendir)  # Make path if not created
             new_genpath = joinpath(new_gendir, new_filename)
-            cp(old_genpath, new_genpath, force=true)
+            mv(old_genpath, new_genpath, force=true)
         end
+    end
+    # Delete all gen files
+    for d in each_gen_dir
+        rm(d, recursive=true, force=true)
     end
 end
 
