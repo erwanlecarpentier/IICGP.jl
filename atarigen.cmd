@@ -18,6 +18,7 @@ REDS=("pooling_" "centroid_") # WARNING: sync with CFGS
 GAMES="frostbite"
 SCRIPT="scripts/atari_dualcgp.jl"
 PROJECT="$PWD"
+OUTDIR="/tmpdir/%u/ICGP-results"
 N_THREADS="25"
 
 for i in "${!CFGS[@]}"; do
@@ -40,8 +41,8 @@ for i in "${!CFGS[@]}"; do
 		echo "" >> $CM
 		echo "julia --threads $N_THREADS --project=$PROJECT $SCRIPT --cfg=${CFGS[i]} --game=$GAME" >> $CM
 
-		sbatch $CM
-		rm $CM
+		# sbatch $CM
+		# rm $CM
 	done
 done
 

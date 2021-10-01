@@ -9,10 +9,6 @@ using YAML
 using Dates
 using Plots
 
-# Global variables, never changed
-# RES_DIR = string(string(@__DIR__)[1:end-length("src/")], "/results/")
-# LOGS_DIR = string(string(@__DIR__)[1:end-length("src/")], "/logs/")
-# GENS_DIR = string(string(@__DIR__)[1:end-length("src/")], "/gens/")
 LOG_HEADER = ["date", "lib", "type", "gen_number", "best", "mean", "std"]
 
 
@@ -232,18 +228,19 @@ end
 TODO doc
 """
 function get_bootstrap_paths(
+    resdir::String,
     enco_cfg::NamedTuple,
     cont_cfg::NamedTuple,
     game::String
 )
-    enco_bs_path = RES_DIR
-    cont_bs_path = RES_DIR
+    enco_bs_path = resdir
+    cont_bs_path = resdir
 
-    dirs = readdir(RES_DIR)
+    dirs = readdir(resdir)
     filter!(e -> e[end-length("nobootstrap")+1:end] != "nobootstrap", dirs)
 
     for dir in dirs
-        exp_dir = joinpath(RES_DIR, dir)
+        exp_dir = joinpath(resdir, dir)
         cfg_dir = cfg_from_exp_dir(exp_dir)
         _, ecfg, ccfg, _, _ = dualcgp_config(cfg_dir, game)
         println()
