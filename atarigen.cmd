@@ -15,12 +15,12 @@
 # defender gravitar
 # space_invaders private_eye
 # asteroids breakout
-# frostbite
+# frostbite riverraid
 
 CMD_PREFIX="atari_"
 CFGS=("cfg/dualcgp_atari_pooling.yaml" "cfg/dualcgp_atari_centroid.yaml") # WARNING: sync with REDS
 REDS=("pooling_" "centroid_") # WARNING: sync with CFGS
-GAMES="frostbite"
+GAMES="frostbite riverraid"
 SCRIPT="scripts/atari_dualcgp.jl"
 PROJECT="$PWD"
 USERNAME=$(whoami)
