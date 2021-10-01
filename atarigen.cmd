@@ -10,7 +10,12 @@
 # seaquest breakout asterix freeway space_invaders
 
 # Selected games
-# boxing assault freeway defender solaris gravitar space_invaders private_eye asteroids breakout frostbite
+# boxing assault
+# freeway solaris
+# defender gravitar
+# space_invaders private_eye
+# asteroids breakout
+# frostbite
 
 CMD_PREFIX="atari_"
 CFGS=("cfg/dualcgp_atari_pooling.yaml" "cfg/dualcgp_atari_centroid.yaml") # WARNING: sync with REDS

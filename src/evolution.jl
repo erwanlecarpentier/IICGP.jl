@@ -6,6 +6,7 @@ using Statistics
 mutable struct DualCGPEvolution{T} <: Cambrian.AbstractEvolution
     config::NamedTuple
     logid::String
+    resdir::String
     encoder_config::NamedTuple
     encoder_population::Array{T}
     encoder_logger::CambrianLogger
@@ -129,7 +130,7 @@ function DualCGPEvolution(
 
     # Create and return DualCGPEvolution
     DualCGPEvolution(
-        config, logid,
+        config, logid, resdir,
         encoder_config, encoder_population, encoder_logger,
         controller_config, controller_population, controller_logger,
         fitness, 0
@@ -175,8 +176,8 @@ end
 Save the population of a dual CGP evolution framework in `gens/`.
 """
 function save_gen(e::DualCGPEvolution)
-    encoder_path = Formatting.format("gens/{1}/encoder_{2:04d}", e.logid, e.gen)
-    controller_path = Formatting.format("gens/{1}/controller_{2:04d}", e.logid, e.gen)
+    encoder_path = joinpath(e.resdir, Formatting.format("gens/{1}/encoder_{2:04d}", e.logid, e.gen))
+    controller_path = joinpath(e.resdir, Formatting.format("gens/{1}/controller_{2:04d}", e.logid, e.gen))
     mkpath(encoder_path)
     mkpath(controller_path)
     save_gen_at(encoder_path, e.encoder_population)
