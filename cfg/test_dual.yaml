@@ -1,9 +1,9 @@
 # General parameters
 seed: 0
-max_frames: 2000
+max_frames: 100
 stickiness: 0.25
 d_fitness: 1
-n_gen: 20
+n_gen: 10
 log_gen: 1
 save_gen: 1
 bootstrap: false

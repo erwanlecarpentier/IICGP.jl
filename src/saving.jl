@@ -9,15 +9,11 @@ using YAML
 using Dates
 using Plots
 
-# Global variables, never changed
-RES_DIR = string(string(@__DIR__)[1:end-length("src/")], "/results/")
-# LOGS_DIR = string(string(@__DIR__)[1:end-length("src/")], "/logs/")
-# GENS_DIR = string(string(@__DIR__)[1:end-length("src/")], "/gens/")
 LOG_HEADER = ["date", "lib", "type", "gen_number", "best", "mean", "std"]
 
 
-function init_backup(logid::String, cfg_path::String)
-    new_resu_dir = joinpath(RES_DIR, logid)
+function init_backup(logid::String, resdir::String, cfg_path::String)
+    new_resu_dir = joinpath(resdir, "results", logid)
     new_logs_dir = joinpath(new_resu_dir, "logs")
     new_gens_dir = joinpath(new_resu_dir, "gens")
     mkdir(new_resu_dir)
@@ -27,21 +23,25 @@ function init_backup(logid::String, cfg_path::String)
     cp(cfg_path, new_cfg_path, force=true)
 end
 
-logsdir_from_logid(logid::String) = joinpath(RES_DIR, logid, "logs")
-gensdir_from_logid(logid::String) = joinpath(RES_DIR, logid, "gens")
+logsdir_from_logid(logid::String, resdir::String) = joinpath(resdir, "results", logid, "logs")
+gensdir_from_logid(logid::String, resdir::String) = joinpath(resdir, "results", logid, "gens")
 
 """
-    fetch_backup()
+    fetch_backup(rootdir::String)
 
 Fetch all the data in `logs/` and `gens/` and copy them to `results/`.
 Assumes the function `init_backup` to be run previously to the evolution.
 Corresponding files are found using unique logid.
 """
-function fetch_backup()
+function fetch_backup(rootdir::String)
     each_log_name = Array{String,1}()
     each_log_id = Array{String,1}()
+    each_log_dir = Array{String,1}()
+    each_gen_dir = Array{String,1}()
     each_log_new_name = Array{String,1}()
-    for l in setdiff(readdir("logs"), ["placeholder.txt"])
+    logsdir = joinpath(rootdir, "logs")
+    gensdir = joinpath(rootdir, "gens")
+    for l in setdiff(readdir(logsdir), ["placeholder.txt"])
         is_csv = endswith(l, ".csv")
         id = is_csv ? l[1:end-length(".csv")] : l
         if is_csv
@@ -49,106 +49,63 @@ function fetch_backup()
             push!(each_log_id, id)
             push!(each_log_new_name, "controller.csv")
         else
-            for p in readdir(joinpath("logs", l))
+            log_dir = joinpath(logsdir, l)
+            push!(each_log_dir, log_dir)
+            for p in readdir(log_dir)
                 push!(each_log_name, joinpath(l, p))
                 push!(each_log_id, id)
                 push!(each_log_new_name, p)
             end
         end
     end
+    # Move all logs
     for i in eachindex(each_log_name)
-        old_logfile = joinpath("logs", each_log_name[i])
-        new_logdir = logsdir_from_logid(each_log_id[i])
+        old_logfile = joinpath(logsdir, each_log_name[i])
+        new_logdir = logsdir_from_logid(each_log_id[i], rootdir)
         new_logfile = joinpath(new_logdir, each_log_new_name[i])
         mkpath(new_logdir)  # Make path if not created
-        cp(old_logfile, new_logfile, force=true)
+        mv(old_logfile, new_logfile, force=true)
     end
-    for id in setdiff(readdir("gens"), ["placeholder.txt"])
-        for g in readdir(joinpath("gens", id))
-            old_genpath = joinpath("gens", id, g)
+    # Delete all log files
+    for d in each_log_dir
+        rm(d, recursive=true, force=true)
+    end
+
+    for id in setdiff(readdir(gensdir), ["placeholder.txt"])
+        gen_dir = joinpath(gensdir, id)
+        push!(each_gen_dir, gen_dir)
+        for g in readdir(gen_dir)
+            old_genpath = joinpath(gensdir, id, g)
             if startswith(g, "encoder_") || startswith(g, "controller_")
                 new_filename = g
             else
                 new_filename = string("controller_", g)
             end
-            new_gendir = gensdir_from_logid(id)
+            new_gendir = gensdir_from_logid(id, rootdir)
             mkpath(new_gendir)  # Make path if not created
             new_genpath = joinpath(new_gendir, new_filename)
-            cp(old_genpath, new_genpath, force=true)
+            mv(old_genpath, new_genpath, force=true)
         end
     end
-end
-
-#=
-# OUTDATED
-"""
-Fetch the saved results and reorganise them.
-"""
-function fetch_backup(logid::String, cfg_path::String)
-    ind_log = string(logid, ".csv")
-    log_path = joinpath("logs", ind_log)
-    gens_dir = joinpath("gens", logid)
-
-    new_resu_dir = joinpath(RES_DIR, logid)
-    new_logs_dir = joinpath(new_resu_dir, "logs")
-    new_gens_dir = joinpath(new_resu_dir, "gens/")
-    mkdir(new_resu_dir)
-    mkdir(new_logs_dir)
-    mkdir(new_gens_dir)
-    new_cfg_path = joinpath(new_resu_dir, cfg_path[length("cfg/")+1:end])
-    cp(cfg_path, new_cfg_path, force=true)
-    new_log_path = joinpath(new_logs_dir, "controller.csv")
-    cp(log_path, new_log_path, force=true)
-    for g in readdir(gens_dir)
-        g_dir = joinpath(new_gens_dir, string("controller_", g))
-        mkdir(g_dir)
-        mv(joinpath(gens_dir, g), g_dir, force=true)
+    # Delete all gen files
+    for d in each_gen_dir
+        rm(d, recursive=true, force=true)
     end
 end
-=#
-
-#=
-# OUTDATED
-"""
-Fetch the saved results and reorganise them.
-"""
-function fetch_backup(logid::String, ind_name::String, cfg_path::String)
-    ind_log = string(ind_name, ".csv")
-    logs_path = joinpath("logs", logid, ind_log)
-    gens_path = joinpath("gens", logid)
-    new_resu_dir = joinpath(RES_DIR, logid)
-    new_logs_dir = joinpath(new_resu_dir, "logs")
-    new_gens_dir = joinpath(new_resu_dir, "gens/")
-    mkdir(new_resu_dir)
-    mkdir(new_logs_dir)
-    mkdir(new_gens_dir)
-    new_logs_path = joinpath(new_logs_dir, ind_log)
-    new_cfg_path = joinpath(new_resu_dir, cfg_path[length("cfg/")+1:end])
-    cp(cfg_path, new_cfg_path, force=true)
-    mv(logs_path, new_logs_path, force=true)
-    for g in readdir(gens_path)
-        if g[1:length(ind_name)] == ind_name
-            g_dir = joinpath(new_gens_dir, g)
-            mkdir(g_dir)
-            mv(joinpath(gens_path, g), g_dir, force=true)
-        end
-    end
-end
-=#
 
 """
     get_exp_dir(game_name::String)
 
 Get a new experiment directory.
 """
-function get_exp_path(game_name::String)
+function get_exp_path(game_name::String, resdir::String)
     exp_dir = string(Dates.now(), "_", game_name)
-    joinpath(RES_DIR, exp_dir)
+    joinpath(resdir, exp_dir)
 end
 
 """
     function get_exp_dir(
-        res_dir::String=RES_DIR;
+        resdir::String;
         min_date::DateTime=DateTime(0),
         max_date::DateTime=DateTime(0),
         games::Array{String,1}=Array{String,1}(),
@@ -163,6 +120,7 @@ Example:
 
     using Dates
     exp_dirs, games = exp_dir(
+        resdir,
         min_date=DateTime(2021, 07, 12),
         max_date=DateTime(2021, 07, 15),
         games=["freeway"],
@@ -170,7 +128,7 @@ Example:
     )
 """
 function get_exp_dir(
-    res_dir::String=RES_DIR;
+    resdir::String;
     min_date::DateTime=DateTime(0),
     max_date::DateTime=DateTime(0),
     games::Array{String,1}=Array{String,1}(),
@@ -179,7 +137,7 @@ function get_exp_dir(
     no_time = min_date == max_date == DateTime(0)
     no_specified_games = length(games) == 0
     no_specified_reducers = length(reducers) == 0
-    existing_res = readdir(res_dir)
+    existing_res = readdir(resdir)
     filtered_res = Array{String,1}()
     filtered_games = Array{String,1}()
     for exp_dir in existing_res
@@ -187,7 +145,7 @@ function get_exp_dir(
         exp_game = exp_dir[25:end]
         if no_time || (min_date < exp_date < max_date)
             if no_specified_games || (exp_game in games)
-                exp_full_path = string(res_dir, exp_dir)
+                exp_full_path = string(resdir, exp_dir)
                 cfg = cfg_from_exp_dir(exp_full_path)
                 if no_specified_reducers || (cfg["reducer"]["type"] in reducers)
                     push!(filtered_res, exp_full_path)
@@ -270,18 +228,19 @@ end
 TODO doc
 """
 function get_bootstrap_paths(
+    resdir::String,
     enco_cfg::NamedTuple,
     cont_cfg::NamedTuple,
     game::String
 )
-    enco_bs_path = RES_DIR
-    cont_bs_path = RES_DIR
+    enco_bs_path = resdir
+    cont_bs_path = resdir
 
-    dirs = readdir(RES_DIR)
+    dirs = readdir(resdir)
     filter!(e -> e[end-length("nobootstrap")+1:end] != "nobootstrap", dirs)
 
     for dir in dirs
-        exp_dir = joinpath(RES_DIR, dir)
+        exp_dir = joinpath(resdir, dir)
         cfg_dir = cfg_from_exp_dir(exp_dir)
         _, ecfg, ccfg, _, _ = dualcgp_config(cfg_dir, game)
         println()

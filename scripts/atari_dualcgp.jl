@@ -29,6 +29,10 @@ s = ArgParseSettings()
     help = "random seed for evolution"
     arg_type = Int
     default = 0
+    "--out"
+    help = "output directory"
+    arg_type = String
+    default = dirname(@__DIR__)
     "--ind"
     help = "individual for evaluation"
     arg_type = String
@@ -37,6 +41,7 @@ end
 args = parse_args(ARGS, s)
 const game = args["game"]
 const seed = args["seed"]
+const outdir = args["out"]
 Random.seed!(seed)
 
 main_cfg, enco_cfg, cont_cfg, reducer, bootstrap = IICGP.dualcgp_config(
@@ -87,7 +92,6 @@ function play_atari(
     [reward]
 end
 
-
 if length(args["ind"]) > 0
     ind = CGPInd(cfg, read(args["ind"], String))
     ftn = fitness(ind, inps, outs)
@@ -109,6 +113,6 @@ else
                                encoder_init_function=IPCGPInd, logid=logid,
                                bootstrap=bootstrap, game=game)
     # Run evolution
-    init_backup(logid, args["cfg"])
+    init_backup(logid, outdir, args["cfg"])
     run!(e)
 end

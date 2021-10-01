@@ -6,6 +6,8 @@
 *.out
 .tags*
 
+buffers/
+canvas.avi
 
 # gens/
 # logs/

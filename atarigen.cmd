@@ -15,9 +15,10 @@
 CMD_PREFIX="atari_"
 CFGS=("cfg/dualcgp_atari_pooling.yaml" "cfg/dualcgp_atari_centroid.yaml") # WARNING: sync with REDS
 REDS=("pooling_" "centroid_") # WARNING: sync with CFGS
-GAMES="space_invaders private_eye"
+GAMES="frostbite"
 SCRIPT="scripts/atari_dualcgp.jl"
 PROJECT="$PWD"
+OUTDIR="/tmpdir/%u/ICGP-results"
 N_THREADS="25"
 
 for i in "${!CFGS[@]}"; do
@@ -32,15 +33,15 @@ for i in "${!CFGS[@]}"; do
 		echo "#SBATCH -n $N_THREADS" >> $CM
 		echo "#SBATCH --ntasks-per-node=$N_THREADS" >> $CM
 		echo "#SBATCH --ntasks-per-core=1" >> $CM
-		echo "#SBATCH -o $OU" >> $CM
-		echo "#SBATCH -e $LO" >> $CM
-		echo "#SBATCH --time=7-00:00:00" >> $CM
+		echo "#SBATCH -o /tmpdir/%u/logs/job%J_$FNAME.out" >> $CM
+		echo "#SBATCH -e /tmpdir/%u/logs/job%J_$FNAME.log" >> $CM
+		echo "#SBATCH --time=00:03:00" >> $CM
 		echo "#SBATCH --mail-user=erwanlecarpentier@mailbox.org" >> $CM
 		echo "#SBATCH --mail-type=END" >> $CM
 		echo "" >> $CM
 		echo "julia --threads $N_THREADS --project=$PROJECT $SCRIPT --cfg=${CFGS[i]} --game=$GAME" >> $CM
 
-		sbatch $CM
+		# sbatch $CM
 		# rm $CM
 	done
 done

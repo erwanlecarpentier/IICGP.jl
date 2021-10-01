@@ -178,15 +178,21 @@ p21049le: freeway solaris
 
 Setting A
 
-## 2021-09-07 (TODO: confirm launch date)
+## 2021-09-07
 
 lecarpen: defender gravitar
 
 Setting A
 
-## 2021-09-09 (TODO: confirm launch date)
+## 2021-09-09 (TODO: confirm launch date and retrieve results)
 
 p21049le: space_invaders private_eye
+
+Setting A
+
+## 2021-09-23 (TODO: confirm launch date and retrieve results)
+
+lecarpen: asteroids breakout
 
 Setting A
 
@@ -202,4 +208,3 @@ Setting A
 
 	source /path/to/my/birtual/environment/bin/activate
 	pip install -r py-requirements.txt
-
