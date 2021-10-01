@@ -44,6 +44,12 @@ const seed = args["seed"]
 const resdir = args["out"]
 Random.seed!(seed)
 
+println(resdir) # TODO remove
+println(resdir) # TODO remove
+println(resdir) # TODO remove
+println(resdir) # TODO remove
+#= # TODO remove
+
 main_cfg, enco_cfg, cont_cfg, reducer, bootstrap = IICGP.dualcgp_config(
     args["cfg"], game
 )
@@ -116,3 +122,4 @@ else
     init_backup(logid, resdir, args["cfg"])
     run!(e)
 end
+=# # TODO remove
