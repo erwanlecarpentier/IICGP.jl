@@ -18,7 +18,6 @@ REDS=("test_") # WARNING: sync with CFGS
 GAMES="frostbite"
 SCRIPT="scripts/atari_dualcgp.jl"
 PROJECT="$PWD"
-OUTDIR="/tmpdir/%u/ICGP-results"
 N_THREADS="1"
 
 for i in "${!CFGS[@]}"; do
@@ -39,9 +38,11 @@ for i in "${!CFGS[@]}"; do
 		echo "#SBATCH --mail-user=erwanlecarpentier@mailbox.org" >> $CM
 		echo "#SBATCH --mail-type=END" >> $CM
 		echo "" >> $CM
-		echo "julia --threads $N_THREADS --project=$PROJECT $SCRIPT --cfg=${CFGS[i]} --game=$GAME --out=$OUTDIR" >> $CM
+		echo "OUTDIR=\"/tmpdir/%u/ICGP-results\"" >> $CM
+		echo "" >> $CM
+		echo "julia --threads $N_THREADS --project=$PROJECT $SCRIPT --cfg=${CFGS[i]} --game=$GAME --out=\$OUTDIR" >> $CM
 
-		# sbatch $CM
+		sbatch $CM
 		# rm $CM
 	done
 done

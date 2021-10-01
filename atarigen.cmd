@@ -39,7 +39,9 @@ for i in "${!CFGS[@]}"; do
 		echo "#SBATCH --mail-user=erwanlecarpentier@mailbox.org" >> $CM
 		echo "#SBATCH --mail-type=END" >> $CM
 		echo "" >> $CM
-		echo "julia --threads $N_THREADS --project=$PROJECT $SCRIPT --cfg=${CFGS[i]} --game=$GAME --out=$OUTDIR" >> $CM
+		echo "OUTDIR=\"/tmpdir/%u/ICGP-results\"" >> $CM
+		echo "" >> $CM
+		echo "julia --threads $N_THREADS --project=$PROJECT $SCRIPT --cfg=${CFGS[i]} --game=$GAME --out=\$OUTDIR" >> $CM
 
 		sbatch $CM
 		rm $CM
