@@ -199,13 +199,13 @@ lecarpen: asteroids breakout
 
 Setting A
 
-## 2021-10-01 (TODO: confirm launch date and retrieve results)
+## 2021-10-01 (TODO: retrieve results)
 
 lecarpen: frostbite riverraid
 
 Setting A
 
-## 2021-10-01 (TODO: confirm launch date and retrieve results)
+## 2021-10-01 (TODO: retrieve results)
 
 p21049le: space_invaders private_eye
 
