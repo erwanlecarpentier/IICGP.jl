@@ -43,7 +43,7 @@ for i in "${!CFGS[@]}"; do
 		echo "julia --threads $N_THREADS --project=$PROJECT $SCRIPT --cfg=${CFGS[i]} --game=$GAME --out=$OUTDIR" >> $CM
 
 		sbatch $CM
-		# rm $CM
+		rm $CM
 	done
 done
 
