@@ -16,8 +16,8 @@ using Plots
 LOG_HEADER = ["date", "lib", "type", "gen_number", "best", "mean", "std"]
 
 
-function init_backup(logid::String, outdir::String, cfg_path::String)
-    new_resu_dir = joinpath(outdir, "results", logid)
+function init_backup(logid::String, resdir::String, cfg_path::String)
+    new_resu_dir = joinpath(resdir, "results", logid)
     new_logs_dir = joinpath(new_resu_dir, "logs")
     new_gens_dir = joinpath(new_resu_dir, "gens")
     mkdir(new_resu_dir)
@@ -27,24 +27,24 @@ function init_backup(logid::String, outdir::String, cfg_path::String)
     cp(cfg_path, new_cfg_path, force=true)
 end
 
-logsdir_from_logid(logid::String, outdir::String) = joinpath(outdir, "results", logid, "logs")
-gensdir_from_logid(logid::String, outdir::String) = joinpath(outdir, "results", logid, "gens")
+logsdir_from_logid(logid::String, resdir::String) = joinpath(resdir, "results", logid, "logs")
+gensdir_from_logid(logid::String, resdir::String) = joinpath(resdir, "results", logid, "gens")
 
 """
-    fetch_backup()
+    fetch_backup(rootdir::String)
 
 Fetch all the data in `logs/` and `gens/` and copy them to `results/`.
 Assumes the function `init_backup` to be run previously to the evolution.
 Corresponding files are found using unique logid.
 """
-function fetch_backup(outdir::String)
+function fetch_backup(rootdir::String)
     each_log_name = Array{String,1}()
     each_log_id = Array{String,1}()
     each_log_dir = Array{String,1}()
     each_gen_dir = Array{String,1}()
     each_log_new_name = Array{String,1}()
-    logsdir = joinpath(outdir, "logs")
-    gensdir = joinpath(outdir, "gens")
+    logsdir = joinpath(rootdir, "logs")
+    gensdir = joinpath(rootdir, "gens")
     for l in setdiff(readdir(logsdir), ["placeholder.txt"])
         is_csv = endswith(l, ".csv")
         id = is_csv ? l[1:end-length(".csv")] : l
@@ -65,7 +65,7 @@ function fetch_backup(outdir::String)
     # Move all logs
     for i in eachindex(each_log_name)
         old_logfile = joinpath(logsdir, each_log_name[i])
-        new_logdir = logsdir_from_logid(each_log_id[i], outdir)
+        new_logdir = logsdir_from_logid(each_log_id[i], rootdir)
         new_logfile = joinpath(new_logdir, each_log_new_name[i])
         mkpath(new_logdir)  # Make path if not created
         mv(old_logfile, new_logfile, force=true)
@@ -85,7 +85,7 @@ function fetch_backup(outdir::String)
             else
                 new_filename = string("controller_", g)
             end
-            new_gendir = gensdir_from_logid(id, outdir)
+            new_gendir = gensdir_from_logid(id, rootdir)
             mkpath(new_gendir)  # Make path if not created
             new_genpath = joinpath(new_gendir, new_filename)
             mv(old_genpath, new_genpath, force=true)
@@ -102,14 +102,14 @@ end
 
 Get a new experiment directory.
 """
-function get_exp_path(game_name::String)
+function get_exp_path(game_name::String, resdir::String)
     exp_dir = string(Dates.now(), "_", game_name)
-    joinpath(RES_DIR, exp_dir)
+    joinpath(resdir, exp_dir)
 end
 
 """
     function get_exp_dir(
-        res_dir::String=RES_DIR;
+        resdir::String;
         min_date::DateTime=DateTime(0),
         max_date::DateTime=DateTime(0),
         games::Array{String,1}=Array{String,1}(),
@@ -124,6 +124,7 @@ Example:
 
     using Dates
     exp_dirs, games = exp_dir(
+        resdir,
         min_date=DateTime(2021, 07, 12),
         max_date=DateTime(2021, 07, 15),
         games=["freeway"],
@@ -131,7 +132,7 @@ Example:
     )
 """
 function get_exp_dir(
-    res_dir::String=RES_DIR;
+    resdir::String;
     min_date::DateTime=DateTime(0),
     max_date::DateTime=DateTime(0),
     games::Array{String,1}=Array{String,1}(),
@@ -140,7 +141,7 @@ function get_exp_dir(
     no_time = min_date == max_date == DateTime(0)
     no_specified_games = length(games) == 0
     no_specified_reducers = length(reducers) == 0
-    existing_res = readdir(res_dir)
+    existing_res = readdir(resdir)
     filtered_res = Array{String,1}()
     filtered_games = Array{String,1}()
     for exp_dir in existing_res
@@ -148,7 +149,7 @@ function get_exp_dir(
         exp_game = exp_dir[25:end]
         if no_time || (min_date < exp_date < max_date)
             if no_specified_games || (exp_game in games)
-                exp_full_path = string(res_dir, exp_dir)
+                exp_full_path = string(resdir, exp_dir)
                 cfg = cfg_from_exp_dir(exp_full_path)
                 if no_specified_reducers || (cfg["reducer"]["type"] in reducers)
                     push!(filtered_res, exp_full_path)
