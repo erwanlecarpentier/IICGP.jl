@@ -41,7 +41,7 @@ end
 args = parse_args(ARGS, s)
 const game = args["game"]
 const seed = args["seed"]
-const outdir = args["out"]
+const resdir = args["out"]
 Random.seed!(seed)
 
 main_cfg, enco_cfg, cont_cfg, reducer, bootstrap = IICGP.dualcgp_config(
@@ -109,10 +109,10 @@ else
     fit(encoder::CGPInd, controller::CGPInd) = play_atari(encoder, reducer,
                                                           controller, lck)
     # Create an evolution framework
-    e = IICGP.DualCGPEvolution(enco_cfg, cont_cfg, fit,
+    e = IICGP.DualCGPEvolution(enco_cfg, cont_cfg, fit, resdir,
                                encoder_init_function=IPCGPInd, logid=logid,
                                bootstrap=bootstrap, game=game)
     # Run evolution
-    init_backup(logid, outdir, args["cfg"])
+    init_backup(logid, resdir, args["cfg"])
     run!(e)
 end
