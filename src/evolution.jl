@@ -78,7 +78,8 @@ Dual CGP evolution framework.
 function DualCGPEvolution(
     encoder_config::NamedTuple,
     controller_config::NamedTuple,
-    fitness::Function;
+    fitness::Function,
+    outdir::String;
     bootstrap::Bool=false,
     kwargs...
 )
@@ -90,8 +91,8 @@ function DualCGPEvolution(
     else
         logid = encoder_config.id
     end
-    encoder_logfile = string("logs/", logid, "/encoder.csv")
-    controller_logfile = string("logs/", logid, "/controller.csv")
+    encoder_logfile = joinpath(outdir, "logs", logid, "encoder.csv")
+    controller_logfile = joinpath(outdir, "logs", logid, "controller.csv")
     encoder_logger = CambrianLogger(encoder_logfile)
     controller_logger = CambrianLogger(controller_logfile)
 

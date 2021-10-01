@@ -16,8 +16,8 @@ RES_DIR = string(string(@__DIR__)[1:end-length("src/")], "/results/")
 LOG_HEADER = ["date", "lib", "type", "gen_number", "best", "mean", "std"]
 
 
-function init_backup(logid::String, cfg_path::String)
-    new_resu_dir = joinpath(RES_DIR, logid)
+function init_backup(logid::String, outdir::String, cfg_path::String)
+    new_resu_dir = joinpath(outdir, "results", logid)
     new_logs_dir = joinpath(new_resu_dir, "logs")
     new_gens_dir = joinpath(new_resu_dir, "gens")
     mkdir(new_resu_dir)
