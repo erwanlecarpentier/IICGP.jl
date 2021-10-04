@@ -33,7 +33,7 @@ Fetch all the data in `logs/` and `gens/` and copy them to `results/`.
 Assumes the function `init_backup` to be run previously to the evolution.
 Corresponding files are found using unique logid.
 """
-function fetch_backup(rootdir::String)
+function fetch_backup(rootdir::String; clean::Bool=false)
     each_log_name = Array{String,1}()
     each_log_id = Array{String,1}()
     each_log_dir = Array{String,1}()
@@ -64,11 +64,13 @@ function fetch_backup(rootdir::String)
         new_logdir = logsdir_from_logid(each_log_id[i], rootdir)
         new_logfile = joinpath(new_logdir, each_log_new_name[i])
         mkpath(new_logdir)  # Make path if not created
-        mv(old_logfile, new_logfile, force=true)
+        cp(old_logfile, new_logfile, force=true)
     end
     # Delete all log files
-    for d in each_log_dir
-        rm(d, recursive=true, force=true)
+    if clean
+        for d in each_log_dir
+            rm(d, recursive=true, force=true)
+        end
     end
 
     for id in setdiff(readdir(gensdir), ["placeholder.txt"])
@@ -84,12 +86,14 @@ function fetch_backup(rootdir::String)
             new_gendir = gensdir_from_logid(id, rootdir)
             mkpath(new_gendir)  # Make path if not created
             new_genpath = joinpath(new_gendir, new_filename)
-            mv(old_genpath, new_genpath, force=true)
+            cp(old_genpath, new_genpath, force=true)
         end
     end
     # Delete all gen files
-    for d in each_gen_dir
-        rm(d, recursive=true, force=true)
+    if clean
+        for d in each_gen_dir
+            rm(d, recursive=true, force=true)
+        end
     end
 end
 

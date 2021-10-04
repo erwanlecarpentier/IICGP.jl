@@ -14,7 +14,7 @@ from pdf2image import convert_from_path
 
 # Meta parameters
 SEED = 1234
-MAX_FRAME = 6711
+MAX_FRAME = 1 # 6711
 DIR_PATH = os.path.dirname(os.path.realpath(__file__))
 IMG_EXT = ".png"
 # IMG_TYPE = PIL.PngImagePlugin.PngImageFile
@@ -25,7 +25,7 @@ ACTIVE_COLOR = "red"
 NDSETTING = "shape=rectangle, rounded corners=0.1cm, minimum width=1cm, minimum height=0.6cm, fill=black!10"
 HALOEDGES = True
 ENABLE_MANUAL_POS = True
-SHOW = False
+SHOWFRAMES = True
 TOPNG = True # convert pdf canvas to png
 DELETE_GRAPHS = True
 DELETE_CANVAS_PDF = True
@@ -58,7 +58,8 @@ POS = {
 			"53": (8, 4),
 			"77": (5, 6),
 			"52": (0, 10),
-			"69": (5, 0.5), "82": (7, 1.5)
+			"69": (5, 0.5), "82": (7, 1.5),
+			"sticky": (10, 10)
 		},
 		"canvas": {
 			"rgbpos": (0, 0.4), "hrgbpos": (0, 0.8),
@@ -187,7 +188,7 @@ def retrieve_metadata(path, frame):
 
 def get_paths(exp_dir):
 	paths = {}
-	paths["exp"] = exp_dir.split("results/",1)[1]
+	paths["exp"] = exp_dir.split("/")[-1]
 	g_dir = exp_dir + "/graphs"
 	for f in os.listdir(g_dir):
 		indtype = f[0:len(f)-len(".yaml")]
@@ -326,6 +327,18 @@ def getpos(gdict, expdir, indtype):
 						pos[nodename] = columnpos(output_pos_dict, n_out, i)
 					else:
 						print("WARNING: output position type", output_pos_dict["type"], "unknown.")
+						
+	# Position of sticky node
+	nodename = "sticky"
+	pos[nodename] = randompos() # Default to random position
+	if (
+		ENABLE_MANUAL_POS
+		and expdir in list(POS.keys())
+		and indtype in list(POS[expdir].keys())
+		and nodename in list(POS[expdir][indtype].keys())
+	):
+		pos[nodename] = POS[expdir][indtype][nodename]
+
 	pos = postostr(pos)
 	return pos
 	
@@ -413,6 +426,13 @@ def appendnodes(ts, gdict, expdir, indtype):
 		nodecontent = getnodecontent(gdict, node, nodename, indtype, True, i)
 		nodesettings = getnodesettings(gdict, expdir, node, nodename, outputs, indtype)
 		ts.append("\\node["+nodesettings+"] ("+nodename+") at ("+p+") {"+nodecontent+"};")
+	if indtype == "controller":
+		is_sticky = gdict["metadata"]["is_sticky"]
+		is_sticky = True
+		color = "red" if is_sticky else "white"
+		nodename = "sticky"
+		p = pos[nodename]
+		ts.append("\\node[color="+color+"] ("+nodename+") at ("+p+") {\\textbf{Sticky!}};")
 
 def appendedges(ts, gdict, indtype):
 	g = gdict[indtype]
@@ -500,7 +520,7 @@ def runtex(fname, savedir, texsavepath):
 	for ext in [".tex", ".aux", ".log"]:
 		os.remove(savedir + fname + ext)
 	# evince
-	if SHOW:
+	if SHOWFRAMES:
 		subprocess.run(["evince", savedir + fname + ".pdf"])
 	
 def canvastopng(fname, savedir):
@@ -529,9 +549,10 @@ def build_canvas(texscript, paths, frame):
 
 def make_graphs(paths, frame):
 	gdict = gdict_from_paths(paths, frame)
-	for indtype in ["encoder", "controller"]:
+	for indtype in ["controller", "encoder"]:
 		texscript = graph_texscript(gdict, paths, indtype)
 		build_graph(texscript, paths, frame, indtype)
+		exit() # TODO remove
 		
 def delete_graphs(paths, frame):
 	savedir = paths["metadata"]
@@ -608,8 +629,7 @@ def make(exp_dir, max_frame, do_frames=True, do_video=True):
 if __name__ == "__main__":
 	exp_dir = sys.argv[1]
 	max_frame = MAX_FRAME
-	make(exp_dir, max_frame, do_frames=False, do_video=True)
+	make(exp_dir, max_frame, do_frames=True, do_video=False)
 
-# python3.7 pygraph.py /home/wahara/.julia/dev/IICGP/results/2021-09-01T17:44:01.968_boxing
-# python3.8 pygraph.py /home/opaweynch/.julia/environments/v1.6/dev/IICGP/results/2021-09-01T17:44:01.968_boxing
+# python3.8 pytexgraph.py /home/opaweynch/Documents/git/ICGP-results/results/2021-09-01T17:44:01.968_boxing
 

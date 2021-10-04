@@ -112,8 +112,10 @@ function process_results(
     plt_mean = plot(ylabel="Mean score", xlabel=xl)
 
     for i in eachindex(exp_dirs)
-        cfg = cfg_from_exp_dir(exp_dirs[i])
-        log = log_from_exp_dir(exp_dirs[i])
+        exp_dir = exp_dirs[i]
+        # exp_date = basename(exp_dir)[1:10]
+        cfg = cfg_from_exp_dir(exp_dir)
+        log = log_from_exp_dir(exp_dir)
 
         # Plots
         reducer_type = cfg["reducer"]["type"]
@@ -146,7 +148,7 @@ function process_results(
             push!(p, ["  - features_size", cfg["reducer"]["features_size"]])
             push!(p, ["  - pooling_function", cfg["reducer"]["pooling_function"]])
         end
-        push!(p, ["Forward pass timing (ms):", ""])
+        push!(p, ["Forward pass timing (ms)", ""])
 
 
         # Timer
@@ -186,7 +188,10 @@ function process_results(
     display(plt_mean)
 
     if save
-        savefig(plt_best, "best.png")
-        savefig(plt_mean, "mean.png")
+        exp_name = string(basename(exp_dirs[1])[1:10], "_", games[1])
+        graph_dir = joinpath(dirname(dirname(exp_dirs[1])), "graphs", exp_name)
+        mkpath(graph_dir)
+        savefig(plt_best, joinpath(graph_dir, "best.png"))
+        savefig(plt_mean, joinpath(graph_dir, "mean.png"))
     end
 end

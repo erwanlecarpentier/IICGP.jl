@@ -151,7 +151,7 @@ Forward pass timing (ms)
 |assault|0.18|0.46|
 |boxing|0.2|1.22|
 
-## 2021-09-01 (30h run): TODO update
+## 2021-09-01
 
 lecarpen: assault boxing
 
@@ -184,16 +184,8 @@ lecarpen: defender gravitar
 
 Setting A
 
-## 2021-09-09 (TODO: confirm launch date and retrieve results)
 
-p21049le: space_invaders private_eye
-
-Setting A
-
-DEPRECATED (stopped)
-
-
-## 2021-09-23 (TODO: confirm launch date and retrieve results)
+## 2021-09-23
 
 lecarpen: asteroids breakout
 
