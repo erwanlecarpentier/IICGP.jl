@@ -22,7 +22,6 @@ IMG_EXT = ".png"
 # Graph layout
 NOBUFFER = False # Set to True to display nodes names instead of buffers
 ACTIVE_COLOR = "red"
-NDSETTING = "shape=rectangle, rounded corners=0.1cm, minimum width=1cm, minimum height=0.6cm, fill=black!10"
 HALOEDGES = True
 ENABLE_MANUAL_POS = True
 SHOWFRAMES = True
@@ -353,11 +352,13 @@ def getnodecontent(gdict, node, nodename, indtype, is_out, index=None, width="1c
 	elif indtype == "controller":
 		if is_out:
 			action_name_in_ale = gdict["controller"]["actions"][index]
-			return ACTIONLABELS[action_name_in_ale]
+			act = ACTIONLABELS[action_name_in_ale]
+			val = "$" + str(round(gdict[indtype]["buffer"][node], 2)) + "$"
+			return act + "\\quad" + val
 		else:
 			return "$" + str(round(gdict[indtype]["buffer"][node], 2)) + "$"
 			
-def getnodesettings(gdict, expdir, node, nodename, activated, indtype):
+def getnodesettings(gdict, expdir, node, nodename, activated, indtype, isout):
 	if (
 		indtype == "controller"
 		and ENABLE_MANUAL_POS
@@ -371,7 +372,8 @@ def getnodesettings(gdict, expdir, node, nodename, activated, indtype):
 		nodesettings = "draw=none, color=black, fill=white, opacity=0.7, rounded corners=0.1cm, minimum width=0.9cm"
 	else:
 		nodecolor = ACTIVE_COLOR if node in activated else "black"
-		nodesettings = NDSETTING+", draw="+nodecolor
+		w = "1.5cm" if (indtype == "controller" and isout) else "1cm"
+		nodesettings = "shape=rectangle, rounded corners=0.1cm, minimum width="+w+", minimum height=0.6cm, fill=black!10, draw="+nodecolor
 	return nodesettings
 
 def getedgelabel(fname):
@@ -398,7 +400,8 @@ def appendbackgroundnodes(ts, gdict, expdir, indtype):
 		for i in range(n_squares):
 			node = gdict["encoder"]["outputs"][i]
 			nodename = getnodename(i, gdict["encoder"], True)
-			nodecontent = getnodecontent(gdict, node, nodename, "encoder", True, i, width=width)
+			isout = True
+			nodecontent = getnodecontent(gdict, node, nodename, "encoder", isout, i, width=width)
 			pos = posdict["origin"]
 			current_square = i + 1
 			sqshift = (0, ((n_squares+1)/2-current_square)*posdict["squarespan"])
@@ -416,15 +419,17 @@ def appendnodes(ts, gdict, expdir, indtype):
 		nodename = getnodename(node)
 		isinput = node <= g["n_in"]
 		p = pos[nodename]
-		nodecontent = getnodecontent(gdict, node, nodename, indtype, False)
-		nodesettings = getnodesettings(gdict, expdir, node, nodename, activated, indtype)
+		isout = False
+		nodecontent = getnodecontent(gdict, node, nodename, indtype, isout)
+		nodesettings = getnodesettings(gdict, expdir, node, nodename, activated, indtype, isout)
 		ts.append("\\node["+nodesettings+"] ("+nodename+") at ("+p+") {"+nodecontent+"};")
 	for i in range(len(g["outputs"])):
 		node = g["outputs"][i]
 		nodename = getnodename(i, g, True)
 		p = pos[nodename]
-		nodecontent = getnodecontent(gdict, node, nodename, indtype, True, i)
-		nodesettings = getnodesettings(gdict, expdir, node, nodename, outputs, indtype)
+		isout = True
+		nodecontent = getnodecontent(gdict, node, nodename, indtype, isout, i)
+		nodesettings = getnodesettings(gdict, expdir, node, nodename, outputs, indtype, isout)
 		ts.append("\\node["+nodesettings+"] ("+nodename+") at ("+p+") {"+nodecontent+"};")
 	if indtype == "controller":
 		is_sticky = gdict["metadata"]["is_sticky"]
