@@ -7,7 +7,18 @@ using BenchmarkTools
 using TimerOutputs
 
 BASELINES = Dict(
-    "breakout"=>Dict("A3C LSTM"=>766.8)
+    "assault"=>Dict("MTCGP"=>(890.4, 255), "A3C LSTM"=>14497.9),
+    "asteroids"=>Dict("MTCGP"=>(9412,1818)),
+    "boxing"=>Dict("MTCGP"=>(38.4,4), "Dueling"=>77.3),
+    "breakout"=>Dict("MTCGP"=>(13.2,2), "A3C LSTM"=>766.8),
+    "defender"=>Dict("MTCGP"=>(993010,2739)),
+    "freeway"=>Dict("MTCGP"=>(28.2,0), "HyperNEAT"=>29),
+    "frostbite"=>Dict("MTCGP"=>(782,795), "TPG"=>8144.4),
+    "gravitar"=>Dict("MTCGP"=>(2350,50)),
+    "private_eye"=>Dict("MTCGP"=>(12702.2,4337), "TPG"=>15028.3),
+    "riverraid"=>Dict("MTCGP"=>(2914,90), "Prioritized"=>18184.4),
+    "solaris"=>Dict("MTCGP"=>(8324,2250)),
+    "space_invaders"=>Dict("MTCGP"=>(1001,25), "A3C LSTM"=>23846)
 )
 
 """
@@ -100,9 +111,15 @@ function add_baselines(graphs::Vector{Plots.Plot{Plots.GRBackend}}, game::String
         baselines = BASELINES[game]
         for g in graphs
             for k in keys(baselines)
-                score = baselines[k]
+                if k == "MTCGP"
+                    score = baselines[k][1]
+                    var = baselines[k][2]
+                    hline!(g, [score], ribbon=([var]), color=:gray, label=false)
+                else
+                    score = baselines[k]
+                end
                 hline!(g, [score], linestyle=:dash, color=:black, label=false)
-                annotate!(0, score, text(k, 7, :left), :black)
+                annotate!(0, score, text(k, 7, :bottom, :left), :black)
             end
         end
     end

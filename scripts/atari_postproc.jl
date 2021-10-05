@@ -7,7 +7,7 @@ resdir = joinpath(rootdir, "results/")
 # fetch_backup(rootdir, clean=true)
 
 min_date = DateTime(2021, 09, 01)
-max_date = DateTime(2021, 09, 24)
+max_date = DateTime(2021, 09, 30)
 # DateTime(2013,7,1,12,30,59,1)
 # games = Array{String,1}()
 games = ["breakout"] # ["freeway"]  # pong kung_fu_master freeway assault
