@@ -6,6 +6,10 @@ using OffsetArrays
 using BenchmarkTools
 using TimerOutputs
 
+BASELINES = Dict(
+    "breakout"=>Dict("A3C LSTM"=>766.8)
+)
+
 """
     function time_monocgp_ms(
         reducer::Reducer,
@@ -91,10 +95,25 @@ function time_dualcgp_ms(
     enco_time, redu_time, flat_time, cont_time
 end
 
+function add_baselines(graphs::Vector{Plots.Plot{Plots.GRBackend}}, game::String)
+    if haskey(BASELINES, game)
+        baselines = BASELINES[game]
+        for g in graphs
+            for k in keys(baselines)
+                score = baselines[k]
+                hline!(g, [score], linestyle=:dash, color=:black, label=false)
+                annotate!(0, score, text(k, 7, :left), :black)
+            end
+        end
+    end
+end
+
 """
     function process_results(
         exp_dirs::Array{String,1},
-        games::Array{String,1};
+        games::Array{String,1},
+        dotime::Bool,
+        dosave::Bool;
         ma::Int64=1
     )
 
@@ -102,9 +121,10 @@ Main results plot/print method.
 """
 function process_results(
     exp_dirs::Array{String,1},
-    games::Array{String,1};
-    ma::Int64=1,
-    save=false
+    games::Array{String,1},
+    dotime::Bool,
+    dosave::Bool;
+    ma::Int64=1
 )
     # Init graphs
     xl = "Generation"
@@ -152,42 +172,45 @@ function process_results(
 
 
         # Timer
-        is_dual = isfile(joinpath(exp_dirs[i], "logs/encoder.csv"))
-        total_time = 0.0
-        grayscale = cfg["grayscale"]
-        downscale = cfg["downscale"]
-        if is_dual
-            enco, reducer, cont = get_last_dualcgp(exp_dirs[i], games[i], cfg)
-            enco_time, redu_time, flat_time, cont_time = time_dualcgp_ms(
-                enco, reducer, cont, games[i], grayscale, downscale
-            )
-            push!(p, ["  - Encoder", enco_time])
-            total_time += enco_time
-        else
-            reducer, cont = get_last_monocgp(exp_dirs[i], games[i], cfg)
-            redu_time, flat_time, cont_time = time_monocgp_ms(
-                reducer, cont, games[i], grayscale, downscale
-            )
+        if dotime
+            is_dual = isfile(joinpath(exp_dirs[i], "logs/encoder.csv"))
+            total_time = 0.0
+            grayscale = cfg["grayscale"]
+            downscale = cfg["downscale"]
+            if is_dual
+                enco, reducer, cont = get_last_dualcgp(exp_dirs[i], games[i], cfg)
+                enco_time, redu_time, flat_time, cont_time = time_dualcgp_ms(
+                    enco, reducer, cont, games[i], grayscale, downscale
+                )
+                push!(p, ["  - Encoder", enco_time])
+                total_time += enco_time
+            else
+                reducer, cont = get_last_monocgp(exp_dirs[i], games[i], cfg)
+                redu_time, flat_time, cont_time = time_monocgp_ms(
+                    reducer, cont, games[i], grayscale, downscale
+                )
+            end
+            total_time += redu_time
+            total_time += flat_time
+            total_time += cont_time
+            push!(p, ["  - Reducer", redu_time])
+            push!(p, ["  - Flattening", flat_time])
+            push!(p, ["  - Controller", cont_time])
+            push!(p, ["  - Total", total_time])
         end
-        total_time += redu_time
-        total_time += flat_time
-        total_time += cont_time
 
         # Finish push and print
-        push!(p, ["  - Reducer", redu_time])
-        push!(p, ["  - Flattening", flat_time])
-        push!(p, ["  - Controller", cont_time])
-        push!(p, ["  - Total", total_time])
         l = maximum([length(k) for k in [pr[1] for pr in p]])
         println()
         for k in p
             println(string(k[1], " "^(l-length(k[1])), " : ", k[2]))
         end
     end
+    add_baselines([plt_best, plt_mean], games[1])
     display(plt_best)
     display(plt_mean)
 
-    if save
+    if dosave
         exp_name = string(basename(exp_dirs[1])[1:10], "_", games[1])
         graph_dir = joinpath(dirname(dirname(exp_dirs[1])), "graphs", exp_name)
         mkpath(graph_dir)
