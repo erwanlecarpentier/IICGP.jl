@@ -125,6 +125,16 @@ function add_baselines(graphs::Vector{Plots.Plot{Plots.GRBackend}}, game::String
     end
 end
 
+function getcolor(reducer_type::String)
+    if reducer_type == "pooling"
+        return :skyblue3
+    elseif reducer_type == "centroid"
+        return :chocolate1
+    else
+        return :black
+    end
+end
+
 """
     function process_results(
         exp_dirs::Array{String,1},
@@ -145,8 +155,9 @@ function process_results(
 )
     # Init graphs
     xl = "Generation"
-    plt_best = plot(ylabel="Best score", xlabel=xl)
-    plt_mean = plot(ylabel="Mean score", xlabel=xl)
+    gamename = titlecase(replace(games[1], "_"=>" "))
+    plt_best = plot(ylabel=string("Best score ", gamename), xlabel=xl)
+    plt_mean = plot(ylabel=string("Mean score ", gamename), xlabel=xl)
 
     for i in eachindex(exp_dirs)
         exp_dir = exp_dirs[i]
@@ -156,15 +167,16 @@ function process_results(
 
         # Plots
         reducer_type = cfg["reducer"]["type"]
-        label_i = string(games[i], ' ',reducer_type)
+        label_i = string(reducer_type) # string(games[i], ' ',reducer_type)
+        color_i = getcolor(reducer_type)
         kernel = OffsetArray(fill(1/(2*ma+1), 2*ma+1), -ma:ma)
         best = (ma == 1) ? log.best : imfilter(log.best, kernel)
         mean = (ma == 1) ? log.mean : imfilter(log.mean, kernel)
         std = (ma == 1) ? log.std : imfilter(log.std, kernel)
         save_gen = cfg["save_gen"]
         x = 1:save_gen:save_gen*length(best)
-        plot!(plt_best, x, best, label=label_i)
-        plot!(plt_mean, x, mean, ribbon=std, label=label_i)
+        plot!(plt_best, x, best, label=label_i, color=color_i)
+        plot!(plt_mean, x, mean, ribbon=std, label=label_i, color=color_i)
 
         # Append info to print
         p = []

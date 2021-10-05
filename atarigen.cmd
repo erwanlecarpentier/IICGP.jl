@@ -9,7 +9,7 @@
 # Minatar benchmark
 # seaquest breakout asterix freeway space_invaders
 
-# Selected games
+# 12 selected games (e.g. setting A)
 # boxing assault
 # freeway solaris
 # defender gravitar
