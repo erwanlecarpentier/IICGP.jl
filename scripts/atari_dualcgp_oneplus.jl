@@ -84,6 +84,7 @@ function play_atari(
         end
         reward += act(game.ale, action)
         frames += 1
+        prev_action = action
         if frames > max_frames
             break
         end
@@ -116,4 +117,3 @@ else
     init_backup(logid, resdir, args["cfg"])
     run!(e)
 end
-

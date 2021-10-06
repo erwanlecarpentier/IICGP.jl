@@ -59,6 +59,7 @@ function dualcgp_config(cfg::Dict, game_name::String)
             main_cfg[k] = cfg[k]
         end
     end
+    main_cfg["id"] = logid
     # main_cfg = dict_to_namedtuple(main_cfg)
 
     # Encoder config

@@ -1,7 +1,11 @@
-export IPCGPInd, IPCGPCopy, image_buffer, get_last_dualcgp
+export IPCGPInd, IPCGPCopy, image_buffer, get_last_dualcgp, rand_CGPchromosome
 
 using CartesianGeneticProgramming
 using JSON
+
+function rand_CGPchromosome(cfg::NamedTuple)::Vector{Float64}
+    rand(cfg.rows * cfg.columns * (3 + cfg.n_parameters) + cfg.n_out)
+end
 
 """
     image_buffer(buffer_size::Int64, img_size::Tuple)

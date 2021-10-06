@@ -1,7 +1,103 @@
-export DualCGPEvolution
+export DualCGPEvolution, DualCGPGAEvo
 
 import Cambrian.populate, Cambrian.evaluate, Cambrian.log_gen, Cambrian.save_gen
 using Statistics
+
+"""
+    init_chomosomes(cfg::NamedTuple)
+
+Initialize a population of random chromosomes of sizes corresponding to the
+input configuration file.
+"""
+function init_chomosomes(cfg::NamedTuple)::Vector{Vector{Float64}}
+    population = Vector{Vector{Float64}}(undef, cfg.n_population)
+    for i in 1:cfg.n_population
+        population[i] = rand_CGPchromosome(cfg)
+    end
+    population
+end
+
+mutable struct DualCGPGAEvo{T} <: Cambrian.AbstractEvolution
+    config::NamedTuple
+    logid::String
+    resdir::String
+    encoder_config::NamedTuple
+    encoder_chromosomes::Vector{Vector{Float64}}
+    encoder_logger::CambrianLogger
+    controller_config::NamedTuple
+    controller_chromosomes::Vector{Vector{Float64}}
+    controller_logger::CambrianLogger
+    fitness::Function
+    gen::Int
+end
+
+# populate(e::IICGP.DualCGPGAEvo) = IICGP.oneplus_populate(e)
+# evaluate(e::IICGP.DualCGPGAEvo) = IICGP.fitness_evaluate(e, e.fitness)
+
+"""
+    DualCGPGAEvo(
+        encoder_config::NamedTuple,
+        controller_config::NamedTuple,
+        fitness::Function,
+        logid::String,
+        resdir::String;
+        kwargs...
+    )
+
+Dual CGP evolution framework.
+"""
+function DualCGPGAEvo(
+    encoder_config::NamedTuple,
+    controller_config::NamedTuple,
+    fitness::Function,
+    logid::String,
+    resdir::String;
+    kwargs...
+)
+    kwargs_dict = Dict(kwargs)
+
+    # Logger
+    encoder_logfile = joinpath(resdir, "logs", logid, "encoder.csv")
+    controller_logfile = joinpath(resdir, "logs", logid, "controller.csv")
+    encoder_logger = CambrianLogger(encoder_logfile)
+    controller_logger = CambrianLogger(controller_logfile)
+
+    # CGP populations
+    #=
+    if haskey(kwargs_dict, :encoder_init_function)
+        encoder_population = Cambrian.initialize(CGPInd, encoder_config,
+            init_function=kwargs_dict[:encoder_init_function])
+    else
+        encoder_population = Cambrian.initialize(CGPInd, encoder_config)
+    end
+    if haskey(kwargs_dict, :controller_init_function)
+        controller_population = Cambrian.initialize(CGPInd, controller_config,
+            init_function=kwargs_dict[:controller_init_function])
+    else
+        controller_population = Cambrian.initialize(CGPInd, controller_config)
+    end
+    =#
+    encoder_chromosomes = init_chomosomes(encoder_config)
+    controller_chromosomes = init_chomosomes(controller_config)
+
+    # Global evolution config
+    @assert encoder_config.d_fitness == controller_config.d_fitness
+    config = (
+        d_fitness=encoder_config.d_fitness,
+        seed=encoder_config.seed,
+        n_gen=max(encoder_config.n_gen, controller_config.n_gen),
+        log_gen=min(encoder_config.log_gen, controller_config.log_gen),
+        save_gen=min(encoder_config.save_gen, controller_config.save_gen)
+    )
+
+    # Create and return DualCGPEvolution
+    DualCGPGAEvo(
+        config, logid, resdir,
+        encoder_config, encoder_chromosomes, encoder_logger,
+        controller_config, controller_chromosomes, controller_logger,
+        fitness, 0
+    )
+end
 
 mutable struct DualCGPEvolution{T} <: Cambrian.AbstractEvolution
     config::NamedTuple
@@ -122,7 +218,8 @@ end
 """
     function save_gen(e::DualCGPEvolution)
 
-Save the population of a dual CGP evolution framework in `gens/`.
+Save the population of a dual CGP evolution framework in `gens/` contained in
+the results directory.
 """
 function save_gen(e::DualCGPEvolution)
     encoder_path = joinpath(e.resdir, Formatting.format("gens/{1}/encoder_{2:04d}", e.logid, e.gen))

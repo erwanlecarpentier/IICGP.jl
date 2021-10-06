@@ -17,10 +17,10 @@ s = ArgParseSettings()
 @add_arg_table! s begin
     "--cfg"
     help = "configuration script"
-    default = "cfg/test_dual.yaml"
+    default = "cfg/dualcgpga_atari_pooling.yaml"
     "--game"
     help = "game rom name"
-    default = "assault"
+    default = "gravitar"
     "--seed"
     help = "random seed for evolution"
     arg_type = Int
@@ -47,26 +47,24 @@ const max_frames = main_cfg["max_frames"]
 const stickiness = main_cfg["stickiness"]
 const grayscale = main_cfg["grayscale"]
 const downscale = main_cfg["downscale"]
-const logid = enco_cfg.id
-const state_ref = get_state_ref(game, seed)
+const logid = main_cfg["id"]
 
 function play_atari(
     encoder::CGPInd,
     reducer::Reducer,
     controller::CGPInd,
+    seed::Int64,
     lck::ReentrantLock;
     rom=game,
-    seed=seed,
-    rom_state_ref=state_ref,
     max_frames=max_frames,
     grayscale=grayscale,
     downscale=downscale,
     stickiness=stickiness
 )
     # Random.seed!(seed)
-    mt = MersenneTwister(seed)
-    game = Game(rom, seed, lck=lck, state_ref=rom_state_ref)
-    IICGP.reset!(reducer) # zero the buffers
+    mt = MersenneTwister(seed) # TODO per-gen seeding
+    game = Game(rom, seed, lck=lck)
+    IICGP.reset!(reducer) # zero buffers
     reward = 0.0
     frames = 0
     prev_action = 0
@@ -80,6 +78,7 @@ function play_atari(
         end
         reward += act(game.ale, action)
         frames += 1
+        prev_action = action
         if frames > max_frames
             break
         end
@@ -88,27 +87,25 @@ function play_atari(
     [reward]
 end
 
-if length(args["ind"]) > 0
-    ind = CGPInd(cfg, read(args["ind"], String))
-    ftn = fitness(ind, inps, outs)
-    println("Fitness: ", ftn)
-else
-    # Define mutate and fit functions
-    function mutate(ind::CGPInd, ind_type::String)
-        if ind_type == "encoder"
-            return goldman_mutate(enco_cfg, ind, init_function=IPCGPInd)
-        elseif ind_type == "controller"
-            return goldman_mutate(cont_cfg, ind)
-        end
+
+# Extend Cambrian mutate function
+function mutate(ind::CGPInd, ind_type::String)
+    if ind_type == "encoder"
+        return goldman_mutate(enco_cfg, ind, init_function=IPCGPInd)
+    elseif ind_type == "controller"
+        return goldman_mutate(cont_cfg, ind)
     end
-    lck = ReentrantLock()
-    fit(encoder::CGPInd, controller::CGPInd) = play_atari(encoder, reducer,
-                                                          controller, lck)
-    # Create an evolution framework
-    e = IICGP.DualCGPEvolution(enco_cfg, cont_cfg, fit, resdir,
-                               encoder_init_function=IPCGPInd, logid=logid,
-                               bootstrap=bootstrap, game=game)
-    # Run evolution
-    init_backup(logid, resdir, args["cfg"])
-    run!(e)
 end
+
+lck = ReentrantLock()
+fit(e::CGPInd, c::CGPInd, seed::Int64) = play_atari(e, reducer, c, seed, lck)
+
+# Create an evolution framework
+evo = IICGP.DualCGPGAEvo(
+    enco_cfg, cont_cfg, fit, logid, resdir,
+    encoder_init_function=IPCGPInd, game=game
+)
+
+# Run evolution
+# init_backup(logid, resdir, args["cfg"])
+# run!(evo)
