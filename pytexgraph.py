@@ -65,6 +65,14 @@ POS = {
 			"epos": (0, -0.4), "hepos": (0, 0),
 			"cpos": (1.1, 0), "hcpos": (1.1, 0.8)
 		}
+	},
+	"2021-09-03T18:18:34.627_solaris": {
+		"encoder": {
+			"1": (0, 0),
+			"2": (2, 2), "3": (4, 2), "7": (6, 2),
+			"4": (6, 0), "8": (8, 0), "20": (10, 0), "out20": (12, 0),
+			"9": (2, -2), "12": (4, -2), "18": (8, -2), "out18": (12, -2)
+		}
 	}
 }
 
@@ -554,10 +562,9 @@ def build_canvas(texscript, paths, frame):
 
 def make_graphs(paths, frame):
 	gdict = gdict_from_paths(paths, frame)
-	for indtype in ["controller", "encoder"]:
+	for indtype in ["encoder", "controller"]:
 		texscript = graph_texscript(gdict, paths, indtype)
 		build_graph(texscript, paths, frame, indtype)
-		exit() # TODO remove
 		
 def delete_graphs(paths, frame):
 	savedir = paths["metadata"]
