@@ -21,51 +21,6 @@ populate(e::IICGP.DualCGPEvolution) = IICGP.oneplus_populate(e)
 evaluate(e::IICGP.DualCGPEvolution) = IICGP.fitness_evaluate(e, e.fitness)
 
 """
-TODO doc
-"""
-function get_bootstrap_chromosomes(
-    enco_cfg::NamedTuple,
-    cont_cfg::NamedTuple,
-    game::String
-)
-    enco_bs_path, cont_bs_path = get_bootstrap_paths(enco_cfg, cont_cfg, game)
-    println(string("-> enco_bs_path = ", enco_bs_path))
-    println(string("-> cont_bs_path = ", cont_bs_path))
-    println()
-end
-
-"""
-TODO doc
-"""
-function bootstrap_init(
-    enco_cfg::NamedTuple,
-    cont_cfg::NamedTuple,
-    kwargs_dict::Dict
-)
-    enco_pop = Array{CGPInd}(undef, enco_cfg.n_population)
-    cont_pop = Array{CGPInd}(undef, cont_cfg.n_population)
-    if haskey(kwargs_dict, :game)
-        game = kwargs_dict[:game]
-    else
-        throw(ArgumentError("No game specified in kwargs"))
-    end
-    chromosome = get_bootstrap_chromosomes(enco_cfg, cont_cfg, game)
-    return enco_pop, cont_pop  # TODO (bootstrap_init) remove
-    # TODO (bootstrap_init) put back and reimplemente
-    #=
-    if haskey(kwargs_dict, :init_function)
-        population[1] = kwargs_dict[:init_function](cfg, chromosome)
-    else
-        population[1] = itype(cfg, chromosome)
-    end
-    for i in 2:cfg.n_population
-        population[i] = mutate(population[1], ind_type)
-    end
-    population
-    =#
-end
-
-"""
     function DualCGPEvolution(
         encoder_config::NamedTuple,
         controller_config::NamedTuple,
@@ -99,23 +54,17 @@ function DualCGPEvolution(
     controller_logger = CambrianLogger(controller_logfile)
 
     # CGP populations
-    if bootstrap
-        encoder_population, controller_population = bootstrap_init(
-            encoder_config, controller_config, kwargs_dict
-        )
+    if haskey(kwargs_dict, :encoder_init_function)
+        encoder_population = Cambrian.initialize(CGPInd, encoder_config,
+            init_function=kwargs_dict[:encoder_init_function])
     else
-        if haskey(kwargs_dict, :encoder_init_function)
-            encoder_population = Cambrian.initialize(CGPInd, encoder_config,
-                init_function=kwargs_dict[:encoder_init_function])
-        else
-            encoder_population = Cambrian.initialize(CGPInd, encoder_config)
-        end
-        if haskey(kwargs_dict, :controller_init_function)
-            controller_population = Cambrian.initialize(CGPInd, controller_config,
-                init_function=kwargs_dict[:controller_init_function])
-        else
-            controller_population = Cambrian.initialize(CGPInd, controller_config)
-        end
+        encoder_population = Cambrian.initialize(CGPInd, encoder_config)
+    end
+    if haskey(kwargs_dict, :controller_init_function)
+        controller_population = Cambrian.initialize(CGPInd, controller_config,
+            init_function=kwargs_dict[:controller_init_function])
+    else
+        controller_population = Cambrian.initialize(CGPInd, controller_config)
     end
 
     # Global evolution config
