@@ -1,5 +1,7 @@
 export fitness_evaluate
 
+using Random
+
 """
     null_evaluate(i::CGPInd, j::CGPInd)
 
@@ -77,12 +79,30 @@ function fitness_evaluate(e::DualCGPEvolution, fitness::Function=null_evaluate)
 end
 
 function select_indexes(e::DualCGPGAEvo)
+	indexes = Vector{Tuple{Int64, Int64}}()
+	nrows = size(e.elites_matrix, 1)
+	ncols = size(e.elites_matrix, 2)
+	nmax = max(nrows, ncols)
 	# 1. Evaluate elites
-	if e.gen > 0 # there exist elites
-		println("TODO")
+	for i in 1:nrows
+		for j in 1:ncols
+			if e.elites_matrix[i, j]
+				push!(indexes, (i, j))
+			end
+		end
 	end
 	# 2. Evaluate at least one pair per row/col
+	shuffledrows = shuffle(collect(1:nrows))
+	shuffledcols = shuffle(collect(1:ncols))
+	candidates = Vector{Tuple{Int64, Int64}}()
+	for i in 1:nmax
+		i_modrow = i-nrows*divrem(i-1,nrows)[1]
+		i_modcol = i-ncols*divrem(i-1,ncols)[1]
+		c = (shuffledrows[i_modrow], shuffledcols[i_modcol])
+		push!(indexes, c)
+	end
 	# 3. Additional random evaluations
+	indexes
 end
 
 """
@@ -91,6 +111,16 @@ end
 GA sparse fitness evaluation method.
 """
 function fitness_evaluate(e::DualCGPGAEvo, fitness::Function=null_evaluate)
-	println() # TODO remove
 	indexes = select_indexes(e)
+	# TODO remove START
+	println()
+	println(indexes)
+	a = zeros(Int64, length(e.encoder_sympop), length(e.controller_sympop))
+	for index in indexes
+		a[index...] = 1
+	end
+	for r in eachrow(a)
+		println(r)
+	end
+	# TODO remove END
 end
