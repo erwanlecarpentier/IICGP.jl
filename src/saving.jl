@@ -13,13 +13,14 @@ LOG_HEADER = ["date", "lib", "type", "gen_number", "best", "mean", "std"]
 
 
 function init_backup(logid::String, resdir::String, cfg_path::String)
-    new_resu_dir = joinpath(resdir, "results", logid)
-    new_logs_dir = joinpath(new_resu_dir, "logs")
-    new_gens_dir = joinpath(new_resu_dir, "gens")
-    mkdir(new_resu_dir)
-    mkdir(new_logs_dir)
-    mkdir(new_gens_dir)
-    new_cfg_path = joinpath(new_resu_dir, cfg_path[length("cfg/")+1:end])
+    #new_resu_dir = joinpath(resdir, "results", logid)
+    #new_logs_dir = joinpath(new_resu_dir, "logs")
+    #new_gens_dir = joinpath(new_resu_dir, "gens")
+    #mkdir(new_resu_dir)
+    #mkdir(new_logs_dir)
+    #mkdir(new_gens_dir)
+    #new_cfg_path = joinpath(new_resu_dir, cfg_path[length("cfg/")+1:end])
+    new_cfg_path = joinpath(resdir, "logs", logid, basename(cfg_path))
     cp(cfg_path, new_cfg_path, force=true)
 end
 
