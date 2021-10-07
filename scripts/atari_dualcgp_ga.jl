@@ -99,4 +99,4 @@ evo = IICGP.DualCGPGAEvo(ecfg, ccfg, fit, logid, resdir)
 
 # Run evolution
 init_backup(logid, resdir, args["cfg"])
-# run!(evo)
+run!(evo)

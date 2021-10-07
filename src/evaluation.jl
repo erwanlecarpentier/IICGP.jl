@@ -1,7 +1,7 @@
 export fitness_evaluate
 
 """
-    function null_evaluate(i::CGPInd, j::CGPInd)
+    null_evaluate(i::CGPInd, j::CGPInd)
 
 Default evaluation function for two CGP individuals.
 """
@@ -10,7 +10,7 @@ function null_evaluate(i::CGPInd, j::CGPInd)
 end
 
 """
-    function fitness_evaluate(e::CGPEvolution; fitness::Function=null_evaluate)
+    fitness_evaluate(e::CGPEvolution; fitness::Function=null_evaluate)
 
 Sets the fitness of each individual to the Array of values returned by fitness.
 Multithreaded option enabled in this version.
@@ -35,7 +35,7 @@ function fitness_evaluate_ij(
 	f[i,j] = fitness(enco_i, cont_j)[1] # Currently, only pick 1st fitness dimension
 end
 """
-    function fitness_evaluate(e::DualCGPEvolution, fitness::Function=null_evaluate)
+    fitness_evaluate(e::DualCGPEvolution, fitness::Function=null_evaluate)
 
 Sets the fitness of each individual to the maximum value of the fitness matrix
 in the dual CGP evolution framework.
@@ -74,4 +74,23 @@ function fitness_evaluate(e::DualCGPEvolution, fitness::Function=null_evaluate)
     for j in eachindex(e.controller_population)
         e.controller_population[j].fitness[1] = maximum(fitness_matrix[:,j])
     end
+end
+
+function select_indexes(e::DualCGPGAEvo)
+	# 1. Evaluate elites
+	if e.gen > 0 # there exist elites
+		println("TODO")
+	end
+	# 2. Evaluate at least one pair per row/col
+	# 3. Additional random evaluations
+end
+
+"""
+	fitness_evaluate(e::DualCGPGAEvo, fitness::Function=null_evaluate)
+
+GA sparse fitness evaluation method.
+"""
+function fitness_evaluate(e::DualCGPGAEvo, fitness::Function=null_evaluate)
+	println() # TODO remove
+	indexes = select_indexes(e)
 end

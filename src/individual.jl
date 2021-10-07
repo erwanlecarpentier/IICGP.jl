@@ -10,14 +10,13 @@ dual CGP GA evolution.
 """
 struct SymInd
     chromosome::Vector{Float64}
-    iselite::Bool
     index::Int64 # row / column index in 2D fitness matrix
     type::String
     fitness::Float64
 end
 
 function SymInd(chromosome::Vector{Float64}, index::Int64, type::String)
-    SymInd(chromosome, false, index, type, -Inf)
+    SymInd(chromosome, index, type, -Inf)
 end
 
 function rand_CGPchromosome(cfg::NamedTuple)::Vector{Float64}

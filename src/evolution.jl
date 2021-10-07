@@ -30,11 +30,12 @@ mutable struct DualCGPGAEvo <: Cambrian.AbstractEvolution
     controller_logger::CambrianLogger
     fitness::Function
     fitness_matrix::Matrix{Float64}
+    elites_matrix::Matrix{Bool}
     gen::Int64
 end
 
 # populate(e::IICGP.DualCGPGAEvo) = IICGP.ga_populate(e)
-# evaluate(e::IICGP.DualCGPGAEvo) = IICGP.fitness_evaluate(e, e.fitness)
+evaluate(e::IICGP.DualCGPGAEvo) = IICGP.fitness_evaluate(e, e.fitness)
 
 """
     DualCGPGAEvo(
@@ -68,13 +69,14 @@ function DualCGPGAEvo(
         log_gen=min(encoder_config.log_gen, controller_config.log_gen),
         save_gen=min(encoder_config.save_gen, controller_config.save_gen)
     )
-    fitmat_size = (encoder_config.n_population, controller_config.n_population)
-    fitness_matrix = -Inf * ones(fitmat_size...)
+    mat_size = (encoder_config.n_population, controller_config.n_population)
+    fitness_matrix = -Inf * ones(mat_size...)
+    elites_matrix = falses(mat_size...)
     DualCGPGAEvo(
         config, logid, resdir,
         encoder_config, encoder_sympop, encoder_logger,
         controller_config, controller_sympop, controller_logger,
-        fitness, fitness_matrix, 0
+        fitness, fitness_matrix, elites_matrix, 0
     )
 end
 

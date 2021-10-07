@@ -27,9 +27,13 @@ fit(e::SymInd, c::SymInd) = e.chromosome[1] * c.chromosome[1]
             @test typeof(sympop[i].chromosome) <: Vector{Float64}
             @test length(sympop[i].chromosome) == n_chr
             @test sympop[i].index == i
-            @test sympop[i].iselite == false
             @test sympop[i].fitness == -Inf
             @test sympop[i].type == type
         end
     end
+    mat_size = (enco_cfg.n_population, cont_cfg.n_population)
+    @test size(evo.fitness_matrix) == mat_size
+    @test size(evo.elites_matrix) == mat_size
+    @test all(i -> i == -Inf, evo.fitness_matrix)
+    @test all(i -> i == false, evo.elites_matrix)
 end
