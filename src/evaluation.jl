@@ -78,6 +78,14 @@ function fitness_evaluate(e::DualCGPEvolution, fitness::Function=null_evaluate)
     end
 end
 
+"""
+	select_indexes(e::DualCGPGAEvo)
+
+Select the indexes of the pairs to be evaluated for this generation.
+	- 1. Select the elite pairs
+	- 2. Select at least one pair per row/col
+	- 3. Select random pairs until e.n_eval pairs have been selected
+"""
 function select_indexes(e::DualCGPGAEvo)
 	indexes = Vector{Tuple{Int64, Int64}}()
 	nrows = size(e.elites_matrix, 1)
@@ -99,10 +107,34 @@ function select_indexes(e::DualCGPGAEvo)
 		i_modrow = i-nrows*divrem(i-1,nrows)[1]
 		i_modcol = i-ncols*divrem(i-1,ncols)[1]
 		c = (shuffledrows[i_modrow], shuffledcols[i_modcol])
-		push!(indexes, c)
+		push!(candidates, c)
+	end
+	eliterows = [i[1] for i in indexes]
+	elitecols = [i[2] for i in indexes]
+	for c in candidates
+		if c[1] ∉ eliterows && c[2] ∉ elitecols
+			push!(indexes, c)
+		end
 	end
 	# 3. Additional random evaluations
+	while length(indexes) < e.n_eval
+		c = (rand(1:nrows), rand(1:ncols))
+		if c ∉ indexes
+			push!(indexes, c)
+		end
+	end
 	indexes
+end
+
+function fitness_evaluate_ij!(
+	e::DualCGPGAEvo,
+	i::Int64,
+	j::Int64,
+	fitness::Function
+)
+	enco_i = IPCGPInd(e.encoder_config, e.encoder_sympop[i].chromosome)
+	cont_j = CGPInd(e.controller_config, e.controller_sympop[j].chromosome)
+	e.fitness_matrix[i, j] = fitness(enco_i, cont_j)[1]
 end
 
 """
@@ -111,16 +143,13 @@ end
 GA sparse fitness evaluation method.
 """
 function fitness_evaluate(e::DualCGPGAEvo, fitness::Function=null_evaluate)
+	# 1. Select indexes of individuals to evaluate
 	indexes = select_indexes(e)
-	# TODO remove START
-	println()
-	println(indexes)
-	a = zeros(Int64, length(e.encoder_sympop), length(e.controller_sympop))
-	for index in indexes
-		a[index...] = 1
-	end
-	for r in eachrow(a)
-		println(r)
-	end
-	# TODO remove END
+	# 2. Evaluate those individuals
+	Threads.@threads for l in eachindex(indexes)
+        i, j = indexes[l]
+		fitness_evaluate_ij!(e, i, j, fitness)
+    end
+	# 3. Set elites
+	set_elites!(e) # TODO here
 end

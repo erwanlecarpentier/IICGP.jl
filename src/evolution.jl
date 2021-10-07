@@ -31,6 +31,9 @@ mutable struct DualCGPGAEvo <: Cambrian.AbstractEvolution
     fitness::Function
     fitness_matrix::Matrix{Float64}
     elites_matrix::Matrix{Bool}
+    n_eval::Int64
+    n_elite::Int64
+    tournament_size::Int64
     gen::Int64
 end
 
@@ -39,6 +42,7 @@ evaluate(e::IICGP.DualCGPGAEvo) = IICGP.fitness_evaluate(e, e.fitness)
 
 """
     DualCGPGAEvo(
+        main_config::Dict,
         encoder_config::NamedTuple,
         controller_config::NamedTuple,
         fitness::Function,
@@ -49,6 +53,7 @@ evaluate(e::IICGP.DualCGPGAEvo) = IICGP.fitness_evaluate(e, e.fitness)
 Dual CGP evolution framework.
 """
 function DualCGPGAEvo(
+    main_config::Dict,
     encoder_config::NamedTuple,
     controller_config::NamedTuple,
     fitness::Function,
@@ -72,11 +77,15 @@ function DualCGPGAEvo(
     mat_size = (encoder_config.n_population, controller_config.n_population)
     fitness_matrix = -Inf * ones(mat_size...)
     elites_matrix = falses(mat_size...)
+    n_eval = main_config["n_eval"]
+    n_elite = main_config["n_elite"]
+    tournament_size = main_config["tournament_size"]
     DualCGPGAEvo(
         config, logid, resdir,
         encoder_config, encoder_sympop, encoder_logger,
         controller_config, controller_sympop, controller_logger,
-        fitness, fitness_matrix, elites_matrix, 0
+        fitness, fitness_matrix, elites_matrix, n_eval, n_elite,
+        tournament_size, 0
     )
 end
 
