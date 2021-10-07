@@ -1,7 +1,24 @@
-export IPCGPInd, IPCGPCopy, image_buffer, get_last_dualcgp, rand_CGPchromosome
+export IPCGPInd, SymInd, IPCGPCopy, image_buffer, get_last_dualcgp
+export rand_CGPchromosome
 
 using CartesianGeneticProgramming
 using JSON
+
+"""
+Symbolic Individual struct for easy/fast representation in
+dual CGP GA evolution.
+"""
+struct SymInd
+    chromosome::Vector{Float64}
+    iselite::Bool
+    index::Int64 # row / column index in 2D fitness matrix
+    type::String
+    fitness::Float64
+end
+
+function SymInd(chromosome::Vector{Float64}, index::Int64, type::String)
+    SymInd(chromosome, false, index, "encoder", -Inf)
+end
 
 function rand_CGPchromosome(cfg::NamedTuple)::Vector{Float64}
     rand(cfg.rows * cfg.columns * (3 + cfg.n_parameters) + cfg.n_out)

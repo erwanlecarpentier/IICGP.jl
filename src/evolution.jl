@@ -22,10 +22,10 @@ mutable struct DualCGPGAEvo{T} <: Cambrian.AbstractEvolution
     logid::String
     resdir::String
     encoder_config::NamedTuple
-    encoder_chromosomes::Vector{Vector{Float64}}
+    encoder_pop::Vector{Vector{Float64}}
     encoder_logger::CambrianLogger
     controller_config::NamedTuple
-    controller_chromosomes::Vector{Vector{Float64}}
+    controller_pop::Vector{Vector{Float64}}
     controller_logger::CambrianLogger
     fitness::Function
     gen::Int
