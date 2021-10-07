@@ -101,10 +101,9 @@ lck = ReentrantLock()
 fit(e::CGPInd, c::CGPInd, seed::Int64) = play_atari(e, reducer, c, seed, lck)
 
 # Create an evolution framework
-evo = IICGP.DualCGPGAEvo(
-    enco_cfg, cont_cfg, fit, logid, resdir,
-    encoder_init_function=IPCGPInd, game=game
-)
+evo = IICGP.DualCGPGAEvo(enco_cfg, cont_cfg, fit, logid, resdir)
+#encoder_init_function=IPCGPInd, game=game
+
 
 # Run evolution
 # init_backup(logid, resdir, args["cfg"])

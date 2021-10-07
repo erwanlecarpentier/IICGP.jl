@@ -17,7 +17,7 @@ struct SymInd
 end
 
 function SymInd(chromosome::Vector{Float64}, index::Int64, type::String)
-    SymInd(chromosome, false, index, "encoder", -Inf)
+    SymInd(chromosome, false, index, type, -Inf)
 end
 
 function rand_CGPchromosome(cfg::NamedTuple)::Vector{Float64}

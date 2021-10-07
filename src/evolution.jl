@@ -6,32 +6,34 @@ using Statistics
 """
     init_chomosomes(cfg::NamedTuple)
 
-Initialize a population of random chromosomes of sizes corresponding to the
-input configuration file.
+Initialize a symbolic population of individual with random chromosomes of sizes
+corresponding to the input configuration file.
 """
-function init_chomosomes(cfg::NamedTuple)::Vector{Vector{Float64}}
-    population = Vector{Vector{Float64}}(undef, cfg.n_population)
+function init_sympop(cfg::NamedTuple)::Vector{SymInd}
+    population = Vector{SymInd}(undef, cfg.n_population)
     for i in 1:cfg.n_population
-        population[i] = rand_CGPchromosome(cfg)
+        chromosome = rand_CGPchromosome(cfg)
+        population[i] = SymInd(chromosome, i, cfg.type)
     end
     population
 end
 
-mutable struct DualCGPGAEvo{T} <: Cambrian.AbstractEvolution
+mutable struct DualCGPGAEvo <: Cambrian.AbstractEvolution
     config::NamedTuple
     logid::String
     resdir::String
     encoder_config::NamedTuple
-    encoder_pop::Vector{Vector{Float64}}
+    encoder_sympop::Vector{SymInd}
     encoder_logger::CambrianLogger
     controller_config::NamedTuple
-    controller_pop::Vector{Vector{Float64}}
+    controller_sympop::Vector{SymInd}
     controller_logger::CambrianLogger
     fitness::Function
-    gen::Int
+    fitness_matrix::Matrix{Float64}
+    gen::Int64
 end
 
-# populate(e::IICGP.DualCGPGAEvo) = IICGP.oneplus_populate(e)
+# populate(e::IICGP.DualCGPGAEvo) = IICGP.ga_populate(e)
 # evaluate(e::IICGP.DualCGPGAEvo) = IICGP.fitness_evaluate(e, e.fitness)
 
 """
@@ -40,8 +42,7 @@ end
         controller_config::NamedTuple,
         fitness::Function,
         logid::String,
-        resdir::String;
-        kwargs...
+        resdir::String
     )
 
 Dual CGP evolution framework.
@@ -51,36 +52,14 @@ function DualCGPGAEvo(
     controller_config::NamedTuple,
     fitness::Function,
     logid::String,
-    resdir::String;
-    kwargs...
+    resdir::String
 )
-    kwargs_dict = Dict(kwargs)
-
-    # Logger
     encoder_logfile = joinpath(resdir, "logs", logid, "encoder.csv")
     controller_logfile = joinpath(resdir, "logs", logid, "controller.csv")
     encoder_logger = CambrianLogger(encoder_logfile)
     controller_logger = CambrianLogger(controller_logfile)
-
-    # CGP populations
-    #=
-    if haskey(kwargs_dict, :encoder_init_function)
-        encoder_population = Cambrian.initialize(CGPInd, encoder_config,
-            init_function=kwargs_dict[:encoder_init_function])
-    else
-        encoder_population = Cambrian.initialize(CGPInd, encoder_config)
-    end
-    if haskey(kwargs_dict, :controller_init_function)
-        controller_population = Cambrian.initialize(CGPInd, controller_config,
-            init_function=kwargs_dict[:controller_init_function])
-    else
-        controller_population = Cambrian.initialize(CGPInd, controller_config)
-    end
-    =#
-    encoder_chromosomes = init_chomosomes(encoder_config)
-    controller_chromosomes = init_chomosomes(controller_config)
-
-    # Global evolution config
+    encoder_sympop = init_sympop(encoder_config)
+    controller_sympop = init_sympop(controller_config)
     @assert encoder_config.d_fitness == controller_config.d_fitness
     config = (
         d_fitness=encoder_config.d_fitness,
@@ -89,13 +68,13 @@ function DualCGPGAEvo(
         log_gen=min(encoder_config.log_gen, controller_config.log_gen),
         save_gen=min(encoder_config.save_gen, controller_config.save_gen)
     )
-
-    # Create and return DualCGPEvolution
+    fitmat_size = (encoder_config.n_population, controller_config.n_population)
+    fitness_matrix = -Inf * ones(fitmat_size...)
     DualCGPGAEvo(
         config, logid, resdir,
-        encoder_config, encoder_chromosomes, encoder_logger,
-        controller_config, controller_chromosomes, controller_logger,
-        fitness, 0
+        encoder_config, encoder_sympop, encoder_logger,
+        controller_config, controller_sympop, controller_logger,
+        fitness, fitness_matrix, 0
     )
 end
 

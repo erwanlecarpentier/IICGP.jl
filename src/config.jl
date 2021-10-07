@@ -67,6 +67,7 @@ function dualcgp_config(cfg::Dict, game_name::String)
     encoder_cfg["n_in"] = n_in
     encoder_cfg["img_size"] = img_size
     encoder_cfg["id"] = logid
+    encoder_cfg["type"] = "encoder"
     encoder_cfg = get_config(encoder_cfg) # dict to named tuple
 
     # Reducer
@@ -84,6 +85,7 @@ function dualcgp_config(cfg::Dict, game_name::String)
     controller_cfg["n_in"] = cont_n_in
     controller_cfg["n_out"] = n_out
     controller_cfg["id"] = logid
+    controller_cfg["type"] = "controller"
     controller_cfg = get_config(controller_cfg) # dict to named tuple
 
     main_cfg, encoder_cfg, controller_cfg, reducer, bootstrap
