@@ -22,7 +22,7 @@ function tournament_selection(e::DualCGPGAEvo, ci::CartesianIndices)
     n_pairs = length(e.fitness_matrix)
     selected = randperm(n_pairs)[1:e.tournament_size]
     fitnesses = e.fitness_matrix[selected]
-    best_pair_index = sortperm(fitnesses)[-1]
+    best_pair_index = sortperm(fitnesses)[end]
     best_pair_carte = ci[best_pair_index]
     echr = e.encoder_sympop[best_pair_carte[1]].chromosome
     cchr = e.controller_sympop[best_pair_carte[2]].chromosome
@@ -45,43 +45,47 @@ function ga_populate(e::DualCGPGAEvo)
     n_c = e.controller_config.n_population
     # 1. Add elites
     ci = CartesianIndices(e.elites_matrix)
+    x, y = 1, 1 # New indexes of elite pairs
+    new_elite_indexes = Vector{Tuple{Int64, Int64}}()
     for i in CartesianIndices(e.elites_matrix)
         if e.elites_matrix[i]
+            push!(new_elite_indexes, (x, y))
             ecandidate = e.encoder_sympop[i[1]]
             ccandidate = e.controller_sympop[i[2]]
             if !isin(enew, ecandidate)
                 push!(enew, ecandidate)
+                x += 1
             end
             if !isin(cnew, ccandidate)
                 push!(cnew, ccandidate)
+                y += 1
             end
         end
     end
     # 2. Run tournaments until population is full
     ci = CartesianIndices(size(e.fitness_matrix))
-    while length(enew) < n_e && length(cnew) < n_c
+    while length(enew) < n_e || length(cnew) < n_c
         echr, cchr = tournament_selection(e, ci)
         if length(enew) < n_e
-            if hasproperty(e, :encoder_init_function)
-                enc = e.encoder_init_function(e.encoder_config, echr)
-            else
-                enc = CGPInd(e.encoder_config, echr)
-            end
-            push!(enew, mutate(enc, "encoder"))
+            type = e.encoder_config.type
+        	enco = IPCGPInd(e.encoder_config, echr)
+            enco_m = mutate(enco, type)
+            push!(enew, SymInd(enco_m.chromosome, 0, type))
         end
         if length(cnew) < n_c
-            if hasproperty(e, :controller_init_function)
-                ctr = e.controller_init_function(e.controller_config, cchr)
-            else
-                ctr = CGPInd(e.controller_config, cchr)
-            end
-            push!(cnew, mutate(ctr, "controller"))
+            type = e.controller_config.type
+        	cont = CGPInd(e.controller_config, cchr)
+            cont_m = mutate(cont, type)
+            push!(cnew, SymInd(cont_m.chromosome, 0, type))
         end
     end
-    # 3. Set population and matrices
-    # TODO here before deciding to keep ind pop
-    println("TODO reset fitness matrix to -Inf")
-    println("TODO reset elite matrice to 0 everywhere except for previous elites")
+    # 3. Set new population and reset matrices
     e.encoder_sympop = enew
     e.controller_sympop = cnew
+    mat_size = size(e.fitness_matrix)
+    e.fitness_matrix = -Inf * ones(mat_size...)
+    e.elite_matrix = falses(mat_size...)
+    for index in new_elite_indexes
+        e.elite_matrix[index...] = true
+    end
 end

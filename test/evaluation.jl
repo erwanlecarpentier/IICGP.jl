@@ -3,6 +3,8 @@ using Cambrian
 using CartesianGeneticProgramming
 using Test
 
+import Cambrian.mutate # function extension
+
 
 function test_fitness_matrix(e::DualCGPGAEvo)
     esize = (length(e.encoder_sympop), length(e.controller_sympop))
@@ -47,8 +49,15 @@ game = "gravitar"
 mcfg, ecfg, ccfg, reducer, bootstrap = IICGP.dualcgp_config(cfg_filename, game)
 logid = "2021-testlogid"
 resdir = dirname(@__DIR__)
+function mutate(ind::CGPInd, ind_type::String)
+    if ind_type == "encoder"
+        return goldman_mutate(ecfg, ind, init_function=IPCGPInd)
+    elseif ind_type == "controller"
+        return goldman_mutate(ccfg, ind)
+    end
+end
 fit(e::CGPInd, c::CGPInd) = [e.chromosome[1] * c.chromosome[1]]
-n_iter = 1
+n_iter = 2
 
 @testset "CGP GA Evaluation" begin
     evo = IICGP.DualCGPGAEvo(mcfg, ecfg, ccfg, fit, logid, resdir)
@@ -56,6 +65,6 @@ n_iter = 1
         evaluate(evo)
         test_fitness_matrix(evo)
         test_ind_fitnesses(evo)
-        println("TODO populate here to reset the fitness matrix")
+        populate(evo)
     end
 end
