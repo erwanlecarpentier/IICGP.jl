@@ -12,6 +12,9 @@ logid = "2021-test-logid"
 resdir = dirname(@__DIR__)
 fit(e::SymInd, c::SymInd) = e.chromosome[1] * c.chromosome[1]
 
+
+
+
 evo = IICGP.DualCGPGAEvo(mcfg, ecfg, ccfg, fit, logid, resdir)
 evaluate(evo)
 populate(evo)
@@ -21,4 +24,7 @@ populate(evo)
 ##
 @testset "CGP GA Populate" begin
     evo = IICGP.DualCGPGAEvo(mcfg, ecfg, ccfg, fit, logid, resdir)
+
+    # Test that elites are kept between generations
+    # Test that pop size is maintened
 end

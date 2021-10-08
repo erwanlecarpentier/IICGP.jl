@@ -19,10 +19,15 @@ function test_fitness_matrix(e::DualCGPGAEvo)
     @test length(filter(x->x>-Inf, e.fitness_matrix)) == e.n_eval
     # 3. Test n_elites elites are selected
     @test sum(e.elites_matrix) == e.n_elite
-    # 4. Test elites are evaluated
+    # 4. Test elites are evaluated and have higher scores
     for i in eachindex(e.elites_matrix)
         if e.elites_matrix[i]
             @test e.fitness_matrix[i] > -Inf
+            for j in eachindex(e.fitness_matrix)
+                if !e.elites_matrix[j]
+                    @test e.fitness_matrix[i] >= e.fitness_matrix[j]
+                end
+            end
         end
     end
 end

@@ -91,7 +91,7 @@ function select_indexes(e::DualCGPGAEvo)
 	nrows = size(e.elites_matrix, 1)
 	ncols = size(e.elites_matrix, 2)
 	nmax = max(nrows, ncols)
-	# 1. Evaluate elites
+	# 1. Select elites
 	for i in 1:nrows
 		for j in 1:ncols
 			if e.elites_matrix[i, j]
@@ -99,7 +99,7 @@ function select_indexes(e::DualCGPGAEvo)
 			end
 		end
 	end
-	# 2. Evaluate at least one pair per row/col
+	# 2. Select at least one pair per row/col
 	shuffledrows = shuffle(collect(1:nrows))
 	shuffledcols = shuffle(collect(1:ncols))
 	candidates = Vector{Tuple{Int64, Int64}}()
@@ -116,7 +116,7 @@ function select_indexes(e::DualCGPGAEvo)
 			push!(indexes, c)
 		end
 	end
-	# 3. Additional random evaluations
+	# 3. Select additional random evaluations
 	while length(indexes) < e.n_eval
 		c = (rand(1:nrows), rand(1:ncols))
 		if c ∉ indexes
@@ -147,9 +147,10 @@ function set_ind_fitnesses!(e::DualCGPGAEvo)
 end
 
 function set_elites!(e::DualCGPGAEvo)
+	mat_size = size(e.elites_matrix)
+	e.elites_matrix = falses(mat_size...) # zero elites matrix
 	ci = CartesianIndices(size(e.fitness_matrix))
     p = sortperm(vec(e.fitness_matrix))[end-e.n_elite+1:end]
-	@assert size(e.fitness_matrix) == (18, 18) # TODO remove
     elite_indexes = ci[p]
 	for i in elite_indexes
 		e.elites_matrix[i] = true
