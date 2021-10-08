@@ -57,7 +57,7 @@ function mutate(ind::CGPInd, ind_type::String)
     end
 end
 fit(e::CGPInd, c::CGPInd) = [e.chromosome[1] * c.chromosome[1]]
-n_iter = 2
+n_iter = 3
 
 @testset "CGP GA Evaluation" begin
     evo = IICGP.DualCGPGAEvo(mcfg, ecfg, ccfg, fit, logid, resdir)

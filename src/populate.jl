@@ -84,8 +84,8 @@ function ga_populate(e::DualCGPGAEvo)
     e.controller_sympop = cnew
     mat_size = size(e.fitness_matrix)
     e.fitness_matrix = -Inf * ones(mat_size...)
-    e.elite_matrix = falses(mat_size...)
+    e.elites_matrix = falses(mat_size...)
     for index in new_elite_indexes
-        e.elite_matrix[index...] = true
+        e.elites_matrix[index...] = true
     end
 end
