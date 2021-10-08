@@ -37,7 +37,7 @@ mutable struct DualCGPGAEvo <: Cambrian.AbstractEvolution
     gen::Int64
 end
 
-# populate(e::IICGP.DualCGPGAEvo) = IICGP.ga_populate(e)
+populate(e::IICGP.DualCGPGAEvo) = IICGP.tournament_populate(e)
 evaluate(e::IICGP.DualCGPGAEvo) = IICGP.fitness_evaluate(e, e.fitness)
 
 """

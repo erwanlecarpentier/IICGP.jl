@@ -16,9 +16,9 @@ function test_fitness_matrix(e::DualCGPGAEvo)
         @test maximum(c) > -Inf
     end
     # 2. Test n_eval eval
-    @test length(filter(x->x>-Inf,m)) == e.n_eval
-    # Test n_elites elites are selected
-    # Test there are n_elites elites
+    @test length(filter(x->x>-Inf, e.fitness_matrix)) == e.n_eval
+    # 3. Test n_elites elites are selected
+    println("TODO test elites")
 end
 
 cfg_filename = string(@__DIR__, "/dualcgpga_test.yaml")
@@ -33,25 +33,3 @@ fit(e::CGPInd, c::CGPInd) = [e.chromosome[1] * c.chromosome[1]]
     evaluate(evo)
     test_fitness_matrix(evo)
 end
-
-##
-
-for r in eachrow(m)
-    println(maximum(r) > -Inf)
-end
-
-
-
-
-# Test at least 1 eval per row col
-# Test n_eval eval
-# Test elites are selected
-# Test there are n_elites elites
-
-# evaluate(evo) # Reevaluate
-
-# Test elites are evaluated
-# Test at least 1 eval per row col
-# Test n_eval eval
-# Test elites are selected
-# Test there are n_elites elites

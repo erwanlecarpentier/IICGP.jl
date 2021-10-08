@@ -1,4 +1,4 @@
-export oneplus_populate
+export oneplus_populate, tournament_populate
 
 """
     function oneplus_populate(e::DualCGPEvolution)
@@ -16,4 +16,8 @@ function oneplus_populate(e::DualCGPEvolution)
     for i in 2:length(e.controller_population)
         e.controller_population[i] = mutate(ctr, "controller")
     end
+end
+
+function tournament_populate(e::DualCGPGAEvo)
+    println("TODO tournament populate")
 end

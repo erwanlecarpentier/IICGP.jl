@@ -137,6 +137,10 @@ function fitness_evaluate_ij!(
 	e.fitness_matrix[i, j] = fitness(enco_i, cont_j)[1]
 end
 
+function set_elites!(e::DualCGPGAEvo)
+	println("TODO set_elites!")
+end
+
 """
 	fitness_evaluate(e::DualCGPGAEvo, fitness::Function=null_evaluate)
 
@@ -151,5 +155,5 @@ function fitness_evaluate(e::DualCGPGAEvo, fitness::Function=null_evaluate)
 		fitness_evaluate_ij!(e, i, j, fitness)
     end
 	# 3. Set elites
-	set_elites!(e) # TODO here
+	set_elites!(e)
 end
