@@ -150,7 +150,8 @@ function set_elites!(e::DualCGPGAEvo)
 	mat_size = size(e.elites_matrix)
 	e.elites_matrix = falses(mat_size...) # zero elites matrix
 	ci = CartesianIndices(size(e.fitness_matrix))
-    p = sortperm(vec(e.fitness_matrix))[end-e.n_elite+1:end]
+    # p = sortperm(vec(e.fitness_matrix))[end-e.n_elite+1:end]
+	p = partialsortperm(vec(e.fitness_matrix), 1:e.n_elite; rev=true)
     elite_indexes = ci[p]
 	for i in elite_indexes
 		e.elites_matrix[i] = true

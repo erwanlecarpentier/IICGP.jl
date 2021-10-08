@@ -18,8 +18,17 @@ function oneplus_populate(e::DualCGPEvolution)
     end
 end
 
-function tournament_selection(e::DualCGPGAEvo)
-    e.tournament_size
+function tournament_selection(e::DualCGPGAEvo, ci::CartesianIndices)
+    n_pairs = length(e.fitness_matrix)
+    selected = randperm(n_pairs)[1:e.tournament_size]
+    fitnesses = e.fitness_matrix[selected]
+    best_pair_index = sortperm(fitnesses)[-1]
+    best_pair_carte = ci[best_pair_index]
+    # echr = e.encoder_sympop[best_pair_carte[1]].chromosome
+    # cchr = e.controller_sympop[best_pair_carte[2]].chromosome
+    enc = e.encoder_sympop[best_pair_carte[1]]
+    ctr = e.controller_sympop[best_pair_carte[2]]
+    return mutate(enc, "encoder"), mutate(ctr, "controller")
 end
 
 function isin(v::Vector{SymInd}, candidate::SymInd)
@@ -51,11 +60,10 @@ function ga_populate(e::DualCGPGAEvo)
         end
     end
     # 2. Run tournaments until population is full
-    #=
-    while length(enew) < n_e && length(enew) < n_c
-        tournament_selection(e)
+    ci = CartesianIndices(size(e.fitness_matrix))
+    while length(enew) < n_e && length(cnew) < n_c
+        tournament_selection(e, ci)
     end
-    =#
     # 3. Set population and matrices
     println("TODO reset fitness to -Inf")
     println("TODO reset elite matrice to 0 everywhere except for previous elites")
