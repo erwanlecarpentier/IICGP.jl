@@ -46,6 +46,24 @@ function test_newpop(
     @test e.fitness_matrix == -Inf * ones(matsize...)
 end
 
+function test_newpop_custom(
+    e::DualCGPGAEvo,
+    elite_echr::Vector{Vector{Float64}},
+    elite_cchr::Vector{Vector{Float64}}
+)
+    @test sum(e.elites_matrix) == length(custom_elites_indexes)
+    expected_elites_matrix = falses(5, 5)
+    for index in [(1,1), (2,2), (2,3)]
+        expected_elites_matrix[index...] = true
+    end
+    @test e.elites_matrix == expected_elites_matrix
+    @test e.encoder_sympop[1].chromosome == elite_echr[1]
+    @test e.encoder_sympop[2].chromosome == elite_echr[3]
+    @test e.controller_sympop[1].chromosome == elite_cchr[1]
+    @test e.controller_sympop[2].chromosome == elite_cchr[2]
+    @test e.controller_sympop[3].chromosome == elite_cchr[3]
+end
+
 function test_tournaments_ind(
     e::DualCGPGAEvo,
     elite_echr::Vector{Vector{Float64}},
@@ -108,6 +126,39 @@ n_iter = 3
         populate(evo)
         test_newpop(evo, elite_echr, elite_cchr)
         test_tournaments_ind(evo, elite_echr, elite_cchr, prev_echr, prev_cchr, "notin")
+    end
+end
+
+custom_elites_indexes = [(2,2), (2,3), (4,4)]
+
+@testset "CGP GA Populate with custom evaluation" begin
+    for i in 1:1
+        evo = IICGP.DualCGPGAEvo(mcfg, ecfg, ccfg, fit, logid, resdir)
+        evaluate(evo)
+        # Custom evaluation
+        ne, nc = ecfg.n_population, ccfg.n_population
+        nmax = max(ne, nc)
+        matsize = (ne, nc)
+        evo.elites_matrix = falses(matsize...)
+        evo.fitness_matrix = -Inf * ones(matsize...)
+    	for i in 1:nmax
+            i_modrow = i-ne*divrem(i-1,ne)[1]
+            i_modcol = i-nc*divrem(i-1,nc)[1]
+    		evo.fitness_matrix[i_modrow, i_modcol] = 1.0
+    	end
+        elite_echr = Vector{Vector{Float64}}()
+        elite_cchr = Vector{Vector{Float64}}()
+        if ne == 5 && nc == 5
+            for index in custom_elites_indexes
+                evo.elites_matrix[index...] = true
+                evo.fitness_matrix[index...] = 3.0
+                row, col = index
+                push!(elite_echr, evo.encoder_sympop[row].chromosome)
+                push!(elite_cchr, evo.controller_sympop[col].chromosome)
+            end
+        end
+        populate(evo)
+        test_newpop_custom(evo, elite_echr, elite_cchr)
     end
 end
 
