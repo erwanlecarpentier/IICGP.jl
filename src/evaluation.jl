@@ -142,12 +142,18 @@ function set_ind_fitnesses!(e::DualCGPGAEvo)
         e.encoder_sympop[i].fitness = maximum(e.fitness_matrix[i,:])
     end
     for j in eachindex(e.controller_sympop)
-        e.controller_population[j].fitness = maximum(e.fitness_matrix[:,j])
+        e.controller_sympop[j].fitness = maximum(e.fitness_matrix[:,j])
     end
 end
 
 function set_elites!(e::DualCGPGAEvo)
-	println("TODO set_elites!")
+	ci = CartesianIndices(size(e.fitness_matrix))
+    p = sortperm(vec(e.fitness_matrix))[end-e.n_elite+1:end]
+	@assert size(e.fitness_matrix) == (18, 18) # TODO remove
+    elite_indexes = ci[p]
+	for i in elite_indexes
+		e.elites_matrix[i] = true
+	end
 end
 
 """
