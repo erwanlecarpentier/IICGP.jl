@@ -24,12 +24,9 @@ function tournament_selection(e::DualCGPGAEvo, ci::CartesianIndices)
     fitnesses = e.fitness_matrix[selected]
     best_pair_index = sortperm(fitnesses)[-1]
     best_pair_carte = ci[best_pair_index]
-    # echr = e.encoder_sympop[best_pair_carte[1]].chromosome
-    # cchr = e.controller_sympop[best_pair_carte[2]].chromosome
-    enc = e.encoder_sympop[best_pair_carte[1]]
-    ctr = e.controller_sympop[best_pair_carte[2]]
-    return enc, ctr
-    # return mutate(enc, "encoder"), mutate(ctr, "controller")
+    echr = e.encoder_sympop[best_pair_carte[1]].chromosome
+    cchr = e.controller_sympop[best_pair_carte[2]].chromosome
+    return echr, cchr
 end
 
 function isin(v::Vector{SymInd}, candidate::SymInd)
@@ -63,11 +60,21 @@ function ga_populate(e::DualCGPGAEvo)
     # 2. Run tournaments until population is full
     ci = CartesianIndices(size(e.fitness_matrix))
     while length(enew) < n_e && length(cnew) < n_c
-        enc, ctr = tournament_selection(e, ci)
+        echr, cchr = tournament_selection(e, ci)
         if length(enew) < n_e
+            if hasproperty(e, :encoder_init_function)
+                enc = e.encoder_init_function(e.encoder_config, echr)
+            else
+                enc = CGPInd(e.encoder_config, echr)
+            end
             push!(enew, mutate(enc, "encoder"))
         end
         if length(cnew) < n_c
+            if hasproperty(e, :controller_init_function)
+                ctr = e.controller_init_function(e.controller_config, cchr)
+            else
+                ctr = CGPInd(e.controller_config, cchr)
+            end
             push!(cnew, mutate(ctr, "controller"))
         end
     end
