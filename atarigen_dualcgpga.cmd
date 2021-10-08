@@ -18,14 +18,14 @@
 # frostbite riverraid
 
 CMD_PREFIX="atari_"
-CFGS=("cfg/dualcgp_atari_pooling.yaml" "cfg/dualcgp_atari_centroid.yaml") # WARNING: sync with REDS
-REDS=("pooling_" "centroid_") # WARNING: sync with CFGS
-GAMES="frostbite riverraid"
-SCRIPT="scripts/atari_dualcgp.jl"
+CFGS=("cfg/dualcgpga_atari_pooling.yaml") # WARNING: sync with REDS
+REDS=("ga_pool_") # WARNING: sync with CFGS
+GAMES="gravitar boxing"
+SCRIPT="scripts/atari_dualcgp_ga.jl"
 PROJECT="$PWD"
 USERNAME=$(whoami)
 OUTDIR="/tmpdir/$USERNAME/ICGP-results"
-N_THREADS="25"
+N_THREADS="36"
 
 for i in "${!CFGS[@]}"; do
 	for GAME in $GAMES; do

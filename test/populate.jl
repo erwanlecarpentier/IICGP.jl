@@ -132,7 +132,7 @@ end
 custom_elites_indexes = [(2,2), (2,3), (4,4)]
 
 @testset "CGP GA Populate with custom evaluation" begin
-    for i in 1:1
+    for i in 1:n_iter
         evo = IICGP.DualCGPGAEvo(mcfg, ecfg, ccfg, fit, logid, resdir)
         evaluate(evo)
         # Custom evaluation
