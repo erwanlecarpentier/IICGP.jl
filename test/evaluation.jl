@@ -21,6 +21,11 @@ function test_fitness_matrix(e::DualCGPGAEvo)
     println("TODO test elites")
 end
 
+function test_ind_fitnesses(e::DualCGPGAEvo)
+    # 1. Test that individual's fitness is set according to the fitness matrix
+    println("TODO test_ind_fitnesses")
+end
+
 cfg_filename = string(@__DIR__, "/dualcgpga_test.yaml")
 game = "gravitar"
 mcfg, ecfg, ccfg, reducer, bootstrap = IICGP.dualcgp_config(cfg_filename, game)
@@ -32,4 +37,5 @@ fit(e::CGPInd, c::CGPInd) = [e.chromosome[1] * c.chromosome[1]]
     evo = IICGP.DualCGPGAEvo(mcfg, ecfg, ccfg, fit, logid, resdir)
     evaluate(evo)
     test_fitness_matrix(evo)
+    test_ind_fitnesses(evo)
 end

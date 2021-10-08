@@ -19,5 +19,14 @@ function oneplus_populate(e::DualCGPEvolution)
 end
 
 function tournament_populate(e::DualCGPGAEvo)
-    println("TODO tournament populate")
+    enew = Vector{SymInd}()
+    cnew = Vector{SymInd}()
+    n_e = evo.encoder_config.n_population
+    n_c = evo.controller_config.n_population
+    # 1. Add elites
+    println("TODO tournament populate elites")
+    # 2. Run tournaments until population is full
+    while length(enew) < n_e && length(enew) < n_c
+        println("TODO tournament")
+    end
 end

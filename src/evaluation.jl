@@ -137,6 +137,15 @@ function fitness_evaluate_ij!(
 	e.fitness_matrix[i, j] = fitness(enco_i, cont_j)[1]
 end
 
+function set_ind_fitnesses!(e::DualCGPGAEvo)
+	for i in eachindex(e.encoder_sympop)
+        e.encoder_sympop[i].fitness = maximum(e.fitness_matrix[i,:])
+    end
+    for j in eachindex(e.controller_sympop)
+        e.controller_population[j].fitness = maximum(e.fitness_matrix[:,j])
+    end
+end
+
 function set_elites!(e::DualCGPGAEvo)
 	println("TODO set_elites!")
 end
@@ -154,6 +163,8 @@ function fitness_evaluate(e::DualCGPGAEvo, fitness::Function=null_evaluate)
         i, j = indexes[l]
 		fitness_evaluate_ij!(e, i, j, fitness)
     end
-	# 3. Set elites
+	# 3. Set individual's fitnesses
+	set_ind_fitnesses!(e)
+	# 4. Set elites
 	set_elites!(e)
 end

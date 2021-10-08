@@ -8,7 +8,7 @@ using JSON
 Symbolic Individual struct for easy/fast representation in
 dual CGP GA evolution.
 """
-struct SymInd
+mutable struct SymInd
     chromosome::Vector{Float64}
     index::Int64 # row / column index in 2D fitness matrix
     type::String
