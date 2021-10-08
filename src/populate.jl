@@ -28,7 +28,8 @@ function tournament_selection(e::DualCGPGAEvo, ci::CartesianIndices)
     # cchr = e.controller_sympop[best_pair_carte[2]].chromosome
     enc = e.encoder_sympop[best_pair_carte[1]]
     ctr = e.controller_sympop[best_pair_carte[2]]
-    return mutate(enc, "encoder"), mutate(ctr, "controller")
+    return enc, ctr
+    # return mutate(enc, "encoder"), mutate(ctr, "controller")
 end
 
 function isin(v::Vector{SymInd}, candidate::SymInd)
@@ -62,10 +63,17 @@ function ga_populate(e::DualCGPGAEvo)
     # 2. Run tournaments until population is full
     ci = CartesianIndices(size(e.fitness_matrix))
     while length(enew) < n_e && length(cnew) < n_c
-        tournament_selection(e, ci)
+        enc, ctr = tournament_selection(e, ci)
+        if length(enew) < n_e
+            push!(enew, mutate(enc, "encoder"))
+        end
+        if length(cnew) < n_c
+            push!(cnew, mutate(ctr, "controller"))
+        end
     end
     # 3. Set population and matrices
-    println("TODO reset fitness to -Inf")
+    # TODO here before deciding to keep ind pop
+    println("TODO reset fitness matrix to -Inf")
     println("TODO reset elite matrice to 0 everywhere except for previous elites")
     e.encoder_sympop = enew
     e.controller_sympop = cnew
