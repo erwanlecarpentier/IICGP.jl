@@ -89,6 +89,56 @@ function DualCGPGAEvo(
     )
 end
 
+#=
+function log_gen_from_pop_logger(d_fitness, pop, logger, gen)
+    for d in 1:d_fitness
+        maxs = map(i->i.fitness[d], pop) # fitness would be a scalar in GA
+        with_logger(logger) do
+            @info Formatting.format("{1:04d},{2:e},{3:e},{4:e}",
+                                    gen, maximum(maxs), mean(maxs), std(maxs))
+        end
+    end
+    flush(logger.stream)
+end
+
+"""
+    function log_gen(e::DualCGPEvolution)
+
+Log a generation within a dual CGP evolution framework, including max, mean,
+and std of each fitness dimension.
+"""
+function log_gen(e::DualCGPGAEvo)
+    log_gen_from_pop_logger(e.config.d_fitness, e.encoder_population,
+                            e.encoder_logger, e.gen)
+    log_gen_from_pop_logger(e.config.d_fitness, e.controller_population,
+                            e.controller_logger, e.gen)
+end
+
+function save_gen_at(path, pop)
+    sort!(pop)
+    for i in eachindex(pop)
+        f = open(Formatting.format("{1}/{2:04d}.dna", path, i), "w+")
+        write(f, string(pop[i]))
+        close(f)
+    end
+end
+
+"""
+    function save_gen(e::DualCGPEvolution)
+
+Save the population of a dual CGP evolution framework in `gens/` contained in
+the results directory.
+"""
+function save_gen(e::DualCGPGAEvo)
+    encoder_path = joinpath(e.resdir, Formatting.format("gens/{1}/encoder_{2:04d}", e.logid, e.gen))
+    controller_path = joinpath(e.resdir, Formatting.format("gens/{1}/controller_{2:04d}", e.logid, e.gen))
+    mkpath(encoder_path)
+    mkpath(controller_path)
+    save_gen_at(encoder_path, e.encoder_population)
+    save_gen_at(controller_path, e.controller_population)
+end
+=#
+
 mutable struct DualCGPEvolution{T} <: Cambrian.AbstractEvolution
     config::NamedTuple
     logid::String
@@ -172,7 +222,14 @@ function DualCGPEvolution(
     )
 end
 
-function log_gen_from_pop_logger(d_fitness, pop, logger, gen)
+DualEvo = Union{DualCGPEvolution, DualCGPGAEvo}
+
+function log_gen_from_pop_logger(
+    d_fitness::Int64,
+    pop::AbstractArray,
+    logger::CambrianLogger,
+    gen::Int64
+)
     for d in 1:d_fitness
         maxs = map(i->i.fitness[d], pop)
         with_logger(logger) do
@@ -189,8 +246,17 @@ end
 Log a generation within a dual CGP evolution framework, including max, mean,
 and std of each fitness dimension.
 """
-function log_gen(e::DualCGPEvolution)
-    log_gen_from_pop_logger(e.config.d_fitness, e.encoder_population,
+function log_gen(e::DualEvo)
+    if typeof(e) <: DualCGPGAEvo
+        epop = e.encoder_sympop
+        cpop = e.controller_sympop
+    elseif typeof(e) <: DualCGPEvolution
+        epop = e.encoder_population
+        cpop = e.controller_population
+    else
+        throw(TypeError("Type $(typeof(e)) not supported in loggen."))
+    end
+    log_gen_from_pop_logger(e.config.d_fitness, epop,
                             e.encoder_logger, e.gen)
     log_gen_from_pop_logger(e.config.d_fitness, e.controller_population,
                             e.controller_logger, e.gen)
