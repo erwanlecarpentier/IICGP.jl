@@ -37,9 +37,13 @@ end
 function test_ind_fitnesses(e::DualCGPGAEvo)
     # Test that individual's fitness is set according to the fitness matrix
     for i in eachindex(e.encoder_sympop)
+        @test length(e.encoder_sympop[i].fitness) == e.config.d_fitness
+        @test e.encoder_sympop[i].fitness[1] > -Inf
         @test e.encoder_sympop[i].fitness[1] == maximum(e.fitness_matrix[i,:])
     end
     for j in eachindex(e.controller_sympop)
+        @test length(e.controller_sympop[j].fitness) == e.config.d_fitness
+        @test e.controller_sympop[j].fitness[1] > -Inf
         @test e.controller_sympop[j].fitness[1] == maximum(e.fitness_matrix[:,j])
     end
 end
@@ -57,7 +61,7 @@ function mutate(ind::CGPInd, ind_type::String)
     end
 end
 fit(e::CGPInd, c::CGPInd, seed::Int64) = [e.chromosome[1] * c.chromosome[1]]
-n_iter = 3
+n_iter = 4
 
 @testset "CGP GA Evaluation" begin
     evo = IICGP.DualCGPGAEvo(mcfg, ecfg, ccfg, fit, logid, resdir)
