@@ -2,13 +2,14 @@ export IPCGPInd, SymInd, IPCGPCopy, image_buffer, get_last_dualcgp
 export rand_CGPchromosome
 
 using CartesianGeneticProgramming
+using Cambrian
 using JSON
 
 """
 Symbolic Individual struct for easy/fast representation in
 dual CGP GA evolution.
 """
-mutable struct SymInd
+mutable struct SymInd <: Cambrian.Individual
     chromosome::Vector{Float64}
     index::Int64 # row / column index in 2D fitness matrix
     type::String

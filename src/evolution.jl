@@ -224,6 +224,19 @@ end
 
 DualEvo = Union{DualCGPEvolution, DualCGPGAEvo}
 
+function getpop(e::DualEvo)
+    if typeof(e) <: DualCGPGAEvo
+        epop = e.encoder_sympop
+        cpop = e.controller_sympop
+    elseif typeof(e) <: DualCGPEvolution
+        epop = e.encoder_population
+        cpop = e.controller_population
+    else
+        throw(TypeError("Type $(typeof(e)) not supported in loggen."))
+    end
+    return epop, cpop
+end
+
 function log_gen_from_pop_logger(
     d_fitness::Int64,
     pop::AbstractArray,
@@ -247,22 +260,12 @@ Log a generation within a dual CGP evolution framework, including max, mean,
 and std of each fitness dimension.
 """
 function log_gen(e::DualEvo)
-    if typeof(e) <: DualCGPGAEvo
-        epop = e.encoder_sympop
-        cpop = e.controller_sympop
-    elseif typeof(e) <: DualCGPEvolution
-        epop = e.encoder_population
-        cpop = e.controller_population
-    else
-        throw(TypeError("Type $(typeof(e)) not supported in loggen."))
-    end
-    log_gen_from_pop_logger(e.config.d_fitness, epop,
-                            e.encoder_logger, e.gen)
-    log_gen_from_pop_logger(e.config.d_fitness, e.controller_population,
-                            e.controller_logger, e.gen)
+    epop, cpop = getpop(e)
+    log_gen_from_pop_logger(e.config.d_fitness, epop, e.encoder_logger, e.gen)
+    log_gen_from_pop_logger(e.config.d_fitness, cpop, e.controller_logger, e.gen)
 end
 
-function save_gen_at(path, pop)
+function save_gen_at(path::String, pop::AbstractArray)
     sort!(pop)
     for i in eachindex(pop)
         f = open(Formatting.format("{1}/{2:04d}.dna", path, i), "w+")
@@ -272,16 +275,17 @@ function save_gen_at(path, pop)
 end
 
 """
-    function save_gen(e::DualCGPEvolution)
+    function save_gen(e::DualEvo)
 
 Save the population of a dual CGP evolution framework in `gens/` contained in
 the results directory.
 """
-function save_gen(e::DualCGPEvolution)
+function save_gen(e::DualEvo)
     encoder_path = joinpath(e.resdir, Formatting.format("gens/{1}/encoder_{2:04d}", e.logid, e.gen))
     controller_path = joinpath(e.resdir, Formatting.format("gens/{1}/controller_{2:04d}", e.logid, e.gen))
     mkpath(encoder_path)
     mkpath(controller_path)
-    save_gen_at(encoder_path, e.encoder_population)
-    save_gen_at(controller_path, e.controller_population)
+    epop, cpop = getpop(e)
+    save_gen_at(encoder_path, epop)
+    save_gen_at(controller_path, cpop)
 end
