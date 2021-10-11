@@ -139,10 +139,10 @@ end
 
 function set_ind_fitnesses!(e::DualCGPGAEvo)
 	for i in eachindex(e.encoder_sympop)
-        e.encoder_sympop[i].fitness = maximum(e.fitness_matrix[i,:])
+        e.encoder_sympop[i].fitness[1] = maximum(e.fitness_matrix[i,:])
     end
     for j in eachindex(e.controller_sympop)
-        e.controller_sympop[j].fitness = maximum(e.fitness_matrix[:,j])
+        e.controller_sympop[j].fitness[1] = maximum(e.fitness_matrix[:,j])
     end
 end
 

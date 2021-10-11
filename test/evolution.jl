@@ -27,7 +27,7 @@ fit(e::SymInd, c::SymInd) = e.chromosome[1] * c.chromosome[1]
             @test typeof(sympop[i].chromosome) <: Vector{Float64}
             @test length(sympop[i].chromosome) == n_chr
             @test sympop[i].index == i
-            @test sympop[i].fitness == -Inf
+            @test sympop[i].fitness == [-Inf]
             @test sympop[i].type == type
         end
     end

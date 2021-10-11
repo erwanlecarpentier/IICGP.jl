@@ -113,7 +113,7 @@ function mutate(ind::CGPInd, ind_type::String)
         return goldman_mutate(ccfg, ind)
     end
 end
-fit(e::CGPInd, c::CGPInd) = [e.chromosome[1] * c.chromosome[1]]
+fit(e::CGPInd, c::CGPInd, seed::Int64) = [e.chromosome[1] * c.chromosome[1]]
 n_iter = 3
 
 @testset "CGP GA Populate" begin
