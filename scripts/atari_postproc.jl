@@ -7,8 +7,8 @@ resdir = joinpath(rootdir, "results/")
 fetch_backup(rootdir, clean=true)
 
 # Filters parameters
-min_date = DateTime(2021, 10, 11)
-max_date = DateTime(2021, 10, 12)
+min_date = DateTime(2021, 10, 10)
+max_date = DateTime(2021, 10, 13)
 games = ["gravitar"]
 games_12 = ["boxing" "assault" "freeway" "solaris" "defender" "gravitar" "space_invaders" "private_eye" "asteroids" "breakout" "frostbite" "riverraid"]
 reducers = Array{String,1}()
@@ -20,5 +20,5 @@ for g in games
         resdir, min_date=min_date, max_date=max_date, games=[g],
         reducers=reducers
     )
-    process_results(exp_dirs, games, dotime, dosave, ma=1, baselines=false)
+    process_results(exp_dirs, games, dotime, dosave, ma=100, baselines=false)
 end

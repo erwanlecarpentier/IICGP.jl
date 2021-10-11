@@ -38,28 +38,34 @@ function isin(v::Vector{SymInd}, candidate::SymInd)
     false
 end
 
+function find_symind_index(ind::SymInd, v::Vector{SymInd})
+    for i in eachindex(v)
+        if v[i].chromosome == ind.chromosome
+            return i
+        end
+    end
+end
+
 function ga_populate(e::DualCGPGAEvo)
     enew = Vector{SymInd}()
     cnew = Vector{SymInd}()
     n_e = e.encoder_config.n_population
     n_c = e.controller_config.n_population
     # 1. Add elites
-    ci = CartesianIndices(e.elites_matrix)
-    x, y = 1, 1 # New indexes of elite pairs
     new_elite_indexes = Vector{Tuple{Int64, Int64}}()
     for i in CartesianIndices(e.elites_matrix)
         if e.elites_matrix[i]
-            push!(new_elite_indexes, (x, y))
             ecandidate = e.encoder_sympop[i[1]]
             ccandidate = e.controller_sympop[i[2]]
             if !isin(enew, ecandidate)
                 push!(enew, ecandidate)
-                x += 1
             end
             if !isin(cnew, ccandidate)
                 push!(cnew, ccandidate)
-                y += 1
             end
+            row = find_symind_index(ecandidate, enew)
+            col = find_symind_index(ccandidate, cnew)
+            push!(new_elite_indexes, (row, col))
         end
     end
     # 2. Run tournaments until population is full
