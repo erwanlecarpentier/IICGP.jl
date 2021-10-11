@@ -20,5 +20,5 @@ for g in games
         resdir, min_date=min_date, max_date=max_date, games=[g],
         reducers=reducers
     )
-    process_results(exp_dirs, games, dotime, dosave, ma=100, baselines=false)
+    process_results(exp_dirs, games, dotime, dosave, ma=1, baselines=false)
 end

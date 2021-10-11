@@ -53,7 +53,7 @@ function test_newpop_custom(
 )
     @test sum(e.elites_matrix) == length(custom_elites_indexes)
     expected_elites_matrix = falses(5, 5)
-    for index in [(1,1), (2,2), (2,3)]
+    for index in [(1,1), (1,2), (2,3)]
         expected_elites_matrix[index...] = true
     end
     @test e.elites_matrix == expected_elites_matrix

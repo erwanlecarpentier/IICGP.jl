@@ -3,7 +3,7 @@ seed: 0
 max_frames: 2 # 10000
 stickiness: 0.0 # 0.25
 d_fitness: 1
-n_gen: 50000 # 50000
+n_gen: 10000 # 50000
 n_eval: 36 # Maximum number of evaluations per generation
 n_elite: 5 # Number of elite pairs per generation
 tournament_size: 10
