@@ -278,8 +278,9 @@ end
 Get configuration file at specified experiment directory.
 """
 function cfg_from_exp_dir(exp_dir::String)
-    yaml = find_yaml(exp_dir)
-    cfg_path = string(exp_dir, "/", yaml)
+    cfg_dir = joinpath(exp_dir, "logs")
+    yaml = find_yaml(cfg_dir)
+    cfg_path = joinpath(cfg_dir, yaml)
     YAML.load_file(cfg_path)
 end
 

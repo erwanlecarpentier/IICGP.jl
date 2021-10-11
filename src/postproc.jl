@@ -151,7 +151,8 @@ function process_results(
     games::Array{String,1},
     dotime::Bool,
     dosave::Bool;
-    ma::Int64=1
+    ma::Int64=1,
+    baselines=false
 )
     # Init graphs
     xl = "Generation"
@@ -235,7 +236,9 @@ function process_results(
             println(string(k[1], " "^(l-length(k[1])), " : ", k[2]))
         end
     end
-    add_baselines([plt_best, plt_mean], games[1])
+    if baselines
+        add_baselines([plt_best, plt_mean], games[1])
+    end
     display(plt_best)
     display(plt_mean)
 
