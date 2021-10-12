@@ -36,14 +36,12 @@ function fitness_evaluate_ij(
 	cont_j = CGPInd(e.controller_config, e.controller_population[j].chromosome)
 	f[i,j] = fitness(enco_i, cont_j)[1] # Currently, only pick 1st fitness dimension
 end
+
 """
     fitness_evaluate(e::DualCGPEvolution, fitness::Function=null_evaluate)
 
 Sets the fitness of each individual to the maximum value of the fitness matrix
 in the dual CGP evolution framework.
-
-TODOs:
-- handle multi dimensional fitness in coevolution
 """
 function fitness_evaluate(e::DualCGPEvolution, fitness::Function=null_evaluate)
     n_enco = e.encoder_config.n_population

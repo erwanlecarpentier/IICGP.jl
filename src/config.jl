@@ -97,7 +97,11 @@ function monocgp_config(monocgp_cfg_filename::String, game_name::String)
 end
 
 """
-TODO doc
+    monocgp_config(cfg::Dict, game_name::String)
+
+Retrieve the controller configuration file from the main mono CGP configuration
+file.
+Return the config dictionary along with the corresponding reducer.
 """
 function monocgp_config(cfg::Dict, game_name::String)
     # Temporarily open a game to retrieve parameters

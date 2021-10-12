@@ -230,7 +230,16 @@ function get_last_dualcgp_paths(exp_dir::String)
 end
 
 """
-TODO doc
+    get_bootstrap_paths(
+        resdir::String,
+        enco_cfg::NamedTuple,
+        cont_cfg::NamedTuple,
+        game::String
+    )
+
+Deprecated.
+Get path to bootstrap individuals for re-starting evolution from a previously
+reached stage.
 """
 function get_bootstrap_paths(
     resdir::String,

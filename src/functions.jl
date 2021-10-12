@@ -241,7 +241,6 @@ fgen(:f_bitwise_not, 1, :(.~x), ImgType)
 fgen(:f_bitwise_and, 2, :(0xff .* (x .& y)), ImgType)
 fgen(:f_bitwise_or, 2, :(0xff .* (x .| y)), ImgType)
 fgen(:f_bitwise_xor, 2, :(0xff .* (x .⊻ y)), ImgType)
-# TODO Comparisons
 # fgen(:f_compare_eq_img, 2, :(OpenCV.compare(x, y, OpenCV.CMP_EQ)), OpenCV.InputArray)
 # fgen(:f_compare_ge_img, 2, :(OpenCV.compare(x, y, OpenCV.CMP_GE)), OpenCV.InputArray)
 # fgen(:f_compare_le_img, 2, :(OpenCV.compare(x, y, OpenCV.CMP_LE)), OpenCV.InputArray)
