@@ -136,6 +136,7 @@ function fitness_evaluate_ij!(
 end
 
 function set_ind_fitnesses!(e::DualCGPGAEvo)
+	push!(e.score_per_gen, maximum(e.fitness_matrix)) # TODO remove
 	for i in eachindex(e.encoder_sympop)
         e.encoder_sympop[i].fitness[1] = maximum(e.fitness_matrix[i,:])
     end

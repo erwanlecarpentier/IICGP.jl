@@ -1,5 +1,5 @@
 export IPCGPInd, SymInd, IPCGPCopy, image_buffer, get_last_dualcgp
-export rand_CGPchromosome
+export rand_CGPchromosome, SymIndCopy
 
 using CartesianGeneticProgramming
 using Cambrian
@@ -18,6 +18,10 @@ end
 
 function SymInd(chromosome::Vector{Float64}, index::Int64, type::String)
     SymInd(chromosome, index, type, [-Inf])
+end
+
+function SymIndCopy(ind::SymInd)::SymInd
+    SymInd(copy(ind.chromosome), copy(ind.index), ind.type, copy(ind.fitness))
 end
 
 function rand_CGPchromosome(cfg::NamedTuple)::Vector{Float64}

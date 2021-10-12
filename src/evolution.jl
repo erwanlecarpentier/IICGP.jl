@@ -35,6 +35,7 @@ mutable struct DualCGPGAEvo <: Cambrian.AbstractEvolution
     n_elite::Int64
     tournament_size::Int64
     gen::Int64
+    score_per_gen::Vector{Float64} # TODO remove
 end
 
 populate(e::IICGP.DualCGPGAEvo) = IICGP.ga_populate(e)
@@ -85,7 +86,7 @@ function DualCGPGAEvo(
         encoder_config, encoder_sympop, encoder_logger,
         controller_config, controller_sympop, controller_logger,
         fitness, fitness_matrix, elites_matrix, n_eval, n_elite,
-        tournament_size, 0
+        tournament_size, 0, Vector{Float64}()
     )
 end
 

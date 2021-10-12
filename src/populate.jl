@@ -55,8 +55,8 @@ function ga_populate(e::DualCGPGAEvo)
     new_elite_indexes = Vector{Tuple{Int64, Int64}}()
     for i in CartesianIndices(e.elites_matrix)
         if e.elites_matrix[i]
-            ecandidate = e.encoder_sympop[i[1]]
-            ccandidate = e.controller_sympop[i[2]]
+            ecandidate = SymIndCopy(e.encoder_sympop[i[1]])
+            ccandidate = SymIndCopy(e.controller_sympop[i[2]])
             if !isin(enew, ecandidate)
                 push!(enew, ecandidate)
             end

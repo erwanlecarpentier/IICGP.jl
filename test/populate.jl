@@ -154,23 +154,28 @@ function mutate(ind::CGPInd, ind_type::String)
     end
 end
 fit(e::CGPInd, c::CGPInd, seed::Int64) = [sum(e.chromosome) * sum(c.chromosome)]
-n_iter = 10
-prevfitnesses = [-Inf]
+n_iter = 1000
+n_seed = 5
 
 @testset "CGP GA Populate" begin
-    evo = IICGP.DualCGPGAEvo(mcfg, ecfg, ccfg, fit, logid, resdir)
-    for i in 1:n_iter
-        evaluate(evo)
-        maxfit = maximum(evo.fitness_matrix)
-        @test maxfit > -Inf
-        @test maxfit >= maximum(prevfitnesses)
-        push!(prevfitnesses, maxfit)
-        elite_echr, elite_cchr, elite_pairs = get_elites(evo)
-        prev_echr = [esym.chromosome for esym in evo.encoder_sympop]
-        prev_cchr = [csym.chromosome for csym in evo.controller_sympop]
-        populate(evo)
-        test_newpop(evo, elite_echr, elite_cchr, elite_pairs)
-        test_tournaments_ind(evo, elite_echr, elite_cchr, prev_echr, prev_cchr, "notin")
+    for t in 1:n_seed
+        Random.seed!(t)
+        evo = IICGP.DualCGPGAEvo(mcfg, ecfg, ccfg, fit, logid, resdir)
+        println(evo.encoder_sympop[1].chromosome[1])
+        prevfitnesses = [-Inf]
+        for i in 1:n_iter
+            evaluate(evo)
+            maxfit = maximum(evo.fitness_matrix)
+            @test maxfit > -Inf
+            @test maxfit >= maximum(prevfitnesses)
+            push!(prevfitnesses, maxfit)
+            elite_echr, elite_cchr, elite_pairs = get_elites(evo)
+            prev_echr = [esym.chromosome for esym in evo.encoder_sympop]
+            prev_cchr = [csym.chromosome for csym in evo.controller_sympop]
+            populate(evo)
+            test_newpop(evo, elite_echr, elite_cchr, elite_pairs)
+            test_tournaments_ind(evo, elite_echr, elite_cchr, prev_echr, prev_cchr, "notin")
+        end
     end
 end
 
