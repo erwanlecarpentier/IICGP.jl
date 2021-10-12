@@ -1,4 +1,4 @@
-export fitness_evaluate
+export fitness_evaluate, select_indexes
 
 using Random
 
