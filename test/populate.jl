@@ -161,7 +161,6 @@ n_seed = 5
     for t in 1:n_seed
         Random.seed!(t)
         evo = IICGP.DualCGPGAEvo(mcfg, ecfg, ccfg, fit, logid, resdir)
-        println(evo.encoder_sympop[1].chromosome[1])
         prevfitnesses = [-Inf]
         for i in 1:n_iter
             evaluate(evo)

@@ -24,8 +24,8 @@ function tournament_selection(e::DualCGPGAEvo, ci::CartesianIndices)
     fitnesses = e.fitness_matrix[selected]
     best_pair_index = sortperm(fitnesses)[end]
     best_pair_carte = ci[best_pair_index]
-    echr = e.encoder_sympop[best_pair_carte[1]].chromosome
-    cchr = e.controller_sympop[best_pair_carte[2]].chromosome
+    echr = copy(e.encoder_sympop[best_pair_carte[1]].chromosome)
+    cchr = copy(e.controller_sympop[best_pair_carte[2]].chromosome)
     return echr, cchr
 end
 
@@ -88,6 +88,16 @@ function ga_populate(e::DualCGPGAEvo)
     # 3. Set new population and reset matrices
     e.encoder_sympop = enew
     e.controller_sympop = cnew
+
+    println("\n") # TODO remove
+    for r in eachrow(e.elites_matrix) # TODO remove
+        println(r)
+    end
+    for r in eachrow(e.fitness_matrix) # TODO remove
+        println(r)
+    end
+    println(maximum(e.fitness_matrix)) # TODO remove
+
     mat_size = size(e.fitness_matrix)
     e.fitness_matrix = -Inf * ones(mat_size...)
     e.elites_matrix = falses(mat_size...)
