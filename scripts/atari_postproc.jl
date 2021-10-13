@@ -8,7 +8,7 @@ fetch_backup(rootdir, clean=true)
 
 # Filters parameters
 min_date = DateTime(2021, 10, 10)
-max_date = DateTime(2021, 10, 13)
+max_date = DateTime(2021, 10, 14)
 games = ["gravitar"]
 games_12 = ["boxing" "assault" "freeway" "solaris" "defender" "gravitar" "space_invaders" "private_eye" "asteroids" "breakout" "frostbite" "riverraid"]
 reducers = Array{String,1}()

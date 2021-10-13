@@ -92,7 +92,13 @@ end
 
 lck = ReentrantLock()
 # fit(e::CGPInd, c::CGPInd, seed::Int64) = play_atari(e, reducer, c, seed, lck) # TODO put back
-fit(e::CGPInd, c::CGPInd, seed::Int64) = [round(sum(e.chromosome) * sum(c.chromosome))] # TODO remove
+function fit(e::CGPInd, c::CGPInd, seed::Int64) # TODO remove
+    esum = sum(e.chromosome)
+    csum = sum(c.chromosome)
+    res = round(esum * csum)
+    # println(string(esum, " * ", csum, " = ", res))
+    [res]
+end
 
 # Create an evolution framework
 evo = IICGP.DualCGPGAEvo(mcfg, ecfg, ccfg, fit, logid, resdir)

@@ -136,6 +136,7 @@ function fitness_evaluate_ij!(
 
 	# TODO here check that we evaluated the right pair and that it yields the good result
 	# TODO remove START
+	#=
 	println(string(
 		"evaluated enco ",
 		sum(e.encoder_sympop[i].chromosome),
@@ -148,6 +149,7 @@ function fitness_evaluate_ij!(
 		" check: ",
 		e.fitness_matrix[i, j]
 	))
+	=#
 	# TODO remove END
 end
 
@@ -178,6 +180,50 @@ end
 GA sparse fitness evaluation method.
 """
 function fitness_evaluate(e::DualCGPGAEvo, fitness::Function=null_evaluate)
+
+	# TODO remove START
+	println("\n"^5)
+    println("-"^100)
+    println("EVALUATE")
+    println("-"^100)
+	println("elites_matrix:")
+    for r in eachrow(e.elites_matrix)
+        println(r)
+    end
+	esums = [sum(ind.chromosome) for ind in e.encoder_sympop]
+	csums = [sum(ind.chromosome) for ind in e.controller_sympop]
+	prods = zeros(length(esums), length(csums))
+	prods_is_fitness = true
+	for i in 1:length(esums)
+		for j in 1:length(csums)
+			prods[i, j] = round(esums[i] * csums[j])
+			if e.fitness_matrix[i,j] > -Inf
+				if e.fitness_matrix[i,j] != prods[i, j]
+					prods_is_fitness = false
+				end
+			end
+		end
+	end
+    println("enco:")
+    println(esums)
+    println("cont:")
+    println(csums)
+    println("prods:")
+	for r in eachrow(prods)
+        println(r)
+    end
+    println("prods is fitness : ", prods_is_fitness)
+    println("to-evaluate:")
+    println(select_indexes(e))
+    println("fitness matrix:")
+    for r in eachrow(e.fitness_matrix)
+        println(r)
+    end
+    println("max : ", maximum(e.fitness_matrix))
+	# TODO remove END
+
+
+
 	# 1. Select indexes of individuals to evaluate
 	indexes = select_indexes(e)
 	# 2. Evaluate those individuals
@@ -189,4 +235,29 @@ function fitness_evaluate(e::DualCGPGAEvo, fitness::Function=null_evaluate)
 	set_ind_fitnesses!(e)
 	# 4. Set elites
 	set_elites!(e)
+
+
+
+
+
+	# TODO remove START
+    println("-"^100)
+    println("elites_matrix:")
+    for r in eachrow(e.elites_matrix)
+        println(r)
+    end
+    println("enco:")
+    println([sum(ind.chromosome) for ind in e.encoder_sympop])
+    println("cont:")
+    println([sum(ind.chromosome) for ind in e.controller_sympop])
+    println("to-evaluate:")
+    println(select_indexes(e))
+    println("fitness matrix:")
+    for r in eachrow(e.fitness_matrix)
+        println(r)
+    end
+    println("max : ", maximum(e.fitness_matrix))
+    println("-"^100)
+	println("\n"^5)
+	# TODO remove END
 end

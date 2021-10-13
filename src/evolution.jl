@@ -225,10 +225,15 @@ end
 
 DualEvo = Union{DualCGPEvolution, DualCGPGAEvo}
 
-function getpop(e::DualEvo)
+function getpop(e::DualEvo; copypop::Bool=false)
     if typeof(e) <: DualCGPGAEvo
-        epop = e.encoder_sympop
-        cpop = e.controller_sympop
+        if copypop
+            epop = [SymIndCopy(ind) for ind in e.encoder_sympop]
+            cpop = [SymIndCopy(ind) for ind in e.controller_sympop]
+        else
+            epop = e.encoder_sympop
+            cpop = e.controller_sympop
+        end
     elseif typeof(e) <: DualCGPEvolution
         epop = e.encoder_population
         cpop = e.controller_population
@@ -286,7 +291,7 @@ function save_gen(e::DualEvo)
     controller_path = joinpath(e.resdir, Formatting.format("gens/{1}/controller_{2:04d}", e.logid, e.gen))
     mkpath(encoder_path)
     mkpath(controller_path)
-    epop, cpop = getpop(e)
+    epop, cpop = getpop(e; copypop=true)
     save_gen_at(encoder_path, epop)
     save_gen_at(controller_path, cpop)
 end
