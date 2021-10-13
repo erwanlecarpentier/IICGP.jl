@@ -47,48 +47,6 @@ function find_symind_index(ind::SymInd, v::Vector{SymInd})
 end
 
 function ga_populate(e::DualCGPGAEvo)
-
-    # TODO remove START
-    println("\n"^5)
-    println("-"^100)
-    println("POPULATE")
-    println("-"^100)
-    for r in eachrow(e.elites_matrix)
-        println(r)
-    end
-	esums = [sum(ind.chromosome) for ind in e.encoder_sympop]
-	csums = [sum(ind.chromosome) for ind in e.controller_sympop]
-	prods = zeros(length(esums), length(csums))
-	prods_is_fitness = true
-	for i in 1:length(esums)
-		for j in 1:length(csums)
-			prods[i, j] = round(esums[i] * csums[j])
-			if e.fitness_matrix[i,j] > -Inf
-				if e.fitness_matrix[i,j] != prods[i, j]
-					prods_is_fitness = false
-				end
-			end
-		end
-	end
-    println("enco:")
-    println(esums)
-    println("cont:")
-    println(csums)
-    println("prods:")
-	for r in eachrow(prods)
-        println(r)
-    end
-    println("prods is fitness : ", prods_is_fitness)
-    println("to evaluate:")
-    println(select_indexes(e))
-    println("fitness:")
-    for r in eachrow(e.fitness_matrix)
-        println(r)
-    end
-    println("maximum : ", maximum(e.fitness_matrix))
-    println("-"^100)
-    # TODO remove END
-
     enew = Vector{SymInd}()
     cnew = Vector{SymInd}()
     n_e = e.encoder_config.n_population
@@ -136,44 +94,4 @@ function ga_populate(e::DualCGPGAEvo)
     for index in new_elite_indexes
         e.elites_matrix[index...] = true
     end
-
-
-
-    # TODO remove START
-    println("new elites_matrix:")
-    for r in eachrow(e.elites_matrix)
-        println(r)
-    end
-	esums = [sum(ind.chromosome) for ind in e.encoder_sympop]
-	csums = [sum(ind.chromosome) for ind in e.controller_sympop]
-	prods = zeros(length(esums), length(csums))
-	prods_is_fitness = true
-	for i in 1:length(esums)
-		for j in 1:length(csums)
-			prods[i, j] = round(esums[i] * csums[j])
-			if e.fitness_matrix[i,j] > -Inf
-				if e.fitness_matrix[i,j] != prods[i, j]
-					prods_is_fitness = false
-				end
-			end
-		end
-	end
-    println("enco:")
-    println(esums)
-    println("cont:")
-    println(csums)
-    println("prods:")
-	for r in eachrow(prods)
-        println(r)
-    end
-    println("prods is fitness : ", prods_is_fitness)
-    println("new to-evaluate:")
-    println(select_indexes(e))
-    println("new fitness matrix:")
-    for r in eachrow(e.fitness_matrix)
-        println(r)
-    end
-    println(maximum(e.fitness_matrix))
-    println("-"^100)
-    # TODO remove END
 end

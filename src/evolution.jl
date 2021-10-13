@@ -35,7 +35,6 @@ mutable struct DualCGPGAEvo <: Cambrian.AbstractEvolution
     n_elite::Int64
     tournament_size::Int64
     gen::Int64
-    score_per_gen::Vector{Float64} # TODO remove
 end
 
 populate(e::IICGP.DualCGPGAEvo) = IICGP.ga_populate(e)

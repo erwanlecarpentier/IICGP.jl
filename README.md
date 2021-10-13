@@ -86,7 +86,7 @@ Image functions on halved-size image (80x105 = 8400 pixels):
 |---|---|
 |![](images/downscaled.png)|![](gifs/freeway_centroids_cropped.gif)|
 
-# TODOs
+# Suggestions
 
 High priority to low priority:
 
@@ -150,58 +150,6 @@ Forward pass timing (ms)
 |---|---|---|
 |assault|0.18|0.46|
 |boxing|0.2|1.22|
-
-## 2021-09-01
-
-lecarpen: assault boxing
-
-Setting A:
-- Encoder + Reducer + controller
-- Downscale (halved images)
-- Grayscale
-- Faster multithreading + initial action fix for determinism
-
-|Best score|Mean score|
-|---|---|
-|![](graphs/20210901-dualcgp-downscale-grayscale/assault_best.png)|![](graphs/20210901-dualcgp-downscale-grayscale/assault_mean.png)|
-|![](graphs/20210901-dualcgp-downscale-grayscale/boxing_best.png)|![](graphs/20210901-dualcgp-downscale-grayscale/boxing_mean.png)|
-
-Forward pass timing (ms)
-||Pooling|Centroid|
-|---|---|---|
-|assault|0.2|1.0|
-|boxing|0.2|0.6|
-
-## 2021-09-03
-
-p21049le: freeway solaris
-
-Setting A
-
-## 2021-09-07
-
-lecarpen: defender gravitar
-
-Setting A
-
-
-## 2021-09-23
-
-lecarpen: asteroids breakout
-
-Setting A
-
-## 2021-10-01 (TODO: retrieve results)
-
-lecarpen: frostbite riverraid
-
-Setting A
-
-## 2021-10-01 (TODO: retrieve results)
-
-p21049le: space_invaders private_eye
-
-Setting A
 
 # Julia Install
 
