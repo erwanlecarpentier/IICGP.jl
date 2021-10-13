@@ -1,21 +1,21 @@
 # General parameters
 seed: 0
 max_frames: 10000
-stickiness: 0.0 # 0.25
+stickiness: 0.25
 d_fitness: 1
-n_gen: 10 # 50000
-n_eval: 13 # 36 # Maximum number of evaluations per generation
+n_gen: 50000
+n_eval: 36 # Maximum number of evaluations per generation
 n_elite: 5 # Number of elite pairs per generation
-tournament_size: 7
-log_gen: 1 # 250
-save_gen: 1 # 250
+tournament_size: 3
+log_gen: 250
+save_gen: 250
 bootstrap: false
 grayscale: true
 downscale: true
 
 # Encoder's parameters
 encoder:
-  n_population: 5
+  n_population: 10
   rows: 1
   columns: 20
   recur: 0.0
@@ -63,7 +63,7 @@ reducer:
 
 # Controller's parameters
 controller:
-  n_population: 5
+  n_population: 10
   rows: 1
   columns: 40
   recur: 0.0

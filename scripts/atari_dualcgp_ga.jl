@@ -91,14 +91,7 @@ function mutate(ind::CGPInd, ind_type::String)
 end
 
 lck = ReentrantLock()
-# fit(e::CGPInd, c::CGPInd, seed::Int64) = play_atari(e, reducer, c, seed, lck) # TODO put back
-function fit(e::CGPInd, c::CGPInd, seed::Int64) # TODO remove
-    esum = sum(e.chromosome)
-    csum = sum(c.chromosome)
-    res = round(esum * csum)
-    # println(string(esum, " * ", csum, " = ", res))
-    [res]
-end
+fit(e::CGPInd, c::CGPInd, seed::Int64) = play_atari(e, reducer, c, seed, lck)
 
 # Create an evolution framework
 evo = IICGP.DualCGPGAEvo(mcfg, ecfg, ccfg, fit, logid, resdir)

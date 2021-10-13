@@ -73,7 +73,7 @@ function play_atari(
     IICGP.reset!(reducer) # zero the buffers
     reward = 0.0
     frames = 0
-    prev_action = 0
+    prev_action = Int32(0)
     while ~game_over(game.ale)
         if rand(mt) > stickiness || frames == 0
             s = get_state(game, grayscale, downscale)

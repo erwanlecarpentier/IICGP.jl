@@ -1,8 +1,8 @@
 using IICGP
 using Dates
 
-# rootdir = joinpath(homedir(), "Documents/git/ICGP-results/") # TODO put back
-rootdir = dirname(@__DIR__) # TODO remove
+rootdir = joinpath(homedir(), "Documents/git/ICGP-results/")
+# rootdir = dirname(@__DIR__)
 resdir = joinpath(rootdir, "results/")
 fetch_backup(rootdir, clean=true)
 

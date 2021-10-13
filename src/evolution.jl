@@ -85,7 +85,7 @@ function DualCGPGAEvo(
         encoder_config, encoder_sympop, encoder_logger,
         controller_config, controller_sympop, controller_logger,
         fitness, fitness_matrix, elites_matrix, n_eval, n_elite,
-        tournament_size, 0, Vector{Float64}()
+        tournament_size, 0
     )
 end
 

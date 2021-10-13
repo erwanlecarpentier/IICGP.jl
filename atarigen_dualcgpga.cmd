@@ -20,7 +20,7 @@
 CMD_PREFIX="atari_"
 CFGS=("cfg/dualcgpga_atari_pooling.yaml") # WARNING: sync with REDS
 REDS=("ga_pool_") # WARNING: sync with CFGS
-GAMES="gravitar boxing"
+GAMES="boxing freeway gravitar pong solaris"
 SCRIPT="scripts/atari_dualcgp_ga.jl"
 PROJECT="$PWD"
 USERNAME=$(whoami)
