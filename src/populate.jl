@@ -47,6 +47,25 @@ function find_symind_index(ind::SymInd, v::Vector{SymInd})
 end
 
 function ga_populate(e::DualCGPGAEvo)
+
+    # TODO remove START
+    println("\n"^5)
+    println("-"^100)
+    for r in eachrow(e.elites_matrix)
+        println(r)
+    end
+    println("enco:")
+    println([sum(ind.chromosome) for ind in e.encoder_sympop])
+    println("cont:")
+    println([sum(ind.chromosome) for ind in e.controller_sympop])
+    println("to evaluate:")
+    println(select_indexes(e))
+    for r in eachrow(e.fitness_matrix)
+        println(r)
+    end
+    println(maximum(e.fitness_matrix))
+    # TODO remove END
+
     enew = Vector{SymInd}()
     cnew = Vector{SymInd}()
     n_e = e.encoder_config.n_population
@@ -88,20 +107,42 @@ function ga_populate(e::DualCGPGAEvo)
     # 3. Set new population and reset matrices
     e.encoder_sympop = enew
     e.controller_sympop = cnew
-
-    println("\n") # TODO remove
-    for r in eachrow(e.elites_matrix) # TODO remove
-        println(r)
-    end
-    for r in eachrow(e.fitness_matrix) # TODO remove
-        println(r)
-    end
-    println(maximum(e.fitness_matrix)) # TODO remove
-
     mat_size = size(e.fitness_matrix)
     e.fitness_matrix = -Inf * ones(mat_size...)
     e.elites_matrix = falses(mat_size...)
     for index in new_elite_indexes
         e.elites_matrix[index...] = true
     end
+
+    # TODO remove START
+    println("\n")
+    println("new elites_matrix:")
+    for r in eachrow(e.elites_matrix)
+        println(r)
+    end
+    println("new enco:")
+    println([sum(ind.chromosome) for ind in e.encoder_sympop])
+    println("new cont:")
+    println([sum(ind.chromosome) for ind in e.controller_sympop])
+    println("new to-evaluate:")
+    println(select_indexes(e))
+    println("new fitness matrix:")
+    for r in eachrow(e.fitness_matrix)
+        println(r)
+    end
+    println(maximum(e.fitness_matrix))
+    println("-"^100)
+    # TODO remove END
+
+
+    # TODO remove START
+    println("one more evaluate:")
+    evaluate(e)
+    println("new evaluated fitness matrix:")
+    for r in eachrow(e.fitness_matrix)
+        println(r)
+    end
+    println("-"^100)
+    println("\n"^5)
+    # TODO remove END
 end

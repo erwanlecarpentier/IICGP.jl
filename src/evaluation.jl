@@ -133,6 +133,22 @@ function fitness_evaluate_ij!(
 	enco_i = IPCGPInd(e.encoder_config, e.encoder_sympop[i].chromosome)
 	cont_j = CGPInd(e.controller_config, e.controller_sympop[j].chromosome)
 	e.fitness_matrix[i, j] = fitness(enco_i, cont_j, e.gen)[1]
+
+	# TODO here check that we evaluated the right pair and that it yields the good result
+	# TODO remove START
+	println(string(
+		"evaluated enco ",
+		sum(e.encoder_sympop[i].chromosome),
+		" cont ",
+		sum(e.controller_sympop[j].chromosome),
+		" result: ",
+		fitness(enco_i, cont_j, e.gen)[1],
+		" check: ",
+		fitness(enco_i, cont_j, e.gen)[1],
+		" check: ",
+		e.fitness_matrix[i, j]
+	))
+	# TODO remove END
 end
 
 function set_ind_fitnesses!(e::DualCGPGAEvo)
