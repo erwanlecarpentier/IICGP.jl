@@ -14,7 +14,7 @@ from pdf2image import convert_from_path
 
 # Meta parameters
 SEED = 1234
-MAX_FRAME = 1 # 6711
+MAX_FRAME = 5 # 6711
 DIR_PATH = os.path.dirname(os.path.realpath(__file__))
 IMG_EXT = ".png"
 # IMG_TYPE = PIL.PngImagePlugin.PngImageFile
@@ -22,7 +22,8 @@ IMG_EXT = ".png"
 # Graph layout
 NOBUFFER = False # Set to True to display nodes names instead of buffers
 ACTIVE_COLOR = "red"
-HALOEDGES = True
+HALOEDGELABELS = False
+BACKGROUNDEDGELABELS = True
 ENABLE_MANUAL_POS = True
 SHOWFRAMES = True
 TOPNG = True # convert pdf canvas to png
@@ -69,9 +70,25 @@ POS = {
 	"2021-09-03T18:18:34.627_solaris": {
 		"encoder": {
 			"1": (0, 0),
-			"2": (2, 2), "3": (4, 2), "7": (6, 2),
-			"4": (6, 0), "8": (8, 0), "20": (10, 0), "out20": (12, 0),
-			"9": (2, -2), "12": (4, -2), "18": (8, -2), "out18": (12, -2)
+			"9": (2, 3), "12": (5, 3), "18": (8, 3), "out18": (12, 3),
+			"4": (4, 0), "8": (7, 0), "20": (10, 0), "out20": (12, 0),
+			"2": (2, -3), "3": (5, -3), "7": (8, -3)
+		},
+		"controller": {
+			"inputs": {"type": "squares", "origin": (-1, 0), "innerspan": 1, "squarespan": 7},
+			"outputs": {"type": "column", "pos": (10, 0), "span": 1},
+			"sticky": (10, 10),
+			"54": (5, 8),
+			"56": (5, 6), "66": (7, 6),
+			"63": (7, -1), "81": (7, 2),
+			"59": (5, 4), "80": (7, 4),
+			"87": (7, -3.5),
+			"77": (7, -4.5)
+		},
+		"canvas": {
+			"rgbpos": (0, 0.4), "hrgbpos": (0, 0.8),
+			"epos": (0, -0.4), "hepos": (0, 0),
+			"cpos": (1.1, 0), "hcpos": (1.1, 0.8)
 		}
 	}
 }
@@ -87,7 +104,7 @@ EDGELABELS = {
 }
 
 ACTIONLABELS = {
-	0: "",
+	0: "$\\bullet$",
 	1: "$\\bullet$",
 	2: "$\\uparrow$",
 	3: "$\\rightarrow$",
@@ -380,8 +397,8 @@ def getnodesettings(gdict, expdir, node, nodename, activated, indtype, isout):
 		nodesettings = "draw=none, color=black, fill=white, opacity=0.7, rounded corners=0.1cm, minimum width=0.9cm"
 	else:
 		nodecolor = ACTIVE_COLOR if node in activated else "black"
-		w = "1.5cm" if (indtype == "controller" and isout) else "1cm"
-		nodesettings = "shape=rectangle, rounded corners=0.1cm, minimum width="+w+", minimum height=0.6cm, fill=black!10, draw="+nodecolor
+		w = "1.8cm" if (indtype == "controller" and isout) else "1cm"
+		nodesettings = "shape=rectangle, rounded corners=0.1cm, minimum width="+w+", minimum height=0.6cm, fill=white, draw="+nodecolor
 	return nodesettings
 
 def getedgelabel(fname):
@@ -445,7 +462,7 @@ def appendnodes(ts, gdict, expdir, indtype):
 		color = "red" if is_sticky else "white"
 		nodename = "sticky"
 		p = pos[nodename]
-		ts.append("\\node[color="+color+"] ("+nodename+") at ("+p+") {\\textbf{Sticky!}};")
+		ts.append("\\node[color="+color+"] ("+nodename+") at ("+p+") {\\textbf{Repeated}};")
 
 def appendedges(ts, gdict, indtype):
 	g = gdict[indtype]
@@ -456,18 +473,20 @@ def appendedges(ts, gdict, indtype):
 		dstindex = g["nodes"].index(edge[1])
 		edgelabel = getedgelabel(g["fs"][dstindex])
 		edgeopt = "loop above" if edge[0] == edge[1] else "" # self-loop
+		labelopt = "above"
+		labelopt += ", fill=white, rounded corners=0.1cm, fill opacity=0.8, text opacity=1" if BACKGROUNDEDGELABELS else ""
 		edgecolor = ACTIVE_COLOR if edge[1] in activated else "black"
-		pathset = "->, color="+edgecolor
-		if HALOEDGES:
+		pathset = "->, fill=blue, color="+edgecolor
+		if HALOEDGELABELS:
 			ts.append("\\path[->, color=white, ultra thick] ("+src+") edge["+edgeopt+"] node[above] {"+edgelabel+"} ("+dst+");")
-		ts.append("\\path["+pathset+"] ("+src+") edge["+edgeopt+"] node[above] {"+edgelabel+"} ("+dst+");")
+		ts.append("\\path["+pathset+"] ("+src+") edge["+edgeopt+"] node["+labelopt+"] {"+edgelabel+"} ("+dst+");")
 	for i in range(len(g["outputs"])):
 		output = g["outputs"][i]
 		src = str(output)
 		dst = getnodename(i, g, True)
 		edgecolor = ACTIVE_COLOR if output in outputs else "black"
 		pathset = "->, color="+edgecolor
-		if HALOEDGES:
+		if HALOEDGELABELS:
 			ts.append("\\path[->, color=white, ultra thick] ("+src+") edge node {} ("+dst+");")
 		ts.append("\\path["+pathset+"] ("+src+") edge node {} ("+dst+");")
 
