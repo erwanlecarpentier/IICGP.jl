@@ -11,10 +11,14 @@ from tqdm import tqdm
 import operator
 from pdf2image import convert_from_path
 
+# COMMANDS
+DOFRAMES = True
+DOVIDEO = True
+SHOWFRAMES = False
 
 # Meta parameters
 SEED = 1234
-MAX_FRAME = 1 # None
+MAX_FRAME = None # None
 DIR_PATH = os.path.dirname(os.path.realpath(__file__))
 IMG_EXT = ".png"
 # IMG_TYPE = PIL.PngImagePlugin.PngImageFile
@@ -25,7 +29,6 @@ ACTIVE_COLOR = "red"
 HALOEDGELABELS = False
 BACKGROUNDEDGELABELS = True
 ENABLE_MANUAL_POS = True
-SHOWFRAMES = True
 TOPNG = True # convert pdf canvas to png
 DELETE_GRAPHS = True
 DELETE_CANVAS_PDF = True
@@ -666,7 +669,7 @@ def make(exp_dir, max_frame, do_frames=True, do_video=True):
 if __name__ == "__main__":
 	exp_dir = sys.argv[1]
 	max_frame = get_max_frame(exp_dir)
-	make(exp_dir, max_frame, do_frames=True, do_video=False)
+	make(exp_dir, max_frame, do_frames=DOFRAMES, do_video=DOVIDEO)
 
 # python3.8 pytexgraph.py /home/opaweynch/Documents/git/ICGP-results/results/2021-09-01T17:44:01.968_boxing
 
