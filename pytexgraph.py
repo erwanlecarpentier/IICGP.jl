@@ -14,7 +14,7 @@ from pdf2image import convert_from_path
 
 # Meta parameters
 SEED = 1234
-MAX_FRAME = 5 # 6711
+MAX_FRAME = 1 # None
 DIR_PATH = os.path.dirname(os.path.realpath(__file__))
 IMG_EXT = ".png"
 # IMG_TYPE = PIL.PngImagePlugin.PngImageFile
@@ -209,6 +209,13 @@ def retrieve_cont_buffer(path, frame):
 def retrieve_metadata(path, frame):
 	fname = path + str(frame) + "_m.yaml"
 	return open_yaml(fname)
+	
+def get_max_frame(exp_dir):
+	if MAX_FRAME is None:
+		bdir = get_paths(exp_dir)["metadata"]
+		return max([int(f.split("_")[0]) for f in os.listdir(bdir)])
+	else:
+		return MAX_FRAME
 
 def get_paths(exp_dir):
 	paths = {}
@@ -458,7 +465,6 @@ def appendnodes(ts, gdict, expdir, indtype):
 		ts.append("\\node["+nodesettings+"] ("+nodename+") at ("+p+") {"+nodecontent+"};")
 	if indtype == "controller":
 		is_sticky = gdict["metadata"]["is_sticky"]
-		is_sticky = True
 		color = "red" if is_sticky else "white"
 		nodename = "sticky"
 		p = pos[nodename]
@@ -659,7 +665,7 @@ def make(exp_dir, max_frame, do_frames=True, do_video=True):
 
 if __name__ == "__main__":
 	exp_dir = sys.argv[1]
-	max_frame = MAX_FRAME
+	max_frame = get_max_frame(exp_dir)
 	make(exp_dir, max_frame, do_frames=True, do_video=False)
 
 # python3.8 pytexgraph.py /home/opaweynch/Documents/git/ICGP-results/results/2021-09-01T17:44:01.968_boxing
