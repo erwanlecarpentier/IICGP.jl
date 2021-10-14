@@ -319,16 +319,15 @@ function visu_ingame(
     end
 end
 
-#rootdir = "/home/wahara/Documents/git/ICGP-results/"
-rootdir = "/home/opaweynch/Documents/git/ICGP-results/"
+rootdir = joinpath(homedir(), "Documents/git/ICGP-results/")
 resdir = joinpath(rootdir, "results/")
 min_date = DateTime(2021, 09, 01)
-max_date = DateTime(2021, 10, 02)
+max_date = DateTime(2021, 10, 03)
 games = ["solaris"] # ["freeway"]  # pong kung_fu_master freeway assault
 reducers = ["pooling"] # Array{String,1}() # ["pooling"]
 exp_dirs, games = get_exp_dir(resdir, min_date=min_date, max_date=max_date,
                               games=games, reducers=reducers)
-max_frames = 1
+max_frames = 10
 render_graph = false
 
 for i in eachindex(exp_dirs)
@@ -339,44 +338,6 @@ for i in eachindex(exp_dirs)
     # Launch python script
     if render_graph
         exp_dir = exp_dirs[i]
-        seed = 1234
         run(`python3.8 pytexgraph.py $exp_dir`)
     end
 end
-
-#=
-i = 1
-exp_dir, game = exp_dirs[i], games[i]
-cfg = cfg_from_exp_dir(exp_dir)
-seed = cfg["seed"]
-stickiness = cfg["stickiness"]
-grayscale = cfg["grayscale"]
-downscale = cfg["downscale"]
-is_dualcgp = haskey(cfg, "encoder")
-enco, redu, cont = get_last_dualcgp(exp_dir, game, cfg)
-
-Random.seed!(seed)
-mt = MersenneTwister(seed)
-g = Game(game, seed)
-img_size = size(get_state(g, grayscale, downscale)[1])
-IICGP.reset!(redu) # zero the buffers
-reward = 0.0
-frames = 1
-prev_action = 0
-prev_chosen_output = 1
-features = Vector{Matrix{Float64}}()
-active = [enco.nodes[i].active for i in eachindex(enco.nodes)]
-
-s = get_state(g, grayscale, downscale)
-is_sticky = rand(mt) < stickiness
-if !is_sticky || frames == 1
-    features, output = IICGP.process_f(enco, redu, cont, s)
-    chosen_output = argmax(output)
-    action = g.actions[chosen_output]
-else
-    chosen_output = prev_chosen_output
-    action = prev_action
-end
-=#
-
-# python3.7 py-graph.py /home/wahara/.julia/dev/IICGP/results/2021-09-01T17:44:01.968_boxing
