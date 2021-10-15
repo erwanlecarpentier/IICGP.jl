@@ -17,11 +17,11 @@ from pdf2image import convert_from_path
 """
 
 # COMMANDS
-ONLYENCO = True
-ONLYCONT = False
+ONLYENCO = False
+ONLYCONT = True
 SHOWGRAPHS = True
 DOFRAMES = True
-SHOWFRAMES = False
+SHOWFRAMES = True
 DOVIDEO = False
 
 PRINTPDFLATEXOUT = True
@@ -34,8 +34,10 @@ IMG_EXT = ".png"
 
 # Graph layout
 GRAPHBACK = True
+BUFFERCLIP = True
 NOBUFFER = False # Set to True to display nodes names instead of buffers
 ACTIVE_COLOR = "red"
+BACKGROUND_COLOR = "white"
 HALOEDGELABELS = False
 BACKGROUNDEDGELABELS = True
 ENABLE_MANUAL_POS = True
@@ -83,10 +85,10 @@ POS = {
 	"2021-09-03T18:18:34.627_solaris": {
 		"encoder": {
 			"1": (0, 0),
-			"9": (2, 3), "12": (5, 3), "18": (8, 3), "out18": (12, 3),
+			"9": (2, 2.62), "12": (5, 2.62), "18": (8, 2.62), "out18": (12, 2.62),
 			"4": (4, 0), "8": (7, 0), "20": (10, 0), "out20": (12, 0),
-			"2": (2, -3), "3": (5, -3), "7": (8, -3),
-			"backgroundnode": {"pos": (6, 0), "width": (2, 9, 2), "height": 10}
+			"2": (2, -2.62), "3": (5, -2.62), "7": (8, -2.62),
+			"backgroundnode": {"pos": (5.9, 0.4), "width": (1.8, 9.9, 1.5), "height": 7.8}
 		},
 		"controller": {
 			"inputs": {"type": "squares", "origin": (-1, 0), "innerspan": 1, "squarespan": 7},
@@ -424,7 +426,8 @@ def getnodesettings(gdict, expdir, node, nodename, activated, indtype, isout):
 	else:
 		nodecolor = ACTIVE_COLOR if node in activated else "black"
 		w = "1.8cm" if (indtype == "controller" and isout) else "1cm"
-		nodesettings = "shape=rectangle, rounded corners=0.1cm, minimum width="+w+", minimum height=0.6cm, fill=white, draw="+nodecolor
+		sep = "inner sep=0,outer sep=0," if indtype == "encoder" else ""
+		nodesettings = "shape=rectangle, rounded corners=0.1cm, minimum width="+w+", minimum height=0.6cm, fill=white,"+sep+"draw, color="+nodecolor+",fill="+BACKGROUND_COLOR
 	return nodesettings
 
 def getedgelabel(fname):
@@ -464,19 +467,27 @@ def appendbackgroundnodes(ts, gdict, expdir, indtype):
 			d = POS[expdir][indtype]["backgroundnode"]
 			pos = d["pos"]
 			w, h = d["width"], d["height"]
-			nodesettings = "text centered, rectangle split, rectangle split horizontal, rectangle split parts=3, draw, rectangle split draw splits=false, rounded corners=0.1cm, minimum height="+str(h)+"cm"
+			nodesettings = "text centered, rectangle split, rectangle split horizontal, rectangle split parts=3, draw, rectangle split draw splits=false, color=black, fill=white, rounded corners=0.1cm, minimum height="+str(h)+"cm"
 			splitsettings = "dashed"
 			pos = str(pos[0]) + "," + str(pos[1])
-			ts.append("\\node["+nodesettings+"] (A) at ("+pos+") {\\nodepart[text width="+str(w[0])+"cm]{one}\\begin{minipage}[t]["+str(h)+"cm]{"+str(w[0])+"cm}\centering Input\\end{minipage} \\nodepart[text width="+str(w[1])+"cm]{two} \\nodepart[text width="+str(w[2])+"cm]{three} \\begin{minipage}[t]["+str(h)+"cm]{"+str(w[0])+"cm}\centering Output\\end{minipage}};")
+			ts.append("\\node["+nodesettings+"] (A) at ("+pos+") {\\nodepart[text width="+str(w[0])+"cm]{one}\\begin{minipage}[t]["+str(h)+"cm]{"+str(w[0])+"cm}\centering \\textbf{Input}\\end{minipage} \\nodepart[text width="+str(w[1])+"cm]{two} \\nodepart[text width="+str(w[2])+"cm]{three} \\begin{minipage}[t]["+str(h)+"cm]{"+str(w[2])+"cm}\centering \\textbf{Output}\\end{minipage}};")
 			ts.append("\\draw["+splitsettings+"] (A.one split south) -- (A.one split north);")
 			ts.append("\\draw["+splitsettings+"] (A.two split south) -- (A.two split north);")
 
+def getnode(indtype, nodesettings, nodename, p, nodecontent):
+	if BUFFERCLIP and indtype == "encoder":
+		#color = nodesettings.split("draw=")[1]
+		return "\\savebox{\\picbox}{"+nodecontent+"} \\node ["+nodesettings+", minimum width=\\wd\\picbox, minimum height=\\ht\\picbox, path picture={\\node at (path picture bounding box.center) {\\usebox{\\picbox}};}] ("+nodename+") at ("+p+") {};"	
+	else:
+		return "\\node["+nodesettings+"] ("+nodename+") at ("+p+") {"+nodecontent+"};"
+	
 def appendnodes(ts, gdict, expdir, indtype):
 	g = gdict[indtype]
 	activated = gdict["metadata"][indtype]["activated"]
 	outputs = gdict["metadata"][indtype]["outputs"]
 	pos = getpos(gdict, expdir, indtype)
 	appendbackgroundnodes(ts, gdict, expdir, indtype)
+	if BUFFERCLIP: ts.append("\\newsavebox{\\picbox}")
 	for node in g["buffer"].keys():
 		nodename = getnodename(node)
 		isinput = node <= g["n_in"]
@@ -484,7 +495,8 @@ def appendnodes(ts, gdict, expdir, indtype):
 		isout = False
 		nodecontent = getnodecontent(gdict, node, nodename, indtype, isout)
 		nodesettings = getnodesettings(gdict, expdir, node, nodename, activated, indtype, isout)
-		ts.append("\\node["+nodesettings+"] ("+nodename+") at ("+p+") {"+nodecontent+"};")
+		nd = getnode(indtype, nodesettings, nodename, p, nodecontent)
+		ts.append(nd)
 	for i in range(len(g["outputs"])):
 		node = g["outputs"][i]
 		nodename = getnodename(i, g, True)
@@ -492,10 +504,11 @@ def appendnodes(ts, gdict, expdir, indtype):
 		isout = True
 		nodecontent = getnodecontent(gdict, node, nodename, indtype, isout, i, width=1)
 		nodesettings = getnodesettings(gdict, expdir, node, nodename, outputs, indtype, isout)
-		ts.append("\\node["+nodesettings+"] ("+nodename+") at ("+p+") {"+nodecontent+"};")
+		nd = getnode(indtype, nodesettings, nodename, p, nodecontent)
+		ts.append(nd)
 	if indtype == "controller":
 		is_sticky = gdict["metadata"]["is_sticky"]
-		color = "red" if is_sticky else "white"
+		color = ACTIVE_COLOR if is_sticky else BACKGROUND_COLOR
 		nodename = "sticky"
 		p = pos[nodename]
 		ts.append("\\node[color="+color+"] ("+nodename+") at ("+p+") {\\textbf{Repeated}};")
