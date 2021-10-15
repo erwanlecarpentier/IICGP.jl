@@ -526,19 +526,16 @@ def graph_texscript(gdict, paths, indtype, printtex=False):
 		print(100*"-")
 	return ts
 
-def canvas_texscript(paths, frame, printtex=False):
+def canvas_texscript(paths, frame, score, printtex=False):
 	savedir = paths["metadata"]
 	expdir = paths["exp"]
 	rgb_path = savedir + rgbfname(frame)
 	e_gpath = savedir + graphfname(frame, "encoder") + ".pdf"
 	c_gpath = savedir + graphfname(frame, "controller") + ".pdf"
-	
 	rgb_content = "\includegraphics[width=1cm]{"+rgb_path+"}"
 	e_content = "\includegraphics[width=1cm]{"+e_gpath+"}"
 	c_content = "\includegraphics[width=1cm]{"+c_gpath+"}"
-	
 	scorepos, rgbpos, hrgbpos, epos, hepos, cpos, hcpos = getcanvaspos(expdir)
-	
 	ts = []
 	ts.append("\\documentclass[crop,tikz]{standalone}")
 	ts.append("\\usepackage{graphicx}")
@@ -546,14 +543,13 @@ def canvas_texscript(paths, frame, printtex=False):
 	ts.append("\\begin{tikzpicture}")
 	ts.append("\\node[scale=0.3] () at "+hrgbpos+" {RGB Image};")
 	ts.append("\\node[scale=0.8] () at "+rgbpos+" {"+rgb_content+"};")
-	ts.append("\\node[scale=0.2, anchor=west] () at "+scorepos+" {Score: 125643};")
+	ts.append("\\node[scale=0.2, anchor=west] () at "+scorepos+" {Score: "+str(score)+"};")
 	ts.append("\\node[scale=0.3] () at "+hepos+" {Encoder};")
 	ts.append("\\node[] () at "+epos+" {"+e_content+"};")
 	ts.append("\\node[scale=0.3] () at "+hcpos+" {Controller};")
 	ts.append("\\node[] () at "+cpos+" {"+c_content+"};")
 	ts.append("\\end{tikzpicture}")
 	ts.append("\\end{document}")
-	
 	if printtex:
 		print("\nPrinting canvas TeX file :")
 		print(100*"-")
@@ -596,8 +592,7 @@ def build_canvas(texscript, paths, frame):
 	if TOPNG:
 		canvastopng(fname, savedir)
 
-def make_graphs(paths, frame):
-	gdict = gdict_from_paths(paths, frame)
+def make_graphs(paths, frame, gdict):
 	for indtype in ["controller", "encoder"]:
 		texscript = graph_texscript(gdict, paths, indtype)
 		build_graph(texscript, paths, frame, indtype)
@@ -608,8 +603,8 @@ def delete_graphs(paths, frame):
 		fname = graphfname(frame, indtype)
 		os.remove(savedir + fname + ".pdf")
 
-def make_canvas(paths, frame):
-	texscript = canvas_texscript(paths, frame)
+def make_canvas(paths, frame, score):
+	texscript = canvas_texscript(paths, frame, score)
 	build_canvas(texscript, paths, frame)
 	if DELETE_GRAPHS: delete_graphs(paths, frame)
 		
@@ -670,8 +665,10 @@ def make(exp_dir, max_frame):
 	random.seed(SEED)
 	if DOFRAMES:
 		for frame in range(1, max_frame + 1):
-			make_graphs(paths, frame)
-			make_canvas(paths, frame)
+			gdict = gdict_from_paths(paths, frame)
+			score = gdict["metadata"]["score"]
+			make_graphs(paths, frame, gdict)
+			make_canvas(paths, frame, score)
 	if DOVIDEO: make_video(paths, max_frame)
 
 if __name__ == "__main__":
