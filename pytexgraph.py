@@ -19,7 +19,7 @@ from pdf2image import convert_from_path
 # COMMANDS
 DOFRAMES = True
 DOVIDEO = False
-SHOWGRAPHS = True
+SHOWGRAPHS = False
 SHOWFRAMES = True
 
 # Meta parameters
@@ -71,7 +71,7 @@ POS = {
 			"sticky": (10, 10)
 		},
 		"canvas": {
-			"rgbpos": (0, 0.4), "hrgbpos": (0, 0.8),
+			"rgbpos": (0, 0.4), "hrgbpos": (0, 0.8), "scorepos": (-0.6, 0.1),
 			"epos": (0, -0.4), "hepos": (0, 0),
 			"cpos": (1.1, 0), "hcpos": (1.1, 0.8)
 		}
@@ -95,9 +95,9 @@ POS = {
 			"77": (7, -4.5)
 		},
 		"canvas": {
-			"rgbpos": (0, 0.4), "hrgbpos": (0, 0.8),
-			"epos": (0, -0.4), "hepos": (0, 0),
-			"cpos": (1.1, 0), "hcpos": (1.1, 0.8)
+			"rgbpos": (0, 0.4), "hrgbpos": (0, 0.75), "scorepos": (-0.4, 0.1),
+			"epos": (0, -0.43), "hepos": (0, -0.05),
+			"cpos": (1.1, 0), "hcpos": (1.1, 0.75)
 		}
 	}
 }
@@ -275,9 +275,11 @@ def twopletostr(t):
 	return "(" + str(t[0]) + ", " + str(t[1]) + ")"
 
 def getcanvaspos(expdir):
-	rgbpos, epos, cpos = "(0, 0)", "(1, 0)", "(2, 0)"
+	scorepos, rgbpos, epos, cpos = "(0, -1)", "(0, 0)", "(1, 0)", "(2, 0)"
 	hrgbpos, hepos, hcpos = "(0, 1)", "(1, 1)", "(2, 1)"
 	if expdir in list(POS.keys()) and "canvas" in list(POS[expdir].keys()):
+		if "scorepos" in list(POS[expdir]["canvas"].keys()):
+			scorepos = twopletostr(POS[expdir]["canvas"]["scorepos"])
 		if "rgbpos" in list(POS[expdir]["canvas"].keys()):
 			rgbpos = twopletostr(POS[expdir]["canvas"]["rgbpos"])
 		if "hrgbpos" in list(POS[expdir]["canvas"].keys()):
@@ -290,7 +292,7 @@ def getcanvaspos(expdir):
 			cpos = twopletostr(POS[expdir]["canvas"]["cpos"])
 		if "hcpos" in list(POS[expdir]["canvas"].keys()):
 			hcpos = twopletostr(POS[expdir]["canvas"]["hcpos"])
-	return rgbpos, hrgbpos, epos, hepos, cpos, hcpos
+	return scorepos, rgbpos, hrgbpos, epos, hepos, cpos, hcpos
 	
 def columnpos(posdict, n_nodes, index):
 	orig = posdict["pos"]
@@ -487,7 +489,7 @@ def appendedges(ts, gdict, indtype):
 		src, dst = str(edge[0]), str(edge[1])
 		dstindex = g["nodes"].index(edge[1])
 		edgelabel = getedgelabel(g["fs"][dstindex])
-		edgeopt = "loop above" if edge[0] == edge[1] else "" # self-loop
+		edgeopt = "loop left" if edge[0] == edge[1] else "" # self-loop
 		labelopt = "above"
 		labelopt += ", fill=white, rounded corners=0.1cm, fill opacity=0.8, text opacity=1" if BACKGROUNDEDGELABELS else ""
 		edgecolor = ACTIVE_COLOR if edge[1] in activated else "black"
@@ -505,7 +507,7 @@ def appendedges(ts, gdict, indtype):
 			ts.append("\\path[->, color=white, ultra thick] ("+src+") edge node {} ("+dst+");")
 		ts.append("\\path["+pathset+"] ("+src+") edge node {} ("+dst+");")
 
-def graph_texscript(gdict, paths, indtype, printtex=True):
+def graph_texscript(gdict, paths, indtype, printtex=False):
 	ts = [] # texscript
 	ts.append("\\documentclass[crop,tikz]{standalone}")
 	ts.append("\\usepackage{graphicx}")
@@ -524,8 +526,7 @@ def graph_texscript(gdict, paths, indtype, printtex=True):
 		print(100*"-")
 	return ts
 
-def canvas_texscript(paths, frame, printtex=True):
-
+def canvas_texscript(paths, frame, printtex=False):
 	savedir = paths["metadata"]
 	expdir = paths["exp"]
 	rgb_path = savedir + rgbfname(frame)
@@ -536,7 +537,7 @@ def canvas_texscript(paths, frame, printtex=True):
 	e_content = "\includegraphics[width=1cm]{"+e_gpath+"}"
 	c_content = "\includegraphics[width=1cm]{"+c_gpath+"}"
 	
-	rgbpos, hrgbpos, epos, hepos, cpos, hcpos = getcanvaspos(expdir)
+	scorepos, rgbpos, hrgbpos, epos, hepos, cpos, hcpos = getcanvaspos(expdir)
 	
 	ts = []
 	ts.append("\\documentclass[crop,tikz]{standalone}")
@@ -545,6 +546,7 @@ def canvas_texscript(paths, frame, printtex=True):
 	ts.append("\\begin{tikzpicture}")
 	ts.append("\\node[scale=0.3] () at "+hrgbpos+" {RGB Image};")
 	ts.append("\\node[scale=0.8] () at "+rgbpos+" {"+rgb_content+"};")
+	ts.append("\\node[scale=0.2, anchor=west] () at "+scorepos+" {Score: 125643};")
 	ts.append("\\node[scale=0.3] () at "+hepos+" {Encoder};")
 	ts.append("\\node[] () at "+epos+" {"+e_content+"};")
 	ts.append("\\node[scale=0.3] () at "+hcpos+" {Controller};")
@@ -599,7 +601,6 @@ def make_graphs(paths, frame):
 	for indtype in ["controller", "encoder"]:
 		texscript = graph_texscript(gdict, paths, indtype)
 		build_graph(texscript, paths, frame, indtype)
-		exit()
 		
 def delete_graphs(paths, frame):
 	savedir = paths["metadata"]
@@ -664,19 +665,19 @@ def make_video(paths, max_frame, verbose=True):
 		os.remove(f)
 	if verbose: print("Successfully created video!")
 
-def make(exp_dir, max_frame, do_frames=True, do_video=True):
+def make(exp_dir, max_frame):
 	paths = get_paths(exp_dir)
 	random.seed(SEED)
-	if do_frames:
+	if DOFRAMES:
 		for frame in range(1, max_frame + 1):
 			make_graphs(paths, frame)
 			make_canvas(paths, frame)
-	if do_video: make_video(paths, max_frame)
+	if DOVIDEO: make_video(paths, max_frame)
 
 if __name__ == "__main__":
 	exp_dir = sys.argv[1]
 	max_frame = get_max_frame(exp_dir)
-	make(exp_dir, max_frame, do_frames=DOFRAMES, do_video=DOVIDEO)
+	make(exp_dir, max_frame)
 
 # python3.8 pytexgraph.py /home/opaweynch/Documents/git/ICGP-results/results/2021-09-01T17:44:01.968_boxing
 
