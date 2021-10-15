@@ -18,26 +18,28 @@ from pdf2image import convert_from_path
 
 # COMMANDS
 ONLYENCO = False
-ONLYCONT = True
-SHOWGRAPHS = True
+ONLYCONT = False
+SHOWGRAPHS = False
 DOFRAMES = True
 SHOWFRAMES = True
 DOVIDEO = False
 
-PRINTPDFLATEXOUT = True
+PRINTPDFLATEXOUT = False
 
 # Meta parameters
 SEED = 1234
-MAX_FRAME = 1 # None implies finding the max
+MAX_FRAME = 3 # None implies finding the max
 DIR_PATH = os.path.dirname(os.path.realpath(__file__))
 IMG_EXT = ".png"
 
 # Graph layout
 GRAPHBACK = True
 BUFFERCLIP = True
-NOBUFFER = False # Set to True to display nodes names instead of buffers
-ACTIVE_COLOR = "red"
-BACKGROUND_COLOR = "white"
+PRINTBUFFER = True
+COLOR_ACTIVE = "red"
+COLOR_INACTIVE = "black"
+COLOR_INACTIVE_EDGE = "black!50"
+COLOR_BACKGROUND = "white"
 HALOEDGELABELS = False
 BACKGROUNDEDGELABELS = True
 ENABLE_MANUAL_POS = True
@@ -88,24 +90,24 @@ POS = {
 			"9": (2, 2.62), "12": (5, 2.62), "18": (8, 2.62), "out18": (12, 2.62),
 			"4": (4, 0), "8": (7, 0), "20": (10, 0), "out20": (12, 0),
 			"2": (2, -2.62), "3": (5, -2.62), "7": (8, -2.62),
-			"backgroundnode": {"pos": (5.9, 0.4), "width": (1.8, 9.9, 1.5), "height": 7.8}
+			"backgroundnode": {"pos": (-1.1, 0.4), "width": (1.8, 9.9, 1.5), "height": 7.8}
 		},
 		"controller": {
 			"inputs": {"type": "squares", "origin": (-1, 0), "innerspan": 1, "squarespan": 7},
 			"outputs": {"type": "column", "pos": (10, 0), "span": 1},
-			"sticky": (10, 10),
+			"sticky": (10, 9.6),
 			"54": (5, 8),
 			"56": (5, 6), "66": (7, 6),
-			"63": (7, -1), "81": (7, 2),
-			"59": (5, 4), "80": (7, 4),
-			"87": (7, -3.5),
-			"77": (7, -4.5),
-			"backgroundnode": {"pos": (6, 0), "width": (2, 9, 2), "height": 10}
+			"63": (7, -0.5), "81": (7, 2.5),
+			"59": (2.8, 2.4), "80": (6.7, 4.7),
+			"87": (7, -5),
+			"77": (7, -6),
+			"backgroundnode": {"pos": (-3.7, 1), "width": (5.2, 6.8, 2.1), "height": 19}
 		},
 		"canvas": {
-			"rgbpos": (0, 0.4), "hrgbpos": (0, 0.75), "scorepos": (-0.4, 0.1),
-			"epos": (0, -0.43), "hepos": (0, -0.05),
-			"cpos": (1.1, 0), "hcpos": (1.1, 0.75)
+			"rgbpos": (0.03, 0.5), "hrgbpos": (0.1, 1.12), "scorepos": (0.1, 0.52),
+			"epos": (0, -0.3), "hepos": (0.1, 0.41),
+			"cpos": (1.1, -0.3), "hcpos": (1.2, 1.13)
 		}
 	}
 }
@@ -393,7 +395,7 @@ def getpos(gdict, expdir, indtype):
 	return pos
 	
 def getnodecontent(gdict, node, nodename, indtype, is_out, index=None, width=1.5):
-	if NOBUFFER:
+	if not PRINTBUFFER:
 		return nodename
 	elif indtype == "encoder":
 		wstr = str(width) + "cm"
@@ -424,10 +426,10 @@ def getnodesettings(gdict, expdir, node, nodename, activated, indtype, isout):
 	): # reduced images as background
 		nodesettings = "draw=none, color=black, fill=white, opacity=0.7, rounded corners=0.1cm, minimum width=0.9cm"
 	else:
-		nodecolor = ACTIVE_COLOR if node in activated else "black"
+		nodecolor = COLOR_ACTIVE if node in activated else COLOR_INACTIVE
 		w = "1.8cm" if (indtype == "controller" and isout) else "1cm"
 		sep = "inner sep=0,outer sep=0," if indtype == "encoder" else ""
-		nodesettings = "shape=rectangle, rounded corners=0.1cm, minimum width="+w+", minimum height=0.6cm, fill=white,"+sep+"draw, color="+nodecolor+",fill="+BACKGROUND_COLOR
+		nodesettings = "shape=rectangle, rounded corners=0.1cm, minimum width="+w+", minimum height=0.6cm, fill=white,"+sep+"draw, color="+nodecolor+",fill="+COLOR_BACKGROUND
 	return nodesettings
 
 def getedgelabel(fname):
@@ -439,7 +441,20 @@ def getedgelabel(fname):
 def appendbackgroundnodes(ts, gdict, expdir, indtype):
 	if (ENABLE_MANUAL_POS
 		and expdir in list(POS.keys()) 
-		and indtype in list(POS[expdir].keys())):
+		and indtype in list(POS[expdir].keys())
+	):
+		if (GRAPHBACK
+			and "backgroundnode" in list(POS[expdir][indtype].keys())
+		): # I/O background node
+			d = POS[expdir][indtype]["backgroundnode"]
+			pos = d["pos"]
+			w, h = d["width"], d["height"]
+			nodesettings = "anchor=west, text centered, rectangle split, rectangle split horizontal, rectangle split parts=3, draw, rectangle split draw splits=false, color=black, fill=white, rounded corners=0.1cm, minimum height="+str(h)+"cm"
+			splitsettings = "dashed"
+			pos = str(pos[0]) + "," + str(pos[1])
+			ts.append("\\node["+nodesettings+"] (A) at ("+pos+") {\\nodepart[text width="+str(w[0])+"cm]{one}\\begin{minipage}[t]["+str(h)+"cm]{"+str(w[0])+"cm}\centering \\textbf{Input}\\end{minipage} \\nodepart[text width="+str(w[1])+"cm]{two} \\nodepart[text width="+str(w[2])+"cm]{three} \\begin{minipage}[t]["+str(h)+"cm]{"+str(w[2])+"cm}\centering \\textbf{Output}\\end{minipage}};")
+			ts.append("\\draw["+splitsettings+"] (A.one split south) -- (A.one split north);")
+			ts.append("\\draw["+splitsettings+"] (A.two split south) -- (A.two split north);")
 		if (indtype == "controller"
 			and "inputs" in list(POS[expdir][indtype].keys())
 			and POS[expdir][indtype]["inputs"]["type"] == "squares"
@@ -461,18 +476,6 @@ def appendbackgroundnodes(ts, gdict, expdir, indtype):
 				pos = tuple(map(operator.add, pos, sqshift)) # shift squares
 				pos = str(pos[0]) + "," + str(pos[1])
 				ts.append("\\node[] () at ("+pos+") {"+nodecontent+"};")
-		if (GRAPHBACK
-			and "backgroundnode" in list(POS[expdir][indtype].keys())
-		): # I/O background node
-			d = POS[expdir][indtype]["backgroundnode"]
-			pos = d["pos"]
-			w, h = d["width"], d["height"]
-			nodesettings = "text centered, rectangle split, rectangle split horizontal, rectangle split parts=3, draw, rectangle split draw splits=false, color=black, fill=white, rounded corners=0.1cm, minimum height="+str(h)+"cm"
-			splitsettings = "dashed"
-			pos = str(pos[0]) + "," + str(pos[1])
-			ts.append("\\node["+nodesettings+"] (A) at ("+pos+") {\\nodepart[text width="+str(w[0])+"cm]{one}\\begin{minipage}[t]["+str(h)+"cm]{"+str(w[0])+"cm}\centering \\textbf{Input}\\end{minipage} \\nodepart[text width="+str(w[1])+"cm]{two} \\nodepart[text width="+str(w[2])+"cm]{three} \\begin{minipage}[t]["+str(h)+"cm]{"+str(w[2])+"cm}\centering \\textbf{Output}\\end{minipage}};")
-			ts.append("\\draw["+splitsettings+"] (A.one split south) -- (A.one split north);")
-			ts.append("\\draw["+splitsettings+"] (A.two split south) -- (A.two split north);")
 
 def getnode(indtype, nodesettings, nodename, p, nodecontent):
 	if BUFFERCLIP and indtype == "encoder":
@@ -508,7 +511,7 @@ def appendnodes(ts, gdict, expdir, indtype):
 		ts.append(nd)
 	if indtype == "controller":
 		is_sticky = gdict["metadata"]["is_sticky"]
-		color = ACTIVE_COLOR if is_sticky else BACKGROUND_COLOR
+		color = COLOR_ACTIVE if is_sticky else COLOR_BACKGROUND
 		nodename = "sticky"
 		p = pos[nodename]
 		ts.append("\\node[color="+color+"] ("+nodename+") at ("+p+") {\\textbf{Repeated}};")
@@ -524,7 +527,8 @@ def appendedges(ts, gdict, indtype):
 		edgeopt = "loop left" if edge[0] == edge[1] else "" # self-loop
 		labelopt = "above"
 		labelopt += ", fill=white, rounded corners=0.1cm, fill opacity=0.8, text opacity=1" if BACKGROUNDEDGELABELS else ""
-		edgecolor = ACTIVE_COLOR if edge[1] in activated else "black"
+		labelopt += ",pos=0.75" if indtype == "controller" else ""
+		edgecolor = COLOR_ACTIVE if edge[1] in activated else COLOR_INACTIVE_EDGE
 		pathset = "->, fill=blue, color="+edgecolor
 		if HALOEDGELABELS:
 			ts.append("\\path[->, color=white, ultra thick] ("+src+") edge["+edgeopt+"] node[above] {"+edgelabel+"} ("+dst+");")
@@ -533,7 +537,7 @@ def appendedges(ts, gdict, indtype):
 		output = g["outputs"][i]
 		src = str(output)
 		dst = getnodename(i, g, True)
-		edgecolor = ACTIVE_COLOR if output in outputs else "black"
+		edgecolor = COLOR_ACTIVE if output in outputs else COLOR_INACTIVE_EDGE
 		pathset = "->, color="+edgecolor
 		if HALOEDGELABELS:
 			ts.append("\\path[->, color=white, ultra thick] ("+src+") edge node {} ("+dst+");")
@@ -543,7 +547,7 @@ def graph_texscript(gdict, paths, indtype, printtex=False):
 	ts = [] # texscript
 	ts.append("\\documentclass[crop,tikz]{standalone}")
 	ts.append("\\usepackage{graphicx}")
-	ts.append("\\usetikzlibrary{shapes}")
+	ts.append("\\usetikzlibrary{shapes,automata}")
 	ts.append("\\begin{document}")
 	ts.append("\\begin{tikzpicture}")
 	appendnodes(ts, gdict, paths["exp"], indtype)
@@ -569,18 +573,19 @@ def canvas_texscript(paths, frame, score, printtex=False):
 	e_content = "\includegraphics[width=1cm]{"+e_gpath+"}"
 	c_content = "\includegraphics[width=1cm]{"+c_gpath+"}"
 	scorepos, rgbpos, hrgbpos, epos, hepos, cpos, hcpos = getcanvaspos(expdir)
+	anch = "anchor=south west, "
 	ts = []
 	ts.append("\\documentclass[crop,tikz]{standalone}")
 	ts.append("\\usepackage{graphicx}")
 	ts.append("\\begin{document}")
 	ts.append("\\begin{tikzpicture}")
-	ts.append("\\node[scale=0.2] () at "+hrgbpos+" {1. RGB Image};")
-	ts.append("\\node[scale=0.8] () at "+rgbpos+" {"+rgb_content+"};")
-	ts.append("\\node[scale=0.15, anchor=west] () at "+scorepos+" {Score: "+str(score)+"};")
-	ts.append("\\node[scale=0.2] () at "+hepos+" {2. Encoder};")
-	ts.append("\\node[] () at "+epos+" {"+e_content+"};")
-	ts.append("\\node[scale=0.2] () at "+hcpos+" {3. Controller};")
-	ts.append("\\node[] () at "+cpos+" {"+c_content+"};")
+	ts.append("\\node["+anch+"scale=0.2] () at "+hrgbpos+" {1. RGB Image};")
+	ts.append("\\node["+anch+"scale=0.8] () at "+rgbpos+" {"+rgb_content+"};")
+	ts.append("\\node["+anch+"scale=0.15] () at "+scorepos+" {Score: "+str(score)+"};")
+	ts.append("\\node["+anch+"scale=0.2] () at "+hepos+" {2. CGP Encoder};")
+	ts.append("\\node["+anch+"] () at "+epos+" {"+e_content+"};")
+	ts.append("\\node["+anch+"scale=0.2] () at "+hcpos+" {3. CGP Controller};")
+	ts.append("\\node["+anch+"] () at "+cpos+" {"+c_content+"};")
 	ts.append("\\end{tikzpicture}")
 	ts.append("\\end{document}")
 	if printtex:
