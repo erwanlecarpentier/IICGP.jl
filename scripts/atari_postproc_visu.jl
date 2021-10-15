@@ -177,7 +177,7 @@ function visu_dualcgp_ingame(
     IICGP.reset!(redu) # zero the buffers
     reward = 0.0
     frames = 1
-    prev_action = 0
+    prev_action = Int32(0)
     prev_chosen_output = 1
     features = Vector{Matrix{Float64}}()
     active = [enco.nodes[i].active for i in eachindex(enco.nodes)]
@@ -232,7 +232,7 @@ function visu_dualcgp_ingame(
 
         reward += act(g.ale, action)
         frames += 1
-        action = prev_action
+        prev_action = action
         chosen_output = prev_chosen_output
         if frames > max_frames
             break
@@ -329,7 +329,7 @@ games = ["solaris"] # ["freeway"]  # pong kung_fu_master freeway assault
 reducers = ["pooling"] # Array{String,1}() # ["pooling"]
 exp_dirs, games = get_exp_dir(resdir, min_date=min_date, max_date=max_date,
                               games=games, reducers=reducers)
-max_frames = 3
+max_frames = 100
 render_graph = false
 
 for i in eachindex(exp_dirs)

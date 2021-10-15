@@ -59,7 +59,7 @@ function play_atari(
     game = Game(rom, seed, lck=lck, state_ref=rom_state_ref)
     reward = 0.0
     frames = 0
-    prev_action = 0
+    prev_action = Int32(0)
     while ~game_over(game.ale)
         if rand(mt) > stickiness || frames == 0
             s = get_state(game, grayscale, downscale)
@@ -70,6 +70,7 @@ function play_atari(
         end
         reward += act(game.ale, action)
         frames += 1
+        prev_action = action
         if frames > max_frames
             break
         end

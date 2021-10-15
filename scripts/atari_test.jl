@@ -16,7 +16,7 @@ function play_atari(
     r_traj = Array{Float64,1}()
     e_traj = Array{Float64,1}()
     frames = 0
-    prev_action = 0
+    prev_action = Int32(0)
     while ~game_over(game.ale)
         e = rand()
         if e > stickiness || frames == 0
@@ -31,6 +31,7 @@ function play_atari(
         push!(r_traj, r)
         push!(e_traj, e)
         frames += 1
+        prev_action = action
         if frames > max_frames
             break
         end
