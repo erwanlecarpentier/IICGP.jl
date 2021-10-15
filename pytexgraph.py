@@ -17,19 +17,23 @@ from pdf2image import convert_from_path
 """
 
 # COMMANDS
+ONLYENCO = True
+ONLYCONT = False
+SHOWGRAPHS = True
 DOFRAMES = True
-DOVIDEO = True
-SHOWGRAPHS = False
 SHOWFRAMES = False
+DOVIDEO = False
+
+PRINTPDFLATEXOUT = True
 
 # Meta parameters
 SEED = 1234
-MAX_FRAME = 3 # None implies finding the max
+MAX_FRAME = 1 # None implies finding the max
 DIR_PATH = os.path.dirname(os.path.realpath(__file__))
 IMG_EXT = ".png"
-# IMG_TYPE = PIL.PngImagePlugin.PngImageFile
 
 # Graph layout
+GRAPHBACK = True
 NOBUFFER = False # Set to True to display nodes names instead of buffers
 ACTIVE_COLOR = "red"
 HALOEDGELABELS = False
@@ -81,7 +85,8 @@ POS = {
 			"1": (0, 0),
 			"9": (2, 3), "12": (5, 3), "18": (8, 3), "out18": (12, 3),
 			"4": (4, 0), "8": (7, 0), "20": (10, 0), "out20": (12, 0),
-			"2": (2, -3), "3": (5, -3), "7": (8, -3)
+			"2": (2, -3), "3": (5, -3), "7": (8, -3),
+			"backgroundnode": {"pos": (6, 0), "width": (2, 9, 2), "height": 10}
 		},
 		"controller": {
 			"inputs": {"type": "squares", "origin": (-1, 0), "innerspan": 1, "squarespan": 7},
@@ -92,7 +97,8 @@ POS = {
 			"63": (7, -1), "81": (7, 2),
 			"59": (5, 4), "80": (7, 4),
 			"87": (7, -3.5),
-			"77": (7, -4.5)
+			"77": (7, -4.5),
+			"backgroundnode": {"pos": (6, 0), "width": (2, 9, 2), "height": 10}
 		},
 		"canvas": {
 			"rgbpos": (0, 0.4), "hrgbpos": (0, 0.75), "scorepos": (-0.4, 0.1),
@@ -384,14 +390,16 @@ def getpos(gdict, expdir, indtype):
 	pos = postostr(pos)
 	return pos
 	
-def getnodecontent(gdict, node, nodename, indtype, is_out, index=None, width="1cm"):
+def getnodecontent(gdict, node, nodename, indtype, is_out, index=None, width=1.5):
 	if NOBUFFER:
 		return nodename
 	elif indtype == "encoder":
+		wstr = str(width) + "cm"
 		if is_out:
-			return "\includegraphics[width="+width+"]{"+gdict["reducer"]["buffer"][node]+"}"
+			return "\includegraphics[width="+wstr+"]{"+gdict["reducer"]["buffer"][node]+"}"
 		else:
-			return "\includegraphics[width="+width+"]{"+gdict[indtype]["buffer"][node]+"}"
+			hstr = str(0.76 * width) + "cm"
+			return "\includegraphics[width="+wstr+", height="+hstr+"]{"+gdict[indtype]["buffer"][node]+"}"
 	elif indtype == "controller":
 		if is_out:
 			action_name_in_ale = gdict["controller"]["actions"][index]
@@ -426,31 +434,42 @@ def getedgelabel(fname):
 		return fname[2:].replace('_', ' ')
 
 def appendbackgroundnodes(ts, gdict, expdir, indtype):
-	if (
-		indtype == "controller"
-		and ENABLE_MANUAL_POS
+	if (ENABLE_MANUAL_POS
 		and expdir in list(POS.keys()) 
-		and indtype in list(POS[expdir].keys())
-		and "inputs" in list(POS[expdir][indtype].keys())
-		and POS[expdir][indtype]["inputs"]["type"] == "squares"
-	): # reduced images as background
-		posdict = POS[expdir][indtype]["inputs"]
-		n_squares = gdict["encoder"]["n_out"]
-		nodes_per_square = gdict[indtype]["n_in"] / n_squares
-		size = math.sqrt(nodes_per_square)
-		assert float(size).is_integer(), "impossible square size: " + str(size)
-		width = str(posdict["innerspan"]*size)+"cm"
-		for i in range(n_squares):
-			node = gdict["encoder"]["outputs"][i]
-			nodename = getnodename(i, gdict["encoder"], True)
-			isout = True
-			nodecontent = getnodecontent(gdict, node, nodename, "encoder", isout, i, width=width)
-			pos = posdict["origin"]
-			current_square = i + 1
-			sqshift = (0, ((n_squares+1)/2-current_square)*posdict["squarespan"])
-			pos = tuple(map(operator.add, pos, sqshift)) # shift squares
+		and indtype in list(POS[expdir].keys())):
+		if (indtype == "controller"
+			and "inputs" in list(POS[expdir][indtype].keys())
+			and POS[expdir][indtype]["inputs"]["type"] == "squares"
+		): # reduced images as background
+			posdict = POS[expdir][indtype]["inputs"]
+			n_squares = gdict["encoder"]["n_out"]
+			nodes_per_square = gdict[indtype]["n_in"] / n_squares
+			size = math.sqrt(nodes_per_square)
+			assert float(size).is_integer(), "impossible square size: " + str(size)
+			width = posdict["innerspan"]*size
+			for i in range(n_squares):
+				node = gdict["encoder"]["outputs"][i]
+				nodename = getnodename(i, gdict["encoder"], True)
+				isout = True
+				nodecontent = getnodecontent(gdict, node, nodename, "encoder", isout, i, width=width)
+				pos = posdict["origin"]
+				current_square = i + 1
+				sqshift = (0, ((n_squares+1)/2-current_square)*posdict["squarespan"])
+				pos = tuple(map(operator.add, pos, sqshift)) # shift squares
+				pos = str(pos[0]) + "," + str(pos[1])
+				ts.append("\\node[] () at ("+pos+") {"+nodecontent+"};")
+		if (GRAPHBACK
+			and "backgroundnode" in list(POS[expdir][indtype].keys())
+		): # I/O background node
+			d = POS[expdir][indtype]["backgroundnode"]
+			pos = d["pos"]
+			w, h = d["width"], d["height"]
+			nodesettings = "text centered, rectangle split, rectangle split horizontal, rectangle split parts=3, draw, rectangle split draw splits=false, rounded corners=0.1cm, minimum height="+str(h)+"cm"
+			splitsettings = "dashed"
 			pos = str(pos[0]) + "," + str(pos[1])
-			ts.append("\\node[] () at ("+pos+") {"+nodecontent+"};")
+			ts.append("\\node["+nodesettings+"] (A) at ("+pos+") {\\nodepart[text width="+str(w[0])+"cm]{one}\\begin{minipage}[t]["+str(h)+"cm]{"+str(w[0])+"cm}\centering Input\\end{minipage} \\nodepart[text width="+str(w[1])+"cm]{two} \\nodepart[text width="+str(w[2])+"cm]{three} \\begin{minipage}[t]["+str(h)+"cm]{"+str(w[0])+"cm}\centering Output\\end{minipage}};")
+			ts.append("\\draw["+splitsettings+"] (A.one split south) -- (A.one split north);")
+			ts.append("\\draw["+splitsettings+"] (A.two split south) -- (A.two split north);")
 
 def appendnodes(ts, gdict, expdir, indtype):
 	g = gdict[indtype]
@@ -471,7 +490,7 @@ def appendnodes(ts, gdict, expdir, indtype):
 		nodename = getnodename(i, g, True)
 		p = pos[nodename]
 		isout = True
-		nodecontent = getnodecontent(gdict, node, nodename, indtype, isout, i)
+		nodecontent = getnodecontent(gdict, node, nodename, indtype, isout, i, width=1)
 		nodesettings = getnodesettings(gdict, expdir, node, nodename, outputs, indtype, isout)
 		ts.append("\\node["+nodesettings+"] ("+nodename+") at ("+p+") {"+nodecontent+"};")
 	if indtype == "controller":
@@ -511,6 +530,7 @@ def graph_texscript(gdict, paths, indtype, printtex=False):
 	ts = [] # texscript
 	ts.append("\\documentclass[crop,tikz]{standalone}")
 	ts.append("\\usepackage{graphicx}")
+	ts.append("\\usetikzlibrary{shapes}")
 	ts.append("\\begin{document}")
 	ts.append("\\begin{tikzpicture}")
 	appendnodes(ts, gdict, paths["exp"], indtype)
@@ -541,12 +561,12 @@ def canvas_texscript(paths, frame, score, printtex=False):
 	ts.append("\\usepackage{graphicx}")
 	ts.append("\\begin{document}")
 	ts.append("\\begin{tikzpicture}")
-	ts.append("\\node[scale=0.3] () at "+hrgbpos+" {RGB Image};")
+	ts.append("\\node[scale=0.2] () at "+hrgbpos+" {1. RGB Image};")
 	ts.append("\\node[scale=0.8] () at "+rgbpos+" {"+rgb_content+"};")
-	ts.append("\\node[scale=0.2, anchor=west] () at "+scorepos+" {Score: "+str(score)+"};")
-	ts.append("\\node[scale=0.3] () at "+hepos+" {Encoder};")
+	ts.append("\\node[scale=0.15, anchor=west] () at "+scorepos+" {Score: "+str(score)+"};")
+	ts.append("\\node[scale=0.2] () at "+hepos+" {2. Encoder};")
 	ts.append("\\node[] () at "+epos+" {"+e_content+"};")
-	ts.append("\\node[scale=0.3] () at "+hcpos+" {Controller};")
+	ts.append("\\node[scale=0.2] () at "+hcpos+" {3. Controller};")
 	ts.append("\\node[] () at "+cpos+" {"+c_content+"};")
 	ts.append("\\end{tikzpicture}")
 	ts.append("\\end{document}")
@@ -559,7 +579,7 @@ def canvas_texscript(paths, frame, score, printtex=False):
 	return ts
 	
 def runtex(fname, savedir, texsavepath, iscanvas=False):
-	f = open('/dev/null', 'w')
+	f = sys.stdout if PRINTPDFLATEXOUT else open('/dev/null', 'w')
 	subprocess.run(
 		["pdflatex", "-interaction", "nonstopmode",
 		"-output-directory", savedir, texsavepath],
@@ -597,9 +617,16 @@ def build_canvas(texscript, paths, frame):
 		canvastopng(fname, savedir)
 
 def make_graphs(paths, frame, gdict):
-	for indtype in ["controller", "encoder"]:
+	if ONLYENCO:
+		indtypes = ["encoder"]
+	elif ONLYCONT:
+		indtypes = ["controller"]
+	else:
+		indtypes = ["controller", "encoder"]
+	for indtype in indtypes:
 		texscript = graph_texscript(gdict, paths, indtype)
 		build_graph(texscript, paths, frame, indtype)
+		if ONLYENCO or ONLYCONT: exit()
 		
 def delete_graphs(paths, frame):
 	savedir = paths["metadata"]
