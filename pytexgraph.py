@@ -18,13 +18,13 @@ from pdf2image import convert_from_path
 
 # COMMANDS
 DOFRAMES = True
-DOVIDEO = False
+DOVIDEO = True
 SHOWGRAPHS = False
-SHOWFRAMES = True
+SHOWFRAMES = False
 
 # Meta parameters
 SEED = 1234
-MAX_FRAME = 1 # None implies finding the max
+MAX_FRAME = 3 # None implies finding the max
 DIR_PATH = os.path.dirname(os.path.realpath(__file__))
 IMG_EXT = ".png"
 # IMG_TYPE = PIL.PngImagePlugin.PngImageFile
@@ -559,8 +559,12 @@ def canvas_texscript(paths, frame, score, printtex=False):
 	return ts
 	
 def runtex(fname, savedir, texsavepath, iscanvas=False):
-	subprocess.run(["pdflatex", "-interaction", "nonstopmode",
-			"-output-directory", savedir, texsavepath])
+	f = open('/dev/null', 'w')
+	subprocess.run(
+		["pdflatex", "-interaction", "nonstopmode",
+		"-output-directory", savedir, texsavepath],
+		stdout=f, stderr=f, capture_output=False
+	)
 	# clean
 	for ext in [".tex", ".aux", ".log"]:
 		os.remove(savedir + fname + ext)
@@ -621,11 +625,11 @@ def make_video(paths, max_frame, verbose=True):
 	ranges = [range(i, i+fspan) for i in range(1, max_frame + 1 - fspan, fspan)]
 	ranges.append(range(len(ranges) * fspan + 1, max_frame + 1))
 	subvid_index = 0
-	if verbose: print("Creating video")
+	if verbose: print("\nCreating video")
 	
 	# Creating sub-videos
 	for r in ranges:
-		if verbose: print("\nLoading images from", r[0], "to", r[-1], "out of", max_frame, ":")
+		if verbose: print("Loading images from", r[0], "to", r[-1], "out of", max_frame, ":")
 		img_array = []
 		for frame in tqdm(r):
 			fname = bufferdir + str(frame) + "_canvas.png"
@@ -659,16 +663,29 @@ def make_video(paths, max_frame, verbose=True):
 	for f in tqdm(subvideofnames):
 		os.remove(f)
 	if verbose: print("Successfully created video!")
+	
+def make_frames(paths, max_frame, verbose=True):
+	if verbose:
+		spth = paths["metadata"]
+		print("Creating frames")
+		print("Number of frames :", str(max_frame))
+		print("Experiment id    :", paths["exp"])
+		print("Experiment path  :", os.path.dirname(os.path.dirname(spth)))
+		print("Saving frames at :", spth)
+	for frame in tqdm(range(1, max_frame + 1)):
+		gdict = gdict_from_paths(paths, frame)
+		score = gdict["metadata"]["score"]
+		make_graphs(paths, frame, gdict)
+		make_canvas(paths, frame, score)
+	if verbose: print("Successfully created frames!")
 
+"""
+Main make method calling frame-maker and video-maker sequentially.
+"""
 def make(exp_dir, max_frame):
 	paths = get_paths(exp_dir)
 	random.seed(SEED)
-	if DOFRAMES:
-		for frame in range(1, max_frame + 1):
-			gdict = gdict_from_paths(paths, frame)
-			score = gdict["metadata"]["score"]
-			make_graphs(paths, frame, gdict)
-			make_canvas(paths, frame, score)
+	if DOFRAMES: make_frames(paths, max_frame)
 	if DOVIDEO: make_video(paths, max_frame)
 
 if __name__ == "__main__":
