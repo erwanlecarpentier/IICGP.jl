@@ -11,14 +11,20 @@ from tqdm import tqdm
 import operator
 from pdf2image import convert_from_path
 
+"""
+15 fps:
+1000 frames <-> 1min video <-> 1h processing
+"""
+
 # COMMANDS
 DOFRAMES = True
-DOVIDEO = True
-SHOWFRAMES = False
+DOVIDEO = False
+SHOWGRAPHS = True
+SHOWFRAMES = True
 
 # Meta parameters
 SEED = 1234
-MAX_FRAME = None # None
+MAX_FRAME = 1 # None implies finding the max
 DIR_PATH = os.path.dirname(os.path.realpath(__file__))
 IMG_EXT = ".png"
 # IMG_TYPE = PIL.PngImagePlugin.PngImageFile
@@ -107,7 +113,7 @@ EDGELABELS = {
 }
 
 ACTIONLABELS = {
-	0: "$\\bullet$",
+	0: "$\\quad$",
 	1: "$\\bullet$",
 	2: "$\\uparrow$",
 	3: "$\\rightarrow$",
@@ -298,8 +304,8 @@ def squarepos(gdict, posdict, n_nodes, index):
 	assert float(size).is_integer(), "impossible square size: " + str(size)
 	in_square_index = (index-1) % nodes_per_square
 	current_square = math.ceil(index / nodes_per_square)
-	row = int(in_square_index % size)
-	col = math.floor(in_square_index / size)
+	row = math.floor(in_square_index / size)
+	col = int(in_square_index % size)
 	innerspan = posdict["innerspan"]
 	pos = ((col-(size-1)/2)*innerspan, (-row+(size-1)/2)*innerspan)
 	pos = tuple(map(operator.add, pos, posdict["origin"])) # shift to origin
@@ -554,14 +560,14 @@ def canvas_texscript(paths, frame, printtex=True):
 		print(100*"-")
 	return ts
 	
-def runtex(fname, savedir, texsavepath):
+def runtex(fname, savedir, texsavepath, iscanvas=False):
 	subprocess.run(["pdflatex", "-interaction", "nonstopmode",
 			"-output-directory", savedir, texsavepath])
 	# clean
 	for ext in [".tex", ".aux", ".log"]:
 		os.remove(savedir + fname + ext)
 	# evince
-	if SHOWFRAMES:
+	if (iscanvas and SHOWFRAMES) or ((not iscanvas) and SHOWGRAPHS):
 		subprocess.run(["evince", savedir + fname + ".pdf"])
 	
 def canvastopng(fname, savedir):
@@ -584,15 +590,16 @@ def build_canvas(texscript, paths, frame):
 	fname = canvasfname(frame)
 	texsavepath = savedir + fname + ".tex"
 	writeat(texsavepath, texscript)
-	runtex(fname, savedir, texsavepath)
+	runtex(fname, savedir, texsavepath, iscanvas=True)
 	if TOPNG:
 		canvastopng(fname, savedir)
 
 def make_graphs(paths, frame):
 	gdict = gdict_from_paths(paths, frame)
-	for indtype in ["encoder", "controller"]:
+	for indtype in ["controller", "encoder"]:
 		texscript = graph_texscript(gdict, paths, indtype)
 		build_graph(texscript, paths, frame, indtype)
+		exit()
 		
 def delete_graphs(paths, frame):
 	savedir = paths["metadata"]

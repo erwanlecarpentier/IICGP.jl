@@ -95,6 +95,7 @@ end
 function get_metadata(
     action::T,
     is_sticky::Bool,
+    score::Float64,
     e_activated::Vector{Int16},
     e_output::Vector{Int16},
     c_activated::Vector{Int16},
@@ -103,6 +104,7 @@ function get_metadata(
     metadata = Dict(
         "action"=>action,
         "is_sticky"=>is_sticky,
+        "score"=>score,
         "encoder"=>Dict("activated"=>e_activated, "outputs"=>e_output),
         "controller"=>Dict("activated"=>c_activated, "outputs"=>[c_output])
     )
@@ -209,8 +211,8 @@ function visu_dualcgp_ingame(
 
         # Saving
         if do_save
-            metadata = get_metadata(action, is_sticky, e_activated, e_output,
-                                    c_activated, c_output)
+            metadata = get_metadata(action, is_sticky, reward, e_activated,
+                                    e_output, c_activated, c_output)
             save_metadata(metadata, buffer_path, frames)
             save_rgb(g, buffer_path, frames)
             save_enco_buffer(enco, buffer_path, frames)
@@ -327,7 +329,7 @@ games = ["solaris"] # ["freeway"]  # pong kung_fu_master freeway assault
 reducers = ["pooling"] # Array{String,1}() # ["pooling"]
 exp_dirs, games = get_exp_dir(resdir, min_date=min_date, max_date=max_date,
                               games=games, reducers=reducers)
-max_frames = 10000
+max_frames = 3
 render_graph = false
 
 for i in eachindex(exp_dirs)
