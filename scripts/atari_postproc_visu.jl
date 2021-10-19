@@ -191,7 +191,10 @@ function visu_dualcgp_ingame(
         s = get_state(g, grayscale, downscale)
         rgb = get_rgb(g)
         is_sticky = rand(mt) < stickiness
-        if !is_sticky || frames == 1
+        if frames == 1
+            is_sticky = false
+        end
+        if !is_sticky
             features, output = IICGP.process_f(enco, redu, cont, s)
             chosen_output = argmax(output)
             action = g.actions[chosen_output]
@@ -233,7 +236,7 @@ function visu_dualcgp_ingame(
         reward += act(g.ale, action)
         frames += 1
         prev_action = action
-        chosen_output = prev_chosen_output
+        prev_chosen_output = chosen_output
         if frames > max_frames
             break
         end
@@ -329,7 +332,7 @@ games = ["solaris"] # ["freeway"]  # pong kung_fu_master freeway assault
 reducers = ["pooling"] # Array{String,1}() # ["pooling"]
 exp_dirs, games = get_exp_dir(resdir, min_date=min_date, max_date=max_date,
                               games=games, reducers=reducers)
-max_frames = 10000
+max_frames = 4
 render_graph = false
 
 for i in eachindex(exp_dirs)

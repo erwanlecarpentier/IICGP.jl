@@ -28,14 +28,14 @@ PRINTPDFLATEXOUT = False
 
 # Meta parameters
 SEED = 1234
-MAX_FRAME = 3 # None implies finding the max
+MAX_FRAME = 1 # None implies finding the max
 DIR_PATH = os.path.dirname(os.path.realpath(__file__))
 IMG_EXT = ".png"
 
 # Graph layout
 GRAPHBACK = True
 BUFFERCLIP = True
-PRINTBUFFER = True
+PRINTBUFFER = False
 COLOR_ACTIVE = "red"
 COLOR_INACTIVE = "black"
 COLOR_INACTIVE_EDGE = "black!50"
@@ -426,7 +426,8 @@ def getnodesettings(gdict, expdir, node, nodename, activated, indtype, isout):
 	): # reduced images as background
 		nodesettings = "draw=none, color=black, fill=white, opacity=0.7, rounded corners=0.1cm, minimum width=0.9cm"
 	else:
-		nodecolor = COLOR_ACTIVE if node in activated else COLOR_INACTIVE
+		isactive = (node in activated) and (not gdict["metadata"]["is_sticky"] or (isout and indtype == "controller"))
+		nodecolor = COLOR_ACTIVE if isactive else COLOR_INACTIVE
 		w = "1.8cm" if (indtype == "controller" and isout) else "1cm"
 		sep = "inner sep=0,outer sep=0," if indtype == "encoder" else ""
 		nodesettings = "shape=rectangle, rounded corners=0.1cm, minimum width="+w+", minimum height=0.6cm, fill=white,"+sep+"draw, color="+nodecolor+",fill="+COLOR_BACKGROUND
@@ -478,7 +479,7 @@ def appendbackgroundnodes(ts, gdict, expdir, indtype):
 				ts.append("\\node[] () at ("+pos+") {"+nodecontent+"};")
 
 def getnode(indtype, nodesettings, nodename, p, nodecontent):
-	if BUFFERCLIP and indtype == "encoder":
+	if BUFFERCLIP and indtype == "encoder" and PRINTBUFFER:
 		#color = nodesettings.split("draw=")[1]
 		return "\\savebox{\\picbox}{"+nodecontent+"} \\node ["+nodesettings+", minimum width=\\wd\\picbox, minimum height=\\ht\\picbox, path picture={\\node at (path picture bounding box.center) {\\usebox{\\picbox}};}] ("+nodename+") at ("+p+") {};"	
 	else:
@@ -528,7 +529,8 @@ def appendedges(ts, gdict, indtype):
 		labelopt = "above"
 		labelopt += ", fill=white, rounded corners=0.1cm, fill opacity=0.8, text opacity=1" if BACKGROUNDEDGELABELS else ""
 		labelopt += ",pos=0.75" if indtype == "controller" else ""
-		edgecolor = COLOR_ACTIVE if edge[1] in activated else COLOR_INACTIVE_EDGE
+		isactive = (edge[1] in activated) and (not gdict["metadata"]["is_sticky"])
+		edgecolor = COLOR_ACTIVE if isactive else COLOR_INACTIVE_EDGE
 		pathset = "->, fill=blue, color="+edgecolor
 		if HALOEDGELABELS:
 			ts.append("\\path[->, color=white, ultra thick] ("+src+") edge["+edgeopt+"] node[above] {"+edgelabel+"} ("+dst+");")
@@ -537,7 +539,8 @@ def appendedges(ts, gdict, indtype):
 		output = g["outputs"][i]
 		src = str(output)
 		dst = getnodename(i, g, True)
-		edgecolor = COLOR_ACTIVE if output in outputs else COLOR_INACTIVE_EDGE
+		isactive = (output in outputs) and (not gdict["metadata"]["is_sticky"])
+		edgecolor = COLOR_ACTIVE if isactive else COLOR_INACTIVE_EDGE
 		pathset = "->, color="+edgecolor
 		if HALOEDGELABELS:
 			ts.append("\\path[->, color=white, ultra thick] ("+src+") edge node {} ("+dst+");")
