@@ -28,7 +28,7 @@ PRINTPDFLATEXOUT = False
 
 # Meta parameters
 SEED = 1234
-MAX_FRAME = 1 # None implies finding the max
+MAX_FRAME = 4 # None implies finding the max
 DIR_PATH = os.path.dirname(os.path.realpath(__file__))
 IMG_EXT = ".png"
 
@@ -413,9 +413,10 @@ def getnodecontent(gdict, node, nodename, indtype, is_out, index=None, width=1.5
 		else:
 			return "$" + str(round(gdict[indtype]["buffer"][node], 2)) + "$"
 			
-def getnodesettings(gdict, expdir, node, nodename, activated, indtype, isout):
+def getnodesettings(gdict, expdir, node, nodename, activated, indtype, isout, iscontout_selected):
+	iscontroller = indtype == "controller"
 	if (
-		indtype == "controller"
+		iscontroller
 		and ENABLE_MANUAL_POS
 		and node <= gdict[indtype]["n_in"]
 		and nodename[:3] != "out"
@@ -426,12 +427,16 @@ def getnodesettings(gdict, expdir, node, nodename, activated, indtype, isout):
 	): # reduced images as background
 		nodesettings = "draw=none, color=black, fill=white, opacity=0.7, rounded corners=0.1cm, minimum width=0.9cm"
 	else:
-		isactive = (node in activated) and (not gdict["metadata"]["is_sticky"] or (isout and indtype == "controller"))
+		issticky = gdict["metadata"]["is_sticky"]
+		isactive = (node in activated) and (not issticky or (isout and iscontroller))
+		if isactive and isout and iscontroller:
+			isactive = not iscontout_selected
+			iscontout_selected = True
 		nodecolor = COLOR_ACTIVE if isactive else COLOR_INACTIVE
 		w = "1.8cm" if (indtype == "controller" and isout) else "1cm"
 		sep = "inner sep=0,outer sep=0," if indtype == "encoder" else ""
 		nodesettings = "shape=rectangle, rounded corners=0.1cm, minimum width="+w+", minimum height=0.6cm, fill=white,"+sep+"draw, color="+nodecolor+",fill="+COLOR_BACKGROUND
-	return nodesettings
+	return nodesettings, iscontout_selected
 
 def getedgelabel(fname):
 	if fname in list(EDGELABELS.keys()):
@@ -492,13 +497,14 @@ def appendnodes(ts, gdict, expdir, indtype):
 	pos = getpos(gdict, expdir, indtype)
 	appendbackgroundnodes(ts, gdict, expdir, indtype)
 	if BUFFERCLIP: ts.append("\\newsavebox{\\picbox}")
+	iscontout_selected = False
 	for node in g["buffer"].keys():
 		nodename = getnodename(node)
 		isinput = node <= g["n_in"]
 		p = pos[nodename]
 		isout = False
 		nodecontent = getnodecontent(gdict, node, nodename, indtype, isout)
-		nodesettings = getnodesettings(gdict, expdir, node, nodename, activated, indtype, isout)
+		nodesettings, iscontout_selected = getnodesettings(gdict, expdir, node, nodename, activated, indtype, isout, iscontout_selected)
 		nd = getnode(indtype, nodesettings, nodename, p, nodecontent)
 		ts.append(nd)
 	for i in range(len(g["outputs"])):
@@ -507,7 +513,7 @@ def appendnodes(ts, gdict, expdir, indtype):
 		p = pos[nodename]
 		isout = True
 		nodecontent = getnodecontent(gdict, node, nodename, indtype, isout, i, width=1)
-		nodesettings = getnodesettings(gdict, expdir, node, nodename, outputs, indtype, isout)
+		nodesettings, iscontout_selected = getnodesettings(gdict, expdir, node, nodename, outputs, indtype, isout, iscontout_selected)
 		nd = getnode(indtype, nodesettings, nodename, p, nodecontent)
 		ts.append(nd)
 	if indtype == "controller":
@@ -535,12 +541,17 @@ def appendedges(ts, gdict, indtype):
 		if HALOEDGELABELS:
 			ts.append("\\path[->, color=white, ultra thick] ("+src+") edge["+edgeopt+"] node[above] {"+edgelabel+"} ("+dst+");")
 		ts.append("\\path["+pathset+"] ("+src+") edge["+edgeopt+"] node["+labelopt+"] {"+edgelabel+"} ("+dst+");")
+	iscontoutedge_selected = False
 	for i in range(len(g["outputs"])):
 		output = g["outputs"][i]
 		src = str(output)
 		dst = getnodename(i, g, True)
 		isactive = (output in outputs) and (not gdict["metadata"]["is_sticky"])
-		edgecolor = COLOR_ACTIVE if isactive else COLOR_INACTIVE_EDGE
+		if isactive and not iscontoutedge_selected:
+			edgecolor = COLOR_ACTIVE
+			iscontoutedge_selected = True
+		else:
+			edgecolor = COLOR_INACTIVE_EDGE
 		pathset = "->, color="+edgecolor
 		if HALOEDGELABELS:
 			ts.append("\\path[->, color=white, ultra thick] ("+src+") edge node {} ("+dst+");")
