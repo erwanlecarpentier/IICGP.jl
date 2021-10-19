@@ -125,13 +125,25 @@ function add_baselines(graphs::Vector{Plots.Plot{Plots.GRBackend}}, game::String
     end
 end
 
-function getcolor(reducer_type::String)
-    if reducer_type == "pooling"
-        return :skyblue3
-    elseif reducer_type == "centroid"
-        return :chocolate1
+function getlabel(labels::Vector{String}, i::Int64, reducer_type::String)
+    if i > length(labels)
+        return string(reducer_type)
     else
-        return :black
+        return labels[i]
+    end
+end
+
+function getcolor(colors::Vector{Symbol}, i::Int64, reducer_type::String)
+    if i > length(colors)
+        if reducer_type == "pooling"
+            return :skyblue3
+        elseif reducer_type == "centroid"
+            return :chocolate1
+        else
+            return :black
+        end
+    else
+        return colors[i]
     end
 end
 
@@ -141,7 +153,11 @@ end
         games::Array{String,1},
         dotime::Bool,
         dosave::Bool;
-        ma::Int64=1
+        savedir_index::Int64=1,
+        ma::Int64=1,
+        baselines::Bool=false,
+        labels::Vector{String}=Vector{String}(),
+        colors::Vector{Symbol}=Vector{Symbol}()
     )
 
 Main results plot/print method.
@@ -151,8 +167,12 @@ function process_results(
     games::Array{String,1},
     dotime::Bool,
     dosave::Bool;
+    savedir_index::Int64=1,
     ma::Int64=1,
-    baselines=false
+    baselines::Bool=false,
+    labels::Vector{String}=Vector{String}(),
+    colors::Vector{Symbol}=Vector{Symbol}()
+
 )
     # Init graphs
     xl = "Generation"
@@ -168,8 +188,8 @@ function process_results(
 
         # Plots
         reducer_type = cfg["reducer"]["type"]
-        label_i = string(reducer_type) # string(games[i], ' ',reducer_type)
-        color_i = getcolor(reducer_type)
+        label_i = getlabel(labels, i, reducer_type)
+        color_i = getcolor(colors, i, reducer_type)
         kernel = OffsetArray(fill(1/(2*ma+1), 2*ma+1), -ma:ma)
         best = (ma == 1) ? log.best : imfilter(log.best, kernel)
         mean = (ma == 1) ? log.mean : imfilter(log.mean, kernel)
@@ -243,8 +263,8 @@ function process_results(
     display(plt_mean)
 
     if dosave
-        exp_name = string(basename(exp_dirs[1])[1:10], "_", games[1])
-        graph_dir = joinpath(dirname(dirname(exp_dirs[1])), "graphs", exp_name)
+        exp_name = string(basename(exp_dirs[savedir_index])[1:10], "_", games[1])
+        graph_dir = joinpath(dirname(dirname(exp_dirs[savedir_index])), "graphs", exp_name)
         mkpath(graph_dir)
         savefig(plt_best, joinpath(graph_dir, "best.png"))
         savefig(plt_mean, joinpath(graph_dir, "mean.png"))
