@@ -332,7 +332,7 @@ games = ["solaris"] # ["freeway"]  # pong kung_fu_master freeway assault
 reducers = ["pooling"] # Array{String,1}() # ["pooling"]
 exp_dirs, games = get_exp_dir(resdir, min_date=min_date, max_date=max_date,
                               games=games, reducers=reducers)
-max_frames = 4
+max_frames = 10000
 render_graph = false
 
 for i in eachindex(exp_dirs)

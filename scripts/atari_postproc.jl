@@ -15,7 +15,7 @@ reducers = ["pooling"]# Vector{String}()
 dotime = false
 dosave = true
 
-labels = ["1 + λ", "GA"] # Vector{String}()
+labels = ["1 + λ (\"deterministic\" game)", "GA (stochastic games)"] # Vector{String}()
 colors = [:skyblue3, :limegreen] # Vector{Symbol}()
 # https://juliagraphics.github.io/Colors.jl/stable/namedcolors/
 savedir_index = 2
