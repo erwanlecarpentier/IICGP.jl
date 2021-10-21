@@ -20,7 +20,7 @@
 CMD_PREFIX="atari_"
 CFGS=("cfg/dualcgpga_atari_pooling.yaml") # WARNING: sync with REDS
 REDS=("ga_pool_") # WARNING: sync with CFGS
-GAMES="asteroids breakout pong space_invaders"
+GAMES="asteroids"
 SCRIPT="scripts/atari_dualcgp_ga.jl"
 PROJECT="$PWD"
 USERNAME=$(whoami)
@@ -49,6 +49,7 @@ for i in "${!CFGS[@]}"; do
 
 		sbatch $CM
 		rm $CM
+		sleep 0.01
 	done
 done
 
