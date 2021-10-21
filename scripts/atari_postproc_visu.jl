@@ -232,7 +232,7 @@ function visu_dualcgp_ingame(
                 visu = cat(visu, snap, dims=3)
             end
         end
-
+        println(reward)
         reward += act(g.ale, action)
         frames += 1
         prev_action = action
@@ -245,7 +245,7 @@ function visu_dualcgp_ingame(
     if do_display
         plot_pipeline(visu)
     end
-    [reward]
+    # [reward]
 end
 
 function save_graph_struct(
@@ -302,6 +302,7 @@ function visu_ingame(
 )
     cfg = cfg_from_exp_dir(exp_dir)
     seed = cfg["seed"]
+    seed = 11123
     stickiness = cfg["stickiness"]
     grayscale = cfg["grayscale"]
     downscale = cfg["downscale"]

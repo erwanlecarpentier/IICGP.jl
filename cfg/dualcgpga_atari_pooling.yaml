@@ -65,7 +65,7 @@ reducer:
 controller:
   n_population: 10
   rows: 1
-  columns: 40
+  columns: 60
   recur: 0.0
   m_rate: 0.1
   out_m_rate: 0.5
