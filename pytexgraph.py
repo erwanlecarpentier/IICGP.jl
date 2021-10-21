@@ -28,14 +28,14 @@ PRINTPDFLATEXOUT = False
 
 # Meta parameters
 SEED = 1234
-MAX_FRAME = 4 # None implies finding the max
+MAX_FRAME = 1 # None implies finding the max
 DIR_PATH = os.path.dirname(os.path.realpath(__file__))
 IMG_EXT = ".png"
 
 # Graph layout
 GRAPHBACK = True
 BUFFERCLIP = True
-PRINTBUFFER = False
+PRINTBUFFER = True
 COLOR_ACTIVE = "red"
 COLOR_INACTIVE = "black"
 COLOR_INACTIVE_EDGE = "black!50"
@@ -433,7 +433,7 @@ def getnodesettings(gdict, expdir, node, nodename, activated, indtype, isout, is
 			isactive = not iscontout_selected
 			iscontout_selected = True
 		nodecolor = COLOR_ACTIVE if isactive else COLOR_INACTIVE
-		w = "1.8cm" if (indtype == "controller" and isout) else "1cm"
+		w = "2cm" if (indtype == "controller" and isout) else "1cm"
 		sep = "inner sep=0,outer sep=0," if indtype == "encoder" else ""
 		nodesettings = "shape=rectangle, rounded corners=0.1cm, minimum width="+w+", minimum height=0.6cm, fill=white,"+sep+"draw, color="+nodecolor+",fill="+COLOR_BACKGROUND
 	return nodesettings, iscontout_selected
