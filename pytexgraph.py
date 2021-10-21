@@ -11,18 +11,13 @@ from tqdm import tqdm
 import operator
 from pdf2image import convert_from_path
 
-"""
-15 fps:
-1000 frames <-> 1min video <-> 1h processing
-"""
-
 # COMMANDS
 ONLYENCO = False
 ONLYCONT = False
 SHOWGRAPHS = False
 DOFRAMES = True
-SHOWFRAMES = True
-DOVIDEO = False
+SHOWFRAMES = False
+DOVIDEO = True
 
 PRINTPDFLATEXOUT = False
 
@@ -704,7 +699,9 @@ def make_video(paths, max_frame, verbose=True):
 		subvid_index += 1
 		
 	# Assembling sub-videos
-	finalvideofname = savedir + "canvas.avi"
+	viddir = os.path.dirname(os.path.dirname(os.path.dirname(savedir)))
+	vidname = os.path.basename(os.path.dirname(savedir)) + ".avi"
+	finalvideofname = viddir + "/" + vidname	
 	video = cv2.VideoWriter(finalvideofname, cv2.VideoWriter_fourcc(*'DIVX'), fps, size)
 	if verbose: print("\nAssembling sub-videos:")
 	for f in tqdm(subvideofnames):
