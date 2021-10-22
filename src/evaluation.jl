@@ -92,7 +92,7 @@ function select_indexes(e::DualCGPGAEvo)
 	# 1. Select elites
 	for i in 1:nrows
 		for j in 1:ncols
-			if e.elites_matrix[i, j]
+			if e.eval_matrix[i, j]
 				push!(indexes, (i, j))
 			end
 		end

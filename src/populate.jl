@@ -91,7 +91,9 @@ function ga_populate(e::DualCGPGAEvo)
     mat_size = size(e.fitness_matrix)
     e.fitness_matrix = -Inf * ones(mat_size...)
     e.elites_matrix = falses(mat_size...)
+    e.eval_matrix = falses(mat_size...)
     for index in new_elite_indexes
         e.elites_matrix[index...] = true
+        e.eval_matrix[index...] = true
     end
 end

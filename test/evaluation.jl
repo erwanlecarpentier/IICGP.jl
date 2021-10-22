@@ -32,6 +32,12 @@ function test_fitness_matrix(e::DualCGPGAEvo)
             end
         end
     end
+    # 5. Test all pairs in eval_matrix are evaluated
+    for i in eachindex(e.elites_matrix)
+        if e.elites_matrix[i]
+            @test e.fitness_matrix[i] > -Inf
+        end
+    end
 end
 
 function test_ind_fitnesses(e::DualCGPGAEvo)
