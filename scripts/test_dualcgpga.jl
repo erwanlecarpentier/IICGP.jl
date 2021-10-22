@@ -15,7 +15,7 @@ resdir = joinpath(rootdir, "results/")
 cfg_name = "cfg/dualcgpga_atari_pooling.yaml"
 mcfg, ecfg, ccfg, reducer, bootstrap = IICGP.dualcgp_config(cfg_name, rom)
 Random.seed!(seed)
-n_iter = 10
+n_iter = 5
 
 # Extend Cambrian mutate function
 function mutate(ind::CGPInd, ind_type::String)
@@ -31,9 +31,11 @@ function fit(e::CGPInd, c::CGPInd, seed::Int64)
     lmin = Int64(round(0.05*lmin)) # Only a fractin is counted
     res = 0.0
     for i in 1:lmin
-        if abs(e.chromosome[i] - c.chromosome[i]) < 0.001
-            res += 1
+        #=if abs(e.chromosome[i] - c.chromosome[i]) < 0.001
+            res += 1 / abs(e.chromosome[i] - c.chromosome[i])
         end
+        =#
+        res += exp( - 500 * abs(e.chromosome[i] - c.chromosome[i]))
     end
     return res
 end
