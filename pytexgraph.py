@@ -12,12 +12,12 @@ import operator
 from pdf2image import convert_from_path
 
 # COMMANDS
-ONLYENCO = False
+ONLYENCO = True
 ONLYCONT = False
-SHOWGRAPHS = False
+SHOWGRAPHS = True
 DOFRAMES = True
 SHOWFRAMES = False
-DOVIDEO = True
+DOVIDEO = False
 
 PRINTPDFLATEXOUT = False
 

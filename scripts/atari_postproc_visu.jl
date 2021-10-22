@@ -244,6 +244,10 @@ function visu_dualcgp_ingame(
     if do_display
         plot_pipeline(visu)
     end
+
+    println("\nGame             : ", game)
+    println("Total return     : ", reward)
+    println("Number of frames : ", frames)
     reward
 end
 
@@ -322,8 +326,6 @@ function visu_ingame(
             downscale, stickiness, do_save=do_save,
             do_display=do_display, buffer_path=buffer_path
         )
-        println("\nGame         : ", game)
-        println("Total return : ", reward)
     end
 end
 

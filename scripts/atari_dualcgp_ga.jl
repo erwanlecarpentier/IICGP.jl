@@ -93,6 +93,18 @@ end
 lck = ReentrantLock()
 fit(e::CGPInd, c::CGPInd, seed::Int64) = play_atari(e, reducer, c, seed, lck)
 
+function fit(e::CGPInd, c::CGPInd, seed::Int64) # TODO remove
+    lmin = min(length(e.chromosome), length(c.chromosome))
+    lmin = Int64(round(0.1*lmin)) # Only a fractin is counted
+    res = 0.0
+    for i in 1:lmin
+        res += (e.chromosome[i] - c.chromosome[i])^2
+    end
+    return res
+end
+
+# fit(e::CGPInd, c::CGPInd, seed::Int64) = sum(e.chromosome) * sum(c.chromosome)
+
 # Create an evolution framework
 evo = IICGP.DualCGPGAEvo(mcfg, ecfg, ccfg, fit, logid, resdir)
 #encoder_init_function=IPCGPInd, game=game
