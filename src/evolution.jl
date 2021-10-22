@@ -32,6 +32,7 @@ mutable struct DualCGPGAEvo <: Cambrian.AbstractEvolution
     fitness_matrix::Matrix{Float64}
     elites_matrix::Matrix{Bool}
     eval_matrix::Matrix{Bool}
+    eval_mutant::Bool
     n_eval::Int64
     n_elite::Int64
     tournament_size::Int64
@@ -81,12 +82,13 @@ function DualCGPGAEvo(
     eval_matrix = falses(mat_size...)
     n_eval = main_config["n_eval"]
     n_elite = main_config["n_elite"]
+    eval_mutant = main_config["eval_mutant"]
     tournament_size = main_config["tournament_size"]
     DualCGPGAEvo(
         config, logid, resdir,
         encoder_config, encoder_sympop, encoder_logger,
         controller_config, controller_sympop, controller_logger,
-        fitness, fitness_matrix, elites_matrix, eval_matrix,
+        fitness, fitness_matrix, elites_matrix, eval_matrix, eval_mutant,
         n_eval, n_elite, tournament_size, 0
     )
 end
