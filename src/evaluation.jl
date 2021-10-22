@@ -89,7 +89,7 @@ function select_indexes(e::DualCGPGAEvo)
 	nrows = size(e.elites_matrix, 1)
 	ncols = size(e.elites_matrix, 2)
 	nmax = max(nrows, ncols)
-	# 1. Select elites
+	# 1. Select elites and maybe other pairs set in eval_matrix (e.g. mutant)
 	for i in 1:nrows
 		for j in 1:ncols
 			if e.eval_matrix[i, j]

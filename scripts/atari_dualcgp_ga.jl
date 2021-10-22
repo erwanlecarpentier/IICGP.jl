@@ -98,7 +98,7 @@ function fit(e::CGPInd, c::CGPInd, seed::Int64) # TODO remove
     lmin = Int64(round(0.1*lmin)) # Only a fractin is counted
     res = 0.0
     for i in 1:lmin
-        res += (e.chromosome[i] - c.chromosome[i])^2
+        res += 1 - abs(e.chromosome[i] - c.chromosome[i])
     end
     return res
 end

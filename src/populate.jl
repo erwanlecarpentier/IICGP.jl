@@ -69,6 +69,7 @@ function ga_populate(e::DualCGPGAEvo)
         end
     end
     # 2. Run tournaments until population is full
+    new_mutant_indexes = Vector{Tuple{Int64, Int64}}()
     ci = CartesianIndices(size(e.fitness_matrix))
     while length(enew) < n_e || length(cnew) < n_c
         echr, cchr = tournament_selection(e, ci)
@@ -84,6 +85,8 @@ function ga_populate(e::DualCGPGAEvo)
             cont_m = mutate(cont, type)
             push!(cnew, SymInd(cont_m.chromosome, 0, type))
         end
+        row, col = length(enew), length(cnew)
+        push!(new_mutant_indexes, (row, col))
     end
     # 3. Set new population and reset matrices
     e.encoder_sympop = enew
@@ -94,6 +97,9 @@ function ga_populate(e::DualCGPGAEvo)
     e.eval_matrix = falses(mat_size...)
     for index in new_elite_indexes
         e.elites_matrix[index...] = true
+        e.eval_matrix[index...] = true
+    end
+    for index in new_mutant_indexes # TODO add the switch eval_mutant
         e.eval_matrix[index...] = true
     end
 end
