@@ -323,7 +323,7 @@ function visu_ingame(
             do_display=do_display, buffer_path=buffer_path
         )
         println("\nGame         : ", game)
-        println("\nTotal return : ", reward)
+        println("Total return : ", reward)
     end
 end
 
@@ -331,7 +331,7 @@ rootdir = joinpath(homedir(), "Documents/git/ICGP-results/")
 resdir = joinpath(rootdir, "results/")
 min_date = DateTime(2021, 09, 01)
 max_date = DateTime(2021, 10, 03)
-games = ["solaris"] # ["freeway"]  # pong kung_fu_master freeway assault
+games = ["boxing"] # ["freeway"]  # pong kung_fu_master freeway assault
 reducers = ["pooling"] # Array{String,1}() # ["pooling"]
 exp_dirs, games = get_exp_dir(resdir, min_date=min_date, max_date=max_date,
                               games=games, reducers=reducers)

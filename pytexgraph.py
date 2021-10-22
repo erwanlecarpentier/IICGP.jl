@@ -23,7 +23,7 @@ PRINTPDFLATEXOUT = False
 
 # Meta parameters
 SEED = 1234
-MAX_FRAME = 1 # None implies finding the max
+MAX_FRAME = None # None implies finding the max
 DIR_PATH = os.path.dirname(os.path.realpath(__file__))
 IMG_EXT = ".png"
 

@@ -109,7 +109,7 @@ function select_indexes(e::DualCGPGAEvo)
 	end
 	eliterows = [i[1] for i in indexes]
 	elitecols = [i[2] for i in indexes]
-	for c in candidates
+	for c in candidates # Only push candidate if the row or col is not evaluated
 		if c[1] ∉ eliterows || c[2] ∉ elitecols
 			push!(indexes, c)
 		end

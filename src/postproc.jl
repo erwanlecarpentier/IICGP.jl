@@ -16,6 +16,7 @@ BASELINES = Dict(
     "frostbite"=>Dict("MTCGP"=>(782,795), "TPG"=>8144.4),
     "gravitar"=>Dict("MTCGP"=>(2350,50)),
     "private_eye"=>Dict("MTCGP"=>(12702.2,4337), "TPG"=>15028.3),
+    "pong"=>Dict("MTCGP"=>(20,0)),
     "riverraid"=>Dict("MTCGP"=>(2914,90), "Prioritized"=>18184.4),
     "solaris"=>Dict("MTCGP"=>(8324,2250)),
     "space_invaders"=>Dict("MTCGP"=>(1001,25), "A3C LSTM"=>23846)
