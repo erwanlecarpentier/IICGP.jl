@@ -146,8 +146,9 @@ function get_exp_dir(
     filtered_res = Array{String,1}()
     filtered_games = Array{String,1}()
     for exp_dir in existing_res
-        exp_date = DateTime(exp_dir[1:23])
-        exp_game = exp_dir[25:end]
+        splt = findnext('_', exp_dir, 1)
+        exp_date = DateTime(exp_dir[1:splt-1])
+        exp_game = exp_dir[splt+1:end]
         if no_time || (min_date < exp_date < max_date)
             if no_specified_games || (exp_game in games)
                 exp_full_path = string(resdir, exp_dir)
