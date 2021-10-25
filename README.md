@@ -86,6 +86,25 @@ Image functions on halved-size image (80x105 = 8400 pixels):
 |---|---|
 |![](images/downscaled.png)|![](gifs/freeway_centroids_cropped.gif)|
 
+# GA - mutant evaluation
+
+	function fit(e::CGPInd, c::CGPInd, seed::Int64)
+		p = 1.0
+		lmin = min(length(e.chromosome), length(c.chromosome))
+		lmin = Int64(round(p*lmin))
+		res = 0.0
+		for i in 1:lmin
+		    if abs(e.chromosome[i] - c.chromosome[i]) < 0.00001
+		        res += 1.0
+		    end
+		end
+		return res
+	end
+
+![](graphs/test-mutant-eval/bestci.png)
+![](graphs/test-mutant-eval/best.png)
+![](graphs/test-mutant-eval/mean.png)
+
 # Suggestions
 
 High priority to low priority:
@@ -151,9 +170,8 @@ Forward pass timing (ms)
 |assault|0.18|0.46|
 |boxing|0.2|1.22|
 
-# Julia Install
+# Julia dev env
 
-- Activate `.`, `instantiate`, `update`, `precompile`, `resolve`
 - `rm Cambrian`
 - `rm CartesianGeneticProgramming`
 - `add https://github.com/erwanlecarpentier/Cambrian.jl.git#ipcgp`
@@ -161,5 +179,5 @@ Forward pass timing (ms)
 
 # Python Install
 
-	source /path/to/my/birtual/environment/bin/activate
+	source /path/to/my/virtual/environment/bin/activate
 	pip install -r py-requirements.txt

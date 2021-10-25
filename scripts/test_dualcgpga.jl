@@ -9,11 +9,12 @@ using Random
 import Cambrian.mutate # function extension
 
 function fit(e::CGPInd, c::CGPInd, seed::Int64)
-    lmin = min(length(e.chromosome), length(c.chromosome))
-    lmin = Int64(round(0.5*lmin)) # Only a fractin is counted
+	p = 1.0
+	lmin = min(length(e.chromosome), length(c.chromosome))
+	lmin = Int64(round(p*lmin))
     res = 0.0
     for i in 1:lmin
-        if abs(e.chromosome[i] - c.chromosome[i]) < 0.0001
+        if abs(e.chromosome[i] - c.chromosome[i]) < 0.00001
             res += 1.0
         end
     end
@@ -29,7 +30,7 @@ cfg_names = [
     "cfg/dualcgpga_atari_pooling.yaml",
     "cfg/dualcgpga_atari_pooling_evalmut_test.yaml"
 ]
-n_iter = 2
+n_iter = 10
 
 mcfg, ecfg, ccfg, reducer, bootstrap = IICGP.dualcgp_config(cfg_names[1], rom)
 function mutate(ind::CGPInd, ind_type::String)
@@ -73,8 +74,8 @@ dotime = false
 dosave = true
 baselines = false
 
-cilabels = ["A", "B"]
-cicolors = [:darkorange1, :slategrey]
+cilabels = ["Random evaluation", "Evaluate mutants"]
+cicolors = [:slategrey, :darkorange1]
 
 for g in games
     exp_dirs, games = get_exp_dir(
