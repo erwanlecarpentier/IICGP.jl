@@ -8,16 +8,30 @@ using Random
 
 import Cambrian.mutate # function extension
 
+function fit(e::CGPInd, c::CGPInd, seed::Int64)
+    lmin = min(length(e.chromosome), length(c.chromosome))
+    lmin = Int64(round(0.5*lmin)) # Only a fractin is counted
+    res = 0.0
+    for i in 1:lmin
+        if abs(e.chromosome[i] - c.chromosome[i]) < 0.0001
+            res += 1.0
+        end
+    end
+    return res
+end
+
+# Settings
 rom = "gravitar"
 seed = 0
 rootdir = dirname(@__DIR__)
 resdir = joinpath(rootdir, "results/")
-cfg_name = "cfg/dualcgpga_atari_pooling.yaml"
-mcfg, ecfg, ccfg, reducer, bootstrap = IICGP.dualcgp_config(cfg_name, rom)
-Random.seed!(seed)
-n_iter = 5
+cfg_names = [
+    "cfg/dualcgpga_atari_pooling.yaml",
+    "cfg/dualcgpga_atari_pooling_evalmut_test.yaml"
+]
+n_iter = 2
 
-# Extend Cambrian mutate function
+mcfg, ecfg, ccfg, reducer, bootstrap = IICGP.dualcgp_config(cfg_names[1], rom)
 function mutate(ind::CGPInd, ind_type::String)
     if ind_type == "encoder"
         return goldman_mutate(ecfg, ind, init_function=IPCGPInd)
@@ -26,57 +40,41 @@ function mutate(ind::CGPInd, ind_type::String)
     end
 end
 
-function fit(e::CGPInd, c::CGPInd, seed::Int64)
-    lmin = min(length(e.chromosome), length(c.chromosome))
-    lmin = Int64(round(0.05*lmin)) # Only a fractin is counted
-    res = 0.0
-    for i in 1:lmin
-        #=if abs(e.chromosome[i] - c.chromosome[i]) < 0.001
-            res += 1 / abs(e.chromosome[i] - c.chromosome[i])
-        end
-        =#
-        res += exp( - 500 * abs(e.chromosome[i] - c.chromosome[i]))
-    end
-    return res
-end
-
+# Iter over configs
+labels = Vector{String}()
 colors = Vector{Symbol}()
-for doem in [false, true]
+for cfg_name in cfg_names
+    # Runs
     for i in 1:n_iter
+        # Random.seed!(seed)
         mcfg, ecfg, ccfg, reducer, bootstrap = IICGP.dualcgp_config(cfg_name, rom)
-        mcfg["eval_mutant"] = doem
+        eval_mutant = mcfg["eval_mutant"]
+        clr = eval_mutant ? :darkorange1 : :slategrey
+        lbl = eval_mutant ? "Evaluate mutants" : "Random evaluation"
+        push!(colors, clr)
+        push!(labels, lbl)
         logid = mcfg["id"]
         evo = IICGP.DualCGPGAEvo(mcfg, ecfg, ccfg, fit, logid, rootdir)
         init_backup(logid, rootdir, cfg_name)
         run!(evo)
-
-        if doem
-            push!(colors, :red)
-        else
-            push!(colors, :green)
-        end
     end
 end
 
-
-
-
-
-# Postproc
-
+## Postproc
 fetch_backup(rootdir, clean=true)
 
 # Filters parameters
-min_date = DateTime(2021, 10, 20)
-max_date = DateTime(2021, 10, 23)
+min_date = DateTime(2021, 10, 24)
+max_date = DateTime(2021, 10, 26)
 savedir_index = 1
-labels = Vector{String}()
-# colors = Vector{Symbol}()
 games = ["gravitar"]
 reducers = ["pooling"]# Vector{String}()
 dotime = false
 dosave = true
 baselines = false
+
+cilabels = ["A", "B"]
+cicolors = [:darkorange1, :slategrey]
 
 for g in games
     exp_dirs, games = get_exp_dir(
@@ -85,6 +83,14 @@ for g in games
     )
     process_results(
         exp_dirs, games, dotime, dosave, ma=1, baselines=baselines,
-        labels=labels, colors=colors, savedir_index=savedir_index
+        labels=labels, colors=colors, savedir_index=savedir_index,
+        plotci=true, cilabels=cilabels, cicolors=cicolors
     )
+end
+
+doclean = false
+if doclean
+    graphdir = joinpath(rootdir, "graphs", "2021-10-25_gravitar")
+    rm(resdir, recursive=true, force=true)
+    rm(graphdir, recursive=true, force=true)
 end

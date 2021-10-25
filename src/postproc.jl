@@ -4,6 +4,7 @@ using Plots
 using ImageFiltering
 using OffsetArrays
 using BenchmarkTools
+using Statistics
 using TimerOutputs
 
 BASELINES = Dict(
@@ -149,41 +150,163 @@ function getcolor(colors::Vector{Symbol}, i::Int64, reducer_type::String)
 end
 
 """
+    plot_cibest(
+        exp_dirs::Vector{String},
+        games::Vector{String},
+        gamename::String,
+        labels::Vector{String},
+        colors::Vector{Symbol};
+        ma::Int64=1
+    )
+
+Plot the fitness of the best individual per each generation with
+confidence intervals across all experiments using the exact same
+configuration dictionary.
+"""
+function plot_cibest(
+    exp_dirs::Vector{String},
+    games::Vector{String},
+    gamename::String,
+    labels::Vector{String},
+    colors::Vector{Symbol};
+    ma::Int64=1
+)
+    # 1. Link cfgs and indexes to categories
+    n_cat = 0
+    cfg2cat = Dict{Dict{Any,Any},Int64}() # Link cfg to category
+    ind2cat = Dict{Int64,Int64}() # Link index to category
+    for i in eachindex(exp_dirs)
+        exp_dir = exp_dirs[i]
+        cfg = cfg_from_exp_dir(exp_dir)
+        if cfg in keys(cfg2cat) # Link index to existing category
+            cat = cfg2cat[cfg]
+            ind2cat[i] = cat
+        else # Add a new category
+            n_cat += 1
+            cfg2cat[cfg] = n_cat
+            ind2cat[i] = n_cat
+        end
+    end
+    # 2. Fetch logs
+    cat2logs = Dict{Int64,Vector{Vector{Float64}}}()
+    for i in eachindex(exp_dirs)
+        exp_dir = exp_dirs[i]
+        log = log_from_exp_dir(exp_dir)
+        kernel = OffsetArray(fill(1/(2*ma+1), 2*ma+1), -ma:ma)
+        best_i = (ma == 1) ? log.best : imfilter(log.best, kernel)
+        cat = ind2cat[i]
+        if cat ∈ keys(cat2logs)
+            push!(cat2logs[cat], best_i)
+        else
+            cat2logs[cat] = [best_i]
+        end
+    end
+    # 3. Compute mean and confidence intervals
+    cat2mean = Dict{Int64,Vector{Float64}}()
+    cat2ci = Dict{Int64,Vector{Float64}}()
+    for cat in 1:n_cat
+        cat2mean[cat] = mean(cat2logs[cat])
+        cat2ci[cat] = std(cat2logs[cat])
+    end
+    # 4. Fetch labels and colors
+    @assert length(labels)==n_cat "please provide exactly one label per category"
+    @assert length(colors)==n_cat "please provide exactly one color per category"
+    cat2lab = Dict{Int64,String}()
+    cat2col = Dict{Int64,Symbol}()
+    for cat in 1:n_cat
+        cat2lab[cat] = labels[cat]
+        cat2col[cat] = colors[cat]
+        cfg = Dict{Any,Any}()
+        for k in keys(cfg2cat)
+            if cfg2cat[k] == cat
+                cfg = k
+            end
+        end
+        println()
+        println("-"^100)
+        println("Printing map:")
+        println("Number of detected experiments: ", length(cat2logs[cat]))
+        println("Label: ", labels[cat])
+        println("Color: ", colors[cat])
+        println("Configuration: ", cfg)
+        println("-"^100)
+        println()
+    end
+    # 5. Plot
+    xlabel = "Generation"
+    ylabel = string("Best score ", gamename)
+    plt = plot(xlabel=xlabel, ylabel=ylabel)
+    for cat in 1:n_cat
+        y = cat2mean[cat]
+        ci = cat2ci[cat]
+        lab = cat2lab[cat]
+        col = cat2col[cat]
+        plot!(plt, y, ribbon=ci, label=lab, color=col)
+    end
+    #=
+    # Re-plot particular experiments
+    for i in eachindex(exp_dirs)
+        exp_dir = exp_dirs[i]
+        cfg = cfg_from_exp_dir(exp_dir)
+        log = log_from_exp_dir(exp_dir)
+        kernel = OffsetArray(fill(1/(2*ma+1), 2*ma+1), -ma:ma)
+        best = (ma == 1) ? log.best : imfilter(log.best, kernel)
+        mean = (ma == 1) ? log.mean : imfilter(log.mean, kernel)
+        std = (ma == 1) ? log.std : imfilter(log.std, kernel)
+        save_gen = cfg["save_gen"]
+        x = 1:save_gen:save_gen*length(best)
+        plot!(plt, x, best)#, label=label_i, color=color_i)
+    end
+    =#
+    plt
+end
+
+"""
     function process_results(
-        exp_dirs::Array{String,1},
-        games::Array{String,1},
+        exp_dirs::Vector{String},
+        games::Vector{String},
         dotime::Bool,
         dosave::Bool;
         savedir_index::Int64=1,
         ma::Int64=1,
         baselines::Bool=false,
         labels::Vector{String}=Vector{String}(),
-        colors::Vector{Symbol}=Vector{Symbol}()
+        colors::Vector{Symbol}=Vector{Symbol}(),
+        plotci::Bool=false,
+        cilabels::Vector{String}=Vector{String}(),
+        cicolors::Vector{Symbol}=Vector{Symbol}()
     )
 
 Main results plot/print method.
 """
 function process_results(
-    exp_dirs::Array{String,1},
-    games::Array{String,1},
+    exp_dirs::Vector{String},
+    games::Vector{String},
     dotime::Bool,
     dosave::Bool;
     savedir_index::Int64=1,
     ma::Int64=1,
     baselines::Bool=false,
     labels::Vector{String}=Vector{String}(),
-    colors::Vector{Symbol}=Vector{Symbol}()
-
+    colors::Vector{Symbol}=Vector{Symbol}(),
+    plotci::Bool=false,
+    cilabels::Vector{String}=Vector{String}(),
+    cicolors::Vector{Symbol}=Vector{Symbol}()
 )
     # Init graphs
+    game = games[1]
+    gamename = titlecase(replace(game, "_"=>" "))
     xl = "Generation"
-    gamename = titlecase(replace(games[1], "_"=>" "))
-    plt_best = plot(ylabel=string("Best score ", gamename), xlabel=xl)
-    plt_mean = plot(ylabel=string("Mean score ", gamename), xlabel=xl)
+    yl_best = string("Best score ", gamename)
+    yl_mean = string("Mean score ", gamename)
+    plt_best = plot(ylabel=yl_best, xlabel=xl)
+    plt_mean = plot(ylabel=yl_mean, xlabel=xl)
+    if plotci
+        plt_mbst = plot_cibest(exp_dirs, games, gamename, cilabels, cicolors, ma=ma)
+    end
 
     for i in eachindex(exp_dirs)
         exp_dir = exp_dirs[i]
-        # exp_date = basename(exp_dir)[1:10]
         cfg = cfg_from_exp_dir(exp_dir)
         log = log_from_exp_dir(exp_dir)
 
@@ -219,11 +342,10 @@ function process_results(
             push!(p, ["  - features_size", cfg["reducer"]["features_size"]])
             push!(p, ["  - pooling_function", cfg["reducer"]["pooling_function"]])
         end
-        push!(p, ["Forward pass timing (ms)", ""])
-
 
         # Timer
         if dotime
+            push!(p, ["Forward pass timing (ms)", ""])
             is_dual = isfile(joinpath(exp_dirs[i], "logs/encoder.csv"))
             total_time = 0.0
             grayscale = cfg["grayscale"]
@@ -258,16 +380,25 @@ function process_results(
         end
     end
     if baselines
-        add_baselines([plt_best, plt_mean], games[1])
+        add_baselines([plt_best, plt_mean], game)
     end
     display(plt_best)
     display(plt_mean)
+    if plotci
+        if baselines
+            add_baselines([plt_mbst], game)
+        end
+        display(plt_mbst)
+    end
 
     if dosave
-        exp_name = string(basename(exp_dirs[savedir_index])[1:10], "_", games[1])
+        exp_name = string(basename(exp_dirs[savedir_index])[1:10], "_", game)
         graph_dir = joinpath(dirname(dirname(exp_dirs[savedir_index])), "graphs", exp_name)
         mkpath(graph_dir)
         savefig(plt_best, joinpath(graph_dir, "best.png"))
         savefig(plt_mean, joinpath(graph_dir, "mean.png"))
+        if plotci
+            savefig(plt_mbst, joinpath(graph_dir, "bestci.png"))
+        end
     end
 end

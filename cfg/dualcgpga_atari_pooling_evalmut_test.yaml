@@ -6,7 +6,7 @@ d_fitness: 1
 n_gen: 1000 # 50000 # TODO put back
 n_eval: 36 # Maximum number of evaluations per generation
 n_elite: 5 # Number of elite pairs per generation
-eval_mutant: false
+eval_mutant: true
 tournament_size: 3
 log_gen: 1 # 250 # TODO put back
 save_gen: 1 # 250 # TODO put back
