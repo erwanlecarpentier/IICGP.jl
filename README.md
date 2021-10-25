@@ -101,9 +101,9 @@ Image functions on halved-size image (80x105 = 8400 pixels):
 		return res
 	end
 
-![](graphs/test-mutant-eval/bestci.png)
-![](graphs/test-mutant-eval/best.png)
-![](graphs/test-mutant-eval/mean.png)
+|||
+|---|---|---|
+|![](graphs/test-mutant-eval/bestci.png)|![](graphs/test-mutant-eval/best.png)|![](graphs/test-mutant-eval/mean.png)|
 
 # Suggestions
 
