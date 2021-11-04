@@ -310,22 +310,27 @@ function visu_ingame(
     downscale = cfg["downscale"]
     is_dualcgp = haskey(cfg, "encoder")
     if is_dualcgp
-        enco, redu, cont = get_last_dualcgp(exp_dir, game, cfg)
-        mini_actions = get_minimal_actions_set(game)
+        for t in 1:2
+            enco, redu, cont = get_last_dualcgp(exp_dir, game, cfg)
+            mini_actions = get_minimal_actions_set(game)
 
-        if do_save
-            graph_path = joinpath(exp_dir, "graphs")
-            mkpath(graph_path)
-            buffer_path = joinpath(exp_dir, "buffers")
-            mkpath(buffer_path)
-            save_graph_struct([enco, cont], graph_path, mini_actions)
+            if do_save
+                graph_path = joinpath(exp_dir, "graphs")
+                mkpath(graph_path)
+                buffer_path = joinpath(exp_dir, "buffers")
+                mkpath(buffer_path)
+                save_graph_struct([enco, cont], graph_path, mini_actions)
+            end
+
+            reward = visu_dualcgp_ingame(
+                enco, redu, cont, game, seed, max_frames, grayscale,
+                downscale, stickiness, do_save=do_save,
+                do_display=do_display, buffer_path=buffer_path
+            )
+            if reward > 79.0
+                break
+            end
         end
-
-        reward = visu_dualcgp_ingame(
-            enco, redu, cont, game, seed, max_frames, grayscale,
-            downscale, stickiness, do_save=do_save,
-            do_display=do_display, buffer_path=buffer_path
-        )
     end
 end
 
@@ -337,7 +342,7 @@ games = ["boxing"] # ["freeway"]  # pong kung_fu_master freeway assault
 reducers = ["pooling"] # Array{String,1}() # ["pooling"]
 exp_dirs, games = get_exp_dir(resdir, min_date=min_date, max_date=max_date,
                               games=games, reducers=reducers)
-max_frames = 10000
+max_frames = 10
 render_graph = false
 
 for i in eachindex(exp_dirs)
