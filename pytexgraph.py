@@ -33,7 +33,7 @@ DELETE_CANVAS_PDF = True
 # Graph layout
 GRAPHBACK = True
 BUFFERCLIP = True
-PRINTBUFFER = False
+PRINTBUFFER = True
 COLOR_ACTIVE = "red"
 COLOR_INACTIVE = "black"
 COLOR_INACTIVE_EDGE = "black!50"
@@ -79,7 +79,9 @@ POS = {
 			"1": (0,0),
 			"3": (4, -1), "out3": (12, -1),
 			"5": (2, 1), "6": (4, 1), "12": (6, 1), "17": (8, 1), "20": (10, 1),
-			"out20": (12, 1)
+			"out20": (12, 1),
+			"backgroundnode": {"pos": (-1, 0), "width": (1.7, 9.8, 1.5), "height": 4},
+			"customedges": {(1, 5): "bend left=90"}
 		}
 	},
 	"2021-09-01T17:44:01.968_boxing": {
@@ -546,7 +548,7 @@ def appendnodes(ts, gdict, expdir, indtype):
 		p = pos[nodename]
 		ts.append("\\node[color="+color+"] ("+nodename+") at ("+p+") {\\textbf{Repeated}};")
 
-def appendedges(ts, gdict, indtype):
+def appendedges(ts, gdict, expdir, indtype):
 	g = gdict[indtype]
 	activated = gdict["metadata"][indtype]["activated"]
 	outputs = gdict["metadata"][indtype]["outputs"]
@@ -563,7 +565,9 @@ def appendedges(ts, gdict, indtype):
 		labelopt += ",pos=0.75" if indtype == "controller" else ""
 		isactive = (edge[1] in activated) and (not gdict["metadata"]["is_sticky"])
 		edgecolor = COLOR_ACTIVE if isactive else COLOR_INACTIVE_EDGE
-		pathset = "->, fill=blue, color="+edgecolor
+		pathset = "->, color="+edgecolor
+		if edge in POS[expdir][indtype]["customedges"]:
+			pathset += ", " + POS[expdir][indtype]["customedges"][edge]
 		if HALOEDGELABELS:
 			ts.append("\\path[->, color=white, ultra thick] ("+src+") edge["+edgeopt+"] node[above] {"+edgelabel+"} ("+dst+");")
 		ts.append("\\path["+pathset+"] ("+src+") edge["+edgeopt+"] node["+labelopt+"] {"+edgelabel+"} ("+dst+");")
@@ -584,14 +588,15 @@ def appendedges(ts, gdict, indtype):
 		ts.append("\\path["+pathset+"] ("+src+") edge node {} ("+dst+");")
 
 def graph_texscript(gdict, paths, indtype, printtex=False):
+	expdir = paths["exp"]
 	ts = [] # texscript
 	ts.append("\\documentclass[crop,tikz]{standalone}")
 	ts.append("\\usepackage{graphicx}")
 	ts.append("\\usetikzlibrary{shapes,automata}")
 	ts.append("\\begin{document}")
 	ts.append("\\begin{tikzpicture}")
-	appendnodes(ts, gdict, paths["exp"], indtype)
-	appendedges(ts, gdict, indtype)
+	appendnodes(ts, gdict, expdir, indtype)
+	appendedges(ts, gdict, expdir, indtype)
 	ts.append("\\end{tikzpicture}")
 	ts.append("\\end{document}")
 	
