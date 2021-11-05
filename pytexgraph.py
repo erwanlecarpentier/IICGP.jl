@@ -12,18 +12,18 @@ import operator
 from pdf2image import convert_from_path
 
 # COMMANDS
-ONLYENCO = True
+ONLYENCO = False
 ONLYCONT = False
-SHOWGRAPHS = True
+SHOWGRAPHS = False # Show separate graphs
 DOFRAMES = True
-SHOWFRAMES = False
-DOVIDEO = False
+SHOWFRAMES = False # Show canvas
+DOVIDEO = True
 
 PRINTPDFLATEXOUT = False
 
 # Meta parameters
 SEED = 0
-MAX_FRAME = 1 # 5776 # None implies finding max_frame
+MAX_FRAME = 5776 # None implies finding max_frame
 DIR_PATH = os.path.dirname(os.path.realpath(__file__))
 IMG_EXT = ".png"
 TOPNG = True # convert pdf canvas to png
@@ -41,7 +41,6 @@ COLOR_BACKGROUND = "white"
 HALOEDGELABELS = False
 BACKGROUNDEDGELABELS = True
 ENABLE_MANUAL_POS = True
-LABELSINCLINATION = {"encoder": 45, "controller": None}
 
 
 """
@@ -80,8 +79,25 @@ POS = {
 			"3": (4, -1), "out3": (12, -1),
 			"5": (2, 1), "6": (4, 1), "12": (6, 1), "17": (8, 1), "20": (10, 1),
 			"out20": (12, 1),
-			"backgroundnode": {"pos": (-1, 0), "width": (1.7, 9.8, 1.5), "height": 4},
-			"customedges": {(1, 5): "bend left=90"}
+			"backgroundnode": {"pos": (-1, 0.4), "width": (1.7, 9.8, 1.5), "height": 4},
+			"customedges": {(1, 5): {1: "bend left=90", 2: "bend left=50"}},
+			"labelsinclination": 45
+		},
+		"controller": {
+			"inputs": {"type": "squares", "origin": (0, 0), "innerspan": 1, "squarespan": 7},
+			"outputs": {"type": "column", "pos": (10, 0), "span": 1},
+			"63": (4, -3), "70": (6, -3), "85": (8, -3),
+			"76": (4, 2), "83": (6, 2), "73": (6, 0), "89": (8, 1),
+			"80": (6, 3),
+			"customedges": {(10, 85): "bend right=20", (85, "out85"): "bend left=30", (28, "out28"): "bend left=4"},
+			"customlabel": {(33, 73): "pos=0.9", (19, 73): "pos=0.9", (27, 83): "pos=0.9", (42, 63): "pos=0.9", (2, 63): "pos=0.9", (63, 70): "pos=0.5", (70, 85): "pos=0.5"},
+			"sticky": (10, 3.7),
+			"backgroundnode": {"pos": (-2.7, 0), "width": (5.2, 5.8, 2.1), "height": 13}
+		},
+		"canvas": {
+			"rgbpos": (0.03, 0.5), "hrgbpos": (0.1, 1.12), "scorepos": (0.1, 0.52),
+			"epos": (0, -0.05), "hepos": (0.1, 0.41),
+			"cpos": (1.1, -0.05), "hcpos": (1.2, 1.13)
 		}
 	},
 	"2021-09-01T17:44:01.968_boxing": {
@@ -544,38 +560,70 @@ def appendnodes(ts, gdict, expdir, indtype):
 	if indtype == "controller":
 		is_sticky = gdict["metadata"]["is_sticky"]
 		color = COLOR_ACTIVE if is_sticky else COLOR_BACKGROUND
+		if not PRINTBUFFER: color = "teal"
 		nodename = "sticky"
 		p = pos[nodename]
 		ts.append("\\node[color="+color+"] ("+nodename+") at ("+p+") {\\textbf{Repeated}};")
+
+def getcustomlabelopt(expdir, indtype, edge, seenedges):
+	out = ""
+	if "customlabel" in POS[expdir][indtype].keys() and edge in POS[expdir][indtype]["customlabel"]:
+		out += ", "
+		setting = POS[expdir][indtype]["customlabel"][edge]
+		if isinstance(setting, str):
+			out += setting
+		elif isinstance(setting, dict):
+			out += setting[2] if edge in seenedges else setting[1]
+		else:
+			out += ""
+	return out
+
+def getcustompathset(expdir, indtype, edge, seenedges):
+	out = ""
+	if "customedges" in POS[expdir][indtype].keys() and edge in POS[expdir][indtype]["customedges"]:
+		out += ", "
+		setting = POS[expdir][indtype]["customedges"][edge]
+		if isinstance(setting, str):
+			out += setting
+		elif isinstance(setting, dict):
+			out += setting[2] if edge in seenedges else setting[1]
+		else:
+			out += ""
+	return out
 
 def appendedges(ts, gdict, expdir, indtype):
 	g = gdict[indtype]
 	activated = gdict["metadata"][indtype]["activated"]
 	outputs = gdict["metadata"][indtype]["outputs"]
+	seenedges = []
 	for edge in g["edges"]:
 		src, dst = str(edge[0]), str(edge[1])
 		dstindex = g["nodes"].index(edge[1])
 		edgelabel = getedgelabel(g["fs"][dstindex])
 		edgeopt = "loop left" if edge[0] == edge[1] else "" # self-loop
-		if LABELSINCLINATION[indtype] is not None:
-			labelopt = "rotate=" + str(LABELSINCLINATION[indtype])
+		
+		if "labelsinclination" in POS[expdir][indtype].keys():
+			labelopt = "rotate=" + str(POS[expdir][indtype]["labelsinclination"])
 		else:
 			labelopt = "above"
 		labelopt += ", fill=white, rounded corners=0.1cm, fill opacity=0.8, text opacity=1" if BACKGROUNDEDGELABELS else ""
 		labelopt += ",pos=0.75" if indtype == "controller" else ""
+		labelopt += getcustomlabelopt(expdir, indtype, edge, seenedges)
 		isactive = (edge[1] in activated) and (not gdict["metadata"]["is_sticky"])
 		edgecolor = COLOR_ACTIVE if isactive else COLOR_INACTIVE_EDGE
 		pathset = "->, color="+edgecolor
-		if edge in POS[expdir][indtype]["customedges"]:
-			pathset += ", " + POS[expdir][indtype]["customedges"][edge]
+		custompathset = getcustompathset(expdir, indtype, edge, seenedges)
+		pathset += custompathset
 		if HALOEDGELABELS:
-			ts.append("\\path[->, color=white, ultra thick] ("+src+") edge["+edgeopt+"] node[above] {"+edgelabel+"} ("+dst+");")
+			ts.append("\\path[->, color=white, ultra thick"+custompathset+"] ("+src+") edge["+edgeopt+"] node[above] {"+edgelabel+"} ("+dst+");")
 		ts.append("\\path["+pathset+"] ("+src+") edge["+edgeopt+"] node["+labelopt+"] {"+edgelabel+"} ("+dst+");")
+		seenedges.append(edge)
 	iscontoutedge_selected = False
 	for i in range(len(g["outputs"])):
 		output = g["outputs"][i]
 		src = str(output)
 		dst = getnodename(i, g, True)
+		edge = (output, dst)
 		isactive = (output in outputs) and (not gdict["metadata"]["is_sticky"])
 		if isactive and not iscontoutedge_selected:
 			edgecolor = COLOR_ACTIVE
@@ -583,8 +631,10 @@ def appendedges(ts, gdict, expdir, indtype):
 		else:
 			edgecolor = COLOR_INACTIVE_EDGE
 		pathset = "->, color="+edgecolor
+		custompathset = getcustompathset(expdir, indtype, edge, seenedges)
+		pathset += custompathset
 		if HALOEDGELABELS:
-			ts.append("\\path[->, color=white, ultra thick] ("+src+") edge node {} ("+dst+");")
+			ts.append("\\path[->, color=white, ultra thick"+custompathset+"] ("+src+") edge node {} ("+dst+");")
 		ts.append("\\path["+pathset+"] ("+src+") edge node {} ("+dst+");")
 
 def graph_texscript(gdict, paths, indtype, printtex=False):
@@ -786,4 +836,6 @@ if __name__ == "__main__":
 	make(exp_dir, max_frame)
 
 # python3.8 pytexgraph.py /home/opaweynch/Documents/git/ICGP-results/results/2021-09-01T17:44:01.968_boxing
+
+# python3.8 pytexgraph.py /home/opaweynch/Documents/git/ICGP-results/results/2021-10-01T18:23:26.293_space_invaders
 
