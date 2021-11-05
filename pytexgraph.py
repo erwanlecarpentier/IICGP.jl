@@ -22,15 +22,18 @@ DOVIDEO = False
 PRINTPDFLATEXOUT = False
 
 # Meta parameters
-SEED = 1234
-MAX_FRAME = None # None implies finding the max
+SEED = 0
+MAX_FRAME = 1 # 5776 # None implies finding max_frame
 DIR_PATH = os.path.dirname(os.path.realpath(__file__))
 IMG_EXT = ".png"
+TOPNG = True # convert pdf canvas to png
+DELETE_GRAPHS = True
+DELETE_CANVAS_PDF = True
 
 # Graph layout
 GRAPHBACK = True
 BUFFERCLIP = True
-PRINTBUFFER = True
+PRINTBUFFER = False
 COLOR_ACTIVE = "red"
 COLOR_INACTIVE = "black"
 COLOR_INACTIVE_EDGE = "black!50"
@@ -38,9 +41,26 @@ COLOR_BACKGROUND = "white"
 HALOEDGELABELS = False
 BACKGROUNDEDGELABELS = True
 ENABLE_MANUAL_POS = True
-TOPNG = True # convert pdf canvas to png
-DELETE_GRAPHS = True
-DELETE_CANVAS_PDF = True
+LABELSINCLINATION = {"encoder": 45, "controller": None}
+
+
+"""
+Exp 1:
+Simple:
+/home/opaweynch/Documents/git/ICGP-results/results/2021-09-01T17:44:01.968_boxing
+/home/opaweynch/Documents/git/ICGP-results/results/2021-09-03T18:18:35.090_freeway
+
+Simple + acceleration:
+/home/opaweynch/Documents/git/ICGP-results/results/2021-09-23T18:31:09.813_asteroids
+
+Complex with an interesting double dilatation:
+/home/opaweynch/Documents/git/ICGP-results/results/2021-10-01T18:23:26.293_space_invaders
+
+Complex:
+/home/opaweynch/Documents/git/ICGP-results/results/2021-09-23T18:31:09.829_breakout
+/home/opaweynch/Documents/git/ICGP-results/results/2021-10-01T18:22:33.340_riverraid
+/home/opaweynch/Documents/git/ICGP-results/results/2021-09-07T17:17:40.579_gravitar
+"""
 
 """
 Instructions on positioning:
@@ -54,6 +74,14 @@ Position "by type" apply to either all inputs or all outputs. Here are examples:
 	{"type": "squares", "pos": (0, 0)} # Only valid for controller input
 """
 POS = {
+	"2021-10-01T18:23:26.293_space_invaders": {
+		"encoder": {
+			"1": (0,0),
+			"3": (4, -1), "out3": (12, -1),
+			"5": (2, 1), "6": (4, 1), "12": (6, 1), "17": (8, 1), "20": (10, 1),
+			"out20": (12, 1)
+		}
+	},
 	"2021-09-01T17:44:01.968_boxing": {
 		"encoder": {
 			"1": (-1, 2), "2": (3, 3), "4": (3, 1), "6": (7, 2), "out6": (10, 2),
@@ -527,7 +555,10 @@ def appendedges(ts, gdict, indtype):
 		dstindex = g["nodes"].index(edge[1])
 		edgelabel = getedgelabel(g["fs"][dstindex])
 		edgeopt = "loop left" if edge[0] == edge[1] else "" # self-loop
-		labelopt = "above"
+		if LABELSINCLINATION[indtype] is not None:
+			labelopt = "rotate=" + str(LABELSINCLINATION[indtype])
+		else:
+			labelopt = "above"
 		labelopt += ", fill=white, rounded corners=0.1cm, fill opacity=0.8, text opacity=1" if BACKGROUNDEDGELABELS else ""
 		labelopt += ",pos=0.75" if indtype == "controller" else ""
 		isactive = (edge[1] in activated) and (not gdict["metadata"]["is_sticky"])
@@ -544,7 +575,7 @@ def appendedges(ts, gdict, indtype):
 		isactive = (output in outputs) and (not gdict["metadata"]["is_sticky"])
 		if isactive and not iscontoutedge_selected:
 			edgecolor = COLOR_ACTIVE
-			iscontoutedge_selected = True
+			if indtype == "controller": iscontoutedge_selected = True
 		else:
 			edgecolor = COLOR_INACTIVE_EDGE
 		pathset = "->, color="+edgecolor

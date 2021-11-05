@@ -245,9 +245,13 @@ function visu_dualcgp_ingame(
         plot_pipeline(visu)
     end
 
-    println("\nGame             : ", game)
+    println()
+    println("-"^20)
+    println("Game             : ", game)
+    println("Seed             : ", seed)
     println("Total return     : ", reward)
     println("Number of frames : ", frames)
+    println("-"^20)
     reward
 end
 
@@ -301,35 +305,46 @@ function visu_ingame(
     game::String,
     max_frames::Int64;
     do_save::Bool,
-    do_display::Bool
+    do_display::Bool,
+    seed::Int64
 )
     cfg = cfg_from_exp_dir(exp_dir)
-    seed = cfg["seed"]
+    # seed = cfg["seed"]
     stickiness = cfg["stickiness"]
     grayscale = cfg["grayscale"]
     downscale = cfg["downscale"]
     is_dualcgp = haskey(cfg, "encoder")
-    if is_dualcgp
-        for t in 1:2
-            enco, redu, cont = get_last_dualcgp(exp_dir, game, cfg)
-            mini_actions = get_minimal_actions_set(game)
+    @assert is_dualcgp
+    enco, redu, cont = get_last_dualcgp(exp_dir, game, cfg)
+    mini_actions = get_minimal_actions_set(game)
+    if do_save
+        graph_path = joinpath(exp_dir, "graphs")
+        mkpath(graph_path)
+        buffer_path = joinpath(exp_dir, "buffers")
+        mkpath(buffer_path)
+        save_graph_struct([enco, cont], graph_path, mini_actions)
+    end
+    reward = visu_dualcgp_ingame(
+        enco, redu, cont, game, seed, max_frames, grayscale,
+        downscale, stickiness, do_save=do_save,
+        do_display=do_display, buffer_path=buffer_path
+    )
+    reward
+end
 
-            if do_save
-                graph_path = joinpath(exp_dir, "graphs")
-                mkpath(graph_path)
-                buffer_path = joinpath(exp_dir, "buffers")
-                mkpath(buffer_path)
-                save_graph_struct([enco, cont], graph_path, mini_actions)
-            end
-
-            reward = visu_dualcgp_ingame(
-                enco, redu, cont, game, seed, max_frames, grayscale,
-                downscale, stickiness, do_save=do_save,
-                do_display=do_display, buffer_path=buffer_path
-            )
-            if reward > 79.0
-                break
-            end
+function test_manyvis(
+    exp_dir::String,
+    game::String,
+    max_frames::Int64;
+    do_save::Bool,
+    do_display::Bool
+)
+    for t = 1:100
+        seed = t+10
+        reward = visu_ingame(exp_dir, game, max_frames, do_save=do_save,
+                             do_display=do_display, seed=seed)
+        if reward > 800
+            break
         end
     end
 end
@@ -338,17 +353,24 @@ rootdir = joinpath(homedir(), "Documents/git/ICGP-results/")
 resdir = joinpath(rootdir, "results/")
 min_date = DateTime(2021, 09, 01)
 max_date = DateTime(2021, 10, 03)
-games = ["boxing"] # ["freeway"]  # pong kung_fu_master freeway assault
+games = ["boxing", "asteroids", "breakout", "freeway", "gravitar", "riverraid", "space_invaders"]
+games = ["breakout"]
 reducers = ["pooling"] # Array{String,1}() # ["pooling"]
 exp_dirs, games = get_exp_dir(resdir, min_date=min_date, max_date=max_date,
                               games=games, reducers=reducers)
-max_frames = 10
+max_frames = 10000
 render_graph = false
+seed = 0
 
 for i in eachindex(exp_dirs)
     # Generate images (may display / save)
+    #=
+    # TODO put back
     visu_ingame(exp_dirs[i], games[i], max_frames,
-                do_save=true, do_display=false)
+                do_save=true, do_display=false, seed)
+    =#
+    test_manyvis(exp_dirs[i], games[i], max_frames,
+                 do_save=true, do_display=false) # TODO comment
 
     # Launch python script
     if render_graph

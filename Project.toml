@@ -6,6 +6,7 @@ version = "0.1.0"
 [deps]
 ArcadeLearningEnvironment = "b7f77d8d-088d-5e02-8ac0-89aab2acc977"
 ArgParse = "c7e460c6-2fb9-53a9-8c5b-16f535851c63"
+ArrayInterface = "4fba245c-0d91-5ea0-9b3e-6abc04ee57a9"
 BenchmarkTools = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
 CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
 Cambrian = "7f27c84d-2d74-42e5-be5f-94f6748267f3"
