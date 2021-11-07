@@ -12,23 +12,26 @@ import operator
 from pdf2image import convert_from_path
 
 # COMMANDS
-ONLYENCO = False
+ONLYENCO = True
 ONLYCONT = False
-SHOWGRAPHS = False # Show separate graphs
+SHOWGRAPHS = True # Show separate graphs
 DOFRAMES = True
 SHOWFRAMES = False # Show canvas
-DOVIDEO = True
+DOVIDEO = False
 
 PRINTPDFLATEXOUT = False
 
 # Meta parameters
 SEED = 0
-MAX_FRAME = 5776 # None implies finding max_frame
+MAX_FRAME = 1 # None implies finding max_frame
 DIR_PATH = os.path.dirname(os.path.realpath(__file__))
+HOME_DIR = os.path.expanduser("~")
+ICGPRES_DIR = HOME_DIR + "/Documents/git/ICGP-results"
 IMG_EXT = ".png"
 TOPNG = True # convert pdf canvas to png
 DELETE_GRAPHS = True
 DELETE_CANVAS_PDF = True
+FPSS = [15, 60]
 
 # Graph layout
 GRAPHBACK = True
@@ -567,7 +570,7 @@ def appendnodes(ts, gdict, expdir, indtype):
 
 def getcustomlabelopt(expdir, indtype, edge, seenedges):
 	out = ""
-	if "customlabel" in POS[expdir][indtype].keys() and edge in POS[expdir][indtype]["customlabel"]:
+	if expdir in POS.keys() and "customlabel" in POS[expdir][indtype].keys() and edge in POS[expdir][indtype]["customlabel"]:
 		out += ", "
 		setting = POS[expdir][indtype]["customlabel"][edge]
 		if isinstance(setting, str):
@@ -580,7 +583,7 @@ def getcustomlabelopt(expdir, indtype, edge, seenedges):
 
 def getcustompathset(expdir, indtype, edge, seenedges):
 	out = ""
-	if "customedges" in POS[expdir][indtype].keys() and edge in POS[expdir][indtype]["customedges"]:
+	if expdir in POS.keys() and "customedges" in POS[expdir][indtype].keys() and edge in POS[expdir][indtype]["customedges"]:
 		out += ", "
 		setting = POS[expdir][indtype]["customedges"][edge]
 		if isinstance(setting, str):
@@ -602,7 +605,7 @@ def appendedges(ts, gdict, expdir, indtype):
 		edgelabel = getedgelabel(g["fs"][dstindex])
 		edgeopt = "loop left" if edge[0] == edge[1] else "" # self-loop
 		
-		if "labelsinclination" in POS[expdir][indtype].keys():
+		if expdir in POS.keys() and "labelsinclination" in POS[expdir][indtype].keys():
 			labelopt = "rotate=" + str(POS[expdir][indtype]["labelsinclination"])
 		else:
 			labelopt = "above"
@@ -752,10 +755,9 @@ def make_canvas(paths, frame, score):
 	build_canvas(texscript, paths, frame)
 	if DELETE_GRAPHS: delete_graphs(paths, frame)
 		
-def make_video(paths, max_frame, verbose=True):
+def make_video(paths, max_frame, fps, verbose=True):
 	bufferdir = paths["metadata"]
 	savedir = bufferdir[0:-len("buffers/")]
-	fps = 15
 	fspan = 1000
 	n_vid = math.ceil(max_frame / fspan)
 	subvideofnames = [savedir + "canvas" + str(i+1) + ".avi" for i in range(n_vid)]
@@ -765,8 +767,7 @@ def make_video(paths, max_frame, verbose=True):
 	ranges = [range(i, i+fspan) for i in range(1, max_frame + 1 - fspan, fspan)]
 	ranges.append(range(len(ranges) * fspan + 1, max_frame + 1))
 	subvid_index = 0
-	if verbose: print("\nCreating video")
-	
+	if verbose: print("\nCreating video"+"\nfps: "+str(fps))	
 	# Creating sub-videos
 	for r in ranges:
 		if verbose: print("Loading images from", r[0], "to", r[-1], "out of", max_frame, ":")
@@ -786,7 +787,7 @@ def make_video(paths, max_frame, verbose=True):
 		
 	# Assembling sub-videos
 	viddir = os.path.dirname(os.path.dirname(os.path.dirname(savedir)))
-	vidname = os.path.basename(os.path.dirname(savedir)) + ".avi"
+	vidname = os.path.basename(os.path.dirname(savedir)) + "_" + str(fps) + "fps.avi"
 	finalvideofname = viddir + "/" + vidname	
 	video = cv2.VideoWriter(finalvideofname, cv2.VideoWriter_fourcc(*'DIVX'), fps, size)
 	if verbose: print("\nAssembling sub-videos:")
@@ -821,19 +822,41 @@ def make_frames(paths, max_frame, verbose=True):
 		make_canvas(paths, frame, score)
 	if verbose: print("Successfully created frames!")
 
+def get_exp_dir(rom):
+	exp_dir = ICGPRES_DIR + "/results/"
+	if rom == "boxing":
+		return exp_dir + "2021-09-01T17:44:01.968_boxing"
+	elif rom == "freeway":
+		return exp_dir + "2021-09-03T18:18:35.090_freeway"
+	elif rom == "asteroids":
+		return exp_dir + "2021-09-23T18:31:09.813_asteroids"
+	elif rom == "space_invaders":
+		return exp_dir + "2021-10-01T18:23:26.293_space_invaders"
+	elif rom == "breakout":
+		return exp_dir + "2021-09-23T18:31:09.829_breakout"
+	elif rom == "riverraid":
+		return exp_dir + "2021-10-01T18:22:33.340_riverraid"
+	elif rom == "gravitar":
+		return exp_dir + "2021-09-07T17:17:40.579_gravitar"
+	else:
+		raise NameError(rom)
+	
 """
 Main make method calling frame-maker and video-maker sequentially.
 """
-def make(exp_dir, max_frame):
+def make(rom):
+	exp_dir = get_exp_dir(rom)
 	paths = get_paths(exp_dir)
+	max_frame = get_max_frame(exp_dir)
 	random.seed(SEED)
 	if DOFRAMES: make_frames(paths, max_frame)
-	if DOVIDEO: make_video(paths, max_frame)
+	if DOVIDEO:
+		for fps in FPSS:
+			make_video(paths, max_frame, fps)
 
 if __name__ == "__main__":
-	exp_dir = sys.argv[1]
-	max_frame = get_max_frame(exp_dir)
-	make(exp_dir, max_frame)
+	rom = sys.argv[1]
+	make(rom)
 
 # python3.8 pytexgraph.py /home/opaweynch/Documents/git/ICGP-results/results/2021-09-01T17:44:01.968_boxing
 
