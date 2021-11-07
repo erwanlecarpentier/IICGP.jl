@@ -12,11 +12,11 @@ import operator
 from pdf2image import convert_from_path
 
 # COMMANDS
-ONLYENCO = False
-ONLYCONT = False
-SHOWGRAPHS = False # Show separate graphs
+ONLYENCO = True
+ONLYCONT = True
+SHOWGRAPHS = True # Show separate graphs
 DOFRAMES = True
-SHOWFRAMES = True # Show canvas
+SHOWFRAMES = False # Show canvas
 DOVIDEO = False
 
 PRINTPDFLATEXOUT = False
@@ -36,7 +36,10 @@ FPSS = [15, 60]
 # Graph layout
 GRAPHBACK = True
 BUFFERCLIP = True
-PRINTBUFFER = True
+PRINTBUFFER = False
+IMG_WIDTH = 1.5
+IMGOUT_WIDTH = 1.0
+WH_RATIO = 0.76
 COLOR_ACTIVE = "red"
 COLOR_INACTIVE = "black"
 COLOR_INACTIVE_EDGE = "black!50"
@@ -44,7 +47,6 @@ COLOR_BACKGROUND = "white"
 HALOEDGELABELS = False
 BACKGROUNDEDGELABELS = True
 ENABLE_MANUAL_POS = True
-
 
 """
 Exp 1:
@@ -76,6 +78,30 @@ Position "by type" apply to either all inputs or all outputs. Here are examples:
 	{"type": "squares", "pos": (0, 0)} # Only valid for controller input
 """
 POS = {
+	"2021-10-01T18:22:33.340_riverraid" : {
+		"encoder": {
+			"1": (0,0),
+			"6": (4,0),
+			"2": (2,-2), "5": (4,-2), "out5": (10,-2),
+			"7": (2,3), "11": (4,3), "3": (2,1.5), "8": (4,1.5), "15": (6,3), "10": (6,0),
+			"17": (8,1.5), "out17": (10,1.5),
+			#"backgroundnode": {"pos": (-1, 0), "width": (1.7, 6, 1.5), "height": 4},
+			"customedges": {(2, 11): "bend right=20"},
+			"labelsinclination": 45
+		},
+		"controller": {
+			"inputs": {"type": "squares", "origin": (0, 0), "innerspan": 1, "squarespan": 7},
+			"outputs": {"type": "column", "pos": (10, 0), "span": 1},
+			"sticky": (10, 2),
+			"backgroundnode": {"pos": (-2.7, 0), "width": (5.2, 5.8, 2.1), "height": 13},
+			"labelsinclination": 45
+		},
+		"canvas": {
+			"rgbpos": (0.03, 0.5), "hrgbpos": (0.1, 1.12), "scorepos": (0.1, 0.52),
+			"epos": (0, -0.15), "hepos": (0.1, 0.41),
+			"cpos": (1.1, -0.05), "hcpos": (1.2, 1.13)
+		}
+	},
 	"2021-09-03T18:18:35.090_freeway" : {
 		"encoder": {
 			"1": (0,0),
@@ -462,15 +488,18 @@ def getpos(gdict, expdir, indtype):
 	pos = postostr(pos)
 	return pos
 	
-def getnodecontent(gdict, node, nodename, indtype, is_out, index=None, width=1.5):
+def getnodecontent(gdict, node, nodename, indtype, is_out, index=None):
 	if not PRINTBUFFER:
 		return nodename
 	elif indtype == "encoder":
-		wstr = str(width) + "cm"
 		if is_out:
+			width = IMGOUT_WIDTH
+			wstr = str(width) + "cm"
 			return "\includegraphics[width="+wstr+"]{"+gdict["reducer"]["buffer"][node]+"}"
 		else:
-			hstr = str(0.76 * width) + "cm"
+			width = IMG_WIDTH
+			wstr = str(width) + "cm"
+			hstr = str(WH_RATIO * width) + "cm"
 			return "\includegraphics[width="+wstr+", height="+hstr+"]{"+gdict[indtype]["buffer"][node]+"}"
 	elif indtype == "controller":
 		if is_out:
@@ -501,9 +530,17 @@ def getnodesettings(gdict, expdir, node, nodename, activated, indtype, isout, is
 			isactive = not iscontout_selected
 			iscontout_selected = True
 		nodecolor = COLOR_ACTIVE if isactive else COLOR_INACTIVE
+		h = "0.6cm"
 		w = "2cm" if (indtype == "controller" and isout) else "1cm"
+		if not PRINTBUFFER and indtype == "encoder": # print nodes in same size as if images were there
+			if isout:
+				w = str(IMGOUT_WIDTH) + "cm"
+				h = w
+			else:
+				w = str(IMG_WIDTH) + "cm"
+				h = str(WH_RATIO * IMG_WIDTH) + "cm"
 		sep = "inner sep=0,outer sep=0," if indtype == "encoder" else ""
-		nodesettings = "shape=rectangle, rounded corners=0.1cm, minimum width="+w+", minimum height=0.6cm, fill=white,"+sep+"draw, color="+nodecolor+",fill="+COLOR_BACKGROUND
+		nodesettings = "shape=rectangle, rounded corners=0.1cm, minimum width="+w+", minimum height="+h+", fill=white,"+sep+"draw, color="+nodecolor+",fill="+COLOR_BACKGROUND
 	return nodesettings, iscontout_selected
 
 def getedgelabel(fname):
@@ -543,7 +580,7 @@ def appendbackgroundnodes(ts, gdict, expdir, indtype):
 				node = gdict["encoder"]["outputs"][i]
 				nodename = getnodename(i, gdict["encoder"], True)
 				isout = True
-				nodecontent = getnodecontent(gdict, node, nodename, "encoder", isout, i, width=width)
+				nodecontent = getnodecontent(gdict, node, nodename, "encoder", isout, i)
 				pos = posdict["origin"]
 				current_square = i + 1
 				sqshift = (0, ((n_squares+1)/2-current_square)*posdict["squarespan"])
@@ -580,7 +617,7 @@ def appendnodes(ts, gdict, expdir, indtype):
 		nodename = getnodename(i, g, True)
 		p = pos[nodename]
 		isout = True
-		nodecontent = getnodecontent(gdict, node, nodename, indtype, isout, i, width=1)
+		nodecontent = getnodecontent(gdict, node, nodename, indtype, isout, i)
 		nodesettings, iscontout_selected = getnodesettings(gdict, expdir, node, nodename, outputs, indtype, isout, iscontout_selected)
 		nd = getnode(indtype, nodesettings, nodename, p, nodecontent)
 		ts.append(nd)
