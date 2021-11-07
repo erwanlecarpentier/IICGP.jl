@@ -13,10 +13,10 @@ from pdf2image import convert_from_path
 
 # COMMANDS
 ONLYENCO = False
-ONLYCONT = True
-SHOWGRAPHS = True # Show separate graphs
+ONLYCONT = False
+SHOWGRAPHS = False # Show separate graphs
 DOFRAMES = True
-SHOWFRAMES = False # Show canvas
+SHOWFRAMES = True # Show canvas
 DOVIDEO = False
 
 PRINTPDFLATEXOUT = False
@@ -93,6 +93,11 @@ POS = {
 			"sticky": (10, 2),
 			"backgroundnode": {"pos": (-2.7, 0), "width": (5.2, 5.8, 2.1), "height": 13},
 			"labelsinclination": 45
+		},
+		"canvas": {
+			"rgbpos": (0.03, 0.5), "hrgbpos": (0.1, 1.12), "scorepos": (0.1, 0.52),
+			"epos": (0, -0.15), "hepos": (0.1, 0.41),
+			"cpos": (1.1, -0.05), "hcpos": (1.2, 1.13)
 		}
 	},
 	"2021-10-01T18:23:26.293_space_invaders": {
