@@ -12,11 +12,11 @@ import operator
 from pdf2image import convert_from_path
 
 # COMMANDS
-ONLYENCO = True
-ONLYCONT = True
-SHOWGRAPHS = True # Show separate graphs
+ONLYENCO = False
+ONLYCONT = False
+SHOWGRAPHS = False # Show separate graphs
 DOFRAMES = True
-SHOWFRAMES = False # Show canvas
+SHOWFRAMES = True # Show canvas
 DOVIDEO = False
 
 PRINTPDFLATEXOUT = False
@@ -133,8 +133,8 @@ POS = {
 		},
 		"canvas": {
 			"rgbpos": (0.03, 0.5), "hrgbpos": (0.1, 1.12), "scorepos": (0.1, 0.52),
-			"epos": (0, -0.15), "hepos": (0.1, 0.41),
-			"cpos": (1.1, -0.05), "hcpos": (1.2, 1.13)
+			"epos": (0, -0.35), "hepos": (0.1, 0.41),
+			"cpos": (1.1, -0.4), "hcpos": (1.2, 1.13)
 		}
 	},
 	"2021-09-03T18:18:35.090_freeway" : {
@@ -191,26 +191,60 @@ POS = {
 	"2021-09-01T17:44:01.968_boxing": {
 		"encoder": {
 			"1": (-1, 2), "2": (3, 3), "4": (3, 1), "6": (7, 2), "out6": (10, 2),
-			"3": (1, -1), "9": (3, -1), "11": (5.5, -1), "14": (8.5, -1), "out14": (10, -1)
+			"3": (1, -1), "9": (3, -1), "11": (5.5, -1), "14": (8.5, -1), "out14": (10, -1),
+			"loopopt": {(11, 11): "loop above"},
+			"backgroundnode": {"pos": (-2, 0.8), "width": (1.7, 9.15, 1.2), "height": 6},
+			"labelsinclination": 45
 		},
 		"controller": {
 			"inputs": {"type": "squares", "origin": (-1, 0), "innerspan": 1, "squarespan": 7},# {"type": "singlenode", "pos": (0, 0)},
 			"outputs": {"type": "column", "pos": (10, 0), "span": 1},
-			"53": (1, 3),
-			"74": (5, -6), "81": (7, -6),
-			"67": (5, -4.5),
-			"78": (5, -2.5), "59": (5, -0.5), "79": (7, -1.5),
-			"85": (8, -3.5),
-			"53": (8, 4),
-			"77": (5, 6),
-			"52": (0, 10),
-			"69": (5, 0.5), "82": (7, 1.5),
-			"sticky": (10, 10)
+			"53": (5, 6),
+			"74": (5, -8), "81": (7, -8),
+			"67": (5, -4),
+			"78": (6, -3), "59": (6, -1.6), "79": (8, -3),
+			"85": (5, 5),
+			"77": (5, 8),
+			"52": (7, 7),
+			"69": (6, 3), "82": (8, 4),
+			"customedges": {
+				(1, "out1"): "bend left=15",
+				(4, 52): "bend left=10",
+				(32, 53): "bend left=10",
+				(53, "out53"): "bend right=5",
+				(14, 77): "bend left=30",
+				(14, "out14"): "bend right=10",
+				(7, "out7"): "bend right=18",
+				(1, 78): "bend right=10",
+				(47, 78): "bend left=10",
+				(48, "out48"): "bend left=20",
+				(27, "out27"): "bend left=10",
+				(35, "out35"): "bend left=12",
+				(36, "out36"): "bend left=5",
+				(14, "out14'"): "bend right=20",
+				(12, "out12"): "bend right=20",
+				(37, 74): "bend right=18",
+				(44, 67): "bend right=18"
+			},
+			"customlabel": {
+				(32, 53): "pos=0.8",
+				(49, 85): "pos=0.93",
+				(17, 69): "pos=0.9",
+				(31, 69): "pos=0.93",
+				(1, 78): "pos=0.9",
+				(47, 78): "pos=0.8",
+				(78, 79): "pos=0.5, yshift=-0.25cm",
+				(74, 81): "pos=0.5, yshift=-0.25cm",
+				(69, 82): "pos=0.5, yshift=-0.25cm"
+			},
+			"loopopt": {(52, 52): "loop below, min distance=1cm"},
+			"backgroundnode": {"pos": (-3.7, 1), "width": (5.2, 6.8, 2.1), "height": 19},
+			"sticky": (10, 9.6)
 		},
 		"canvas": {
-			"rgbpos": (0, 0.4), "hrgbpos": (0, 0.8), "scorepos": (-0.6, 0.1),
-			"epos": (0, -0.4), "hepos": (0, 0),
-			"cpos": (1.1, 0), "hcpos": (1.1, 0.8)
+			"rgbpos": (0.03, 0.5), "hrgbpos": (0.1, 1.12), "scorepos": (0.1, 0.52),
+			"epos": (0, -0.3), "hepos": (0.1, 0.32),
+			"cpos": (1.1, -0.3), "hcpos": (1.2, 1.13)
 		}
 	},
 	"2021-09-03T18:18:34.627_solaris": {
@@ -701,7 +735,9 @@ def appendedges(ts, gdict, expdir, indtype):
 		src, dst = str(edge[0]), str(edge[1])
 		dstindex = g["nodes"].index(edge[1])
 		edgelabel = getedgelabel(g["fs"][dstindex])
-		edgeopt = "loop left" if edge[0] == edge[1] else "" # self-loop
+		loopopt = "loop left" if edge[0] == edge[1] else "" # self-loop
+		if expdir in POS.keys() and indtype in POS[expdir].keys() and "loopopt" in POS[expdir][indtype].keys() and edge in POS[expdir][indtype]["loopopt"].keys():
+			loopopt = POS[expdir][indtype]["loopopt"][edge]
 		if expdir in POS.keys() and indtype in POS[expdir].keys() and "labelsinclination" in POS[expdir][indtype].keys():
 			labelopt = "rotate=" + str(POS[expdir][indtype]["labelsinclination"])
 		else:
@@ -717,8 +753,8 @@ def appendedges(ts, gdict, expdir, indtype):
 		custompathset = getcustompathset(expdir, indtype, edge, seenedges)
 		pathset += custompathset
 		if HALOEDGELABELS:
-			ts.append("\\path[->, color=white, ultra thick"+custompathset+"] ("+src+") edge["+edgeopt+"] node[above] {"+edgelabel+"} ("+dst+");")
-		ts.append("\\path["+pathset+"] ("+src+") edge["+edgeopt+"] node["+labelopt+"] {"+edgelabel+"} ("+dst+");")
+			ts.append("\\path[->, color=white, ultra thick"+custompathset+"] ("+src+") edge["+loopopt+"] node[above] {"+edgelabel+"} ("+dst+");")
+		ts.append("\\path["+pathset+"] ("+src+") edge["+loopopt+"] node["+labelopt+"] {"+edgelabel+"} ("+dst+");")
 		seenedges.append(edge)
 	iscontoutedge_selected = False
 	for i in range(len(g["outputs"])):

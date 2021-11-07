@@ -321,6 +321,7 @@ function visu_ingame(
         graph_path = joinpath(exp_dir, "graphs")
         mkpath(graph_path)
         buffer_path = joinpath(exp_dir, "buffers")
+        rm(buffer_path, recursive=true, force=true)
         mkpath(buffer_path)
         save_graph_struct([enco, cont], graph_path, mini_actions)
     end
@@ -339,13 +340,16 @@ function test_manyvis(
     do_save::Bool,
     do_display::Bool
 )
-    for t = 1:100
-        seed = t+10
+    max_reward = -Inf
+    for t = 1:1000
+        seed = t
         reward = visu_ingame(exp_dir, game, max_frames, do_save=do_save,
                              do_display=do_display, seed=seed)
-        if reward > 800
+        max_reward = max(max_reward, reward)
+        if reward > 21
             break
         end
+        println("Max total return: ", max_reward)
     end
 end
 
@@ -354,7 +358,7 @@ resdir = joinpath(rootdir, "results/")
 min_date = DateTime(2021, 09, 01)
 max_date = DateTime(2021, 10, 03)
 games = ["boxing", "asteroids", "breakout", "freeway", "gravitar", "riverraid", "space_invaders"]
-games = ["breakout"]
+games = ["freeway"]
 reducers = ["pooling"] # Array{String,1}() # ["pooling"]
 exp_dirs, games = get_exp_dir(resdir, min_date=min_date, max_date=max_date,
                               games=games, reducers=reducers)
