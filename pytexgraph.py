@@ -12,7 +12,7 @@ import operator
 from pdf2image import convert_from_path
 
 # COMMANDS
-ONLYENCO = True
+ONLYENCO = False
 ONLYCONT = True
 SHOWGRAPHS = True # Show separate graphs
 DOFRAMES = True
@@ -85,15 +85,37 @@ POS = {
 			"2": (2,-2), "5": (4,-2), "out5": (10,-2),
 			"7": (2,3), "11": (4,3), "3": (2,1.5), "8": (4,1.5), "15": (6,3), "10": (6,0),
 			"17": (8,1.5), "out17": (10,1.5),
-			#"backgroundnode": {"pos": (-1, 0), "width": (1.7, 6, 1.5), "height": 4},
-			"customedges": {(2, 11): "bend right=20"},
+			"backgroundnode": {"pos": (-1, 0.5), "width": (1.7, 7.9, 1.5), "height": 7},
+			"customedges": {(2, 5): "bend right=45", (1, 7): "bend left=20", (8, 15): "bend right=45"},
+			"customlabel": {(2, 5): "rotate=-45"},
 			"labelsinclination": 45
 		},
 		"controller": {
 			"inputs": {"type": "squares", "origin": (0, 0), "innerspan": 1, "squarespan": 7},
 			"outputs": {"type": "column", "pos": (10, 0), "span": 1},
-			"sticky": (10, 2),
-			"backgroundnode": {"pos": (-2.7, 0), "width": (5.2, 5.8, 2.1), "height": 13},
+			"62": (7, 9),
+			"73": (7, 7),
+			"70": (5, 5), "85": (7, 5),
+			"58": (7, 4),
+			"65": (7.2, 1),
+			"52": (6.5,-1),
+			"54": (6,-3),
+			"53": (7,-7),
+			"customedges": {
+				(30, "out30"): "bend right=10",
+				(39, "out39"): "bend right=25",
+				(8, "out8"): "bend right=25",
+				(65, "out65'"): "out=south, in=west",
+				(10, "out10"): "out=east, in=west",
+				(4, "out4"): "in=west"
+			},
+			"customlabel": {
+				(22, 52): "pos=0.8", (37, 52): "pos=0.8",
+				(28, 54): "pos=0.73", (48, 54): "pos=0.73",
+				(18, 53): "pos=0.9"
+			},
+			"backgroundnode": {"pos": (-2.8, 1), "width": (5.2, 5.9, 2.1), "height": 19},
+			"sticky": (10, 9.6),
 			"labelsinclination": 45
 		},
 		"canvas": {
@@ -189,14 +211,14 @@ POS = {
 		"controller": {
 			"inputs": {"type": "squares", "origin": (-1, 0), "innerspan": 1, "squarespan": 7},
 			"outputs": {"type": "column", "pos": (10, 0), "span": 1},
-			"sticky": (10, 9.6),
 			"54": (5, 8),
 			"56": (5, 6), "66": (7, 6),
 			"63": (7, -0.5), "81": (7, 2.5),
 			"59": (2.8, 2.4), "80": (6.7, 4.7),
 			"87": (7, -5),
 			"77": (7, -6),
-			"backgroundnode": {"pos": (-3.7, 1), "width": (5.2, 6.8, 2.1), "height": 19}
+			"backgroundnode": {"pos": (-3.7, 1), "width": (5.2, 6.8, 2.1), "height": 19},
+			"sticky": (10, 9.6)
 		},
 		"canvas": {
 			"rgbpos": (0.03, 0.5), "hrgbpos": (0.1, 1.12), "scorepos": (0.1, 0.52),
@@ -488,13 +510,14 @@ def getpos(gdict, expdir, indtype):
 	pos = postostr(pos)
 	return pos
 	
-def getnodecontent(gdict, node, nodename, indtype, is_out, index=None):
+def getnodecontent(gdict, node, nodename, indtype, is_out, index=None, isbackground=False):
 	if not PRINTBUFFER:
 		return nodename
 	elif indtype == "encoder":
 		if is_out:
 			width = IMGOUT_WIDTH
 			wstr = str(width) + "cm"
+			if isbackground: wstr = "5cm"
 			return "\includegraphics[width="+wstr+"]{"+gdict["reducer"]["buffer"][node]+"}"
 		else:
 			width = IMG_WIDTH
@@ -580,7 +603,7 @@ def appendbackgroundnodes(ts, gdict, expdir, indtype):
 				node = gdict["encoder"]["outputs"][i]
 				nodename = getnodename(i, gdict["encoder"], True)
 				isout = True
-				nodecontent = getnodecontent(gdict, node, nodename, "encoder", isout, i)
+				nodecontent = getnodecontent(gdict, node, nodename, "encoder", isout, i, True)
 				pos = posdict["origin"]
 				current_square = i + 1
 				sqshift = (0, ((n_squares+1)/2-current_square)*posdict["squarespan"])
