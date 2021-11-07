@@ -12,7 +12,7 @@ import operator
 from pdf2image import convert_from_path
 
 # COMMANDS
-ONLYENCO = False
+ONLYENCO = True
 ONLYCONT = True
 SHOWGRAPHS = True # Show separate graphs
 DOFRAMES = True
@@ -36,10 +36,11 @@ FPSS = [15, 60]
 # Graph layout
 GRAPHBACK = True
 BUFFERCLIP = True
-PRINTBUFFER = False
+PRINTBUFFER = True
 IMG_WIDTH = 1.5
 IMGOUT_WIDTH = 1.0
 WH_RATIO = 0.76
+THICKNESS_ACTIVE = "thick"
 COLOR_ACTIVE = "red"
 COLOR_INACTIVE = "black"
 COLOR_INACTIVE_EDGE = "black!50"
@@ -94,9 +95,9 @@ POS = {
 			"inputs": {"type": "squares", "origin": (0, 0), "innerspan": 1, "squarespan": 7},
 			"outputs": {"type": "column", "pos": (10, 0), "span": 1},
 			"62": (7, 9),
-			"73": (7, 7),
+			"73": (8, 7),
 			"70": (5, 5), "85": (7, 5),
-			"58": (7, 4),
+			"58": (5.3, 4),
 			"65": (7.2, 1),
 			"52": (6.5,-1),
 			"54": (6,-3),
@@ -104,14 +105,26 @@ POS = {
 			"customedges": {
 				(30, "out30"): "bend right=10",
 				(39, "out39"): "bend right=25",
+				(85, "out85'"): "bend right=10",
+				(85, "out85''"): "bend right=12",
+				(43, "out43"): "bend left=12",
+				(12, 70): "bend left=10",
+				(15, 62): "bend left=10", (28, 62): "bend left=2",
+				(26, 65): "bend left=10",
+				(33, 85): "bend right=5",
 				(8, "out8"): "bend right=25",
-				(65, "out65'"): "out=south, in=west",
-				(10, "out10"): "out=east, in=west",
-				(4, "out4"): "in=west"
+				(65, "out65'"): "out=south east, in=west",
+				(10, "out10"): "out=south, in=west",
+				(4, "out4"): "out=east, in=west"
 			},
 			"customlabel": {
+				(2, 73): "pos=0.85",
+				(13, 58): "pos=0.9", (19, 58): "pos=0.7",
+				(12, 70): "pos=0.87",
+				(70, 85): "pos=0.5",
+				(26, 65): "pos=0.67",
 				(22, 52): "pos=0.8", (37, 52): "pos=0.8",
-				(28, 54): "pos=0.73", (48, 54): "pos=0.73",
+				(28, 54): "pos=0.9", (48, 54): "pos=0.6",
 				(18, 53): "pos=0.9"
 			},
 			"backgroundnode": {"pos": (-2.8, 1), "width": (5.2, 5.9, 2.1), "height": 19},
@@ -553,6 +566,7 @@ def getnodesettings(gdict, expdir, node, nodename, activated, indtype, isout, is
 			isactive = not iscontout_selected
 			iscontout_selected = True
 		nodecolor = COLOR_ACTIVE if isactive else COLOR_INACTIVE
+		thickness = THICKNESS_ACTIVE if isactive else ""
 		h = "0.6cm"
 		w = "2cm" if (indtype == "controller" and isout) else "1cm"
 		if not PRINTBUFFER and indtype == "encoder": # print nodes in same size as if images were there
@@ -563,7 +577,7 @@ def getnodesettings(gdict, expdir, node, nodename, activated, indtype, isout, is
 				w = str(IMG_WIDTH) + "cm"
 				h = str(WH_RATIO * IMG_WIDTH) + "cm"
 		sep = "inner sep=0,outer sep=0," if indtype == "encoder" else ""
-		nodesettings = "shape=rectangle, rounded corners=0.1cm, minimum width="+w+", minimum height="+h+", fill=white,"+sep+"draw, color="+nodecolor+",fill="+COLOR_BACKGROUND
+		nodesettings = "shape=rectangle, rounded corners=0.1cm, minimum width="+w+", minimum height="+h+", fill=white,"+sep+"draw, color="+nodecolor+",fill="+COLOR_BACKGROUND+","+thickness
 	return nodesettings, iscontout_selected
 
 def getedgelabel(fname):
@@ -698,6 +712,8 @@ def appendedges(ts, gdict, expdir, indtype):
 		isactive = (edge[1] in activated) and (not gdict["metadata"]["is_sticky"])
 		edgecolor = COLOR_ACTIVE if isactive else COLOR_INACTIVE_EDGE
 		pathset = "->, color="+edgecolor
+		if isactive:
+			pathset += ", " + THICKNESS_ACTIVE
 		custompathset = getcustompathset(expdir, indtype, edge, seenedges)
 		pathset += custompathset
 		if HALOEDGELABELS:
@@ -711,12 +727,14 @@ def appendedges(ts, gdict, expdir, indtype):
 		dst = getnodename(i, g, True)
 		edge = (output, dst)
 		isactive = (output in outputs) and (not gdict["metadata"]["is_sticky"])
+		pathset = ""
 		if isactive and not iscontoutedge_selected:
 			edgecolor = COLOR_ACTIVE
+			pathset += THICKNESS_ACTIVE
 			if indtype == "controller": iscontoutedge_selected = True
 		else:
 			edgecolor = COLOR_INACTIVE_EDGE
-		pathset = "->, color="+edgecolor
+		pathset += ", ->, color="+edgecolor
 		custompathset = getcustompathset(expdir, indtype, edge, seenedges)
 		pathset += custompathset
 		if HALOEDGELABELS:
