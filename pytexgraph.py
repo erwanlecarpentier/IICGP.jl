@@ -12,8 +12,8 @@ import operator
 from pdf2image import convert_from_path
 
 # COMMANDS
-ONLYENCO = True
-ONLYCONT = False
+ONLYENCO = False
+ONLYCONT = True
 SHOWGRAPHS = True # Show separate graphs
 DOFRAMES = True
 SHOWFRAMES = False # Show canvas
@@ -36,7 +36,7 @@ FPSS = [15, 60]
 # Graph layout
 GRAPHBACK = True
 BUFFERCLIP = True
-PRINTBUFFER = True
+PRINTBUFFER = False
 COLOR_ACTIVE = "red"
 COLOR_INACTIVE = "black"
 COLOR_INACTIVE_EDGE = "black!50"
@@ -76,6 +76,17 @@ Position "by type" apply to either all inputs or all outputs. Here are examples:
 	{"type": "squares", "pos": (0, 0)} # Only valid for controller input
 """
 POS = {
+	"2021-09-03T18:18:35.090_freeway" : {
+		"encoder": {
+			"1": (0,0),
+			"2": (2,0),
+			"8": (4,-1), "11": (6,-1), "out11": (8,-1),
+			"17": (4,1), "out17": (8,1),
+			"backgroundnode": {"pos": (-1, 0), "width": (1.7, 6, 1.5), "height": 4},
+			"customedges": {(2, 11): "bend left=20"},
+			"labelsinclination": 45
+		}
+	},
 	"2021-10-01T18:23:26.293_space_invaders": {
 		"encoder": {
 			"1": (0,0),
@@ -570,7 +581,7 @@ def appendnodes(ts, gdict, expdir, indtype):
 
 def getcustomlabelopt(expdir, indtype, edge, seenedges):
 	out = ""
-	if expdir in POS.keys() and "customlabel" in POS[expdir][indtype].keys() and edge in POS[expdir][indtype]["customlabel"]:
+	if expdir in POS.keys() and indtype in POS[expdir].keys() and "customlabel" in POS[expdir][indtype].keys() and edge in POS[expdir][indtype]["customlabel"]:
 		out += ", "
 		setting = POS[expdir][indtype]["customlabel"][edge]
 		if isinstance(setting, str):
@@ -583,7 +594,7 @@ def getcustomlabelopt(expdir, indtype, edge, seenedges):
 
 def getcustompathset(expdir, indtype, edge, seenedges):
 	out = ""
-	if expdir in POS.keys() and "customedges" in POS[expdir][indtype].keys() and edge in POS[expdir][indtype]["customedges"]:
+	if expdir in POS.keys() and indtype in POS[expdir].keys() and "customedges" in POS[expdir][indtype].keys() and edge in POS[expdir][indtype]["customedges"]:
 		out += ", "
 		setting = POS[expdir][indtype]["customedges"][edge]
 		if isinstance(setting, str):
@@ -604,8 +615,7 @@ def appendedges(ts, gdict, expdir, indtype):
 		dstindex = g["nodes"].index(edge[1])
 		edgelabel = getedgelabel(g["fs"][dstindex])
 		edgeopt = "loop left" if edge[0] == edge[1] else "" # self-loop
-		
-		if expdir in POS.keys() and "labelsinclination" in POS[expdir][indtype].keys():
+		if expdir in POS.keys() and indtype in POS[expdir].keys() and "labelsinclination" in POS[expdir][indtype].keys():
 			labelopt = "rotate=" + str(POS[expdir][indtype]["labelsinclination"])
 		else:
 			labelopt = "above"
