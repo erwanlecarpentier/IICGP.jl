@@ -36,7 +36,7 @@ FPSS = [15, 60]
 # Graph layout
 GRAPHBACK = True
 BUFFERCLIP = True
-PRINTBUFFER = False
+PRINTBUFFER = True
 COLOR_ACTIVE = "red"
 COLOR_INACTIVE = "black"
 COLOR_INACTIVE_EDGE = "black!50"
@@ -80,10 +80,18 @@ POS = {
 		"encoder": {
 			"1": (0,0),
 			"2": (2,0),
-			"8": (4,-1), "11": (6,-1), "out11": (8,-1),
-			"17": (4,1), "out17": (8,1),
+			"8": (4,1), "11": (6,1), "out11": (8,1),
+			"17": (4,-1), "out17": (8,-1),
 			"backgroundnode": {"pos": (-1, 0), "width": (1.7, 6, 1.5), "height": 4},
-			"customedges": {(2, 11): "bend left=20"},
+			"customedges": {(2, 11): "bend right=20"},
+			"labelsinclination": 45
+		},
+		"controller": {
+			"inputs": {"type": "squares", "origin": (0, 0), "innerspan": 1, "squarespan": 7},
+			"outputs": {"type": "column", "pos": (10, 0), "span": 1},
+			"68": (5,-0.5), "79": (7,-0.5),
+			"sticky": (10, 2),
+			"backgroundnode": {"pos": (-2.7, 0), "width": (5.2, 5.8, 2.1), "height": 13},
 			"labelsinclination": 45
 		}
 	},
