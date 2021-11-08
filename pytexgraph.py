@@ -16,14 +16,14 @@ ONLYENCO = False
 ONLYCONT = False
 SHOWGRAPHS = False # Show separate graphs
 DOFRAMES = True
-SHOWFRAMES = True # Show canvas
-DOVIDEO = False
+SHOWFRAMES = False # Show canvas
+DOVIDEO = True
 
 PRINTPDFLATEXOUT = False
 
 # Meta parameters
 SEED = 0
-MAX_FRAME = 1 # None implies finding max_frame
+MAX_FRAME = None # None implies finding max_frame
 DIR_PATH = os.path.dirname(os.path.realpath(__file__))
 HOME_DIR = os.path.expanduser("~")
 ICGPRES_DIR = HOME_DIR + "/Documents/git/ICGP-results"
