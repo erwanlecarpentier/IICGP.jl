@@ -13,7 +13,7 @@ s = ArgParseSettings()
 @add_arg_table! s begin
     "--cfg"
     help = "configuration script"
-    default = "cfg/dualcgpga_atari_pooling.yaml"
+    default = "cfg/atari_eccgp.yaml"
     "--game"
     help = "game rom name"
     default = "gravitar"

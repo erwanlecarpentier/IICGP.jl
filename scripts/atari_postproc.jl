@@ -2,23 +2,23 @@ using IICGP
 using Dates
 
 rootdir = joinpath(homedir(), "Documents/git/ICGP-results/")
-rootdir = dirname(@__DIR__) # TODO remove
+# rootdir = dirname(@__DIR__) # TODO remove
 resdir = joinpath(rootdir, "results/")
 fetch_backup(rootdir, clean=true)
 
 # Filters parameters
 min_date = DateTime(2021, 09, 01)
-max_date = DateTime(2021, 10, 23)
+max_date = DateTime(2021, 10, 02)
 savedir_index = 1
 labels = Vector{String}()
 colors = Vector{Symbol}()
-games = ["gravitar"]
 games_12 = ["boxing" "assault" "freeway" "solaris" "defender" "gravitar" "space_invaders" "private_eye" "asteroids" "breakout" "frostbite" "riverraid"]
+games = games_12# ["gravitar"]
 reducers = ["pooling"]# Vector{String}()
 dotime = false
 dosave = true
 
-baselines = false # TODO set to true
+baselines = true
 
 #=
 labels = ["1 + λ (\"deterministic\" game)", "GA (stochastic games)"] # Vector{String}()

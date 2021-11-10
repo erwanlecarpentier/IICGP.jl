@@ -1,0 +1,87 @@
+# General parameters
+optimizer: "nsgaii"
+seed: 0
+max_frames: 10000
+stickiness: 0.25
+d_fitness: 2
+n_gen: 10 # 20000 # TODO put back
+#n_eval: 36 # Maximum number of evaluations per generation
+n_elite: 5 # Number of elite pairs per generation
+eval_mutant: false
+tournament_size: 3
+log_gen: 1 # 200 # TODO put back
+save_gen: 1 # 200 # TODO put back
+bootstrap: false
+grayscale: true
+downscale: true
+
+# Encoder's parameters
+encoder:
+  n_population: 10
+  rows: 1
+  columns: 20
+  recur: 0.0
+  m_rate: 0.1
+  out_m_rate: 0.3
+  n_parameters: 1
+  n_out: 1
+  functions:
+    - f_dilate
+    - f_erode
+    - f_subtract
+    #- f_remove_details
+    #- f_make_boxes
+    #- f_felzenszwalb_segmentation
+    #- f_components_segmentation
+    #- f_box_segmentation
+    - f_threshold
+    - f_binary
+    #- f_corners
+    #- f_gaussian
+    #- f_laplacian
+    #- f_sobel_x
+    #- f_sobel_y
+    #- f_canny
+    #- f_edges
+    #- f_opening
+    #- f_closing
+    #- f_tophat
+    #- f_bothat
+    #- f_morphogradient
+    #- f_morpholaplace
+    - f_bitwise_not
+    - f_bitwise_and
+    - f_bitwise_or
+    - f_bitwise_xor
+    - f_motion_capture
+    #- f_motion_distances
+
+# Reducer's parameters
+reducer:
+  type: "pooling" # "pooling" or "centroid"
+  pooling_function: "mean" # POOLING: "mean", "max", or "min"
+  features_size: 5 # POOLING: size of the square down-sampled image
+  n_centroids: 15 # CENTROID: number of biggest objects tracked
+
+# Controller's parameters
+controller:
+  n_population: 10
+  rows: 1
+  columns: 60
+  recur: 0.0
+  m_rate: 0.1
+  out_m_rate: 0.5
+  n_parameters: 1
+  functions:
+    - f_add
+    - f_subtract
+    - f_mult
+    - f_div
+    - f_abs
+    - f_sqrt
+    - f_lt
+    - f_gt
+    - f_and
+    - f_or
+    - f_xor
+    - f_not
