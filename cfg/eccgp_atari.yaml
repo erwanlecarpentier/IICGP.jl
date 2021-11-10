@@ -1,5 +1,5 @@
 # General parameters
-optimizer: "nsgaii"
+optimizer: "oneplus"
 seed: 0
 max_frames: 10000
 stickiness: 0.25
@@ -72,6 +72,7 @@ controller:
   m_rate: 0.1
   out_m_rate: 0.5
   n_parameters: 1
+  n_cst_nodes: 10
   functions:
     - f_add
     - f_subtract

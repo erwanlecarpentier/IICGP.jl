@@ -1,9 +1,32 @@
-export IPCGPInd, SymInd, IPCGPCopy, image_buffer, get_last_dualcgp
+export IPCGPInd, IPCGPCopy, image_buffer, get_last_dualcgp
+export SymInd, SymIndCopy
+export ECCGPInd, ECCGPIndCopy
 export rand_CGPchromosome, SymIndCopy
 
 using CartesianGeneticProgramming
 using Cambrian
 using JSON
+
+"""
+Encoder controller paired within one single individual.
+"""
+mutable struct ECCGPInd <: Cambrian.Individual
+    e_chromosome::Vector{Float64} # Encoder chromosome
+    c_chromosome::Vector{Float64} # Controller chromosome
+    fitness::Vector{Float64}
+end
+
+function ECCGPInd(
+    cfg::NamedTuple,
+    e_chromosome::Vector{Float64},
+    c_chromosome::Vector{Float64}
+)
+    ECCGPInd(e_chromosome, c_chromosome, -Inf * ones(cfg.d_fitness))
+end
+
+function ECCGPIndCopy(ind::ECCGPInd)::ECCGPInd
+    ECCGPInd(copy(ind.e_chromosome), copy(ind.c_chromosome), copy(ind.fitness))
+end
 
 """
 Symbolic Individual struct for easy/fast representation in

@@ -2,7 +2,7 @@ using ArcadeLearningEnvironment
 using ArgParse
 using Cambrian
 using CartesianGeneticProgramming
-using Dates
+using Datesnsgaii
 using IICGP
 using Random
 
@@ -13,10 +13,10 @@ s = ArgParseSettings()
 @add_arg_table! s begin
     "--cfg"
     help = "configuration script"
-    default = "cfg/atari_eccgp.yaml"
+    default = "cfg/eccgp_atari.yaml"
     "--game"
     help = "game rom name"
-    default = "gravitar"
+    default = "freeway"
     "--seed"
     help = "random seed for evolution"
     arg_type = Int
@@ -96,5 +96,5 @@ fit(ind::ECCGP, seed::Int64) = play_atari(ind, seed, lck)
 
 evo = IICGP.DualCGPGAEvo(mcfg, ecfg, ccfg, fit, logid, resdir)
 
-init_backup(logid, resdir, cfgpath)
-run!(evo)
+#init_backup(logid, resdir, cfgpath)
+#run!(evo)
