@@ -1,6 +1,6 @@
 export IPCGPInd, IPCGPCopy, image_buffer, get_last_dualcgp
 export SymInd, SymIndCopy
-export ECCGPInd, ECCGPIndCopy
+export ECCGPInd
 export rand_CGPchromosome, SymIndCopy
 
 using CartesianGeneticProgramming
@@ -11,21 +11,21 @@ using JSON
 Encoder controller paired within one single individual.
 """
 mutable struct ECCGPInd <: Cambrian.Individual
-    e_chromosome::Vector{Float64} # Encoder chromosome
-    c_chromosome::Vector{Float64} # Controller chromosome
+    e::CGPInd
+    c::CGPInd
+    #e_chromosome::Vector{Float64} # Encoder chromosome
+    #c_chromosome::Vector{Float64} # Controller chromosome
     fitness::Vector{Float64}
 end
 
 function ECCGPInd(
-    cfg::NamedTuple,
-    e_chromosome::Vector{Float64},
-    c_chromosome::Vector{Float64}
+    mcfg::NamedTuple,
+    ecfg::NamedTuple,
+    ccfg::NamedTuple
 )
-    ECCGPInd(e_chromosome, c_chromosome, -Inf * ones(cfg.d_fitness))
-end
-
-function ECCGPIndCopy(ind::ECCGPInd)::ECCGPInd
-    ECCGPInd(copy(ind.e_chromosome), copy(ind.c_chromosome), copy(ind.fitness))
+    e = IPCGPInd(ecfg)
+    c = CartesianGeneticProgramming.CGPInd(ccfg)
+    ECCGPInd(e, c, -Inf * ones(mcfg.d_fitness))
 end
 
 """

@@ -44,7 +44,7 @@ const downscale = mcfg["downscale"]
 const logid = mcfg["id"]
 
 function play_atari(
-    ind::ECCGP,
+    ind::ECCGPInd,
     seed::Int64,
     lck::ReentrantLock;
     rom=rom,
@@ -80,14 +80,14 @@ function play_atari(
 end
 
 """
-    mutate(ind::ECCGP, ind_type::String)
+    mutate(ind::ECCGPInd, ind_type::String)
 
 Mutate function for an EC-CGP (encoder-controller pair). Mutate both the
 encoder and the controller so that child pair is structurally different.
 """
-function mutate(ind::ECCGP)
+function mutate(ind::ECCGPInd)
     ind.encoder = goldman_mutate(ecfg, ind.encoder, init_function=IPCGPInd)
-    ind.controller = goldman_mutate(ecfg, ind.controller)
+    ind.controller = goldman_mutate(ccfg, ind.controller)
     ind
 end
 
