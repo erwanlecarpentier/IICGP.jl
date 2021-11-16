@@ -1,6 +1,6 @@
 export IPCGPInd, IPCGPCopy, image_buffer, get_last_dualcgp
 export SymInd, SymIndCopy
-export NSGA2Ind, dominates
+export NSGA2Ind, NSGA2IndCopy, dominates
 export ECCGPInd
 export rand_CGPchromosome, SymIndCopy
 
@@ -28,6 +28,11 @@ function NSGA2Ind(cfg::NamedTuple, chromosome::Vector{Float64})
     crowding_distance = 0.0
     NSGA2Ind(chromosome, fitness, rank, domination_count,
              domination_list, crowding_distance)
+end
+
+function NSGA2IndCopy(ind::NSGA2Ind)
+    NSGA2Ind(copy(ind.chromosome), copy(ind.fitness), ind.rank,
+             ind.domination_count, ind.domination_list, ind.crowding_distance)
 end
 
 function dominates(ind1::NSGA2Ind, ind2::NSGA2Ind)

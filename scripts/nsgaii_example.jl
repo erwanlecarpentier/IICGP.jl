@@ -81,7 +81,7 @@ for i in (e.gen+1):1#e.config.n_gen
         populate(e)
     end=#
     evaluate(e)
-    generation(e)
+    new_population = generation(e)
     display_paretto(e)
     #=if ((e.config.log_gen > 0) && mod(e.gen, e.config.log_gen) == 0)
         log_gen(e)
@@ -90,8 +90,6 @@ for i in (e.gen+1):1#e.config.n_gen
         save_gen(e)
     end=#
 end
-
-
 
 ##
 

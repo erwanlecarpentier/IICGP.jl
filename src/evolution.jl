@@ -28,7 +28,62 @@ end
 evaluate(e::NSGA2Evo) = IICGP.fitness_evaluate(e, e.fitness)
 
 function generation(e::NSGA2Evo)
+    # Sort all individuals according to Pareto efficiency
     fast_non_dominated_sort!(e)
+    # Select elites as most Pareto efficient solutions
+    new_population = Vector{NSGA2Ind}()
+    sort!(e.population, by = ind -> ind.rank)
+    current_rank = 1
+    i_start = 1
+    i_end = findlast(ind -> ind.rank == current_rank, e.population)
+    while length(new_population) < e.config.n_elite
+        n_candidates = i_end - i_start + 1
+        if !(length(new_population) + n_candidates > e.config.n_elite)
+            # Add all the individuals of this rank
+            push!(new_population,
+                  [NSGA2IndCopy(ind) for ind in e.population[i_start:i_end]]...)
+        else
+            # Compute crowding distances and add less crowded individuals
+            assign_crowding_distances!(e, current_rank)
+            sort!(e.population, by = ind -> ind.crowding_distance, rev=true)
+            push!(new_population, [NSGA2IndCopy(ind) for ind in
+                  e.population[1:e.config.n_elite-length(new_population)]]...)
+        end
+        current_rank += 1
+        i_start = i_end + 1
+        i_end = findlast(ind -> ind.rank == current_rank, e.population)
+    end
+    e.population = new_population
+end
+
+"""
+    assign_crowding_distances!(e::NSGA2Evo, rank::Int64)
+
+Assign crowding distances as defined in [1] for individuals with rank
+corresponding to the input rank.
+
+[1] Deb, Kalyanmoy, et al. "A Fast and Elitist Multiobjective Genetic
+Algorithm: NSGA-II." IEEE transactions on evolutionary computation 6.2
+(2002): 182-197.
+"""
+function assign_crowding_distances!(e::NSGA2Evo, rank::Int64)
+    subpop = view(e.population, findall(ind -> ind.rank == rank, e.population))
+    for ind in subpop
+        ind.crowding_distance = 0
+    end
+    l = length(subpop)
+    @inbounds for i in 1:e.config.d_fitness
+        sort!(subpop, by = ind -> ind.fitness[i])
+        if subpop[1].fitness[i] != subpop[end].fitness[i]
+            subpop[1].crowding_distance = Inf
+            subpop[end].crowding_distance = Inf
+            cd_norm = subpop[end].fitness[i] - subpop[1].fitness[i]
+            for j in 2:l-1
+                cd_dist = subpop[j+1].fitness[i] - subpop[j-1].fitness[i]
+                subpop[j].crowding_distance += cd_dist / cd_norm
+            end
+        end
+    end
 end
 
 """
@@ -41,7 +96,7 @@ Algorithm: NSGA-II." IEEE transactions on evolutionary computation 6.2
 (2002): 182-197.
 """
 function fast_non_dominated_sort!(e::NSGA2Evo)
-    # Re-initialize individuals
+    # Re-initialize individuals statistics
     for ind in e.population
         ind.rank = 0
         ind.domination_count = 0
@@ -68,7 +123,7 @@ function fast_non_dominated_sort!(e::NSGA2Evo)
     while any([ind.rank == current_rank - 1 for ind in e.population])
         for ind in e.population
             if ind.rank == current_rank - 1
-                for index in ind.domination_list
+                @inbounds for index in ind.domination_list
                     e.population[index].domination_count -= 1
                     if e.population[index].domination_count == 0
                         e.population[index].rank = current_rank
