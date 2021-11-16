@@ -74,7 +74,7 @@ e = NSGA2Evo(cfg, resdir, my_fitness, my_init)
 
 init_backup(cfg.id, resdir, cfg_path)
 #run!(evo)
-for i in 1:e.config.n_gen
+for i in 1:2#e.config.n_gen
     e.gen += 1
     if e.gen > 1
         populate(e)

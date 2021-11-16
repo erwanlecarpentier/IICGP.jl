@@ -6,7 +6,7 @@ using Statistics
 mutable struct NSGA2Evo{T} <: Cambrian.AbstractEvolution
     config::NamedTuple
     logid::String
-    #logger::CambrianLogger
+    logger::CambrianLogger
     population::Array{T}
     fitness::Function
     gen::Int64
@@ -19,10 +19,10 @@ function NSGA2Evo(
     init_population::Function
 )
     logid = config.id
-    log_path = joinpath(resdir, logid)
-    #logger = CambrianLogger(log_path)
+    log_path = joinpath(resdir, logid, "logs/logs.csv")
+    logger = CambrianLogger(log_path)
     population = init_population(config)
-    NSGA2Evo(config, logid, population, fitness, 0)
+    NSGA2Evo(config, logid, logger, population, fitness, 0)
 end
 
 populate(e::NSGA2Evo{T}) where T = IICGP.nsga2_populate(e)
@@ -134,6 +134,21 @@ function fast_non_dominated_sort!(e::NSGA2Evo)
         end
         current_rank += 1
     end
+end
+
+function log_gen(e::NSGA2Evo)
+    println("Holà")
+    if e.gen == 1
+        with_logger(e.logger) do
+            @info Formatting.format("generation,fitness,rank")
+        end
+    end
+    for ind in e.population
+        with_logger(e.logger) do
+            @info Formatting.format(string(e.gen,",",ind.fitness,",",ind.rank))
+        end
+    end
+    flush(e.logger.stream)
 end
 
 """
