@@ -35,7 +35,7 @@ const cfg = get_config(cfg_path)
 
 # Specific functions for this example of learning two functions
 x = [i for i in 0:0.1:1]
-f1(x) = 0.25 * (2.0 + cos(2.0*π*x))
+f1(x) = 0.2 * (2.0 + cos(2.0*π*x))
 f2(x) = 0.25 * (2.0 + cos(4*π*x))
 y1 = f1.(x)
 y2 = f2.(x)
@@ -97,5 +97,5 @@ end
 
 println()
 for ind in e.population
-    println(ind.rank, ind.fitness)
+    println(ind.rank, " ", ind.fitness, " ", ind.domination_count)
 end

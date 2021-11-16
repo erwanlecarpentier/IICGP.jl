@@ -45,7 +45,7 @@ function fast_non_dominated_sort!(e::NSGA2Evo)
             if dominates(e.population[i], e.population[j])
                 push!(e.population[i].domination_list, j)
                 e.population[j].domination_count += 1
-            else
+            elseif dominates(e.population[j], e.population[i])
                 push!(e.population[j].domination_list, i)
                 e.population[i].domination_count += 1
             end
