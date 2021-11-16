@@ -136,17 +136,23 @@ function fast_non_dominated_sort!(e::NSGA2Evo)
     end
 end
 
-function log_gen(e::NSGA2Evo)
+function log_gen(e::NSGA2Evo, fitness_norm::Vector{Float64})
     println("Holà")
     if e.gen == 1
         with_logger(e.logger) do
-            @info Formatting.format("generation,rank, fitness,chromosome")
+            @info Formatting.format("generation,rank,fitness,normalized_fitness,chromosome")
         end
     end
     for ind in e.population
+        raw_fitness = ind.fitness .* fitness_norm
         with_logger(e.logger) do
             @info Formatting.format(
-                string(e.gen,",",ind.rank,",",ind.fitness,",",ind.chromosome)
+                string(
+                    e.gen,",",
+                    ind.rank,",",
+                    raw_fitness,",",
+                    ind.fitness,",",
+                    ind.chromosome)
             )
         end
     end
