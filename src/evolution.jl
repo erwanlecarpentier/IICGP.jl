@@ -6,7 +6,7 @@ using Statistics
 mutable struct NSGA2Evo{T} <: Cambrian.AbstractEvolution
     config::NamedTuple
     logid::String
-    logger::CambrianLogger
+    #logger::CambrianLogger
     population::Array{T}
     fitness::Function
     gen::Int64
@@ -20,9 +20,9 @@ function NSGA2Evo(
 )
     logid = config.id
     log_path = joinpath(resdir, logid)
-    logger = CambrianLogger(log_path)
+    #logger = CambrianLogger(log_path)
     population = init_population(config)
-    NSGA2Evo(config, logid, logger, population, fitness, 0)
+    NSGA2Evo(config, logid, population, fitness, 0)
 end
 
 populate(e::NSGA2Evo{T}) where T = IICGP.nsga2_populate(e)

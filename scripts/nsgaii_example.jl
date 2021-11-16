@@ -10,16 +10,16 @@ using LinearAlgebra
 import Cambrian.mutate
 
 out(plt) = println(IOContext(stdout, :color=>true), plt)
-
-
 default_resdir = joinpath(dirname(@__DIR__), "results")
+default_cfgdir = joinpath(dirname(@__DIR__), "cfg")
 
 s = ArgParseSettings()
 @add_arg_table! s begin
     "--cfg"
     help = "configuration script"
-    default = "cfg/nsgaii_example.yaml"
+    default = joinpath(default_cfgdir, "nsgaii_example.yaml")
     "--seed"
+    help = "random seed"
     default = 0
     "--out"
     help = "output directory"
@@ -72,9 +72,9 @@ end
 
 e = NSGA2Evo(cfg, resdir, my_fitness, my_init)
 
-#init_backup(logid, resdir, cfgpath)
+init_backup(cfg.id, resdir, cfg_path)
 #run!(evo)
-for i in (e.gen+1):e.config.n_gen
+for i in 1:e.config.n_gen
     e.gen += 1
     if e.gen > 1
         populate(e)
@@ -82,10 +82,10 @@ for i in (e.gen+1):e.config.n_gen
     evaluate(e)
     display_paretto(e)
     new_population = generation(e)
-    #=if ((e.config.log_gen > 0) && mod(e.gen, e.config.log_gen) == 0)
+    if ((e.config.log_gen > 0) && mod(e.gen, e.config.log_gen) == 0)
         log_gen(e)
     end
-    if ((e.config.save_gen > 0) && mod(e.gen, e.config.save_gen) == 0)
+    #=if ((e.config.save_gen > 0) && mod(e.gen, e.config.save_gen) == 0)
         save_gen(e)
     end=#
 end

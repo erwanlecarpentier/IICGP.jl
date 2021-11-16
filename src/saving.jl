@@ -20,7 +20,10 @@ function init_backup(logid::String, resdir::String, cfg_path::String)
     #mkdir(new_logs_dir)
     #mkdir(new_gens_dir)
     #new_cfg_path = joinpath(new_resu_dir, cfg_path[length("cfg/")+1:end])
-    new_cfg_path = joinpath(resdir, "logs", logid, basename(cfg_path))
+    expdir = joinpath(resdir, logid)
+    mkpath(joinpath(expdir, "logs"))
+    mkpath(joinpath(expdir, "gens"))
+    new_cfg_path = joinpath(expdir, "logs", basename(cfg_path))
     cp(cfg_path, new_cfg_path, force=true)
 end
 
