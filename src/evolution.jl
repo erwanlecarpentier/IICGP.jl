@@ -140,12 +140,14 @@ function log_gen(e::NSGA2Evo)
     println("Holà")
     if e.gen == 1
         with_logger(e.logger) do
-            @info Formatting.format("generation,fitness,rank")
+            @info Formatting.format("generation,rank, fitness,chromosome")
         end
     end
     for ind in e.population
         with_logger(e.logger) do
-            @info Formatting.format(string(e.gen,",",ind.fitness,",",ind.rank))
+            @info Formatting.format(
+                string(e.gen,",",ind.rank,",",ind.fitness,",",ind.chromosome)
+            )
         end
     end
     flush(e.logger.stream)
