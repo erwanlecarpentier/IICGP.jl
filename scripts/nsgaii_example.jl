@@ -34,7 +34,7 @@ const resdir = args["out"]
 const cfg = get_config(cfg_path)
 
 # Specific functions for this example of learning two functions
-x = [i for i in 0:0.1:1]
+x = [i for i in 0:0.05:1]
 f1(x) = 0.2 * (2.0 + cos(2.0*π*x))
 f2(x) = 0.25 * (2.0 + cos(4*π*x))
 y1 = f1.(x)
@@ -53,16 +53,16 @@ function my_fitness(ind::NSGA2Ind)
     @inbounds for i in eachindex(y1)
         y_hat[i] = CartesianGeneticProgramming.process(cgp_ind, [x[i]])[1]
     end
-    o1 = 1.0 - norm(y1 - y_hat) / length(x)
-    o2 = 1.0 - norm(y2 - y_hat) / length(x)
+    o1 = - norm(y1 - y_hat) / length(x)
+    o2 = - norm(y2 - y_hat) / length(x)
     o1, o2
 end
 
 # User-defined mutation function
-function my_mutate(ind::NSGA2Ind)
-    ind = CGPInd(cfg, chromosome)
-    child = goldman_mutate(cfg, ind)
-    NSGA2Ind(child.chromosome)
+function mutate(ind::NSGA2Ind)
+    cgpind = CGPInd(cfg, ind.chromosome)
+    child = goldman_mutate(cfg, cgpind)
+    NSGA2Ind(cfg, child.chromosome)
 end
 
 # User-defined population initialization function
@@ -74,15 +74,14 @@ e = NSGA2Evo(cfg, resdir, my_fitness, my_init)
 
 #init_backup(logid, resdir, cfgpath)
 #run!(evo)
-
-for i in (e.gen+1):1#e.config.n_gen
+for i in (e.gen+1):e.config.n_gen
     e.gen += 1
-    #=if e.gen > 1
+    if e.gen > 1
         populate(e)
-    end=#
+    end
     evaluate(e)
-    new_population = generation(e)
     display_paretto(e)
+    new_population = generation(e)
     #=if ((e.config.log_gen > 0) && mod(e.gen, e.config.log_gen) == 0)
         log_gen(e)
     end
@@ -91,9 +90,7 @@ for i in (e.gen+1):1#e.config.n_gen
     end=#
 end
 
-##
-
-println()
-for ind in e.population
-    println(ind.rank, " ", ind.fitness, " ", ind.domination_count)
-end
+# Display one of the elite (Pareto efficient) individuals
+ind = CGPInd(cfg, e.population[1].chromosome)
+f(x) = CartesianGeneticProgramming.process(ind, [x])[1]
+out(lineplot([f1, f2, f], 0, 1, border=:dotted))

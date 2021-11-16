@@ -1,4 +1,19 @@
-export oneplus_populate, ga_populate
+export oneplus_populate, ga_populate, nsga2_populate
+
+"""
+    nsga2_populate(e::NSGA2Evo)
+
+Complete the population vector of the input `NSGA2Evo` object by mutating
+elite/parents individuals that are already contained in this population vector.
+"""
+function nsga2_populate(e::NSGA2Evo{T}) where T
+    parent_index = 1
+    while length(e.population) < e.config.n_population
+        push!(e.population, mutate(e.population[parent_index]))
+        parent_index = mod(parent_index, e.config.n_elite) + 1
+    end
+end
+
 
 """
     function oneplus_populate(e::DualCGPEvolution)

@@ -25,6 +25,7 @@ function NSGA2Evo(
     NSGA2Evo(config, logid, logger, population, fitness, 0)
 end
 
+populate(e::NSGA2Evo{T}) where T = IICGP.nsga2_populate(e)
 evaluate(e::NSGA2Evo) = IICGP.fitness_evaluate(e, e.fitness)
 
 function generation(e::NSGA2Evo)
