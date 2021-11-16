@@ -2,7 +2,7 @@ using ArcadeLearningEnvironment
 using ArgParse
 using Cambrian
 using CartesianGeneticProgramming
-using Datesnsgaii
+using Dates
 using IICGP
 using Random
 
@@ -86,8 +86,8 @@ Mutate function for an EC-CGP (encoder-controller pair). Mutate both the
 encoder and the controller so that child pair is structurally different.
 """
 function mutate(ind::ECCGPInd)
-    ind.encoder = goldman_mutate(ecfg, ind.encoder, init_function=IPCGPInd)
-    ind.controller = goldman_mutate(ccfg, ind.controller)
+    ind.e = goldman_mutate(ecfg, ind.e, init_function=IPCGPInd)
+    ind.c = goldman_mutate(ccfg, ind.c)
     ind
 end
 

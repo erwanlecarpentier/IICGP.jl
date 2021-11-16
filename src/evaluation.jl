@@ -5,10 +5,23 @@ using Random
 """
     null_evaluate(i::CGPInd, j::CGPInd)
 
-Default evaluation function for two CGP individuals.
+Default evaluation function for two CGP individuals setting minimum fitness.
 """
 function null_evaluate(i::CGPInd, j::CGPInd)
     return -Inf
+end
+
+"""
+	fitness_evaluate(e::NSGA2Evo, fitness::Function)
+
+Evaluation function for the NSGA-II algorithm.
+"""
+function fitness_evaluate(e::NSGA2Evo, fitness::Function)
+	@sync @inbounds for i in eachindex(e.population)
+		Threads.@spawn begin
+            e.population[i].fitness .= fitness(e.population[i])
+		end
+    end
 end
 
 """
@@ -20,7 +33,7 @@ Multithreaded option enabled in this version.
 function fitness_evaluate(e::CGPEvolution, fitness::Function)
     @sync for i in eachindex(e.population)
         Threads.@spawn begin
-            e.population[i].fitness[:] = fitness(e.population[i])[:]
+            e.population[i].fitness .= fitness(e.population[i])
         end
     end
 end

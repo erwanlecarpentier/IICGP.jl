@@ -1,11 +1,43 @@
 export IPCGPInd, IPCGPCopy, image_buffer, get_last_dualcgp
 export SymInd, SymIndCopy
+export NSGA2Ind, dominates
 export ECCGPInd
 export rand_CGPchromosome, SymIndCopy
 
 using CartesianGeneticProgramming
 using Cambrian
 using JSON
+
+"""
+Standard NSGA2 indivudal
+"""
+mutable struct NSGA2Ind <: Cambrian.Individual
+    chromosome::Vector{Float64}
+    fitness::Vector{Float64}
+    rank::Int64
+    domination_count::Int64
+    domination_list::Vector{Int64}
+    crowding_distance::Float64
+end
+
+function NSGA2Ind(cfg::NamedTuple, chromosome::Vector{Float64})
+    fitness = -Inf * ones(cfg.d_fitness)
+    rank = 0
+    domination_count = 0
+    domination_list = Vector{Int64}()
+    crowding_distance = 0.0
+    NSGA2Ind(chromosome, fitness, rank, domination_count,
+             domination_list, crowding_distance)
+end
+
+function dominates(ind1::NSGA2Ind, ind2::NSGA2Ind)
+    @inbounds for i in eachindex(ind1.fitness)
+        if ind1.fitness[i] < ind2.fitness[i]
+            return false
+        end
+    end
+    return true
+end
 
 """
 Encoder controller paired within one single individual.

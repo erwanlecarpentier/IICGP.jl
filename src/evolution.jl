@@ -1,7 +1,75 @@
-export DualCGPEvolution, DualCGPGAEvo
+export DualCGPEvolution, DualCGPGAEvo, NSGA2Evo, generation
 
 import Cambrian.populate, Cambrian.evaluate, Cambrian.log_gen, Cambrian.save_gen
 using Statistics
+
+mutable struct NSGA2Evo{T} <: Cambrian.AbstractEvolution
+    config::NamedTuple
+    logid::String
+    logger::CambrianLogger
+    population::Array{T}
+    fitness::Function
+    gen::Int64
+end
+
+function NSGA2Evo(
+    config::NamedTuple,
+    resdir::String,
+    fitness::Function,
+    init_population::Function
+)
+    logid = config.id
+    log_path = joinpath(resdir, logid)
+    logger = CambrianLogger(log_path)
+    population = init_population(config)
+    NSGA2Evo(config, logid, logger, population, fitness, 0)
+end
+
+evaluate(e::NSGA2Evo) = IICGP.fitness_evaluate(e, e.fitness)
+
+function generation(e::NSGA2Evo)
+    fast_non_dominated_sort!(e)
+end
+
+function fast_non_dominated_sort!(e::NSGA2Evo)
+    # Re-initialize individuals
+    for ind in e.population
+        ind.rank = 0
+        ind.domination_count = 0
+        empty!(ind.domination_list)
+        ind.crowding_distance = 0.0
+    end
+    # Set domination lists, counts and 1st ranks
+    @inbounds for i in 1:length(e.population)
+        for j in i+1:length(e.population)
+            if dominates(e.population[i], e.population[j])
+                push!(e.population[i].domination_list, j)
+                e.population[j].domination_count += 1
+            else
+                push!(e.population[j].domination_list, i)
+                e.population[i].domination_count += 1
+            end
+        end
+        if e.population[i].domination_count == 0
+            e.population[i].rank = 1
+        end
+    end
+    # Set ranks higher than 2
+    current_rank = 2
+    while any([ind.rank == current_rank - 1 for ind in e.population])
+        for ind in e.population
+            if ind.rank == current_rank - 1
+                for index in ind.domination_list
+                    e.population[index].domination_count -= 1
+                    if e.population[index].domination_count == 0
+                        e.population[index].rank = current_rank
+                    end
+                end
+            end
+        end
+        current_rank += 1
+    end
+end
 
 """
     init_chomosomes(cfg::NamedTuple)
