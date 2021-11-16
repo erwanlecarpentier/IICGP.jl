@@ -31,6 +31,15 @@ function generation(e::NSGA2Evo)
     fast_non_dominated_sort!(e)
 end
 
+"""
+    fast_non_dominated_sort!(e::NSGA2Evo)
+
+Fast non-dominated sorting algorithm from the NSGA2 paper [1].
+
+[1] Deb, Kalyanmoy, et al. "A Fast and Elitist Multiobjective Genetic
+Algorithm: NSGA-II." IEEE transactions on evolutionary computation 6.2
+(2002): 182-197.
+"""
 function fast_non_dominated_sort!(e::NSGA2Evo)
     # Re-initialize individuals
     for ind in e.population
