@@ -10,6 +10,23 @@ using LinearAlgebra
 
 import Cambrian.mutate
 
+# State-of-the-art maximum scores (rough estimate)
+const soa_scores = Dict(
+    "assault"=>14497.9,
+    "asteroids"=>9412.0,
+    "boxing"=>100.0,
+    "breakout"=>800.0,
+    "defender"=>993010.0,
+    "freeway"=>30.0,
+    "frostbite"=>8144.4,
+    "gravitar"=>2350.0,
+    "private_eye"=>15028.3,
+    "pong"=>20.0,
+    "riverraid"=>18184.4,
+    "solaris"=>8324,
+    "space_invaders"=>23846.0
+)
+
 out(plt) = println(IOContext(stdout, :color=>true), plt)
 default_resdir = joinpath(dirname(@__DIR__), "results")
 default_cfgdir = joinpath(dirname(@__DIR__), "cfg")
@@ -48,21 +65,26 @@ const rom_name = args["game"]
 const resdir = args["out"]
 mcfg, ecfg, ccfg, reducer, bootstrap = IICGP.dualcgp_config(cfg_path, rom_name)
 mcfg = dict2namedtuple(mcfg)
-const max_f = mcfg.max_frames
+const max_frames = mcfg.max_frames
 const grayscale = mcfg.grayscale
 const downscale = mcfg.downscale
 const stickiness = mcfg.stickiness
 const lck = ReentrantLock()
-const fitness_norm = [1.0, 1.0] # TODO set fitness_norm
+const max_n_active_nodes = ecfg.rows * ecfg.columns + ccfg.rows * ccfg.columns
 
-function play_atari(
+const fitness_norm = [
+    soa_scores[rom_name],
+    max_n_active_nodes
+]
+
+function atari_score(
     encoder::CGPInd,
     reducer::Reducer,
     controller::CGPInd,
     seed::Int64;
     lck::ReentrantLock=lck,
     rom::String=rom_name,
-    max_frames::Int64=max_f,
+    max_frames::Int64=max_frames,
     grayscale::Bool=grayscale,
     downscale::Bool=downscale,
     stickiness::Float64=stickiness
@@ -90,15 +112,21 @@ function play_atari(
         end
     end
     close!(game)
-    reward + rand(mt)
+    reward
+end
+
+function sparsity_score(encoder::CGPInd, controller::CGPInd)
+    n_enco_active = sum([nd.active for nd in enco.nodes])
+    n_cont_active = sum([nd.active for nd in cont.nodes])
+    max_n_active_nodes - (n_enco_active + n_cont_active)
 end
 
 # User-defined fitness function (normalized)
 function my_fitness(ind::NSGA2ECInd, seed::Int64)
     enco = IPCGPInd(ecfg, ind.e_chromosome)
     cont = CGPInd(ccfg, ind.c_chromosome)
-    o1 = play_atari(enco, reducer, cont, seed)
-    o2 = 1.0
+    o1 = atari_score(enco, reducer, cont, seed)
+    o2 = sparsity_score(enco, cont)
     [o1, o2] ./ fitness_norm
 end
 
