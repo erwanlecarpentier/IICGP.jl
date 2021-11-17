@@ -1,11 +1,12 @@
 # General parameters
-optimizer: "oneplus"
+optimizer: "nsga2"
 seed: 0
 max_frames: 10000
 stickiness: 0.25
 d_fitness: 2
 n_gen: 10 # 20000 # TODO put back
 #n_eval: 36 # Maximum number of evaluations per generation
+n_population: 10
 n_elite: 5 # Number of elite pairs per generation
 eval_mutant: false
 tournament_size: 3

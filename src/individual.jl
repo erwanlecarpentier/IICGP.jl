@@ -1,6 +1,7 @@
 export IPCGPInd, IPCGPCopy, image_buffer, get_last_dualcgp
 export SymInd, SymIndCopy
 export NSGA2Ind, NSGA2IndCopy, dominates
+export NSGA2ECInd, NSGA2ECIndCopy, dominates
 export ECCGPInd
 export rand_CGPchromosome, SymIndCopy
 
@@ -9,7 +10,7 @@ using Cambrian
 using JSON
 
 """
-Standard NSGA2 indivudal
+NSGA2 standard indivudal
 """
 mutable struct NSGA2Ind <: Cambrian.Individual
     chromosome::Vector{Float64}
@@ -35,34 +36,46 @@ function NSGA2IndCopy(ind::NSGA2Ind)
              ind.domination_count, ind.domination_list, ind.crowding_distance)
 end
 
-function dominates(ind1::NSGA2Ind, ind2::NSGA2Ind)
+"""
+NSGA2 indivudal for Encoder-Controller individual
+"""
+mutable struct NSGA2ECInd <: Cambrian.Individual
+    e_chromosome::Vector{Float64}
+    c_chromosome::Vector{Float64}
+    fitness::Vector{Float64}
+    rank::Int64
+    domination_count::Int64
+    domination_list::Vector{Int64}
+    crowding_distance::Float64
+end
+
+function NSGA2ECInd(
+    cfg::NamedTuple,
+    e_chromosome::Vector{Float64},
+    c_chromosome::Vector{Float64}
+)
+    fitness = -Inf * ones(cfg.d_fitness)
+    rank = 0
+    domination_count = 0
+    domination_list = Vector{Int64}()
+    crowding_distance = 0.0
+    NSGA2ECInd(e_chromosome, c_chromosome, fitness, rank, domination_count,
+               domination_list, crowding_distance)
+end
+
+function NSGA2IndCopy(ind::NSGA2ECInd)
+    NSGA2ECInd(copy(ind.e_chromosome), copy(ind.c_chromosome),
+               copy(ind.fitness), ind.rank, ind.domination_count,
+               ind.domination_list, ind.crowding_distance)
+end
+
+function dominates(ind1::T, ind2::T) where {T <: Union{NSGA2Ind, NSGA2ECInd}}
     @inbounds for i in eachindex(ind1.fitness)
         if ind1.fitness[i] < ind2.fitness[i]
             return false
         end
     end
     return true
-end
-
-"""
-Encoder controller paired within one single individual.
-"""
-mutable struct ECCGPInd <: Cambrian.Individual
-    e::CGPInd
-    c::CGPInd
-    #e_chromosome::Vector{Float64} # Encoder chromosome
-    #c_chromosome::Vector{Float64} # Controller chromosome
-    fitness::Vector{Float64}
-end
-
-function ECCGPInd(
-    mcfg::NamedTuple,
-    ecfg::NamedTuple,
-    ccfg::NamedTuple
-)
-    e = IPCGPInd(ecfg)
-    c = CartesianGeneticProgramming.CGPInd(ccfg)
-    ECCGPInd(e, c, -Inf * ones(mcfg.d_fitness))
 end
 
 """
