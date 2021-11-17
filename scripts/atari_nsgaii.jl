@@ -116,8 +116,8 @@ function atari_score(
 end
 
 function sparsity_score(encoder::CGPInd, controller::CGPInd)
-    n_enco_active = sum([nd.active for nd in enco.nodes])
-    n_cont_active = sum([nd.active for nd in cont.nodes])
+    n_enco_active = sum([nd.active for nd in encoder.nodes])
+    n_cont_active = sum([nd.active for nd in controller.nodes])
     max_n_active_nodes - (n_enco_active + n_cont_active)
 end
 

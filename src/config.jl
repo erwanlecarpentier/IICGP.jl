@@ -78,7 +78,7 @@ function dualcgp_config(cfg::Dict, game_name::String)
     enco_out = CartesianGeneticProgramming.process(enco, s)
     features = reducer.reduct(enco_out, reducer.parameters)
     features_flatten = collect(Iterators.flatten(Iterators.flatten(features)))
-    cont_n_in = length(features_flatten)
+    cont_n_in = length(features_flatten)# + controller_cfg["n_cst_nodes"]
 
     # Controller config
     controller_cfg["function_module"] = IICGP.CGPFunctions
