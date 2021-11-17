@@ -26,13 +26,13 @@ function NSGA2Evo(
 end
 
 populate(e::NSGA2Evo{T}) where T = IICGP.nsga2_populate(e)
-evaluate(e::NSGA2Evo) = IICGP.fitness_evaluate(e, e.fitness)
+evaluate(e::NSGA2Evo{T}) where T = IICGP.fitness_evaluate(e, e.fitness)
 
-function generation(e::NSGA2Evo)
+function generation(e::NSGA2Evo{T}) where T
     # Sort all individuals according to Pareto efficiency
     fast_non_dominated_sort!(e)
     # Select elites as most Pareto efficient solutions
-    new_population = Vector{NSGA2Ind}()
+    new_population = Vector{T}()
     sort!(e.population, by = ind -> ind.rank)
     current_rank = 1
     i_start = 1
@@ -136,14 +136,29 @@ function fast_non_dominated_sort!(e::NSGA2Evo)
     end
 end
 
-function log_gen(e::NSGA2Evo, fitness_norm::Vector{Float64})
-    println("Holà")
+function log_gen(
+    e::NSGA2Evo{T},
+    fitness_norm::Vector{Float64};
+    is_ec::Bool=false
+) where T
     if e.gen == 1
+        if is_ec
+            chr_header = ",e_chromosome,c_chromosome"
+        else
+            chr_header = ",chromosome"
+        end
         with_logger(e.logger) do
-            @info Formatting.format("generation,rank,fitness,normalized_fitness,chromosome")
+            @info Formatting.format(
+                string("generation,rank,fitness,normalized_fitness",chr_header)
+            )
         end
     end
     for ind in e.population
+        if is_ec
+            chr = string(ind.e_chromosome,",",ind.c_chromosome)
+        else
+            chr = string(ind.chromosome)
+        end
         raw_fitness = ind.fitness .* fitness_norm
         with_logger(e.logger) do
             @info Formatting.format(
@@ -152,7 +167,8 @@ function log_gen(e::NSGA2Evo, fitness_norm::Vector{Float64})
                     ind.rank,",",
                     raw_fitness,",",
                     ind.fitness,",",
-                    ind.chromosome)
+                    chr
+                )
             )
         end
     end

@@ -16,15 +16,16 @@ end
 
 Evaluation function for the NSGA-II algorithm.
 """
-function fitness_evaluate(e::NSGA2Evo, fitness::Function)
-	@sync @inbounds for i in eachindex(e.population)
+function fitness_evaluate(e::NSGA2Evo{T}, fitness::Function) where T
+	for i in eachindex(e.population)
+		e.population[i].fitness .= fitness(e.population[i])
+    end
+	#=@sync @inbounds for i in eachindex(e.population)
 		Threads.@spawn begin
 			e.population[i].fitness .= fitness(e.population[i])
-            #=raw_fitness, normalized_fitness = fitness(e.population[i])
-			e.population[i].raw_fitness .= raw_fitness
-			e.population[i].fitness .= normalized_fitness=#
 		end
     end
+	=#
 end
 
 """

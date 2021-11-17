@@ -18,7 +18,7 @@ downscale: true
 
 # Encoder's parameters
 encoder:
-  n_population: 10
+  #n_population: 10
   rows: 1
   columns: 20
   recur: 0.0
@@ -62,11 +62,11 @@ reducer:
   type: "pooling" # "pooling" or "centroid"
   pooling_function: "mean" # POOLING: "mean", "max", or "min"
   features_size: 5 # POOLING: size of the square down-sampled image
-  n_centroids: 15 # CENTROID: number of biggest objects tracked
+  #n_centroids: 15 # CENTROID: number of biggest objects tracked
 
 # Controller's parameters
 controller:
-  n_population: 10
+  #n_population: 10
   rows: 1
   columns: 60
   recur: 0.0
