@@ -49,9 +49,49 @@ mcfg, ecfg, ccfg, reducer, bootstrap = IICGP.dualcgp_config(cfg_path, game)
 mcfg = dict2namedtuple(mcfg)
 const fitness_norm = [1.0, 1.0] # TODO set fitness_norm
 
+function play_atari(
+    encoder::CGPInd,
+    reducer::Reducer,
+    controller::CGPInd,
+    seed::Int64,
+    lck::ReentrantLock;
+    rom=rom,
+    max_frames=max_frames,
+    grayscale=grayscale,
+    downscale=downscale,
+    stickiness=stickiness
+)
+    # Random.seed!(seed)
+    mt = MersenneTwister(seed)
+    game = Game(rom, seed, lck=lck)
+    IICGP.reset!(reducer) # zero buffers
+    reward = 0.0
+    frames = 0
+    prev_action = Int32(0)
+    while ~game_over(game.ale)
+        if rand(mt) > stickiness || frames == 0
+            s = get_state(game, grayscale, downscale)
+            output = IICGP.process(encoder, reducer, controller, s)
+            action = game.actions[argmax(output)]
+        else
+            action = prev_action
+        end
+        reward += act(game.ale, action)
+        frames += 1
+        prev_action = action
+        if frames > max_frames
+            break
+        end
+    end
+    close!(game)
+    [reward]
+end
+
 # User-defined fitness function (normalized)
 function my_fitness(ind::NSGA2ECInd)
-    o1 = 1.0
+    enco = IPCGPInd(ecfg, ind.e_chromosome)
+    cont = CGPInd(ccfg, ind.c_chromosome)
+    o1 = 1.0 # play_atari(enco, reducer, cont)
     o2 = 1.0
     [o1, o2] ./ fitness_norm
 end
@@ -85,10 +125,11 @@ for i in 1:2#e.config.n_gen
     end
     evaluate(e)
     display_paretto(e)
-    new_population = generation(e)
+    new_population = generation(e) # Externalized for logging
     if ((e.config.log_gen > 0) && mod(e.gen, e.config.log_gen) == 0)
         log_gen(e, fitness_norm, is_ec=true)
     end
+    e.population = new_population
     #=if ((e.config.save_gen > 0) && mod(e.gen, e.config.save_gen) == 0)
         save_gen(e)
     end=#
@@ -102,6 +143,12 @@ end
 
 ##
 
-x = rand(UInt8, 10, 10)
+g = Game("freeway", seed)
+s = get_state(g, true, true)
+close!(g)
 
-f, y = IICGP.process_f(e, reducer, c, [x])
+ind = IICGP.NSGA2IndCopy(e.population[1])
+enco = IPCGPInd(ecfg, ind.e_chromosome)
+cont = CGPInd(ccfg, ind.c_chromosome)
+
+f, y = IICGP.process_f(enco, reducer, cont, s)

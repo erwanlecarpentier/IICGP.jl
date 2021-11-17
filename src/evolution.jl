@@ -28,7 +28,7 @@ end
 populate(e::NSGA2Evo{T}) where T = IICGP.nsga2_populate(e)
 evaluate(e::NSGA2Evo{T}) where T = IICGP.fitness_evaluate(e, e.fitness)
 
-function generation(e::NSGA2Evo{T}) where T
+function generation(e::NSGA2Evo{T}; fnds::Bool=true) where T
     # Sort all individuals according to Pareto efficiency
     fast_non_dominated_sort!(e)
     # Select elites as most Pareto efficient solutions
@@ -54,7 +54,8 @@ function generation(e::NSGA2Evo{T}) where T
         i_start = i_end + 1
         i_end = findlast(ind -> ind.rank == current_rank, e.population)
     end
-    e.population = new_population
+    #e.population = new_population
+    new_population
 end
 
 """
