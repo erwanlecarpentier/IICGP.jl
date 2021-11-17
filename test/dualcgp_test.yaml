@@ -15,12 +15,12 @@ encoder:
   n_population: 5
   n_elite: 1
   rows: 1
-  columns: 20
+  columns: 10
   recur: 0.0
   m_rate: 0.1
   out_m_rate: 0.3
   n_parameters: 1
-  n_out: 2
+  n_out: 1
   functions:
     - f_dilate
     - f_erode
@@ -63,11 +63,12 @@ controller:
   n_population: 3
   n_elite: 1
   rows: 1
-  columns: 20
+  columns: 10
   recur: 0.0
   m_rate: 0.1
   out_m_rate: 0.5
   n_parameters: 1
+  n_cst_inputs: 3
   functions:
     - f_add
     - f_subtract

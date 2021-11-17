@@ -5,6 +5,7 @@ export process, process_f
         encoder::CGPInd,
         reducer::AbstractReducer,
         controller::CGPInd,
+        controller_config::NamedTuple,
         inp::AbstractArray
     )
 
@@ -15,9 +16,10 @@ function process(
     encoder::CGPInd,
     reducer::AbstractReducer,
     controller::CGPInd,
+    controller_config::NamedTuple,
     inp::AbstractArray
 )
-    process_f(encoder, reducer, controller, inp)[2]
+    process_f(encoder, reducer, controller, controller_config, inp)[2]
 end
 
 """
@@ -25,6 +27,7 @@ end
         encoder::CGPInd,
         reducer::AbstractReducer,
         controller::CGPInd,
+        controller_config::NamedTuple,
         inp::AbstractArray
     )
 
@@ -36,12 +39,16 @@ function process_f(
     encoder::CGPInd,
     reducer::AbstractReducer,
     controller::CGPInd,
+    controller_config::NamedTuple,
     inp::AbstractArray
 )
     out = CartesianGeneticProgramming.process(encoder, inp)
     features = reducer.reduct(out, reducer.parameters)
     # features_flatten = collect(Iterators.flatten(features))
     features_flatten = collect(Iterators.flatten(Iterators.flatten(features)))
+    if controller_config.n_cst_inputs > 1
+        push!(features_flatten, 0:1.0/(controller_config.n_cst_inputs-1):1.0...)
+    end
     return features, CartesianGeneticProgramming.process(controller, features_flatten)
 end
 
@@ -50,6 +57,7 @@ end
         encoder::CGPInd,
         reducer::AbstractReducer,
         controller::CGPInd,
+        controller_config::NamedTuple,
         inp::AbstractArray
     )
 
@@ -61,12 +69,16 @@ function process_full(
     encoder::CGPInd,
     reducer::AbstractReducer,
     controller::CGPInd,
+    controller_config::NamedTuple,
     inp::AbstractArray
 )
     enco_out = CartesianGeneticProgramming.process(encoder, inp)
     features = reducer.reduct(enco_out, reducer.parameters)
     # features_flatten = collect(Iterators.flatten(features))
     features_flatten = collect(Iterators.flatten(Iterators.flatten(features)))
+    if controller_config.n_cst_inputs > 1
+        push!(features_flatten, 0:1.0/(controller_config.n_cst_inputs-1):1.0...)
+    end
     cont_out = CartesianGeneticProgramming.process(controller, features_flatten)
     return enco_out, features, cont_out
 end
@@ -74,7 +86,7 @@ end
 function process(
     reducer::AbstractReducer,
     controller::CGPInd,
-    inp::AbstractArray
+    inp::AbstractArray,
 )
     features = reducer.reduct(inp, reducer.parameters)
     features_flatten = collect(Iterators.flatten(Iterators.flatten(features)))

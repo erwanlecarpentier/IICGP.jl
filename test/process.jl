@@ -98,3 +98,20 @@ end
         close!(game)
     end
 end
+
+cfg_filename = string(@__DIR__, "/dualcgp_test.yaml")
+rom = "assault"
+
+@testset "CGP controller with constant input values" begin
+    mcfg, ecfg, ccfg, reducer, _ = IICGP.dualcgp_config(cfg_filename, rom)
+    game = Game(rom, 0)
+    enco = IICGP.IPCGPInd(ecfg)
+    cont = CGPInd(ccfg)
+    cstes = collect(0.0:1.0/(ccfg.n_cst_inputs-1):1.0)
+    for t in 1:10
+        s = get_state(game, true, true)
+        output = IICGP.process(enco, reducer, cont, ccfg, s)
+        @test cont.buffer[ccfg.n_in-ccfg.n_cst_inputs+1:ccfg.n_in] == cstes
+    end
+    close!(game)
+end
