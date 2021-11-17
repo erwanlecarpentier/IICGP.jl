@@ -48,7 +48,7 @@ function display_paretto(e::NSGA2Evo)
 end
 
 # User-defined fitness function (normalized)
-function my_fitness(ind::NSGA2Ind)
+function my_fitness(ind::NSGA2Ind, seed::Int64)
     cgp_ind = CGPInd(cfg, ind.chromosome)
     y_hat = zeros(length(y1))
     @inbounds for i in eachindex(y1)
@@ -75,7 +75,7 @@ e = NSGA2Evo(cfg, resdir, my_fitness, my_init)
 
 init_backup(cfg.id, resdir, cfg_path)
 #run!(evo)
-for i in 1:2#e.config.n_gen
+for i in 1:e.config.n_gen
     e.gen += 1
     if e.gen > 1
         populate(e)
@@ -86,6 +86,7 @@ for i in 1:2#e.config.n_gen
     if ((e.config.log_gen > 0) && mod(e.gen, e.config.log_gen) == 0)
         log_gen(e, fitness_norm)
     end
+    e.population = new_population
     #=if ((e.config.save_gen > 0) && mod(e.gen, e.config.save_gen) == 0)
         save_gen(e)
     end=#
@@ -93,5 +94,5 @@ end
 
 # Display one of the elite (Pareto efficient) individuals
 ind = CGPInd(cfg, e.population[1].chromosome)
-f(x) = CartesianGeneticProgramming.process(ind, [x])[1]
-out(lineplot([f1, f2, f], 0, 1, border=:dotted))
+cgp_f(x) = CartesianGeneticProgramming.process(ind, [x])[1]
+out(lineplot([f1, f2, cgp_f], 0, 1, border=:dotted))

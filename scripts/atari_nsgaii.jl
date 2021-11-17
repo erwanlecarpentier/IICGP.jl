@@ -1,3 +1,4 @@
+using ArcadeLearningEnvironment
 using ArgParse
 using Cambrian
 using CartesianGeneticProgramming
@@ -42,26 +43,31 @@ end
 
 args = parse_args(ARGS, s)
 const cfg_path = args["cfg"]
-const game = args["game"]
-const seed = args["seed"]
+const rom_name = args["game"]
+#const seed = args["seed"]
 const resdir = args["out"]
-mcfg, ecfg, ccfg, reducer, bootstrap = IICGP.dualcgp_config(cfg_path, game)
+mcfg, ecfg, ccfg, reducer, bootstrap = IICGP.dualcgp_config(cfg_path, rom_name)
 mcfg = dict2namedtuple(mcfg)
+const max_f = mcfg.max_frames
+const grayscale = mcfg.grayscale
+const downscale = mcfg.downscale
+const stickiness = mcfg.stickiness
+const lck = ReentrantLock()
 const fitness_norm = [1.0, 1.0] # TODO set fitness_norm
 
 function play_atari(
     encoder::CGPInd,
     reducer::Reducer,
     controller::CGPInd,
-    seed::Int64,
-    lck::ReentrantLock;
-    rom=rom,
-    max_frames=max_frames,
-    grayscale=grayscale,
-    downscale=downscale,
-    stickiness=stickiness
+    seed::Int64;
+    lck::ReentrantLock=lck,
+    rom::String=rom_name,
+    max_frames::Int64=max_f,
+    grayscale::Bool=grayscale,
+    downscale::Bool=downscale,
+    stickiness::Float64=stickiness
 )
-    # Random.seed!(seed)
+    Random.seed!(seed)
     mt = MersenneTwister(seed)
     game = Game(rom, seed, lck=lck)
     IICGP.reset!(reducer) # zero buffers
@@ -84,14 +90,14 @@ function play_atari(
         end
     end
     close!(game)
-    [reward]
+    reward + rand(mt)
 end
 
 # User-defined fitness function (normalized)
-function my_fitness(ind::NSGA2ECInd)
+function my_fitness(ind::NSGA2ECInd, seed::Int64)
     enco = IPCGPInd(ecfg, ind.e_chromosome)
     cont = CGPInd(ccfg, ind.c_chromosome)
-    o1 = 1.0 # play_atari(enco, reducer, cont)
+    o1 = play_atari(enco, reducer, cont, seed)
     o2 = 1.0
     [o1, o2] ./ fitness_norm
 end
@@ -114,11 +120,12 @@ function my_init(cfg::NamedTuple)
     ) for _ in 1:cfg.n_population]
 end
 
+# Create evolution framework
 e = NSGA2Evo(mcfg, resdir, my_fitness, my_init)
 
+# Run experiment
 init_backup(mcfg.id, resdir, cfg_path)
-#run!(e)
-for i in 1:2#e.config.n_gen
+for i in 1:e.config.n_gen
     e.gen += 1
     if e.gen > 1
         populate(e)
@@ -134,21 +141,3 @@ for i in 1:2#e.config.n_gen
         save_gen(e)
     end=#
 end
-
-# Display one of the elite (Pareto efficient) individuals
-#ind = CGPInd(cfg, e.population[1].chromosome)
-#f(x) = CartesianGeneticProgramming.process(ind, [x])[1]
-#out(lineplot([f1, f2, f], 0, 1, border=:dotted))
-
-
-##
-
-g = Game("freeway", seed)
-s = get_state(g, true, true)
-close!(g)
-
-ind = IICGP.NSGA2IndCopy(e.population[1])
-enco = IPCGPInd(ecfg, ind.e_chromosome)
-cont = CGPInd(ccfg, ind.c_chromosome)
-
-f, y = IICGP.process_f(enco, reducer, cont, s)

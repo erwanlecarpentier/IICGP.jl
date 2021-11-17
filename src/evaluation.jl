@@ -19,7 +19,7 @@ Evaluation function for the NSGA-II algorithm.
 function fitness_evaluate(e::NSGA2Evo{T}, fitness::Function) where T
 	@sync @inbounds for i in eachindex(e.population)
 		Threads.@spawn begin
-			e.population[i].fitness .= fitness(e.population[i])
+			e.population[i].fitness .= fitness(e.population[i], e.gen)
 		end
     end
 end
