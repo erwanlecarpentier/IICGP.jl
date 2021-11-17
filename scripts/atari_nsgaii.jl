@@ -99,7 +99,7 @@ function atari_score(
     while ~game_over(game.ale)
         if rand(mt) > stickiness || frames == 0
             s = get_state(game, grayscale, downscale)
-            output = IICGP.process(encoder, reducer, controller, s)
+            output = IICGP.process(encoder, reducer, controller, ccfg, s)
             action = game.actions[argmax(output)]
         else
             action = prev_action
