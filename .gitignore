@@ -6,6 +6,7 @@
 *.out
 .tags*
 
+outdated
 buffers/
 canvas.avi
 
