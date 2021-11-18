@@ -20,7 +20,7 @@
 CMD_PREFIX="atari_"
 CFGS=("cfg/eccgp_atari.yaml") # WARNING: sync with REDS
 REDS=("nsgaii_") # WARNING: sync with CFGS
-GAMES="boxing" #  asteroids freeway TODO put back
+GAMES="boxing asteroids freeway"
 SCRIPT="scripts/atari_nsgaii.jl"
 PROJECT="$PWD"
 USERNAME=$(whoami)
@@ -41,7 +41,7 @@ for i in "${!CFGS[@]}"; do
 		echo "#SBATCH --ntasks-per-core=1" >> $CM
 		echo "#SBATCH -o /tmpdir/%u/logs/job%J_$FNAME.out" >> $CM
 		echo "#SBATCH -e /tmpdir/%u/logs/job%J_$FNAME.log" >> $CM
-		echo "#SBATCH --time=00:10:00" >> $CM
+		echo "#SBATCH --time=5-00:00:00" >> $CM
 		echo "#SBATCH --mail-user=erwanlecarpentier@mailbox.org" >> $CM
 		echo "#SBATCH --mail-type=END" >> $CM
 		echo "" >> $CM

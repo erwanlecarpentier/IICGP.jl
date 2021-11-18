@@ -3,13 +3,13 @@ seed: 0
 max_frames: 10000
 stickiness: 0.25
 d_fitness: 1
-n_gen: 1000 # 50000 # TODO put back
+n_gen: 20000
 n_eval: 36 # Maximum number of evaluations per generation
 n_elite: 5 # Number of elite pairs per generation
 eval_mutant: true
 tournament_size: 3
-log_gen: 1 # 250 # TODO put back
-save_gen: 1 # 250 # TODO put back
+log_gen: 200
+save_gen: 200
 bootstrap: false
 grayscale: true
 downscale: true
