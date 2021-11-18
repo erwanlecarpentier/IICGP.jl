@@ -150,10 +150,7 @@ end
 
 # Initial population containing best constant action individuals
 function cstind_init(cfg::NamedTuple)
-    game = Game(rom_name, 0)
-    actions = game.actions
-    close!(game)
-    cstinds = get_cstind(cfg, ecfg, ccfg, actions)
+    cstinds = IICGP.get_cstind(rom_name, cfg, ecfg, ccfg, reducer)
 end
 
 cstind_init(mcfg) # TODO remove
