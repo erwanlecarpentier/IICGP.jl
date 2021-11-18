@@ -140,7 +140,7 @@ function mutate(ind::IICGP.NSGA2ECInd)
 end
 
 # User-defined population initialization function
-function my_init(cfg::NamedTuple) # cfg = mcfg
+function random_init(cfg::NamedTuple) # cfg = mcfg
     [IICGP.NSGA2ECInd(
         cfg,
         IPCGPInd(ecfg).chromosome,
@@ -150,19 +150,30 @@ end
 
 # Initial population containing best constant action individuals
 function cstind_init(cfg::NamedTuple)
+    # Create cst individuals
     cstinds = IICGP.get_cstind(rom_name, cfg, ecfg, ccfg, reducer)
+    # Evaluate cst individuals and sort by 1st objective
+    @inbounds for i in eachindex(cstinds)
+		cstinds[i].fitness .= my_fitness(cstinds[i], 0)
+    end
+	sort!(cstinds, by = ind -> ind.fitness[1], rev = true)
+    # Select best n_population individuals (fill lacking with random)
+	if length(cstinds) > cfg.n_population
+		cstinds =  cstinds[1:cfg.n_population]
+	else
+		push!(cstinds, [IICGP.NSGA2ECInd(cfg, IPCGPInd(ecfg).chromosome,
+			  CGPInd(ccfg).chromosome) for _ in 1:cfg.n_population-length(cstinds)]...)
+	end
+	@assert length(cstinds) == cfg.n_population
+	cstinds
 end
-
-cstind_init(mcfg) # TODO remove
-
-##
 
 # Create evolution framework
 e = NSGA2Evo(mcfg, resdir, my_fitness, cstind_init)
 
 # Run experiment
 init_backup(mcfg.id, resdir, cfg_path)
-for i in 1:-1#e.config.n_gen
+for i in 1:e.config.n_gen
     e.gen += 1
     if e.gen > 1
         populate(e)
