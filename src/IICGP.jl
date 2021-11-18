@@ -20,6 +20,7 @@ include("config.jl")
 include("process.jl")
 include("postproc.jl")
 include("utils.jl")
+include("init.jl")
 include("saving.jl")
 include("visual.jl")
 

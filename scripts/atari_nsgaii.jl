@@ -140,20 +140,32 @@ function mutate(ind::IICGP.NSGA2ECInd)
 end
 
 # User-defined population initialization function
-function my_init(cfg::NamedTuple)
+function my_init(cfg::NamedTuple) # cfg = mcfg
     [IICGP.NSGA2ECInd(
-        mcfg,
+        cfg,
         IPCGPInd(ecfg).chromosome,
         CGPInd(ccfg).chromosome
     ) for _ in 1:cfg.n_population]
 end
 
+# Initial population containing best constant action individuals
+function cstind_init(cfg::NamedTuple)
+    game = Game(rom_name, 0)
+    actions = game.actions
+    close!(game)
+    cstinds = get_cstind(cfg, ecfg, ccfg, actions)
+end
+
+cstind_init(mcfg) # TODO remove
+
+##
+
 # Create evolution framework
-e = NSGA2Evo(mcfg, resdir, my_fitness, my_init)
+e = NSGA2Evo(mcfg, resdir, my_fitness, cstind_init)
 
 # Run experiment
 init_backup(mcfg.id, resdir, cfg_path)
-for i in 1:e.config.n_gen
+for i in 1:-1#e.config.n_gen
     e.gen += 1
     if e.gen > 1
         populate(e)

@@ -4,7 +4,7 @@ seed: 0
 max_frames: 10 # 10000 # TODO put back
 stickiness: 0.25
 d_fitness: 2
-n_gen: 20 # 20000 # TODO put back
+n_gen: 5 # 20000 # TODO put back
 #n_eval: 36 # Maximum number of evaluations per generation
 n_population: 15
 n_elite: 5 # Number of elite pairs per generation
