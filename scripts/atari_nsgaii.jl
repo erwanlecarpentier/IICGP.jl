@@ -5,8 +5,6 @@ using CartesianGeneticProgramming
 using Dates
 using IICGP
 using Random
-using UnicodePlots
-using LinearAlgebra
 
 import Cambrian.mutate
 
@@ -35,11 +33,13 @@ function dict2namedtuple(d::Dict)
     (; (Symbol(k)=>v for (k, v) in d)...)
 end
 
+#=
 function display_paretto(e::NSGA2Evo)
     o1 = [ind.fitness[1] for ind in e.population]
     o2 = [ind.fitness[2] for ind in e.population]
     out(scatterplot(o1, o2, title = "Paretto front"))#, xlim=[0,1], ylim=[0,1]))
 end
+=#
 
 s = ArgParseSettings()
 @add_arg_table! s begin
@@ -48,7 +48,7 @@ s = ArgParseSettings()
     default = joinpath(default_cfgdir, "eccgp_atari.yaml")
     "--game"
     help = "game rom name"
-    default = "freeway"
+    default = "boxing"
     "--seed"
     help = "random seed"
     default = 0
@@ -179,7 +179,6 @@ for i in 1:e.config.n_gen
         populate(e)
     end
     evaluate(e)
-    display_paretto(e)
     new_population = generation(e) # Externalized for logging
     if ((e.config.log_gen > 0) && mod(e.gen, e.config.log_gen) == 0)
         log_gen(e, fitness_norm, is_ec=true)

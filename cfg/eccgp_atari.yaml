@@ -1,15 +1,15 @@
 # General parameters
 optimizer: "nsga2"
 seed: 0
-max_frames: 10 # 10000 # TODO put back
+max_frames: 20 # 10000 # TODO put back
 stickiness: 0.25
-d_fitness: 2
-n_gen: 5 # 20000 # TODO put back
-#n_eval: 36 # Maximum number of evaluations per generation
+d_fitness: 2 # atari sparsity
+n_gen: 3 # 25000 # TODO put back
+#n_eval: 36 # GA maximum number of evaluations per generation
 n_population: 15
 n_elite: 5 # Number of elite pairs per generation
-eval_mutant: false
-tournament_size: 3
+#eval_mutant: false # GA
+#tournament_size: 3 # GA
 log_gen: 1 # 200 # TODO put back
 save_gen: 1 # 200 # TODO put back
 bootstrap: false
@@ -23,7 +23,7 @@ encoder:
   columns: 20
   recur: 0.0
   m_rate: 0.1
-  out_m_rate: 0.3
+  out_m_rate: 0.2
   n_parameters: 1
   n_out: 1
   functions:
@@ -71,7 +71,7 @@ controller:
   columns: 60
   recur: 0.0
   m_rate: 0.1
-  out_m_rate: 0.5
+  out_m_rate: 0.3
   n_parameters: 1
   n_cst_inputs: 10
   functions:
