@@ -10,19 +10,22 @@ mutable struct NSGA2Evo{T} <: Cambrian.AbstractEvolution
     population::Array{T}
     fitness::Function
     gen::Int64
+    atari_games::Vector{Game}
 end
 
 function NSGA2Evo(
     config::NamedTuple,
     resdir::String,
     fitness::Function,
-    init_population::Function
+    init_population::Function,
+    rom_name::String
 )
     logid = config.id
     log_path = joinpath(resdir, logid, "logs/logs.csv")
     logger = CambrianLogger(log_path)
     population = init_population(config)
-    NSGA2Evo(config, logid, logger, population, fitness, 0)
+    atari_games = [Game(rom_name, 0) for _ in 1:length(population)]
+    NSGA2Evo(config, logid, logger, population, fitness, 0, atari_games)
 end
 
 populate(e::NSGA2Evo{T}) where T = IICGP.nsga2_populate(e)

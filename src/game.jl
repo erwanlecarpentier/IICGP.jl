@@ -9,6 +9,7 @@ using Interpolations
 export
     Game,
     close!,
+    reset!,
     draw,
     get_inputs,
     get_state,
@@ -51,6 +52,10 @@ function Game(romfile::String, seed::Int64; kwargs...)
         act(ale, 0)
     end
     Game(ale, w, h, actions)
+end
+
+function reset!(game::Game)
+    reset_game(game)
 end
 
 function get_state_ref(romfile::String, seed::Int64)

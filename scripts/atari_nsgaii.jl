@@ -78,6 +78,7 @@ const fitness_norm = [
 ]
 
 function atari_score(
+	game::Game,
     encoder::CGPInd,
     reducer::Reducer,
     controller::CGPInd,
@@ -91,7 +92,8 @@ function atari_score(
 )
     Random.seed!(seed)
     mt = MersenneTwister(seed)
-    game = Game(rom, seed, lck=lck)
+    #game = Game(rom, seed, lck=lck)
+	reset!(game)
     IICGP.reset!(reducer) # zero buffers
     reward = 0.0
     frames = 0
@@ -111,7 +113,7 @@ function atari_score(
             break
         end
     end
-    close!(game)
+    #close!(game)
     reward
 end
 
@@ -122,10 +124,10 @@ function sparsity_score(encoder::CGPInd, controller::CGPInd)
 end
 
 # User-defined fitness function (normalized)
-function my_fitness(ind::NSGA2ECInd, seed::Int64)
+function my_fitness(ind::NSGA2ECInd, seed::Int64, game::Game)
     enco = IPCGPInd(ecfg, ind.e_chromosome)
     cont = CGPInd(ccfg, ind.c_chromosome)
-    o1 = atari_score(enco, reducer, cont, seed)
+    o1 = atari_score(game, enco, reducer, cont, seed)
     o2 = sparsity_score(enco, cont)
     [o1, o2] ./ fitness_norm
 end
@@ -154,7 +156,10 @@ function cstind_init(cfg::NamedTuple)
     cstinds = IICGP.get_cstind(rom_name, cfg, ecfg, ccfg, reducer)
     # Evaluate cst individuals and sort by 1st objective
     @inbounds for i in eachindex(cstinds)
-		cstinds[i].fitness .= my_fitness(cstinds[i], 0)
+		seed = 0
+		game = Game(rom_name, seed)
+		cstinds[i].fitness .= my_fitness(cstinds[i], seed, game)
+		close!(game)
     end
 	sort!(cstinds, by = ind -> ind.fitness[1], rev = true)
     # Select best n_population individuals (fill lacking with random)
@@ -169,7 +174,9 @@ function cstind_init(cfg::NamedTuple)
 end
 
 # Create evolution framework
-e = NSGA2Evo(mcfg, resdir, my_fitness, cstind_init)
+e = NSGA2Evo(mcfg, resdir, my_fitness, cstind_init, rom_name)
+
+##
 
 # Run experiment
 init_backup(mcfg.id, resdir, cfg_path)
@@ -187,4 +194,9 @@ for i in 1:e.config.n_gen
     #=if ((e.config.save_gen > 0) && mod(e.gen, e.config.save_gen) == 0)
         save_gen(e)
     end=#
+end
+
+# Close games
+for g in e.atari_games
+	close!(g)
 end
