@@ -33,6 +33,13 @@ function dict2namedtuple(d::Dict)
     (; (Symbol(k)=>v for (k, v) in d)...)
 end
 
+function print_usage()
+	out = read(`top -bn1 -p $(getpid())`, String)
+	res = split(split(out,  "\n")[end-1])
+	println("RES: ", res[6], "   %MEM: ", res[10], "   %CPU: ", res[9])
+end
+
+
 #=
 function display_paretto(e::NSGA2Evo)
     o1 = [ind.fitness[1] for ind in e.population]
@@ -176,8 +183,6 @@ end
 # Create evolution framework
 e = NSGA2Evo(mcfg, resdir, my_fitness, cstind_init, rom_name)
 
-##
-
 # Run experiment
 init_backup(mcfg.id, resdir, cfg_path)
 for i in 1:e.config.n_gen
@@ -194,6 +199,7 @@ for i in 1:e.config.n_gen
     #=if ((e.config.save_gen > 0) && mod(e.gen, e.config.save_gen) == 0)
         save_gen(e)
     end=#
+	print_usage()
 end
 
 # Close games
