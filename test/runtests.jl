@@ -3,6 +3,7 @@ using IICGP
 using CartesianGeneticProgramming
 using Cambrian
 
+include("atari.jl")
 include("config.jl")
 include("determinism.jl")
 include("functions.jl")

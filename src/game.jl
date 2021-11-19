@@ -48,14 +48,16 @@ function Game(romfile::String, seed::Int64; kwargs...)
     w = getScreenWidth(ale)
     h = getScreenHeight(ale)
     actions = getMinimalActionSet(ale)
+    #=
     for _ in 1:3 # 1st actions are noop
         act(ale, 0)
     end
+    =#
     Game(ale, w, h, actions)
 end
 
 function reset!(game::Game)
-    reset_game(game)
+    reset_game(game.ale)
 end
 
 function get_state_ref(romfile::String, seed::Int64)
