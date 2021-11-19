@@ -5,6 +5,7 @@ using CartesianGeneticProgramming
 using Dates
 using IICGP
 using Random
+using UnicodePlots # TODO remove
 
 import Cambrian.mutate
 
@@ -37,6 +38,7 @@ function print_usage()
 	out = read(`top -bn1 -p $(getpid())`, String)
 	res = split(split(out,  "\n")[end-1])
 	println("RES: ", res[6], "   %MEM: ", res[10], "   %CPU: ", res[9])
+	parse(Float64, replace(res[10], "," => "."))
 end
 
 
@@ -97,14 +99,17 @@ function atari_score(
     downscale::Bool=downscale,
     stickiness::Float64=stickiness
 )
+	# 1 %MEM in [22.9, 25] reset every 300 (went until 800)
     Random.seed!(seed)
     mt = MersenneTwister(seed)
     #game = Game(rom, seed, lck=lck)
-	reset!(game)
+	IICGP.reset!(game)
     IICGP.reset!(reducer) # zero buffers
     reward = 0.0
     frames = 0
     prev_action = Int32(0)
+	#return rand() # TODO remove
+	# 3 %MEM in [4.9, 5.5] reset every 50 (went until 300)
     while ~game_over(game.ale)
         if rand(mt) > stickiness || frames == 0
             s = get_state(game, grayscale, downscale)
@@ -119,9 +124,12 @@ function atari_score(
         if frames > max_frames
             break
         end
+		# 5 %MEM around 5.2 +/- 0.2
     end
     #close!(game)
     reward
+	# 4 %MEM in [5, Inf?] no reset? (went until 90) with IICGP.reset!(game)
+	# 2 %MEM in [22.9, Inf?] no reset? (went until 90) with reset!(game)
 end
 
 function sparsity_score(encoder::CGPInd, controller::CGPInd)
@@ -181,10 +189,12 @@ function cstind_init(cfg::NamedTuple)
 end
 
 # Create evolution framework
-e = NSGA2Evo(mcfg, resdir, my_fitness, cstind_init, rom_name)
+e = NSGA2Evo(mcfg, resdir, my_fitness, random_init, rom_name) # TODO put back cstind_init
+mem_usage = Vector{Float64}()
 
 # Run experiment
 init_backup(mcfg.id, resdir, cfg_path)
+gc_freq = 10
 for i in 1:e.config.n_gen
     e.gen += 1
     if e.gen > 1
@@ -199,7 +209,16 @@ for i in 1:e.config.n_gen
     #=if ((e.config.save_gen > 0) && mod(e.gen, e.config.save_gen) == 0)
         save_gen(e)
     end=#
-	print_usage()
+	# GC
+	#=if mod(i, gc_freq) == 0
+		GC.gc()
+	end
+	GC.gc()
+	=#
+	# Display memory
+	#mem = print_usage()
+	#push!(mem_usage, mem)
+	#out(lineplot(mem_usage, title = "%MEM"))
 end
 
 # Close games
