@@ -81,6 +81,14 @@ const stickiness = mcfg.stickiness
 const lck = ReentrantLock()
 const max_n_active_nodes = ecfg.rows * ecfg.columns + ccfg.rows * ccfg.columns
 
+# TODO remove START
+#=
+gtest = Game(rom_name, 1)
+stest = get_state(gtest, grayscale, downscale)
+close!(gtest)
+=#
+# TODO remove END
+
 const fitness_norm = [
     soa_scores[rom_name],
     max_n_active_nodes
@@ -111,13 +119,18 @@ function atari_score(
 	#return rand() # TODO remove
 	# 3 %MEM in [4.9, 5.5] reset every 50 (went until 300)
     while ~game_over(game.ale)
-        if rand(mt) > stickiness || frames == 0
+		#output = IICGP.process(encoder, reducer, controller, ccfg, stest) # TODO remove
+		s = get_state(game, grayscale, downscale) # TODO remove
+		#= TODO put back
+		if rand(mt) > stickiness || frames == 0
             s = get_state(game, grayscale, downscale)
             output = IICGP.process(encoder, reducer, controller, ccfg, s)
             action = game.actions[argmax(output)]
         else
             action = prev_action
         end
+		=#
+		action = game.actions[rand(1:length(game.actions))] # TODO remove
         reward += act(game.ale, action)
         frames += 1
         prev_action = action
@@ -216,9 +229,9 @@ for i in 1:e.config.n_gen
 	GC.gc()
 	=#
 	# Display memory
-	#mem = print_usage()
-	#push!(mem_usage, mem)
-	#out(lineplot(mem_usage, title = "%MEM"))
+	mem = print_usage()
+	push!(mem_usage, mem)
+	out(lineplot(mem_usage, title = "%MEM"))
 end
 
 # Close games

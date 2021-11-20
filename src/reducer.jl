@@ -247,12 +247,8 @@ end
 
 Generic pooling function for several images (sequential application).
 """
-function pooling_reduction(xs::Array{Array{UInt8,2},1}, parameters::Dict)
-    fs = Array{Array{Float64,2},1}(undef, length(xs))
-    for i in eachindex(xs)
-        fs[i] = pooling_reduction(xs[i], parameters)
-    end
-    return fs
+function pooling_reduction(xs::Vector{Array{UInt8,2}}, parameters::Dict)
+    [pooling_reduction(xs_i, parameters) for xs_i in xs]
 end
 
 """
@@ -262,14 +258,7 @@ Generic pooling function for a single image.
 """
 function pooling_reduction(x::Array{UInt8,2}, parameters::Dict)
     outsz = (parameters["size"], parameters["size"])
-    # out = Array{eltype(x), ndims(x)}(undef, outsz)
-    out = Array{Float64, ndims(x)}(undef, outsz)
     tilesz = ceil.(Int, size(x)./outsz)
     R = TileIterator(axes(x), tilesz)
-    i = 1
-    for tileaxs in R
-       out[i] = parameters["pooling_function"](view(x, tileaxs...))
-       i += 1
-    end
-    return out ./ 255.0
+    [parameters["pooling_function"](view(x, tileaxs...)) for tileaxs in R] ./ 255.0
 end

@@ -102,17 +102,14 @@ end
 function get_state(game::Game, grayscale::Bool, downscale::Bool)
     s = grayscale ? get_grayscale(game) : get_rgb(game)
     if downscale
-        out = Array{Array{UInt8,2},1}(undef, length(s))
-        for i in 1:length(s)
-            # out[i] = scale(s[i])
-            # out[i] = imresize(s[i], ratio=0.5, method=BSpline(Constant()))
-            # out[i] = convert(Array{UInt8,2}, floor.(imresize(s[i], ratio=0.5, method=BSpline(Linear()))))
-            out[i] = convert(Array{UInt8,2}, floor.(restrict(s[i])))
+        @inbounds for i in eachindex(s)
+            # s[i] = scale(s[i])
+            # s[i] = imresize(s[i], ratio=0.5, method=BSpline(Constant()))
+            # s[i] = convert(Array{UInt8,2}, floor.(imresize(s[i], ratio=0.5, method=BSpline(Linear()))))
+            s[i] = convert(Array{UInt8,2}, floor.(restrict(s[i])))
         end
-        return out
-    else
-        return s
     end
+    s
 end
 
 function save_screen_png(game::Game, filename::String)
