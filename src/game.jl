@@ -12,6 +12,10 @@ export
     reset!,
     draw,
     get_inputs,
+    get_state_buffer,
+    get_observation_buffer,
+    get_state!,
+    get_observation!,
     get_state,
     get_screen,
     get_rgb,
@@ -99,7 +103,87 @@ function scale(x::Array{UInt8,2}; factor::Int64=2)
     out
 end
 
-function get_state(game::Game, grayscale::Bool, downscale::Bool)
+function get_state_buffer(game::Game, grayscale::Bool)
+    size = grayscale ? game.width * game.height : game.width * game.height * 3
+    Vector{UInt8}(undef, size)
+end
+
+function get_observation_buffer(game::Game, grayscale::Bool, downscale::Bool)
+    n_obs = grayscale ? 1 : 3
+    if downscale
+        # (l+1)÷2 for odd l, and l÷2 + 1 for even l
+        w = isodd(game.width) ? (game.width + 1) ÷ 2 : game.width ÷ 2 + 1
+        h = isodd(game.height) ? (game.height + 1) ÷ 2 : game.height ÷ 2 + 1
+        obs_size = (w, h)
+    else
+        obs_size = (game.width, game.height)
+    end
+    [Array{UInt8, 2}(undef, obs_size) for _ in 1:n_obs]
+end
+
+function get_state!(
+    s::Vector{UInt8},
+    game::Game,
+    grayscale::Bool
+)
+    if grayscale
+        ArcadeLearningEnvironment.getScreenGrayscale!(game.ale, s)
+    else
+        ArcadeLearningEnvironment.getScreenRGB!(game.ale, s)
+    end
+end
+
+"""
+grayscale downscale - @btime
+1 1 - 41.143 μs (16 allocations: 276.27 KiB)
+1 0 - 77.752 ns (3 allocations: 192 bytes)
+0 0 - 54.647 μs (7 allocations: 98.97 KiB)
+0 1 - 158.778 μs (43 allocations: 828.58 KiB)
+"""
+function get_observation!(
+    o::Vector{Matrix{UInt8}},
+    s::Vector{UInt8},
+    game::Game,
+    grayscale::Bool,
+    downscale::Bool
+)
+    if grayscale
+        if downscale
+            o .= [convert(Array{UInt8,2},
+                floor.(restrict(reshape(s, (game.width, game.height)))))]
+        else
+            o .= [reshape(s, (game.width, game.height))]
+        end
+    else
+        if downscale
+            o .= [
+                convert(
+                    Array{UInt8,2},
+                    floor.(restrict(reshape(
+                        @view(s[i:3:length(s)]),
+                        (game.width, game.height)
+                    )))
+                ) for i in 1:3
+            ]
+        else
+            o .= [
+                convert(
+                    Array{UInt8,2},
+                    reshape(
+                        @view(s[i:3:length(s)]),
+                        (game.width, game.height)
+                    )
+                ) for i in 1:3
+            ]
+        end
+    end
+end
+
+function get_state(
+    game::Game,
+    grayscale::Bool,
+    downscale::Bool
+)
     s = grayscale ? get_grayscale(game) : get_rgb(game)
     if downscale
         @inbounds for i in eachindex(s)
@@ -123,11 +207,6 @@ end
 
 function get_rgb(game::Game)
     rawscreen = getScreenRGB(game.ale)
-    #=
-    # Slower
-    rgb = reshape(rawscreen, (3, game.width, game.height));
-    [Array{UInt8}(rgb[i,:,:]) for i in 1:3]
-    =#
     [convert(Array{UInt8,2}, reshape(@view(rawscreen[i:3:length(rawscreen)]), (game.width, game.height))) for i in 1:3]
 end
 

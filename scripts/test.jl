@@ -20,71 +20,73 @@ function print_usage()
 	parse(Float64, replace(res[10], "," => "."))
 end
 
-n_episodes = 500
+function play(game::Game, n_steps::Int64, grayscale::Bool, downscale::Bool)
+	IICGP.reset!(game)
+	s = get_state_buffer(game, grayscale)
+	o = get_observation_buffer(game, grayscale, downscale)
+	for t in 1:n_steps
+		get_state!(s, game, grayscale)
+		get_observation!(o, s, game, grayscale, downscale)
+		# output = IICGP.process(enco, redu, cont, ccfg, s)
+		act(game.ale, game.actions[rand(1:length(game.actions))])
+		if game_over(game.ale)
+			break
+		end
+	end
+end
+
+n_iter = 500
+n_para = 4
 n_steps = 10000
 rom_name = "boxing"
-game = Game(rom_name, 0)
-actions = game.actions
+games = [Game(rom_name, 0) for _ in 1:n_para]
 mem_usage = Vector{Float64}()
 cfgpath = "/home/opaweynch/.julia/environments/v1.6/dev/IICGP/cfg/eccgp_atari.yaml"
 mcfg, ecfg, ccfg, redu, bootstrap = IICGP.dualcgp_config(cfgpath, rom_name)
 enco = IPCGPInd(ecfg)
 cont = CGPInd(ccfg)
+grayscale = true
+downscale = true
 
-for e in 1:n_episodes
-	IICGP.reset!(game)
-	for t in 1:n_steps
-		s = get_state(game, true, true) # gain 2%
-		output = IICGP.process(enco, redu, cont, ccfg, s)
-		act(game.ale, actions[rand(1:length(actions))])
-		if game_over(game.ale)
-			break
+for e in 1:n_iter
+	@sync for i in 1:n_para
+		Threads.@spawn begin
+			play(games[i], n_steps, grayscale, downscale)
 		end
 	end
-	# Display memory
 	mem = print_usage()
 	push!(mem_usage, mem)
 	out(lineplot(mem_usage, title = "%MEM"))
 end
-close!(game)
+
+for game in games
+	close!(game)
+end
 
 
 
 ##
 
-game = Game("boxing", 0)
-gs = get_grayscale(game)
-rgb = get_rgb(game)
-x = gs[1]
-features = redu.reduct(gs, redu.parameters)
+#game = Game("boxing", 0)
+grayscale = false
+downscale = true
 
-IICGP.implot(rgb[1])
-IICGP.implot(x)
-IICGP.implot(pr2(x, redu.parameters), clim="auto")
-IICGP.implot(pr1(x, redu.parameters), clim="auto")
-IICGP.implot(features[1], clim="auto")
+s = get_state_buffer(game, grayscale)
+o = get_observation_buffer(game, grayscale, downscale)
+# 81 x 106
 
+get_state!(s, game, grayscale)
+get_observation!(o, s, game, grayscale, downscale)
+@btime get_observation!($o, $s, $game, $grayscale, $downscale)
 
+# 1 1 - 41.143 μs (16 allocations: 276.27 KiB)
+# 1 0 - 77.752 ns (3 allocations: 192 bytes)
+# 0 0 - 54.647 μs (7 allocations: 98.97 KiB)
+# 0 1 - 158.778 μs (43 allocations: 828.58 KiB)
+##
 
-@btime pr1($x, $redu.parameters)
-@btime pr2($x, $redu.parameters)
+IICGP.implot(o[3])
 
-function pr1(x::Array{UInt8,2}, parameters::Dict)
-    outsz = (parameters["size"], parameters["size"])
-    tilesz = ceil.(Int, size(x)./outsz)
-	out = Array{Float64, ndims(x)}(undef, outsz)
-    R = TileIterator(axes(x), tilesz)
-    i = 1
-    for tileaxs in R
-       out[i] = parameters["pooling_function"](view(x, tileaxs...))
-       i += 1
-    end
-    return out ./ 255.0
-end
-
-function pr2(x::Array{UInt8,2}, parameters::Dict)
-    outsz = (parameters["size"], parameters["size"])
-    tilesz = ceil.(Int, size(x)./outsz)
-    R = TileIterator(axes(x), tilesz)
-    [parameters["pooling_function"](view(x, tileaxs...)) for tileaxs in R] ./ 255.0
+for t in 1:600
+	act(game.ale, game.actions[rand(1:length(game.actions))])
 end
