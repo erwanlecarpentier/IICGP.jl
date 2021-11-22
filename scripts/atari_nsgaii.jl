@@ -41,7 +41,6 @@ function print_usage()
 	parse(Float64, replace(res[10], "," => "."))
 end
 
-
 #=
 function display_paretto(e::NSGA2Evo)
     o1 = [ind.fitness[1] for ind in e.population]
@@ -81,14 +80,6 @@ const stickiness = mcfg.stickiness
 const lck = ReentrantLock()
 const max_n_active_nodes = ecfg.rows * ecfg.columns + ccfg.rows * ccfg.columns
 
-# TODO remove START
-#=
-gtest = Game(rom_name, 1)
-stest = get_state(gtest, grayscale, downscale)
-close!(gtest)
-=#
-# TODO remove END
-
 const fitness_norm = [
     soa_scores[rom_name],
     max_n_active_nodes
@@ -107,42 +98,34 @@ function atari_score(
     downscale::Bool=downscale,
     stickiness::Float64=stickiness
 )
-	# 1 %MEM in [22.9, 25] reset every 300 (went until 800)
     Random.seed!(seed)
     mt = MersenneTwister(seed)
     #game = Game(rom, seed, lck=lck)
 	IICGP.reset!(game)
     IICGP.reset!(reducer) # zero buffers
+	s = get_state_buffer(game, grayscale)
+	o = get_observation_buffer(game, grayscale, downscale)
     reward = 0.0
     frames = 0
     prev_action = Int32(0)
-	#return rand() # TODO remove
-	# 3 %MEM in [4.9, 5.5] reset every 50 (went until 300)
     while ~game_over(game.ale)
-		#output = IICGP.process(encoder, reducer, controller, ccfg, stest) # TODO remove
-		s = get_state(game, grayscale, downscale) # TODO remove
-		#= TODO put back
 		if rand(mt) > stickiness || frames == 0
-            s = get_state(game, grayscale, downscale)
-            output = IICGP.process(encoder, reducer, controller, ccfg, s)
+			get_state!(s, game, grayscale)
+			get_observation!(o, s, game, grayscale, downscale)
+            output = IICGP.process(encoder, reducer, controller, ccfg, o)
             action = game.actions[argmax(output)]
         else
             action = prev_action
         end
-		=#
-		action = game.actions[rand(1:length(game.actions))] # TODO remove
         reward += act(game.ale, action)
         frames += 1
         prev_action = action
         if frames > max_frames
             break
         end
-		# 5 %MEM around 5.2 +/- 0.2
     end
     #close!(game)
     reward
-	# 4 %MEM in [5, Inf?] no reset? (went until 90) with IICGP.reset!(game)
-	# 2 %MEM in [22.9, Inf?] no reset? (went until 90) with reset!(game)
 end
 
 function sparsity_score(encoder::CGPInd, controller::CGPInd)
@@ -202,19 +185,17 @@ function cstind_init(cfg::NamedTuple)
 end
 
 # Create evolution framework
-e = NSGA2Evo(mcfg, resdir, my_fitness, random_init, rom_name) # TODO put back cstind_init
-mem_usage = Vector{Float64}()
+e = NSGA2Evo(mcfg, resdir, my_fitness, cstind_init, rom_name)
 
 # Run experiment
 init_backup(mcfg.id, resdir, cfg_path)
-gc_freq = 10
 for i in 1:e.config.n_gen
     e.gen += 1
     if e.gen > 1
         populate(e)
     end
     evaluate(e)
-    new_population = generation(e) # Externalized for logging
+    new_population = generation(e) # Externalized for logging complete population
     if ((e.config.log_gen > 0) && mod(e.gen, e.config.log_gen) == 0)
         log_gen(e, fitness_norm, is_ec=true)
     end
@@ -222,16 +203,7 @@ for i in 1:e.config.n_gen
     #=if ((e.config.save_gen > 0) && mod(e.gen, e.config.save_gen) == 0)
         save_gen(e)
     end=#
-	# GC
-	#=if mod(i, gc_freq) == 0
-		GC.gc()
-	end
-	GC.gc()
-	=#
-	# Display memory
-	mem = print_usage()
-	push!(mem_usage, mem)
-	out(lineplot(mem_usage, title = "%MEM"))
+	print_usage() # Display memory in stdout
 end
 
 # Close games
