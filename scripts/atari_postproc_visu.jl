@@ -368,13 +368,9 @@ seed = 0
 
 for i in eachindex(exp_dirs)
     # Generate images (may display / save)
-    #=
-    # TODO put back
     visu_ingame(exp_dirs[i], games[i], max_frames,
                 do_save=true, do_display=false, seed)
-    =#
-    test_manyvis(exp_dirs[i], games[i], max_frames,
-                 do_save=true, do_display=false) # TODO comment
+    #test_manyvis(exp_dirs[i], games[i], max_frames, do_save=true, do_display=false)
 
     # Launch python script
     if render_graph

@@ -5,7 +5,6 @@ using CartesianGeneticProgramming
 using Dates
 using IICGP
 using Random
-using UnicodePlots # TODO remove
 
 import Cambrian.mutate
 
