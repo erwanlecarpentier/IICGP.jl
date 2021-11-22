@@ -5,6 +5,7 @@ using CartesianGeneticProgramming
 using Dates
 using IICGP
 using Random
+using UnicodePlots # TODO remove
 
 import Cambrian.mutate
 
@@ -124,7 +125,7 @@ function atari_score(
         end
     end
     #close!(game)
-    reward
+    reward, frames
 end
 
 function sparsity_score(encoder::CGPInd, controller::CGPInd)
@@ -137,8 +138,9 @@ end
 function my_fitness(ind::NSGA2ECInd, seed::Int64, game::Game)
     enco = IPCGPInd(ecfg, ind.e_chromosome)
     cont = CGPInd(ccfg, ind.c_chromosome)
-    o1 = atari_score(game, enco, reducer, cont, seed)
+    o1, frames = atari_score(game, enco, reducer, cont, seed)
     o2 = sparsity_score(enco, cont)
+	ind.reached_frames = frames
     [o1, o2] ./ fitness_norm
 end
 
@@ -185,7 +187,7 @@ end
 
 # Create evolution framework
 e = NSGA2Evo(mcfg, resdir, my_fitness, cstind_init, rom_name)
-
+mem_usage = Vector{Float64}() # TODO remove
 # Run experiment
 init_backup(mcfg.id, resdir, cfg_path)
 for i in 1:e.config.n_gen
@@ -202,7 +204,10 @@ for i in 1:e.config.n_gen
     #=if ((e.config.save_gen > 0) && mod(e.gen, e.config.save_gen) == 0)
         save_gen(e)
     end=#
-	print_usage() # Display memory in stdout
+	# TODO only print_usage()
+	mem = print_usage() # Display memory in stdout
+	push!(mem_usage, mem)
+	out(lineplot(mem_usage, title = "%MEM"))
 end
 
 # Close games

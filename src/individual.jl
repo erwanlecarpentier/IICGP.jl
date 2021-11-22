@@ -47,6 +47,7 @@ mutable struct NSGA2ECInd <: Cambrian.Individual
     domination_count::Int64
     domination_list::Vector{Int64}
     crowding_distance::Float64
+    reached_frames::Int64
 end
 
 function NSGA2ECInd(
@@ -59,14 +60,15 @@ function NSGA2ECInd(
     domination_count = 0
     domination_list = Vector{Int64}()
     crowding_distance = 0.0
+    reached_frames = 0
     NSGA2ECInd(e_chromosome, c_chromosome, fitness, rank, domination_count,
-               domination_list, crowding_distance)
+               domination_list, crowding_distance, reached_frames)
 end
 
 function NSGA2IndCopy(ind::NSGA2ECInd)
     NSGA2ECInd(copy(ind.e_chromosome), copy(ind.c_chromosome),
                copy(ind.fitness), ind.rank, ind.domination_count,
-               ind.domination_list, ind.crowding_distance)
+               ind.domination_list, ind.crowding_distance, ind.reached_frames)
 end
 
 function dominates(ind1::T, ind2::T) where {T <: Union{NSGA2Ind, NSGA2ECInd}}

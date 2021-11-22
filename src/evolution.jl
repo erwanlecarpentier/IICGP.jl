@@ -153,7 +153,7 @@ function log_gen(
         end
         with_logger(e.logger) do
             @info Formatting.format(
-                string("generation,rank,fitness,normalized_fitness",chr_header)
+                string("generation,rank,fitness,normalized_fitness,reached_frames",chr_header)
             )
         end
     end
@@ -171,6 +171,7 @@ function log_gen(
                     ind.rank,",",
                     raw_fitness,",",
                     ind.fitness,",",
+                    ind.reached_frames,",",
                     chr
                 )
             )

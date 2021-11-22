@@ -1,16 +1,16 @@
 # General parameters
 optimizer: "nsga2"
 seed: 0
-max_frames: 10000
+max_frames: 10 # 10000 # TODO put back
 stickiness: 0.25
 d_fitness: 2 # atari sparsity
-n_gen: 25000
+n_gen: 10 # 25000 # TODO put back
 #n_eval: 36 # GA maximum number of evaluations per generation
 n_population: 15
 n_elite: 5 # Number of elite pairs per generation
 #eval_mutant: false # GA
 #tournament_size: 3 # GA
-log_gen: 200
+log_gen: 1 # 200 # TODO put back
 save_gen: 200
 bootstrap: false
 grayscale: true
