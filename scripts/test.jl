@@ -27,7 +27,8 @@ function play(game::Game, n_steps::Int64, grayscale::Bool, downscale::Bool)
 	for t in 1:n_steps
 		get_state!(s, game, grayscale)
 		get_observation!(o, s, game, grayscale, downscale)
-		# output = IICGP.process(enco, redu, cont, ccfg, s)
+		#s = getScreenRGB(game.ale)
+		output = IICGP.process(enco, redu, cont, ccfg, o)
 		act(game.ale, game.actions[rand(1:length(game.actions))])
 		if game_over(game.ale)
 			break
@@ -45,8 +46,7 @@ cfgpath = "/home/opaweynch/.julia/environments/v1.6/dev/IICGP/cfg/eccgp_atari.ya
 mcfg, ecfg, ccfg, redu, bootstrap = IICGP.dualcgp_config(cfgpath, rom_name)
 enco = IPCGPInd(ecfg)
 cont = CGPInd(ccfg)
-grayscale = true
-downscale = true
+grayscale, downscale = true, true
 
 for e in 1:n_iter
 	@sync for i in 1:n_para
@@ -54,6 +54,7 @@ for e in 1:n_iter
 			play(games[i], n_steps, grayscale, downscale)
 		end
 	end
+	#play(games[1], n_steps, grayscale, downscale)
 	mem = print_usage()
 	push!(mem_usage, mem)
 	out(lineplot(mem_usage, title = "%MEM"))
@@ -67,8 +68,8 @@ end
 
 ##
 
-#game = Game("boxing", 0)
-grayscale = false
+game = Game("boxing", 0)
+grayscale = true
 downscale = true
 
 s = get_state_buffer(game, grayscale)
@@ -77,16 +78,45 @@ o = get_observation_buffer(game, grayscale, downscale)
 
 get_state!(s, game, grayscale)
 get_observation!(o, s, game, grayscale, downscale)
-@btime get_observation!($o, $s, $game, $grayscale, $downscale)
 
-# 1 1 - 41.143 μs (16 allocations: 276.27 KiB)
-# 1 0 - 77.752 ns (3 allocations: 192 bytes)
-# 0 0 - 54.647 μs (7 allocations: 98.97 KiB)
-# 0 1 - 158.778 μs (43 allocations: 828.58 KiB)
 ##
 
-IICGP.implot(o[3])
+IICGP.implot(o[1])
 
 for t in 1:600
 	act(game.ale, game.actions[rand(1:length(game.actions))])
 end
+
+
+##
+
+IICGP.implot(ds1(x))
+IICGP.implot(ds3(x))
+
+function ds1(x::Matrix{UInt8})
+	convert(
+		Matrix{UInt8},
+		floor.(
+			imresize(x, ratio=0.5, method=BSpline(Linear()))
+		)
+	)
+end
+
+function ds3(x::Matrix{UInt8})
+	convert(
+		Matrix{UInt8},
+		floor.(
+			imresize(x, ratio=0.5, method=BSpline(Constant()))
+		)
+	)
+end
+
+function ds2(x::Matrix{UInt8})
+	convert(
+		Matrix{UInt8},
+		floor.([mean(UInt8, view(x, tile...)) for tile in TileIterator(axes(x), (2, 2))])
+	)
+end
+
+@btime ds1($x)
+@btime ds3($x)
