@@ -114,7 +114,7 @@ function atari_score(
 			#get_state!(s, game, grayscale) # TODO put back
 			#get_observation!(o, s, game, grayscale, downscale) # TODO put back
 			s = get_state(game, grayscale, downscale) # TODO remove
-            output = IICGP.process(encoder, reducer, controller, ccfg, o)
+            output = IICGP.process(encoder, reducer, controller, ccfg, s) # TODO put back o
             action = game.actions[argmax(output)]
         else
             action = prev_action
