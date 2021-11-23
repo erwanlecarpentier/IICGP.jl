@@ -10,7 +10,7 @@ n_population: 15
 n_elite: 5 # Number of elite pairs per generation
 #eval_mutant: false # GA
 #tournament_size: 3 # GA
-log_gen: 200
+log_gen: 1
 save_gen: 200
 bootstrap: false
 grayscale: true

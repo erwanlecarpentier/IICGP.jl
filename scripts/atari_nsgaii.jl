@@ -198,12 +198,11 @@ for i in 1:e.config.n_gen
         populate(e)
     end
     evaluate(e)
-    generation(e)
-    if ((e.config.log_gen > 0) && mod(e.gen, e.config.log_gen) == 0)
+    generation(e, fitness_norm, is_ec=true)
+    #=if ((e.config.log_gen > 0) && mod(e.gen, e.config.log_gen) == 0)
         log_gen(e, fitness_norm, is_ec=true)
     end
-    #filter!(ind -> ind.is_elite, e.population)
-    #=if ((e.config.save_gen > 0) && mod(e.gen, e.config.save_gen) == 0)
+    if ((e.config.save_gen > 0) && mod(e.gen, e.config.save_gen) == 0)
         save_gen(e)
     end=#
 	mem = print_usage(i)

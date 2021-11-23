@@ -75,7 +75,11 @@ function log_gen(
     flush(e.logger.stream)
 end
 
-function generation(e::NSGA2Evo{T}) where T
+function generation(
+	e::NSGA2Evo{T},
+	fitness_norm::Vector{Float64};
+	is_ec::Bool=false
+) where T
     #==#
 	# Sort all individuals according to Pareto efficiency
     fast_non_dominated_sort!(e)
@@ -105,7 +109,7 @@ function generation(e::NSGA2Evo{T}) where T
     end
 	# Log results
 	if ((e.config.log_gen > 0) && mod(e.gen, e.config.log_gen) == 0)
-        log_gen(e, fitness_norm)
+        log_gen(e, fitness_norm, is_ec=is_ec)
     end
 	# Remove non-elite individuals
 	filter!(ind -> ind.is_elite, e.population)

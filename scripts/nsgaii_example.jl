@@ -82,7 +82,7 @@ for i in 1:e.config.n_gen
     end
     evaluate(e)
     display_paretto(e)
-    generation(e)
+    generation(e, fitness_norm, is_ec=false)
     #=if ((e.config.log_gen > 0) && mod(e.gen, e.config.log_gen) == 0)
         log_gen(e, fitness_norm)
     end
