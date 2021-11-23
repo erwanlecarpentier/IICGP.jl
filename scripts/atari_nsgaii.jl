@@ -104,17 +104,16 @@ function atari_score(
     #game = Game(rom, seed, lck=lck)
 	IICGP.reset!(game)
     IICGP.reset!(reducer) # zero buffers
-	#s = get_state_buffer(game, grayscale) # TODO put back
-	#o = get_observation_buffer(game, grayscale, downscale) # TODO put back
+	s = get_state_buffer(game, grayscale)
+	o = get_observation_buffer(game, grayscale, downscale)
     reward = 0.0
     frames = 0
     prev_action = Int32(0)
     while ~game_over(game.ale)
 		if rand(mt) > stickiness || frames == 0
-			#get_state!(s, game, grayscale) # TODO put back
-			#get_observation!(o, s, game, grayscale, downscale) # TODO put back
-			s = get_state(game, grayscale, downscale) # TODO remove
-            output = IICGP.process(encoder, reducer, controller, ccfg, s) # TODO put back o
+			get_state!(s, game, grayscale)
+			get_observation!(o, s, game, grayscale, downscale)
+            output = IICGP.process(encoder, reducer, controller, ccfg, o)
             action = game.actions[argmax(output)]
         else
             action = prev_action
