@@ -1,4 +1,23 @@
-export process, process_f
+export process, process_ind, process_f
+
+function process_ind(ind::CGPInd, inputs::AbstractArray)
+    # Set inputs
+    @inbounds for i in eachindex(inputs)
+        ind.buffer[i] = inputs[i]
+    end
+    # Process
+    @inbounds for i in eachindex(ind.nodes)
+        if ind.nodes[i].active
+            ind.buffer[i] = ind.nodes[i].f(
+                ind.buffer[ind.nodes[i].x],
+                ind.buffer[ind.nodes[i].y],
+                ind.nodes[i].p
+            )
+        end
+    end
+    # Get outputs
+    [ind.buffer[i] for i in ind.outputs]
+end
 
 """
     function process(
@@ -19,7 +38,13 @@ function process(
     controller_config::NamedTuple,
     inp::AbstractArray
 )
-    process_f(encoder, reducer, controller, controller_config, inp)[2]
+    out = CartesianGeneticProgramming.process(encoder, inp)
+    features = reducer.reduct(out, reducer.parameters)
+    features_flatten = collect(Iterators.flatten(Iterators.flatten(features)))
+    if controller_config.n_cst_inputs > 1
+        push!(features_flatten, 0:1.0/(controller_config.n_cst_inputs-1):1.0...)
+    end
+    CartesianGeneticProgramming.process(controller, features_flatten)
 end
 
 """

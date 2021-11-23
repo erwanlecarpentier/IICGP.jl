@@ -48,7 +48,7 @@ function display_paretto(e::NSGA2Evo)
 end
 
 # User-defined fitness function (normalized)
-function my_fitness(ind::NSGA2Ind, seed::Int64)
+function my_fitness(ind::NSGA2Ind, seed::Int64, game::Game) # game is a placeholder
     cgp_ind = CGPInd(cfg, ind.chromosome)
     y_hat = zeros(length(y1))
     @inbounds for i in eachindex(y1)
@@ -71,7 +71,7 @@ function my_init(cfg::NamedTuple)
     [NSGA2Ind(cfg, CGPInd(cfg).chromosome) for _ in 1:cfg.n_population]
 end
 
-e = NSGA2Evo(cfg, resdir, my_fitness, my_init)
+e = NSGA2Evo(cfg, resdir, my_fitness, my_init, "boxing") # boxing is a placeholder
 
 init_backup(cfg.id, resdir, cfg_path)
 #run!(evo)
@@ -82,12 +82,11 @@ for i in 1:e.config.n_gen
     end
     evaluate(e)
     display_paretto(e)
-    new_population = generation(e)
-    if ((e.config.log_gen > 0) && mod(e.gen, e.config.log_gen) == 0)
+    generation(e)
+    #=if ((e.config.log_gen > 0) && mod(e.gen, e.config.log_gen) == 0)
         log_gen(e, fitness_norm)
     end
-    e.population = new_population
-    #=if ((e.config.save_gen > 0) && mod(e.gen, e.config.save_gen) == 0)
+    if ((e.config.save_gen > 0) && mod(e.gen, e.config.save_gen) == 0)
         save_gen(e)
     end=#
 end

@@ -31,7 +31,46 @@ end
 populate(e::NSGA2Evo{T}) where T = IICGP.nsga2_populate(e)
 evaluate(e::NSGA2Evo{T}) where T = IICGP.fitness_evaluate(e, e.fitness)
 
-function generation(e::NSGA2Evo{T}; fnds::Bool=true) where T
+function get_n_elites(population::Vector{T}) where T
+	count(ind -> ind.is_elite, population)
+end
+
+function generation(e::NSGA2Evo{T}) where T
+    #==#
+	# Sort all individuals according to Pareto efficiency
+    fast_non_dominated_sort!(e)
+    # Select elites as most Pareto efficient solutions
+    sort!(e.population, by = ind -> ind.rank)
+    current_rank = 1
+    i_start = 1
+    i_end = findlast(ind -> ind.rank == current_rank, e.population)
+    while get_n_elites(e.population) < e.config.n_elite
+        n_candidates = i_end - i_start + 1
+        if !(get_n_elites(e.population) + n_candidates > e.config.n_elite)
+            # Flag all the individuals of this rank
+			@inbounds for i in i_start:i_end
+				e.population[i].is_elite = true
+			end
+        else
+            # Compute crowding distances and flag less crowded individuals
+            assign_crowding_distances!(e, current_rank)
+            sort!(e.population, by = ind -> ind.crowding_distance, rev=true)
+  			@inbounds for i in 1:(e.config.n_elite - get_n_elites(e.population))
+  				e.population[i].is_elite = true
+  			end
+        end
+        current_rank += 1
+        i_start = i_end + 1
+        i_end = findlast(ind -> ind.rank == current_rank, e.population)
+    end
+	# Remove non-elite individuals
+	filter!(ind -> ind.is_elite, e.population)
+	# Reset flags
+	for ind in e.population
+        ind.is_elite = false
+    end
+	#==#
+    #=
     # Sort all individuals according to Pareto efficiency
     fast_non_dominated_sort!(e)
     # Select elites as most Pareto efficient solutions
@@ -57,8 +96,9 @@ function generation(e::NSGA2Evo{T}; fnds::Bool=true) where T
         i_start = i_end + 1
         i_end = findlast(ind -> ind.rank == current_rank, e.population)
     end
-    #e.population = new_population
-    new_population
+    e.population = new_population
+    #new_population
+    =#
 end
 
 """
@@ -269,56 +309,6 @@ function DualCGPGAEvo(
         n_eval, n_elite, tournament_size, 0
     )
 end
-
-#=
-function log_gen_from_pop_logger(d_fitness, pop, logger, gen)
-    for d in 1:d_fitness
-        maxs = map(i->i.fitness[d], pop) # fitness would be a scalar in GA
-        with_logger(logger) do
-            @info Formatting.format("{1:04d},{2:e},{3:e},{4:e}",
-                                    gen, maximum(maxs), mean(maxs), std(maxs))
-        end
-    end
-    flush(logger.stream)
-end
-
-"""
-    function log_gen(e::DualCGPEvolution)
-
-Log a generation within a dual CGP evolution framework, including max, mean,
-and std of each fitness dimension.
-"""
-function log_gen(e::DualCGPGAEvo)
-    log_gen_from_pop_logger(e.config.d_fitness, e.encoder_population,
-                            e.encoder_logger, e.gen)
-    log_gen_from_pop_logger(e.config.d_fitness, e.controller_population,
-                            e.controller_logger, e.gen)
-end
-
-function save_gen_at(path, pop)
-    sort!(pop)
-    for i in eachindex(pop)
-        f = open(Formatting.format("{1}/{2:04d}.dna", path, i), "w+")
-        write(f, string(pop[i]))
-        close(f)
-    end
-end
-
-"""
-    function save_gen(e::DualCGPEvolution)
-
-Save the population of a dual CGP evolution framework in `gens/` contained in
-the results directory.
-"""
-function save_gen(e::DualCGPGAEvo)
-    encoder_path = joinpath(e.resdir, Formatting.format("gens/{1}/encoder_{2:04d}", e.logid, e.gen))
-    controller_path = joinpath(e.resdir, Formatting.format("gens/{1}/controller_{2:04d}", e.logid, e.gen))
-    mkpath(encoder_path)
-    mkpath(controller_path)
-    save_gen_at(encoder_path, e.encoder_population)
-    save_gen_at(controller_path, e.controller_population)
-end
-=#
 
 mutable struct DualCGPEvolution{T} <: Cambrian.AbstractEvolution
     config::NamedTuple

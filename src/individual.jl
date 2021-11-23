@@ -19,6 +19,7 @@ mutable struct NSGA2Ind <: Cambrian.Individual
     domination_count::Int64
     domination_list::Vector{Int64}
     crowding_distance::Float64
+    is_elite::Bool
 end
 
 function NSGA2Ind(cfg::NamedTuple, chromosome::Vector{Float64})
@@ -27,13 +28,15 @@ function NSGA2Ind(cfg::NamedTuple, chromosome::Vector{Float64})
     domination_count = 0
     domination_list = Vector{Int64}()
     crowding_distance = 0.0
+    is_elite = false
     NSGA2Ind(chromosome, fitness, rank, domination_count,
-             domination_list, crowding_distance)
+             domination_list, crowding_distance, is_elite)
 end
 
 function NSGA2IndCopy(ind::NSGA2Ind)
     NSGA2Ind(copy(ind.chromosome), copy(ind.fitness), ind.rank,
-             ind.domination_count, ind.domination_list, ind.crowding_distance)
+             ind.domination_count, ind.domination_list, ind.crowding_distance,
+             ind.is_elite)
 end
 
 """
@@ -47,6 +50,7 @@ mutable struct NSGA2ECInd <: Cambrian.Individual
     domination_count::Int64
     domination_list::Vector{Int64}
     crowding_distance::Float64
+    is_elite::Bool
     reached_frames::Int64
 end
 
@@ -60,15 +64,17 @@ function NSGA2ECInd(
     domination_count = 0
     domination_list = Vector{Int64}()
     crowding_distance = 0.0
+    is_elite = false
     reached_frames = 0
     NSGA2ECInd(e_chromosome, c_chromosome, fitness, rank, domination_count,
-               domination_list, crowding_distance, reached_frames)
+               domination_list, crowding_distance, is_elite, reached_frames)
 end
 
 function NSGA2IndCopy(ind::NSGA2ECInd)
     NSGA2ECInd(copy(ind.e_chromosome), copy(ind.c_chromosome),
                copy(ind.fitness), ind.rank, ind.domination_count,
-               ind.domination_list, ind.crowding_distance, ind.reached_frames)
+               ind.domination_list, ind.crowding_distance, ind.is_elite,
+               ind.reached_frames)
 end
 
 function dominates(ind1::T, ind2::T) where {T <: Union{NSGA2Ind, NSGA2ECInd}}

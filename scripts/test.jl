@@ -64,7 +64,30 @@ for game in games
 	close!(game)
 end
 
+##
 
+mutable struct Foo
+	v::Int64
+	b::Bool
+end
+
+pop = [Foo(i, false) for i in 1:10]
+for i in [1, 3, 5, 6, 7]
+	pop[i].b = true
+end
+
+filter!(ind -> ind.b, pop)
+
+function get_count(pop::Vector{Foo})
+	sum([ind.b for ind in pop])
+end
+
+function get_count2(pop::Vector{Foo})
+	count(i->i.b, pop)
+end
+
+@btime get_count($pop)
+@btime get_count2($pop)
 
 ##
 
@@ -78,6 +101,7 @@ o = get_observation_buffer(game, grayscale, downscale)
 
 get_state!(s, game, grayscale)
 get_observation!(o, s, game, grayscale, downscale)
+
 
 ##
 
