@@ -5,6 +5,7 @@ using CartesianGeneticProgramming
 using Dates
 using IICGP
 using Random
+using UnicodePlots # TODO remove
 
 import Cambrian.mutate
 
@@ -33,10 +34,11 @@ function dict2namedtuple(d::Dict)
     (; (Symbol(k)=>v for (k, v) in d)...)
 end
 
-function print_usage()
+function print_usage(gen::Int64)
 	out = read(`top -bn1 -p $(getpid())`, String)
 	res = split(split(out,  "\n")[end-1])
-	println("RES: ", res[6], "   %MEM: ", res[10], "   %CPU: ", res[9])
+	println("gen: ", gen, "   RES: ", res[6], "   %MEM: ", res[10],
+			"   %CPU: ", res[9])
 	parse(Float64, replace(res[10], "," => "."))
 end
 
@@ -102,15 +104,16 @@ function atari_score(
     #game = Game(rom, seed, lck=lck)
 	IICGP.reset!(game)
     IICGP.reset!(reducer) # zero buffers
-	s = get_state_buffer(game, grayscale)
-	o = get_observation_buffer(game, grayscale, downscale)
+	#s = get_state_buffer(game, grayscale) # TODO put back
+	#o = get_observation_buffer(game, grayscale, downscale) # TODO put back
     reward = 0.0
     frames = 0
     prev_action = Int32(0)
     while ~game_over(game.ale)
 		if rand(mt) > stickiness || frames == 0
-			get_state!(s, game, grayscale)
-			get_observation!(o, s, game, grayscale, downscale)
+			#get_state!(s, game, grayscale) # TODO put back
+			#get_observation!(o, s, game, grayscale, downscale) # TODO put back
+			s = get_state(game, grayscale, downscale) # TODO remove
             output = IICGP.process(encoder, reducer, controller, ccfg, o)
             action = game.actions[argmax(output)]
         else
@@ -187,6 +190,8 @@ end
 # Create evolution framework
 e = NSGA2Evo(mcfg, resdir, my_fitness, cstind_init, rom_name)
 
+mem_usage = Vector{Float64}() # TODO remove
+
 # Run experiment
 init_backup(mcfg.id, resdir, cfg_path)
 for i in 1:e.config.n_gen
@@ -203,7 +208,9 @@ for i in 1:e.config.n_gen
     #=if ((e.config.save_gen > 0) && mod(e.gen, e.config.save_gen) == 0)
         save_gen(e)
     end=#
-	print_usage() # Display memory in stdout
+	mem = print_usage(i)
+	push!(mem_usage, mem) # TODO remove
+	out(lineplot(mem_usage, title = "%MEM")) # TODO remove
 end
 
 # Close games

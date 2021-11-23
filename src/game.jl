@@ -193,9 +193,9 @@ function get_state(
     if downscale
         @inbounds for i in eachindex(s)
             # s[i] = scale(s[i])
-            s[i] = convert(Matrix{UInt8}, imresize(s[i], ratio=0.5, method=BSpline(Constant())))
+            # s[i] = convert(Matrix{UInt8}, imresize(s[i], ratio=0.5, method=BSpline(Constant()))) # TODO put back
             # s[i] = convert(Matrix{UInt8}, floor.(imresize(s[i], ratio=0.5, method=BSpline(Linear()))))
-            # s[i] = convert(Matrix{UInt8}, floor.(restrict(s[i]))) # Memory issues ?
+            s[i] = convert(Matrix{UInt8}, floor.(restrict(s[i]))) # Memory issues ? # TODO remove
         end
     end
     s
