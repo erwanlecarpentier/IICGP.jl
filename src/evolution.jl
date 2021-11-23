@@ -35,6 +35,46 @@ function get_n_elites(population::Vector{T}) where T
 	count(ind -> ind.is_elite, population)
 end
 
+function log_gen(
+    e::NSGA2Evo{T},
+    fitness_norm::Vector{Float64};
+    is_ec::Bool=false
+) where T
+    if e.gen == 1
+        if is_ec
+            chr_header = ",e_chromosome,c_chromosome"
+        else
+            chr_header = ",chromosome"
+        end
+        with_logger(e.logger) do
+            @info Formatting.format(
+                string("generation,rank,fitness,normalized_fitness,reached_frames",chr_header)
+            )
+        end
+    end
+    for ind in e.population
+        if is_ec
+            chr = string(ind.e_chromosome,",",ind.c_chromosome)
+        else
+            chr = string(ind.chromosome)
+        end
+        raw_fitness = ind.fitness .* fitness_norm
+        with_logger(e.logger) do
+            @info Formatting.format(
+                string(
+                    e.gen,",",
+                    ind.rank,",",
+                    raw_fitness,",",
+                    ind.fitness,",",
+                    ind.reached_frames,",",
+                    chr
+                )
+            )
+        end
+    end
+    flush(e.logger.stream)
+end
+
 function generation(e::NSGA2Evo{T}) where T
     #==#
 	# Sort all individuals according to Pareto efficiency
@@ -62,6 +102,10 @@ function generation(e::NSGA2Evo{T}) where T
         current_rank += 1
         i_start = i_end + 1
         i_end = findlast(ind -> ind.rank == current_rank, e.population)
+    end
+	# Log results
+	if ((e.config.log_gen > 0) && mod(e.gen, e.config.log_gen) == 0)
+        log_gen(e, fitness_norm)
     end
 	# Remove non-elite individuals
 	filter!(ind -> ind.is_elite, e.population)
@@ -178,46 +222,6 @@ function fast_non_dominated_sort!(e::NSGA2Evo)
         end
         current_rank += 1
     end
-end
-
-function log_gen(
-    e::NSGA2Evo{T},
-    fitness_norm::Vector{Float64};
-    is_ec::Bool=false
-) where T
-    if e.gen == 1
-        if is_ec
-            chr_header = ",e_chromosome,c_chromosome"
-        else
-            chr_header = ",chromosome"
-        end
-        with_logger(e.logger) do
-            @info Formatting.format(
-                string("generation,rank,fitness,normalized_fitness,reached_frames",chr_header)
-            )
-        end
-    end
-    for ind in e.population
-        if is_ec
-            chr = string(ind.e_chromosome,",",ind.c_chromosome)
-        else
-            chr = string(ind.chromosome)
-        end
-        raw_fitness = ind.fitness .* fitness_norm
-        with_logger(e.logger) do
-            @info Formatting.format(
-                string(
-                    e.gen,",",
-                    ind.rank,",",
-                    raw_fitness,",",
-                    ind.fitness,",",
-                    ind.reached_frames,",",
-                    chr
-                )
-            )
-        end
-    end
-    flush(e.logger.stream)
 end
 
 """

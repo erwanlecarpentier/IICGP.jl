@@ -190,7 +190,6 @@ end
 e = NSGA2Evo(mcfg, resdir, my_fitness, cstind_init, rom_name)
 
 mem_usage = Vector{Float64}() # TODO remove
-
 # Run experiment
 init_backup(mcfg.id, resdir, cfg_path)
 for i in 1:e.config.n_gen

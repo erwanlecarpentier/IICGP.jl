@@ -20,14 +20,13 @@
 CMD_PREFIX="atari_"
 CFGS=("cfg/eccgp_atari.yaml") # WARNING: sync with REDS
 REDS=("nsgaii_") # WARNING: sync with CFGS
-GAMES="boxing" # asteroids space_invaders" # TODO put back
+GAMES="space_invaders" # boxing asteroids" # TODO put back
 SCRIPT="scripts/atari_nsgaii.jl"
 PROJECT="$PWD"
 USERNAME=$(whoami)
 OUTDIR="/tmpdir/$USERNAME/ICGP-results/results"
-N_THREADS="15"
-
-# TODO put back 5-00:00:00
+N_THREADS="15" # WARNING: sync with MEM
+MEM="80000" # WARNING: sync with N_THREADS
 
 for i in "${!CFGS[@]}"; do
 	for GAME in $GAMES; do
@@ -41,15 +40,17 @@ for i in "${!CFGS[@]}"; do
 		echo "#SBATCH -n $N_THREADS" >> $CM
 		echo "#SBATCH --ntasks-per-node=$N_THREADS" >> $CM
 		echo "#SBATCH --ntasks-per-core=1" >> $CM
+		echo "#SBATCH --mem=$MEM" >> $CM
 		echo "#SBATCH -o /tmpdir/%u/logs/job%J_$FNAME.out" >> $CM
 		echo "#SBATCH -e /tmpdir/%u/logs/job%J_$FNAME.log" >> $CM
-		echo "#SBATCH --time=00:20:00" >> $CM
+		echo "#SBATCH --time=5-00:00:00" >> $CM
 		echo "#SBATCH --mail-user=erwanlecarpentier@mailbox.org" >> $CM
 		echo "#SBATCH --mail-type=END" >> $CM
 		echo "" >> $CM
 		echo "julia --threads $N_THREADS --project=$PROJECT $SCRIPT --cfg=${CFGS[i]} --game=$GAME --out=$OUTDIR" >> $CM
 
 		sbatch $CM
+		cp $CM /tmpdir/%u/logs/job%J_$FNAME.cmd
 		rm $CM
 		sleep 0.01
 	done
