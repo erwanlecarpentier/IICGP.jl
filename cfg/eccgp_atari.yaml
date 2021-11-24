@@ -20,7 +20,7 @@ downscale: true
 encoder:
   #n_population: 10
   rows: 1
-  columns: 20
+  columns: 40
   recur: 0.0
   m_rate: 0.1
   out_m_rate: 0.2
