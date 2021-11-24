@@ -20,7 +20,7 @@
 CMD_PREFIX="atari_"
 CFGS=("cfg/eccgp_atari.yaml") # WARNING: sync with REDS
 REDS=("nsgaii_") # WARNING: sync with CFGS
-GAMES="space_invaders" # boxing asteroids" # TODO put back
+GAMES="boxing"
 SCRIPT="scripts/atari_nsgaii.jl"
 PROJECT="$PWD"
 USERNAME=$(whoami)
@@ -51,7 +51,7 @@ for i in "${!CFGS[@]}"; do
 		
 		RES=$(sbatch $CM)
 		JOBID=${RES##* }
-		mv $CM /tmpdir/$USERNAME/logs/job$(echo $JOBID)_$FNAME.cmd
+		cp $CM /tmpdir/$USERNAME/logs/job$(echo $JOBID)_$FNAME.cmd
 		sleep 0.01
 	done
 done
