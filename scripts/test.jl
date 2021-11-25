@@ -12,6 +12,7 @@ using ImageMorphology
 using LinearAlgebra
 using Random
 
+
 out(plt) = println(IOContext(stdout, :color=>true), plt)
 
 function print_usage()

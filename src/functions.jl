@@ -139,6 +139,7 @@ function binary(x::ImgType, p::Float64)::ImgType
     reshape([x[i] < floor(UInt8, 255 * p) ? 0x00 : 0xff for i in eachindex(x)], size(x))
 end
 
+#=
 function threshold(x::ImgType, t::UInt8, reverse::Bool=false)::ImgType
     out = copy(x)
     if reverse
@@ -151,6 +152,21 @@ end
 
 function threshold(x::ImgType, t::Int64)::ImgType
     threshold(x, convert(UInt8, t))
+end
+
+function threshold(x::ImgType, p::Float64)::ImgType
+    if p < 0.5
+        t = floor(UInt8, 255 * 2 * p)
+        threshold(x, t, false)
+    else
+        t = floor(UInt8, 255 * 2 * (p - 0.5))
+        threshold(x, t, true)
+    end
+end
+=#
+
+function threshold(x::ImgType, t::UInt8, reverse::Bool=false)::ImgType
+    reshape([reverse ? (x[i]>t ? 0x00 : x[i]) : (x[i]<t ? 0x00 : x[i]) for i in eachindex(x)], size(x))
 end
 
 function threshold(x::ImgType, p::Float64)::ImgType
@@ -225,6 +241,7 @@ fgen(:f_box_segmentation, 1, :(box_segmentation(x)), ImgType)
 # Thresholds and values
 # fgen(:f_negative, 1, :(0xff .- x), ImgType) # Same as f_bitwise_not
 fgen(:f_threshold, 1, :(threshold(x, p[1])), ImgType)
+fgen(:f_threshold_bis, 1, :(threshold_bis(x, p[1])), ImgType)
 fgen(:f_binary, 1, :(binary(x, p[1])), ImgType)
 fgen(:f_motion_capture, 1, :(motion_capture!(x, p)), ImgType)
 fgen(:f_motion_distances, 1, :(motion_distances!(x, p)), ImgType)
