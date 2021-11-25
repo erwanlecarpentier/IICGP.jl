@@ -319,8 +319,9 @@ Default: return the controller's log file.
 function log_from_exp_dir(
     exp_dir::String;
     log_file::String="logs/controller.csv",
-    header::Union{Int64,Vector{String}}=LOG_HEADER
+    header::Union{Int64,Vector{String}}=LOG_HEADER,
+    sep::String=","
 )
     log_file = joinpath(exp_dir, log_file)
-    CSV.File(log_file, header=header, delim=",")
+    CSV.File(log_file, header=header, delim=sep)
 end

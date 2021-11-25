@@ -263,19 +263,45 @@ function plot_cibest(
     plt
 end
 
+function retrieve_nsga2_statistics(log::CSV.File)
+    gen = Vector{Int64}()
+    for row in log
+        if row.gen_number ∉ gen
+            push!(gen, row.gen_number)
+        end
+    end
+    gen
+end
+
 function process_nsga2_results(
     exp_dirs::Vector{String},
-    games::Vector{String}
+    games::Vector{String},
+    objectives_names::Vector{String},
 )
     @assert all([g == games[1] for g in games])
+
+    # Create plots
     gamename = gamename_from_romname(games[1])
+    xl = "Generation"
+    plt_obj = Vector{Plots.Plot}()
+    for i in eachindex(objectives_names)
+        yl = string("Best ", objectives_names[i], " (", gamename, ")")
+        push!(plt_obj, plot(ylabel=yl, xlabel=xl))
+    end
+
+    # Fetch logs
     for i in eachindex(exp_dirs)
         exp_dir = exp_dirs[i]
         cfg = cfg_from_exp_dir(exp_dir)
-        #log = log_from_exp_dir(exp_dir, log_file="logs/logs.csv", header=NSGA2_LOG_HEADER)
-        log_file = joinpath(exp_dir, "logs/logs.csv")
-        log = CSV.File(log_file, header=1, delim=",")
-        return log
+        log = log_from_exp_dir(exp_dir, log_file="logs/logs.csv",
+            header=1, sep=";")
+        gen = retrieve_nsga2_statistics(log)
+        println(gen)
+    end
+
+    # Display
+    for i in eachindex(plt_obj)
+        display(plt_obj[i])
     end
 end
 

@@ -19,14 +19,15 @@ dotime = false
 dosave = true
 baselines = true
 
+objectives_names = ["Atari score", "sparsity"]
+
 exp_dirs, games = get_exp_dir(
     resdir, min_date=min_date, max_date=max_date, games=rom_names,
     reducers=reducers
 )
 
-
 log = process_nsga2_results(
-    exp_dirs, games
+    exp_dirs, games, objectives_names
 )
 
 
