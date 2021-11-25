@@ -11,10 +11,10 @@ using YAML
 using Dates
 using Plots
 
+
 LOG_HEADER = ["date", "lib", "type", "gen_number", "best", "mean", "std"]
 NSGA2_LOG_HEADER = ["date", "lib", "type", "gen_number", "rank", "fitness",
-                    "normalized_fitness", "reached_frames", "e_chromosome",
-                    "c_chromosome"]
+                    "normalized_fitness", "reached_frames", "dna_id"]
 
 
 function init_backup(logid::String, resdir::String, cfg_path::String)

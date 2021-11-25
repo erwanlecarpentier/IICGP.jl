@@ -24,27 +24,41 @@ exp_dirs, games = get_exp_dir(
     reducers=reducers
 )
 
+
 log = process_nsga2_results(
     exp_dirs, games
 )
 
 
-##
-logfile = joinpath(exp_dirs[1], "logs", "logs.csv")
-newlogfile = joinpath(exp_dirs[1], "logs", "logs_new.csv")
+#=
+exp_dir = exp_dirs[1]
+rom_name = games[1]
+logfile = joinpath(exp_dir, "logs", "logs.csv")
+newlogfile = joinpath(exp_dir, "logs", "logs_new.csv")
 log = open(logfile)
 lines = readlines(log)
 
 
-##
+cfg_dir = joinpath(exp_dir, "logs")
+yaml = find_yaml(cfg_dir)
+if yaml == nothing
+    cfg_dir = exp_dir
+    yaml = find_yaml(cfg_dir)
+end
+cfg_path = joinpath(cfg_dir, yaml)
+#cfg = cfg_from_exp_dir(exp_dirs[1])
+mcfg, ecfg, ccfg, reducer, bootstrap = IICGP.dualcgp_config(cfg_path, rom_name)
+
 using Formatting
+using CartesianGeneticProgramming
+
 log_gen = 200
 sep = ";"
-output = ["date,lib,type,gen_number,rank,fitness,normalized_fitness,reached_frames,dna_id"]
+newlog = ["date,lib,type,gen_number,rank,fitness,normalized_fitness,reached_frames,dna_id"]
 dna_id_int = 1
 current_gen = 1
 
-for i in 2:20#length(lines)
+for i in 2:length(lines)
     line = lines[i]
     splitted = split(line, ",")
     ngen = splitted[4]
@@ -62,27 +76,53 @@ for i in 2:20#length(lines)
         splitted = split(line, "[")
         fitn = string('[', split(splitted[2], "]")[1], ']')
         nofi = string('[', split(splitted[3], "]")[1], ']')
+        fitn = replace(fitn, " " => "")
+        nofi = replace(nofi, " " => "")
         echr = split(splitted[4], "]")[1]
         cchr = split(splitted[5], "]")[1]
-
         dna_id = Formatting.format("{1:04d}", dna_id_int)
         dna_id_int += 1
-
         newline = string(date, sep, libr, sep, type, sep, ngen, sep, rank, sep,
                          fitn, sep, nofi, sep, fram, sep, dna_id)
-        push!(output, newline)
+        push!(newlog, newline)
+
+        echr = [parse(Float64, chr) for chr in split(echr, ",")]
+        cchr = [parse(Float64, chr) for chr in split(cchr, ",")]
+
+        enco = IPCGPInd(ecfg, echr)
+        cont = CGPInd(ccfg, cchr)
+
+        myfit = [parse(Float64, split(nofi, ",")[1][2:end]),
+                 parse(Float64, split(nofi, ",")[2][1:end-1])]
+        enco.fitness .= myfit
+        cont.fitness .= myfit
+
+        enco_path = joinpath(exp_dir, Formatting.format("gens/encoder_{1:04d}", n_gen))
+        cont_path = joinpath(exp_dir, Formatting.format("gens/controller_{1:04d}", n_gen))
+        mkpath(enco_path)
+        mkpath(cont_path)
+
+        f = open(string(enco_path, "/", dna_id, ".dna"), "w+")
+        write(f, string(enco))
+        close(f)
+
+        f = open(string(cont_path, "/", dna_id, ".dna"), "w+")
+        write(f, string(cont))
+        close(f)
     end
 end
 
-#=
-for i in eachindex(pop)
-    f = open(Formatting.format("{1}/{2:04d}.dna", path, i), "w+")
-    write(f, string(pop[i]))
-    close(f)
-end
-=#
-
+# Gather all lines in a single string
 println()
-for l in output
-    println(l)
+output = ""
+for i in eachindex(newlog)
+    println(newlog[i])
+    lb = i > 1 ? '\n' : ""
+    output = string(output, lb, newlog[i])
 end
+
+# Output to file
+f = open(newlogfile, "w+")
+write(f, output)
+close(f)
+=#
