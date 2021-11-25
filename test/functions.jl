@@ -29,7 +29,8 @@ end
 
 function generate_atari_img_set(frame_number::Int64)
     set = Array{Array{UInt8,2},1}()
-    rom_list = setdiff(getROMList(), ["pacman", "surround"])
+    #rom_list = setdiff(getROMList(), ["pacman", "surround"]) # All games
+    rom_list = ["boxing"]
     for rom in rom_list
         append!(set, IICGP.load_rgb(rom, frame_number))
     end
@@ -216,7 +217,7 @@ function time_functions(functions::Array{Function}, io_type::String)
     end
 end
 
-do_time = true
+do_time = false
 if do_time
     time_functions(scalar_functions, "scalar")
     time_functions(idempotent_img_functions, "img")

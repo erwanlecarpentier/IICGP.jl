@@ -117,8 +117,9 @@ function box_segmentation(x::ImgType)::ImgType
     make_boxes(label)
 end
 
+#=
 function binary(x::ImgType, t::UInt8)::ImgType
-    out = x .* 1.0#copy(x) # TODO put back
+    out = copy(x)
     out[x .< t] .= 0x00
     out[x .>= t] .= 0xff
     out
@@ -131,6 +132,11 @@ end
 function binary(x::ImgType, p::Float64)::ImgType
     t = floor(UInt8, 255 * p)
     binary(x, t)
+end
+=#
+
+function binary(x::ImgType, p::Float64)::ImgType
+    reshape([x[i] < floor(UInt8, 255 * p) ? 0x00 : 0xff for i in eachindex(x)], size(x))
 end
 
 function threshold(x::ImgType, t::UInt8, reverse::Bool=false)::ImgType
@@ -206,22 +212,8 @@ function motion_distances!(x::ImgType, p::Array{Float64})::ImgType
     return out
 end
 
-# TODO remove START
-function f_binary(x::ImgType, y::ImgType, p::Vector{Float64})::ImgType
-    #=t = floor(UInt8, 255 * p[1])
-    out = copy(x)
-    out[x .< t] .= 0x00
-    out[x .>= t] .= 0xff
-    out
-    =#
 
-    reshape([x[i] < floor(UInt8, 255 * p[1]) ? 0x00 : 0xff for i in eachindex(x)], size(x))
-end
-arity["f_binary"] = 1
-# TODO remove END
-
-fgen(:f_dilate, 1, :(ImageMorphology.dilate(x)), ImgType) # TODO put back
-#fgen(:f_dilate, 1, :(.~x), ImgType) # TODO remove
+fgen(:f_dilate, 1, :(ImageMorphology.dilate(x)), ImgType)
 fgen(:f_erode, 1, :(ImageMorphology.erode(x)), ImgType)
 fgen(:f_subtract, 2, :(x .- y), ImgType)
 fgen(:f_remove_details, 1, :(remove_details(x, p[1])), ImgType)
@@ -233,10 +225,8 @@ fgen(:f_box_segmentation, 1, :(box_segmentation(x)), ImgType)
 # Thresholds and values
 # fgen(:f_negative, 1, :(0xff .- x), ImgType) # Same as f_bitwise_not
 fgen(:f_threshold, 1, :(threshold(x, p[1])), ImgType)
-#fgen(:f_binary, 1, :(binary(x, p[1])), ImgType) # TODO put back
-#fgen(:f_binary, 1, :(.~x), ImgType) # TODO remove
-fgen(:f_motion_capture, 1, :(motion_capture!(x, p)), ImgType) # TODO put back
-#fgen(:f_motion_capture, 1, :(.~x), ImgType) # TODO remove
+fgen(:f_binary, 1, :(binary(x, p[1])), ImgType)
+fgen(:f_motion_capture, 1, :(motion_capture!(x, p)), ImgType)
 fgen(:f_motion_distances, 1, :(motion_distances!(x, p)), ImgType)
 # Filtering
 fgen(:f_corners, 1, :(rescale_uint_img(Images.fastcorners(x))), ImgType)

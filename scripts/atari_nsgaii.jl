@@ -5,7 +5,7 @@ using CartesianGeneticProgramming
 using Dates
 using IICGP
 using Random
-using UnicodePlots # TODO remove
+using UnicodePlots
 
 import Cambrian.mutate
 
@@ -188,8 +188,8 @@ end
 
 # Create evolution framework
 e = NSGA2Evo(mcfg, resdir, my_fitness, cstind_init, rom_name)
+mem_usage = Vector{Float64}()
 
-mem_usage = Vector{Float64}() # TODO remove
 # Run experiment
 init_backup(mcfg.id, resdir, cfg_path)
 for i in 1:e.config.n_gen
@@ -206,8 +206,8 @@ for i in 1:e.config.n_gen
         save_gen(e)
     end=#
 	mem = print_usage(i)
-	push!(mem_usage, mem) # TODO remove
-	out(lineplot(mem_usage, title = "%MEM")) # TODO remove
+	push!(mem_usage, mem)
+	out(lineplot(mem_usage, title = "%MEM"))
 end
 
 # Close games
