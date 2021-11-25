@@ -9,31 +9,51 @@ function print_mem_usage()
 	parse(Float64, replace(res[10], "," => "."))
 end
 
-mutable struct Foo
-	f::Function
-end
-
+module MyFunctions
 function f1(x::Matrix{Float64})
     out = copy(x)
     out[x .< 0.5] .= 0.0
     out[x .>= 0.5] .= 1.0
     out
 end
-
 function f2(x::Matrix{Float64})
 	reshape([x[i] < 0.5 ? 0.0 : 1.0 for i in eachindex(x)], size(x))
 end
+end
 
-function test(foo::Foo)
+struct Foo
+	functions::Vector{Function}
+end
+
+function Foo(function_module::Module, fname::String)
+	functions = Array{Function}(undef, 1)
+	functions[1] = getfield(function_module, Symbol(fname))
+	Foo(functions)
+end
+
+mutable struct Bar
+	f::Function
+end
+
+function Bar(foo::Foo)
+	f = foo.functions[1]
+	Bar(f)
+end
+
+function test(bar::Bar)
 	mem_usage = Vector{Float64}()
-	for i in 1:1000
+	for i in 1:100
 		x = rand(1000, 1000)
-		foo.f(x)
+		bar.f(x)
 		mem = print_mem_usage()
 		push!(mem_usage, mem)
 		out(lineplot(mem_usage, title = "%MEM"))
 	end
 end
 
-foo = Foo(f1)
-test(foo)
+function_module = MyFunctions
+fname = "f1"
+foo = Foo(function_module, fname)
+bar = Bar(foo)
+
+test(bar)
