@@ -1,4 +1,4 @@
-export process_results
+export process_results, process_nsga2_results
 
 using Plots
 using ImageFiltering
@@ -22,6 +22,8 @@ BASELINES = Dict(
     "solaris"=>Dict("MTCGP"=>(8324,2250)),
     "space_invaders"=>Dict("MTCGP"=>(1001,25), "A3C LSTM"=>23846)
 )
+
+gamename_from_romname(rn::String) = titlecase(replace(rn, "_"=>" "))
 
 """
     function time_monocgp_ms(
@@ -261,6 +263,22 @@ function plot_cibest(
     plt
 end
 
+function process_nsga2_results(
+    exp_dirs::Vector{String},
+    games::Vector{String}
+)
+    @assert all([g == games[1] for g in games])
+    gamename = gamename_from_romname(games[1])
+    for i in eachindex(exp_dirs)
+        exp_dir = exp_dirs[i]
+        cfg = cfg_from_exp_dir(exp_dir)
+        #log = log_from_exp_dir(exp_dir, log_file="logs/logs.csv", header=NSGA2_LOG_HEADER)
+        log_file = joinpath(exp_dir, "logs/logs.csv")
+        log = CSV.File(log_file, header=1, delim=",")
+        return log
+    end
+end
+
 """
     function process_results(
         exp_dirs::Vector{String},
@@ -295,7 +313,7 @@ function process_results(
 )
     # Init graphs
     game = games[1]
-    gamename = titlecase(replace(game, "_"=>" "))
+    gamename = gamename_from_romname(game)
     xl = "Generation"
     yl_best = string("Best score ", gamename)
     yl_mean = string("Mean score ", gamename)

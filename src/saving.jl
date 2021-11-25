@@ -3,6 +3,8 @@ export get_last_dualcgp_paths, get_last_ind_path
 export init_backup, fetch_backup
 export find_yaml, cfg_from_exp_dir, log_from_exp_dir
 
+export LOG_HEADER, NSGA2_LOG_HEADER
+
 using CSV
 using YAML
 # using DataFrames
@@ -10,6 +12,9 @@ using Dates
 using Plots
 
 LOG_HEADER = ["date", "lib", "type", "gen_number", "best", "mean", "std"]
+NSGA2_LOG_HEADER = ["date", "lib", "type", "gen_number", "rank", "fitness",
+                    "normalized_fitness", "reached_frames", "e_chromosome",
+                    "c_chromosome"]
 
 
 function init_backup(logid::String, resdir::String, cfg_path::String)
@@ -302,12 +307,20 @@ function cfg_from_exp_dir(exp_dir::String)
 end
 
 """
-    cfg_from_exp_dir(exp_dir::String)
+    log_from_exp_dir(
+        exp_dir::String;
+        log_file::String="logs/controller.csv",
+        log_header::Vector{String}=LOG_HEADER
+    )
 
-Get log file at specified experiment directory. Precisely, return the
-controller's log file.
+Get log file at specified experiment directory.
+Default: return the controller's log file.
 """
-function log_from_exp_dir(exp_dir::String)
-    log_file = joinpath(exp_dir, "logs/controller.csv")
-    CSV.File(log_file, header=LOG_HEADER)
+function log_from_exp_dir(
+    exp_dir::String;
+    log_file::String="logs/controller.csv",
+    header::Union{Int64,Vector{String}}=LOG_HEADER
+)
+    log_file = joinpath(exp_dir, log_file)
+    CSV.File(log_file, header=header, delim=",")
 end

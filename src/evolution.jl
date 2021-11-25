@@ -2,6 +2,7 @@ export DualCGPEvolution, DualCGPGAEvo, NSGA2Evo, generation
 
 import Cambrian.populate, Cambrian.evaluate, Cambrian.log_gen, Cambrian.save_gen
 using Statistics
+using Formatting
 
 mutable struct NSGA2Evo{T} <: Cambrian.AbstractEvolution
     config::NamedTuple
@@ -37,38 +38,27 @@ end
 
 function log_gen(
     e::NSGA2Evo{T},
-    fitness_norm::Vector{Float64};
-    is_ec::Bool=false
+    fitness_norm::Vector{Float64}
 ) where T
+	sep = ";"
     if e.gen == 1
-        if is_ec
-            chr_header = ",e_chromosome,c_chromosome"
-        else
-            chr_header = ",chromosome"
-        end
         with_logger(e.logger) do
             @info Formatting.format(
-                string("generation,rank,fitness,normalized_fitness,reached_frames",chr_header)
+                string("generation", sep, "rank", sep, "fitness", sep,
+					   "normalized_fitness", sep, "reached_frames", sep,
+					   "dna_id")
             )
         end
     end
-    for ind in e.population
-        if is_ec
-            chr = string(ind.e_chromosome,",",ind.c_chromosome)
-        else
-            chr = string(ind.chromosome)
-        end
-        raw_fitness = ind.fitness .* fitness_norm
+    for i in eachindex(e.population)
+        dna_id = Formatting.format("{1:04d}", i) # TODO test
+		# TODO log genes
+        raw_fitness = e.population[i].fitness .* fitness_norm
         with_logger(e.logger) do
             @info Formatting.format(
-                string(
-                    e.gen,",",
-                    ind.rank,",",
-                    raw_fitness,",",
-                    ind.fitness,",",
-                    ind.reached_frames,",",
-                    chr
-                )
+                string(e.gen, sep, e.population[i].rank, sep, raw_fitness, sep,
+					   e.population[i].fitness, sep,
+					   e.population[i].reached_frames, sep, chr, sep, dna_id)
             )
         end
     end
@@ -108,7 +98,7 @@ function generation(
         i_end = findlast(ind -> ind.rank == current_rank, e.population)
     end
 	# Log results
-	if ((e.config.log_gen > 0) && mod(e.gen, e.config.log_gen) == 0)
+	if ((e.config.log_gen > 0) && (e.gen == 1 || mod(e.gen, e.config.log_gen) == 0))
         log_gen(e, fitness_norm, is_ec=is_ec)
     end
 	# Remove non-elite individuals
