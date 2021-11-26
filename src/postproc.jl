@@ -286,16 +286,29 @@ function strvec2vec(x::Union{CSV.InlineString,CSV.String31,String})
     [parse(Float64, xi) for xi in split(x, ",")]
 end
 
-rawfit_key(i::Int64) = string("obj_", i, "_best_rawfit")
-norfit_key(i::Int64) = string("obj_", i, "_best_norfit")
+tofilename(s::String) = replace(lowercase(s), " " => "_")
+pareto_key(i::Int64) = string("pareto_", i)
+rawfit_max_key(i::Int64) = string("obj_", i, "_best_rawfit")
+rawfit_mea_key(i::Int64) = string("obj_", i, "_mean_rawfit")
+rawfit_std_key(i::Int64) = string("obj_", i, "_std_rawfit")
+norfit_max_key(i::Int64) = string("obj_", i, "_best_norfit")
+norfit_mea_key(i::Int64) = string("obj_", i, "_mean_norfit")
+norfit_std_key(i::Int64) = string("obj_", i, "_std_norfit")
 
-function retrieve_nsga2_statistics(log::CSV.File)
+function retrieve_nsga2_statistics(
+    log::CSV.File;
+    pareto_gen::Vector{Int64}=Vector{Int64}()
+)
     n_obj = length(strvec2vec(log[1].fitness))
     datadict = Dict()
     datadict["gen"] = Vector{Int64}()
     for i in 1:n_obj
-        datadict[rawfit_key(i)] = Vector{Float64}()
-        datadict[norfit_key(i)] = Vector{Float64}()
+        datadict[rawfit_max_key(i)] = Vector{Float64}()
+        datadict[rawfit_mea_key(i)] = Vector{Float64}()
+        datadict[rawfit_std_key(i)] = Vector{Float64}()
+        datadict[norfit_max_key(i)] = Vector{Float64}()
+        datadict[norfit_mea_key(i)] = Vector{Float64}()
+        datadict[norfit_std_key(i)] = Vector{Float64}()
     end
     for row in log
         if row.gen_number ∉ datadict["gen"]
@@ -306,9 +319,16 @@ function retrieve_nsga2_statistics(log::CSV.File)
         rawfit = [strvec2vec(r.fitness) for r in log[log.gen_number .== gen]]
         norfit = [strvec2vec(r.normalized_fitness) for r in log[log.gen_number .== gen]]
         for i in 1:n_obj
-            push!(datadict[rawfit_key(i)], maximum([f[i] for f in rawfit]))
-            push!(datadict[norfit_key(i)], maximum([f[i] for f in norfit]))
+            push!(datadict[rawfit_max_key(i)], maximum([f[i] for f in rawfit]))
+            push!(datadict[rawfit_mea_key(i)], mean([f[i] for f in rawfit]))
+            push!(datadict[rawfit_std_key(i)], std([f[i] for f in rawfit]))
+            push!(datadict[norfit_max_key(i)], maximum([f[i] for f in norfit]))
+            push!(datadict[norfit_mea_key(i)], mean([f[i] for f in norfit]))
+            push!(datadict[norfit_std_key(i)], std([f[i] for f in norfit]))
         end
+    end
+    for gen in pareto_gen
+        datadict[pareto_key(gen)] = [strvec2vec(r.normalized_fitness) for r in log[log.gen_number .== gen]]
     end
     datadict
 end
@@ -316,34 +336,66 @@ end
 function process_nsga2_results(
     exp_dirs::Vector{String},
     games::Vector{String},
-    objectives_names::Vector{String};
+    objectives_names::Vector{String},
+    colors::Vector{Symbol},
+    labels::Vector{String};
+    pareto_gen::Vector{Int64}=Vector{Int64}(),
+    pareto_xlim::Tuple=(0, 1),
+    pareto_ylim::Tuple=(0, 1),
     do_display::Bool=true,
     do_save::Bool=true,
     savedir_index::Int64=1
 )
     @assert all([g == games[1] for g in games])
     game = games[1]
-    # Create plots
     gamename = gamename_from_romname(game)
+    # Create plots
     xl = "Generation"
     plt_rawfit = Vector{Plots.Plot}()
     plt_norfit = Vector{Plots.Plot}()
+    plt_pareto = Vector{Plots.Plot}()
     for i in eachindex(objectives_names)
-        yl_raw = string("Best ", objectives_names[i], " (", gamename, ")")
-        yl_nor = string("Best ", objectives_names[i], " (normalized, ", gamename, ")")
+        yl_raw = string(objectives_names[i], " (", gamename, ")")
+        yl_nor = string("Normalized ", objectives_names[i], " (", gamename, ")")
         push!(plt_rawfit, plot(ylabel=yl_raw, xlabel=xl))
         push!(plt_norfit, plot(ylabel=yl_nor, xlabel=xl))
     end
-    # Fetch logs and plot
-    for i in eachindex(exp_dirs)
-        exp_dir = exp_dirs[i]
+    for gen in pareto_gen
+        title = string("Pareto front ", gamename, " (generation: ", gen, ")")
+        xl_par = objectives_names[1]
+        yl_par = objectives_names[2]
+        push!(plt_pareto, plot(ylabel=yl_par, xlabel=xl_par, title=title))
+    end
+    # Fetch logs and plotpareto_gen
+    for k in eachindex(exp_dirs)
+        exp_dir = exp_dirs[k]
         cfg = cfg_from_exp_dir(exp_dir)
         log = log_from_exp_dir(exp_dir, log_file="logs/logs.csv",
             header=1, sep=";")
-        datadict = retrieve_nsga2_statistics(log)
+        datadict = retrieve_nsga2_statistics(log, pareto_gen=pareto_gen)
         for i in eachindex(objectives_names)
-            plot!(plt_rawfit[i], datadict["gen"], datadict[rawfit_key(i)])
-            plot!(plt_norfit[i], datadict["gen"], datadict[norfit_key(i)])
+            best_lb = string(labels[k], " best")
+            mean_lb = string(labels[k], " mean")
+            plot!(plt_rawfit[i], datadict["gen"], datadict[rawfit_max_key(i)],
+                label=best_lb, color=colors[k], linewidth=2)
+            plot!(plt_rawfit[i], datadict["gen"], datadict[rawfit_mea_key(i)],
+                ribbon=datadict[rawfit_std_key(i)], label=mean_lb,
+                color=colors[k])
+            plot!(plt_norfit[i], datadict["gen"], datadict[norfit_max_key(i)],
+                label=best_lb, color=colors[k], linewidth=2)
+            plot!(plt_norfit[i], datadict["gen"], datadict[norfit_mea_key(i)],
+                ribbon=datadict[norfit_std_key(i)], label=mean_lb,
+                color=colors[k])
+        end
+        for i in eachindex(pareto_gen)
+            println()
+            println(pareto_gen[i])
+            println(datadict[pareto_key(pareto_gen[i])])
+            println()
+            x = [nf[1] for nf in datadict[pareto_key(pareto_gen[i])]]
+            y = [nf[2] for nf in datadict[pareto_key(pareto_gen[i])]]
+            plot!(plt_pareto[i], x, y, seriestype = :scatter, xlims=pareto_xlim,
+                ylims=pareto_ylim, label=labels[k], markercolor=colors[k])
         end
     end
     # Display
@@ -352,15 +404,22 @@ function process_nsga2_results(
             display(plt_rawfit[i])
             #display(plt_norfit[i])
         end
+        for i in eachindex(pareto_gen)
+            display(plt_pareto[i])
+        end
     end
     # Save
     if do_save
         graph_dir = set_graph_dir(exp_dirs, savedir_index, game)
         for i in eachindex(objectives_names)
-            raw_name = string(objectives_names[i], "_best.png")
-            nor_name = string(objectives_names[i], "_normalized_best.png")
+            raw_name = tofilename(string(objectives_names[i], "_best.png"))
+            nor_name = tofilename(string(objectives_names[i], "_normalized_best.png"))
             savefig(plt_rawfit[i], joinpath(graph_dir, raw_name))
             savefig(plt_norfit[i], joinpath(graph_dir, nor_name))
+        end
+        for i in eachindex(pareto_gen)
+            par_name = tofilename(string("pareto_gen_", pareto_gen[i], ".png"))
+            savefig(plt_pareto[i], joinpath(graph_dir, par_name))
         end
     end
 end
