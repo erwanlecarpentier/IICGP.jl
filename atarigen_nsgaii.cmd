@@ -48,10 +48,11 @@ for i in "${!CFGS[@]}"; do
 		echo "#SBATCH --mail-type=END" >> $CM
 		echo "" >> $CM
 		echo "julia --threads $N_THREADS --project=$PROJECT $SCRIPT --cfg=${CFGS[i]} --game=$GAME --out=$OUTDIR" >> $CM
-		
+
 		RES=$(sbatch $CM)
 		JOBID=${RES##* }
-		cp $CM /tmpdir/$USERNAME/logs/job$(echo $JOBID)_$FNAME.cmd
+		echo $RES
+		mv $CM /tmpdir/$USERNAME/logs/job$(echo $JOBID)_$FNAME.cmd
 		sleep 0.01
 	done
 done
