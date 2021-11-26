@@ -8,6 +8,7 @@ mutable struct NSGA2Evo{T} <: Cambrian.AbstractEvolution
     config::NamedTuple
     logid::String
     logger::CambrianLogger
+	resdir::String
     population::Array{T}
     fitness::Function
     gen::Int64
@@ -26,7 +27,7 @@ function NSGA2Evo(
     logger = CambrianLogger(log_path)
     population = init_population(config)
     atari_games = [Game(rom_name, 0) for _ in 1:length(population)]
-    NSGA2Evo(config, logid, logger, population, fitness, 0, atari_games)
+    NSGA2Evo(config, logid, logger, resdir, population, fitness, 0, atari_games)
 end
 
 populate(e::NSGA2Evo{T}) where T = IICGP.nsga2_populate(e)
@@ -42,33 +43,60 @@ function log_gen(
 ) where T
 	sep = ";"
     if e.gen == 1
-        with_logger(e.logger) do
+        #=
+		with_logger(e.logger) do
             @info Formatting.format(
                 string("generation", sep, "rank", sep, "fitness", sep,
 					   "normalized_fitness", sep, "reached_frames", sep,
 					   "dna_id")
             )
         end
+		=#
+		f = open(joinpath(e.resdir, e.logid, "logs/logs.csv"), "w+")
+        write(f, string("generation", sep, "rank", sep, "fitness", sep,
+			"normalized_fitness", sep, "reached_frames", sep, "dna_id\n"))
+        close(f)
     end
+	enco_path = joinpath(e.resdir, e.logid, Formatting.format("gens/encoder_{1:04d}", e.gen))
+    cont_path = joinpath(e.resdir, e.logid, Formatting.format("gens/controller_{1:04d}", e.gen))
+    mkpath(enco_path)
+    mkpath(cont_path)
     for i in eachindex(e.population)
         dna_id = Formatting.format("{1:04d}", i) # TODO test
-		# TODO log genes
+		# Log results
         raw_fitness = e.population[i].fitness .* fitness_norm
-        with_logger(e.logger) do
+        #=
+		with_logger(e.logger) do
             @info Formatting.format(
                 string(e.gen, sep, e.population[i].rank, sep, raw_fitness, sep,
 					   e.population[i].fitness, sep,
-					   e.population[i].reached_frames, sep, chr, sep, dna_id)
+					   e.population[i].reached_frames, sep, dna_id)
             )
         end
+		=#
+		f = open(joinpath(e.resdir, e.logid, "logs/logs.csv"), "a+")
+        write(f, Formatting.format(string(e.gen, sep, e.population[i].rank, sep, raw_fitness, sep,
+			   e.population[i].fitness, sep,
+			   e.population[i].reached_frames, sep, dna_id, "\n")))
+        close(f)
+		# Log individuals
+		enco = IPCGPInd(e.config.e_config, e.population[i].e_chromosome)
+		enco.fitness .= e.population[i].fitness
+		f = open(string(enco_path, "/", dna_id, ".dna"), "w+")
+        write(f, string(enco))
+        close(f)
+        cont = CGPInd(e.config.c_config, e.population[i].c_chromosome)
+		cont.fitness .= e.population[i].fitness
+        f = open(string(cont_path, "/", dna_id, ".dna"), "w+")
+        write(f, string(cont))
+        close(f)
     end
     flush(e.logger.stream)
 end
 
 function generation(
 	e::NSGA2Evo{T},
-	fitness_norm::Vector{Float64};
-	is_ec::Bool=false
+	fitness_norm::Vector{Float64}
 ) where T
     #==#
 	# Sort all individuals according to Pareto efficiency
@@ -99,7 +127,7 @@ function generation(
     end
 	# Log results
 	if ((e.config.log_gen > 0) && (e.gen == 1 || mod(e.gen, e.config.log_gen) == 0))
-        log_gen(e, fitness_norm, is_ec=is_ec)
+        log_gen(e, fitness_norm)
     end
 	# Remove non-elite individuals
 	filter!(ind -> ind.is_elite, e.population)

@@ -13,7 +13,7 @@ max_date = DateTime(2021, 12, 31)
 #savedir_index = 1
 labels = Vector{String}()
 colors = Vector{Symbol}()
-rom_names = ["boxing", "space_invaders"]
+rom_names = ["boxing"]#, "space_invaders"]
 reducers = ["pooling"]
 dotime = false
 dosave = true
@@ -21,32 +21,26 @@ baselines = true
 
 objectives_names = ["Atari score", "Sparsity"]
 pareto_gen = [1, 9000, 17000, 25000]
-pareto_xlim = (0, 1)
+pareto_xlim = (-1, 1)
 pareto_ylim = (0, 1)
 
 colors = [:skyblue3]
 labels = ["NSGA2"]
 
-
 for rom_name in rom_names
-    exp_dirs, games = get_exp_dir(
-        resdir, min_date=min_date, max_date=max_date, games=[rom_name],
-        reducers=reducers
-    )
-
+    exp_dirs, games = get_exp_dir(resdir, min_date=min_date, max_date=max_date,
+        games=[rom_name], reducers=reducers)
     process_nsga2_results(exp_dirs, games, objectives_names, colors, labels,
         pareto_gen=pareto_gen, pareto_xlim=pareto_xlim, pareto_ylim=pareto_ylim)
 end
 
-
-#=
+#==#
 exp_dir = exp_dirs[1]
 rom_name = games[1]
 logfile = joinpath(exp_dir, "logs", "logs.csv")
 newlogfile = joinpath(exp_dir, "logs", "logs_new.csv")
 log = open(logfile)
 lines = readlines(log)
-
 
 cfg_dir = joinpath(exp_dir, "logs")
 yaml = find_yaml(cfg_dir)

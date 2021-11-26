@@ -42,6 +42,11 @@ function print_usage(gen::Int64)
 	parse(Float64, replace(res[10], "," => "."))
 end
 
+function append_ec_cfgs!(mcfg, ecfg, ccfg)
+	mcfg["e_config"] = ecfg
+	mcfg["c_config"] = ccfg
+end
+
 #=
 function display_paretto(e::NSGA2Evo)
     o1 = [ind.fitness[1] for ind in e.population]
@@ -73,6 +78,7 @@ const rom_name = args["game"]
 #const seed = args["seed"]
 const resdir = args["out"]
 mcfg, ecfg, ccfg, reducer, bootstrap = IICGP.dualcgp_config(cfg_path, rom_name)
+append_ec_cfgs!(mcfg, ecfg, ccfg) # Ugly fix for tracking e/c configs
 mcfg = dict2namedtuple(mcfg)
 const max_frames = mcfg.max_frames
 const grayscale = mcfg.grayscale
@@ -187,7 +193,8 @@ function cstind_init(cfg::NamedTuple)
 end
 
 # Create evolution framework
-e = NSGA2Evo(mcfg, resdir, my_fitness, cstind_init, rom_name)
+# TODO put back cstind_init
+e = NSGA2Evo(mcfg, resdir, my_fitness, random_init, rom_name)
 mem_usage = Vector{Float64}()
 
 # Run experiment
@@ -198,7 +205,7 @@ for i in 1:e.config.n_gen
         populate(e)
     end
     evaluate(e)
-    generation(e, fitness_norm, is_ec=true)
+    generation(e, fitness_norm)
     #=if ((e.config.log_gen > 0) && mod(e.gen, e.config.log_gen) == 0)
         log_gen(e, fitness_norm, is_ec=true)
     end
