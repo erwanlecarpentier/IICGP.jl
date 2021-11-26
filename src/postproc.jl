@@ -162,7 +162,7 @@ end
         ma::Int64=1
     )
 
-Plot the fitness of the best individual per each generation with
+Plot the fitness of the best individual for each generation with
 confidence intervals across all experiments using the exact same
 configuration dictionary.
 """
@@ -264,22 +264,38 @@ function plot_cibest(
     plt
 end
 
+function set_graph_dir(
+    exp_dirs::Vector{String},
+    savedir_index::Int64,
+    game::String
+)
+    exp_dir = exp_dirs[savedir_index]
+    set_graph_dir(exp_dir, game)
+end
+
+function set_graph_dir(exp_dir::String, game::String)
+    exp_name = string(basename(exp_dir)[1:10], "_", game)
+    graph_dir = joinpath(dirname(dirname(exp_dir)), "graphs", exp_name)
+    mkpath(graph_dir)
+    graph_dir
+end
+
 function strvec2vec(x::Union{CSV.InlineString,CSV.String31,String})
     x = replace(x, "[" => "")
     x = replace(x, "]" => "")
     [parse(Float64, xi) for xi in split(x, ",")]
 end
 
-rawfit_lb(i::Int64) = string("obj_", i, "_best_rawfit")
-norfit_lb(i::Int64) = string("obj_", i, "_best_norfit")
+rawfit_key(i::Int64) = string("obj_", i, "_best_rawfit")
+norfit_key(i::Int64) = string("obj_", i, "_best_norfit")
 
 function retrieve_nsga2_statistics(log::CSV.File)
     n_obj = length(strvec2vec(log[1].fitness))
     datadict = Dict()
     datadict["gen"] = Vector{Int64}()
     for i in 1:n_obj
-        datadict[rawfit_lb(i)] = Vector{Float64}()
-        datadict[norfit_lb(i)] = Vector{Float64}()
+        datadict[rawfit_key(i)] = Vector{Float64}()
+        datadict[norfit_key(i)] = Vector{Float64}()
     end
     for row in log
         if row.gen_number ∉ datadict["gen"]
@@ -290,8 +306,8 @@ function retrieve_nsga2_statistics(log::CSV.File)
         rawfit = [strvec2vec(r.fitness) for r in log[log.gen_number .== gen]]
         norfit = [strvec2vec(r.normalized_fitness) for r in log[log.gen_number .== gen]]
         for i in 1:n_obj
-            push!(datadict[rawfit_lb(i)], maximum([f[i] for f in rawfit]))
-            push!(datadict[norfit_lb(i)], maximum([f[i] for f in norfit]))
+            push!(datadict[rawfit_key(i)], maximum([f[i] for f in rawfit]))
+            push!(datadict[norfit_key(i)], maximum([f[i] for f in norfit]))
         end
     end
     datadict
@@ -301,34 +317,50 @@ function process_nsga2_results(
     exp_dirs::Vector{String},
     games::Vector{String},
     objectives_names::Vector{String};
-    do_display::Bool=false
+    do_display::Bool=true,
+    do_save::Bool=true,
+    savedir_index::Int64=1
 )
     @assert all([g == games[1] for g in games])
-
+    game = games[1]
     # Create plots
-    gamename = gamename_from_romname(games[1])
+    gamename = gamename_from_romname(game)
     xl = "Generation"
-    plt_obj = Vector{Plots.Plot}()
+    plt_rawfit = Vector{Plots.Plot}()
+    plt_norfit = Vector{Plots.Plot}()
     for i in eachindex(objectives_names)
-        yl = string("Best ", objectives_names[i], " (", gamename, ")")
-        push!(plt_obj, plot(ylabel=yl, xlabel=xl))
+        yl_raw = string("Best ", objectives_names[i], " (", gamename, ")")
+        yl_nor = string("Best ", objectives_names[i], " (normalized, ", gamename, ")")
+        push!(plt_rawfit, plot(ylabel=yl_raw, xlabel=xl))
+        push!(plt_norfit, plot(ylabel=yl_nor, xlabel=xl))
     end
-
-    # Fetch logs
+    # Fetch logs and plot
     for i in eachindex(exp_dirs)
         exp_dir = exp_dirs[i]
         cfg = cfg_from_exp_dir(exp_dir)
         log = log_from_exp_dir(exp_dir, log_file="logs/logs.csv",
             header=1, sep=";")
         datadict = retrieve_nsga2_statistics(log)
-        println(datadict)
-        return log
+        for i in eachindex(objectives_names)
+            plot!(plt_rawfit[i], datadict["gen"], datadict[rawfit_key(i)])
+            plot!(plt_norfit[i], datadict["gen"], datadict[norfit_key(i)])
+        end
     end
-
     # Display
     if do_display
-        for i in eachindex(plt_obj)
-            display(plt_obj[i])
+        for i in eachindex(plt_rawfit)
+            display(plt_rawfit[i])
+            #display(plt_norfit[i])
+        end
+    end
+    # Save
+    if do_save
+        graph_dir = set_graph_dir(exp_dirs, savedir_index, game)
+        for i in eachindex(objectives_names)
+            raw_name = string(objectives_names[i], "_best.png")
+            nor_name = string(objectives_names[i], "_normalized_best.png")
+            savefig(plt_rawfit[i], joinpath(graph_dir, raw_name))
+            savefig(plt_norfit[i], joinpath(graph_dir, nor_name))
         end
     end
 end
@@ -464,9 +496,7 @@ function process_results(
     end
 
     if dosave
-        exp_name = string(basename(exp_dirs[savedir_index])[1:10], "_", game)
-        graph_dir = joinpath(dirname(dirname(exp_dirs[savedir_index])), "graphs", exp_name)
-        mkpath(graph_dir)
+        graph_dir = set_graph_dir(exp_dirs, savedir_index, game)
         savefig(plt_best, joinpath(graph_dir, "best.png"))
         savefig(plt_mean, joinpath(graph_dir, "mean.png"))
         if plotci
