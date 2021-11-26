@@ -89,8 +89,16 @@ const max_n_active_nodes = ecfg.rows * ecfg.columns + ccfg.rows * ccfg.columns
 
 const fitness_norm = [
     soa_scores[rom_name],
-    max_n_active_nodes
+    1.0
 ]
+
+# Get timing image
+g = Game(rom_name, 0)
+for _ in 1:4
+	act(g.ale, Int32(0))
+end
+timing_image = get_state(g, mcfg.grayscale, mcfg.downscale)
+close!(g)
 
 function atari_score(
 	game::Game,
@@ -135,6 +143,18 @@ function atari_score(
     reward, frames
 end
 
+function timing_score(encoder::CGPInd, reducer::Reducer,controller::CGPInd)
+    t = 0.0
+	#t_max = 1.0
+	n_iter = 100
+    for _ in 1:n_iter
+        t += @elapsed IICGP.process(encoder, reducer, controller, ccfg,
+			timing_image)
+    end
+    t *= 1000 / n_iter
+	1.0 - t # / 1.0
+end
+
 function sparsity_score(encoder::CGPInd, controller::CGPInd)
     n_enco_active = sum([nd.active for nd in encoder.nodes])
     n_cont_active = sum([nd.active for nd in controller.nodes])
@@ -146,7 +166,9 @@ function my_fitness(ind::NSGA2ECInd, seed::Int64, game::Game)
     enco = IPCGPInd(ecfg, ind.e_chromosome)
     cont = CGPInd(ccfg, ind.c_chromosome)
     o1, frames = atari_score(game, enco, reducer, cont, seed)
-    o2 = sparsity_score(enco, cont)
+    #o2 = sparsity_score(enco, cont)
+	o2 = timing_score(enco, reducer, cont)
+	# WARNING: set fitness_norm accordingly to objectives
 	ind.reached_frames = frames
     [o1, o2] ./ fitness_norm
 end
@@ -193,8 +215,7 @@ function cstind_init(cfg::NamedTuple)
 end
 
 # Create evolution framework
-# TODO put back cstind_init
-e = NSGA2Evo(mcfg, resdir, my_fitness, random_init, rom_name)
+e = NSGA2Evo(mcfg, resdir, my_fitness, cstind_init, rom_name)
 mem_usage = Vector{Float64}()
 
 # Run experiment

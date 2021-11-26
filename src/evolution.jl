@@ -62,7 +62,7 @@ function log_gen(
     mkpath(enco_path)
     mkpath(cont_path)
     for i in eachindex(e.population)
-        dna_id = Formatting.format("{1:04d}", i) # TODO test
+        dna_id = Formatting.format("{1:04d}", i)
 		# Log results
         raw_fitness = e.population[i].fitness .* fitness_norm
         #=

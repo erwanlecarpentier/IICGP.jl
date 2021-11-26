@@ -34,7 +34,7 @@ for rom_name in rom_names
         pareto_gen=pareto_gen, pareto_xlim=pareto_xlim, pareto_ylim=pareto_ylim)
 end
 
-#==#
+#=
 exp_dir = exp_dirs[1]
 rom_name = games[1]
 logfile = joinpath(exp_dir, "logs", "logs.csv")

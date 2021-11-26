@@ -20,13 +20,13 @@
 CMD_PREFIX="atari_"
 CFGS=("cfg/eccgp_atari.yaml") # WARNING: sync with REDS
 REDS=("nsgaii_") # WARNING: sync with CFGS
-GAMES="boxing"
+GAMES="boxing space_invaders"
 SCRIPT="scripts/atari_nsgaii.jl"
 PROJECT="$PWD"
 USERNAME=$(whoami)
 OUTDIR="/tmpdir/$USERNAME/ICGP-results/results"
-N_THREADS="15" # WARNING: sync with MEM
-MEM="80000" # WARNING: sync with N_THREADS
+N_THREADS="18" # WARNING: sync with MEM
+MEM="96000" # WARNING: sync with N_THREADS
 
 for i in "${!CFGS[@]}"; do
 	for GAME in $GAMES; do
