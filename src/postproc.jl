@@ -5,6 +5,7 @@ using ImageFiltering
 using OffsetArrays
 using BenchmarkTools
 using Statistics
+using CSV
 using TimerOutputs
 
 BASELINES = Dict(
@@ -263,20 +264,44 @@ function plot_cibest(
     plt
 end
 
+function strvec2vec(x::Union{CSV.InlineString,CSV.String31,String})
+    x = replace(x, "[" => "")
+    x = replace(x, "]" => "")
+    [parse(Float64, xi) for xi in split(x, ",")]
+end
+
+rawfit_lb(i::Int64) = string("obj_", i, "_best_rawfit")
+norfit_lb(i::Int64) = string("obj_", i, "_best_norfit")
+
 function retrieve_nsga2_statistics(log::CSV.File)
-    gen = Vector{Int64}()
+    n_obj = length(strvec2vec(log[1].fitness))
+    datadict = Dict()
+    datadict["gen"] = Vector{Int64}()
+    for i in 1:n_obj
+        datadict[rawfit_lb(i)] = Vector{Float64}()
+        datadict[norfit_lb(i)] = Vector{Float64}()
+    end
     for row in log
-        if row.gen_number ∉ gen
-            push!(gen, row.gen_number)
+        if row.gen_number ∉ datadict["gen"]
+            push!(datadict["gen"], row.gen_number)
         end
     end
-    gen
+    for gen in datadict["gen"]
+        rawfit = [strvec2vec(r.fitness) for r in log[log.gen_number .== gen]]
+        norfit = [strvec2vec(r.normalized_fitness) for r in log[log.gen_number .== gen]]
+        for i in 1:n_obj
+            push!(datadict[rawfit_lb(i)], maximum([f[i] for f in rawfit]))
+            push!(datadict[norfit_lb(i)], maximum([f[i] for f in norfit]))
+        end
+    end
+    datadict
 end
 
 function process_nsga2_results(
     exp_dirs::Vector{String},
     games::Vector{String},
-    objectives_names::Vector{String},
+    objectives_names::Vector{String};
+    do_display::Bool=false
 )
     @assert all([g == games[1] for g in games])
 
@@ -295,13 +320,16 @@ function process_nsga2_results(
         cfg = cfg_from_exp_dir(exp_dir)
         log = log_from_exp_dir(exp_dir, log_file="logs/logs.csv",
             header=1, sep=";")
-        gen = retrieve_nsga2_statistics(log)
-        println(gen)
+        datadict = retrieve_nsga2_statistics(log)
+        println(datadict)
+        return log
     end
 
     # Display
-    for i in eachindex(plt_obj)
-        display(plt_obj[i])
+    if do_display
+        for i in eachindex(plt_obj)
+            display(plt_obj[i])
+        end
     end
 end
 
