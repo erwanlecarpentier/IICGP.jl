@@ -49,7 +49,7 @@ for i in "${!CFGS[@]}"; do
 		echo "" >> $CM
 		echo "julia --threads $N_THREADS --project=$PROJECT $SCRIPT --cfg=${CFGS[i]} --game=$GAME --out=$OUTDIR" >> $CM
 
-		RES=$(sbatch $CM)
+		RES=$(sbatch $CM) # --parsable
 		JOBID=${RES##* }
 		echo $RES
 		mv $CM /tmpdir/$USERNAME/logs/job$(echo $JOBID)_$FNAME.cmd

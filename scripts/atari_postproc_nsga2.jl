@@ -8,12 +8,12 @@ resdir = joinpath(rootdir, "results/")
 #fetch_backup(rootdir, clean=true)
 
 # Filters parameters
-min_date = DateTime(2021, 11, 01)
+min_date = DateTime(2021, 11, 28)
 max_date = DateTime(2021, 12, 31)
 #savedir_index = 1
 labels = Vector{String}()
 colors = Vector{Symbol}()
-rom_names = ["boxing"]#, "space_invaders"]
+rom_names = ["boxing"]
 reducers = ["pooling"]
 dotime = false
 dosave = true

@@ -53,7 +53,7 @@ function log_gen(
         end
 		=#
 		f = open(joinpath(e.resdir, e.logid, "logs/logs.csv"), "w+")
-        write(f, string("generation", sep, "rank", sep, "fitness", sep,
+        write(f, string("gen_number", sep, "rank", sep, "fitness", sep,
 			"normalized_fitness", sep, "reached_frames", sep, "dna_id\n"))
         close(f)
     end
