@@ -243,9 +243,9 @@ for i in 1:e.config.n_gen
         populate(e)
     end
     evaluate(e)
-    generation(e, fitness_norm)
+    generation(e, max_fitness, min_fitness)
     #=if ((e.config.log_gen > 0) && mod(e.gen, e.config.log_gen) == 0)
-        log_gen(e, fitness_norm, is_ec=true)
+        log_gen(e, max_fitness, min_fitness, is_ec=true)
     end
     if ((e.config.save_gen > 0) && mod(e.gen, e.config.save_gen) == 0)
         save_gen(e)

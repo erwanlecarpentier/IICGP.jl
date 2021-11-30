@@ -39,7 +39,8 @@ end
 
 function log_gen(
     e::NSGA2Evo{T},
-    fitness_norm::Vector{Float64}
+    max_fitness::Vector{Float64},
+	min_fitness::Vector{Float64}
 ) where T
 	sep = ";"
     if e.gen == 1
@@ -64,7 +65,7 @@ function log_gen(
     for i in eachindex(e.population)
         dna_id = Formatting.format("{1:04d}", i)
 		# Log results
-        raw_fitness = e.population[i].fitness .* fitness_norm
+		raw_fitness = (e.population[i].fitness .- min_fitness) ./ (max_fitness .- min_fitness)
         #=
 		with_logger(e.logger) do
             @info Formatting.format(
@@ -96,7 +97,8 @@ end
 
 function generation(
 	e::NSGA2Evo{T},
-	fitness_norm::Vector{Float64}
+    max_fitness::Vector{Float64},
+	min_fitness::Vector{Float64}
 ) where T
     #==#
 	# Sort all individuals according to Pareto efficiency
@@ -127,7 +129,7 @@ function generation(
     end
 	# Log results
 	if ((e.config.log_gen > 0) && (e.gen == 1 || mod(e.gen, e.config.log_gen) == 0))
-        log_gen(e, fitness_norm)
+        log_gen(e, max_fitness, min_fitness)
     end
 	# Remove non-elite individuals
 	filter!(ind -> ind.is_elite, e.population)
