@@ -13,15 +13,15 @@ max_date = DateTime(2021, 12, 31)
 #savedir_index = 1
 labels = Vector{String}()
 colors = Vector{Symbol}()
-rom_names = ["boxing"]
+rom_names = ["space_invaders"]
 reducers = ["pooling"]
 dotime = false
 dosave = true
 baselines = true
 
-objectives_names = ["Atari score", "Sparsity"]
+objectives_names = ["Atari score", "1 - Processing time ÷ Max time"]
 pareto_gen = [1, 9000, 17000, 25000]
-pareto_xlim = (-1, 1)
+pareto_xlim = (0, 1)
 pareto_ylim = (0, 1)
 
 colors = [:skyblue3]

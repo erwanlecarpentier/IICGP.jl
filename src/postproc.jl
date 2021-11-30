@@ -388,10 +388,6 @@ function process_nsga2_results(
                 color=colors[k])
         end
         for i in eachindex(pareto_gen)
-            println()
-            println(pareto_gen[i])
-            println(datadict[pareto_key(pareto_gen[i])])
-            println()
             x = [nf[1] for nf in datadict[pareto_key(pareto_gen[i])]]
             y = [nf[2] for nf in datadict[pareto_key(pareto_gen[i])]]
             plot!(plt_pareto[i], x, y, seriestype = :scatter, xlims=pareto_xlim,
