@@ -9,39 +9,6 @@ using UnicodePlots
 
 import Cambrian.mutate
 
-# State-of-the-art maximum scores (rough estimate)
-const soa_scores = Dict(
-    "assault"=>14497.9,
-    "asteroids"=>9412.0,
-    "boxing"=>100.0,
-    "breakout"=>800.0,
-    "defender"=>993010.0,
-    "freeway"=>30.0,
-    "frostbite"=>8144.4,
-    "gravitar"=>2350.0,
-    "private_eye"=>15028.3,
-    "pong"=>20.0,
-    "riverraid"=>18184.4,
-    "solaris"=>8324,
-    "space_invaders"=>23846.0
-)
-
-const min_scores = Dict(
-    "assault"=>0.0,
-    "asteroids"=>0.0,
-    "boxing"=>-100.0,
-    "breakout"=>0.0,
-    "defender"=>0.0,
-    "freeway"=>0.0,
-    "frostbite"=>0.0,
-    "gravitar"=>0.0,
-    "private_eye"=>0.0,
-    "pong"=>-20.0,
-    "riverraid"=>0.0,
-    "solaris"=>0.0,
-    "space_invaders"=>0.0
-)
-
 out(plt) = println(IOContext(stdout, :color=>true), plt)
 default_resdir = joinpath(dirname(@__DIR__), "results")
 default_cfgdir = joinpath(dirname(@__DIR__), "cfg")
@@ -63,19 +30,11 @@ function append_ec_cfgs!(mcfg, ecfg, ccfg)
 	mcfg["c_config"] = ccfg
 end
 
-#=
-function display_paretto(e::NSGA2Evo)
-    o1 = [ind.fitness[1] for ind in e.population]
-    o2 = [ind.fitness[2] for ind in e.population]
-    out(scatterplot(o1, o2, title = "Paretto front"))#, xlim=[0,1], ylim=[0,1]))
-end
-=#
-
 s = ArgParseSettings()
 @add_arg_table! s begin
     "--cfg"
     help = "configuration script"
-    default = joinpath(default_cfgdir, "eccgp_atari_nsga2.yaml")
+    default = joinpath(default_cfgdir, "eccgp_atari_ucea.yaml")
     "--game"
     help = "game rom name"
     default = "boxing"
@@ -101,18 +60,6 @@ const grayscale = mcfg.grayscale
 const downscale = mcfg.downscale
 const stickiness = mcfg.stickiness
 const lck = ReentrantLock()
-const max_n_active_nodes = ecfg.rows * ecfg.columns + ccfg.rows * ccfg.columns
-
-const min_fitness = [min_scores[rom_name], min_scores[rom_name]]
-const max_fitness = [soa_scores[rom_name], soa_scores[rom_name]]
-
-# Get timing image
-g = Game(rom_name, 0)
-for _ in 1:4
-	act(g.ale, Int32(0))
-end
-timing_image = get_state(g, mcfg.grayscale, mcfg.downscale)
-close!(g)
 
 function atari_score(
 	game::Game,
@@ -167,49 +114,54 @@ function my_fitness(ind::UCInd, seed::Int64, game::Game)
 end
 
 # User-defined mutation function
-function mutate(ind::IICGP.NSGA2ECInd)
+function mutate(ind::UCInd)
 	println("I am mutating!") # TODO test called
     e = IPCGPInd(ecfg, ind.e_chromosome)
     e_child = goldman_mutate(ecfg, e, init_function=IPCGPInd)
     c = CGPInd(ccfg, ind.c_chromosome)
     c_child = goldman_mutate(ccfg, c)
-    NSGA2ECInd(mcfg, e_child.chromosome, c_child.chromosome)
+    UCInd(e_child.chromosome, c_child.chromosome)
 end
 
 # User-defined population initialization function
-function random_init(cfg::NamedTuple) # cfg = mcfg
-    [IICGP.NSGA2ECInd(
-        cfg,
+function random_init(indtype::Type, config::NamedTuple)
+    [indtype(
         IPCGPInd(ecfg).chromosome,
         CGPInd(ccfg).chromosome
-    ) for _ in 1:cfg.n_population]
+    ) for _ in 1:config.n_population]
 end
 
 # Initial population containing best constant action individuals
-function cstind_init(cfg::NamedTuple)
+function cstind_init(indtype::Type, config::NamedTuple)
     # Create cst individuals
-    cstinds = IICGP.get_cstind(rom_name, cfg, ecfg, ccfg, reducer)
+    cstinds = IICGP.get_cstind(indtype, rom_name, config, ecfg, ccfg, reducer)
     # Evaluate cst individuals and sort by 1st objective
+	seed = 0
+	game = Game(rom_name, seed)
     @inbounds for i in eachindex(cstinds)
-		seed = 0
-		game = Game(rom_name, seed)
-		cstinds[i].fitness .= my_fitness(cstinds[i], seed, game)
-		close!(game)
+		IICGP.reset!(game)
+		push!(cstinds[i].fitnesses, my_fitness(cstinds[i], seed, game))
     end
-	sort!(cstinds, by = ind -> ind.fitness[1], rev = true)
-    # Select best n_population individuals (fill lacking with random)
-	if length(cstinds) > cfg.n_population
-		cstinds =  cstinds[1:cfg.n_population]
-	else
-		push!(cstinds, [IICGP.NSGA2ECInd(cfg, IPCGPInd(ecfg).chromosome,
-			  CGPInd(ccfg).chromosome) for _ in 1:cfg.n_population-length(cstinds)]...)
+	close!(game)
+	for ind in cstinds
+		ind.lifetime += min(config.n_population, length(cstinds))
 	end
-	@assert length(cstinds) == cfg.n_population
+	sort!(cstinds, by=ind->mean_fitness(ind), rev = true)
+    # Select best n_population individuals (fill lacking with random)
+	if length(cstinds) > config.n_population
+		cstinds =  cstinds[1:config.n_population]
+	else
+		push!(cstinds, [indtype(config, IPCGPInd(ecfg).chromosome,
+			  CGPInd(ccfg).chromosome) for _ in 1:config.n_population-length(cstinds)]...)
+	end
+	@assert length(cstinds) == config.n_population
 	cstinds
 end
 
+##
+
 # Create evolution framework
-e = NSGA2Evo(mcfg, resdir, my_fitness, cstind_init, rom_name)
+e = UCEvo{UCInd}(mcfg, resdir, my_fitness, cstind_init, rom_name)
 mem_usage = Vector{Float64}()
 
 # Run experiment

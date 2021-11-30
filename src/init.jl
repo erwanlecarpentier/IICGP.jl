@@ -13,7 +13,8 @@ Test that this individual only outputs this action.
 """
 function test_cstind(
     rom_name::String,
-    ind::NSGA2ECInd,
+    e_chromosome::Vector{Float64},
+    c_chromosome::Vector{Float64},
     mcfg::NamedTuple,
     ecfg::NamedTuple,
     ccfg::NamedTuple,
@@ -21,8 +22,8 @@ function test_cstind(
     reducer::Reducer
 )
     game = Game(rom_name, 0)
-    enco = IPCGPInd(ecfg, ind.e_chromosome)
-    cont = CGPInd(ccfg, ind.c_chromosome)
+    enco = IPCGPInd(ecfg, e_chromosome)
+    cont = CGPInd(ccfg, c_chromosome)
     for i in 1:100
         s = get_state(game, mcfg.grayscale, mcfg.downscale)
         output = IICGP.process(enco, reducer, cont, ccfg, s)
@@ -38,15 +39,18 @@ end
 
 """
     get_cstind(
+        indtype::Type,
         rom_name::String,
         mcfg::NamedTuple,
         ecfg::NamedTuple,
-        ccfg::NamedTuple
+        ccfg::NamedTuple,
+        reducer::Reducer
     )
 
 Build individuals constantly outputing the same actions.
 """
 function get_cstind(
+    indtype::Type,
     rom_name::String,
     mcfg::NamedTuple,
     ecfg::NamedTuple,
@@ -56,8 +60,8 @@ function get_cstind(
     game = Game(rom_name, 0)
     actions = game.actions
     close!(game)
-    @assert ccfg.n_cst_inputs > 1
-    cstinds = Vector{NSGA2ECInd}()
+    @assert ccfg.n_cst_inputs > 2
+    cstinds = Vector{indtype}()
     R = ccfg.rows
     C = ccfg.columns
     P = ccfg.n_parameters
@@ -74,8 +78,9 @@ function get_cstind(
                 cont.chromosome[R*C*(3+P)+j] = (ccfg.n_in) / M
             end
         end
-        new_ind = IICGP.NSGA2ECInd(mcfg, enco.chromosome, cont.chromosome)
-        test_cstind(rom_name, new_ind, mcfg, ecfg, ccfg, actions[i], reducer)
+        new_ind = indtype(mcfg, enco.chromosome, cont.chromosome)
+        test_cstind(rom_name, new_ind.e_chromosome, new_ind.c_chromosome, mcfg,
+            ecfg, ccfg, actions[i], reducer)
         push!(cstinds, new_ind)
     end
     cstinds

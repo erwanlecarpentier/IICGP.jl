@@ -1,4 +1,4 @@
-export UCEvo, UCInd, evaluate, populate, generation
+export UCEvo, UCInd, evaluate, populate, generation, mean_fitness
 
 using Cambrian
 using Statistics
@@ -21,6 +21,14 @@ function UCInd(e_chromosome::Vector{Float64}, c_chromosome::Vector{Float64})
     UCInd(e_chromosome, c_chromosome, Vector{Float64}(), 0, 0)
 end
 
+function UCInd(
+	config::NamedTuple,
+	e_chromosome::Vector{Float64},
+	c_chromosome::Vector{Float64}
+)
+    UCInd(e_chromosome, c_chromosome)
+end
+
 """
 Evolution framework
 """
@@ -38,7 +46,7 @@ end
 function UCEvo{T}(
 	config::NamedTuple,
     resdir::String,
-	fitness::Function
+	fitness::Function,
     init_population::Function,
     rom_name::String
 ) where T
