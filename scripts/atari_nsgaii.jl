@@ -180,6 +180,7 @@ function my_fitness(ind::NSGA2ECInd, seed::Int64, game::Game)
     enco = IPCGPInd(ecfg, ind.e_chromosome)
     cont = CGPInd(ccfg, ind.c_chromosome)
 
+	# TODO comment
 	# Parallel objectives evaluation
 	o1, f1 = 0.0, 0
 	o2, f2 = 0.0, 0
@@ -192,6 +193,7 @@ function my_fitness(ind::NSGA2ECInd, seed::Int64, game::Game)
 		end
     end
 
+	# TODO put back
 	# Sequential objectives evaluation
     #o1, f1 = atari_score(game, enco, reducer, cont, seed)
     #o2 = sparsity_score(enco, cont)
