@@ -25,8 +25,8 @@ SCRIPT="scripts/atari_nsgaii.jl"
 PROJECT="$PWD"
 USERNAME=$(whoami)
 OUTDIR="/tmpdir/$USERNAME/ICGP-results/results"
-N_THREADS="18" # WARNING: sync with MEM
-MEM="96000" # WARNING: sync with N_THREADS
+N_THREADS="36" # WARNING: sync with MEM
+MEM="192000" # WARNING: sync with N_THREADS
 
 for i in "${!CFGS[@]}"; do
 	for GAME in $GAMES; do
@@ -43,7 +43,7 @@ for i in "${!CFGS[@]}"; do
 		echo "#SBATCH --mem=$MEM" >> $CM
 		echo "#SBATCH -o /tmpdir/%u/logs/job%J_$FNAME.out" >> $CM
 		echo "#SBATCH -e /tmpdir/%u/logs/job%J_$FNAME.log" >> $CM
-		echo "#SBATCH --time=5-00:00:00" >> $CM
+		echo "#SBATCH --time=2-00:00:00" >> $CM
 		echo "#SBATCH --mail-user=erwanlecarpentier@mailbox.org" >> $CM
 		echo "#SBATCH --mail-type=END" >> $CM
 		echo "" >> $CM

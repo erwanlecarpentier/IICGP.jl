@@ -26,6 +26,22 @@ const soa_scores = Dict(
     "space_invaders"=>23846.0
 )
 
+const min_scores = Dict(
+    "assault"=>0.0,
+    "asteroids"=>0.0,
+    "boxing"=>-100.0,
+    "breakout"=>0.0,
+    "defender"=>0.0,
+    "freeway"=>0.0,
+    "frostbite"=>0.0,
+    "gravitar"=>0.0,
+    "private_eye"=>0.0,
+    "pong"=>-20.0,
+    "riverraid"=>0.0,
+    "solaris"=>0.0,
+    "space_invaders"=>0.0
+)
+
 out(plt) = println(IOContext(stdout, :color=>true), plt)
 default_resdir = joinpath(dirname(@__DIR__), "results")
 default_cfgdir = joinpath(dirname(@__DIR__), "cfg")
@@ -87,10 +103,8 @@ const stickiness = mcfg.stickiness
 const lck = ReentrantLock()
 const max_n_active_nodes = ecfg.rows * ecfg.columns + ccfg.rows * ccfg.columns
 
-const fitness_norm = [
-    soa_scores[rom_name],
-    1.0
-]
+const min_fitness = [min_scores[rom_name], min_scores[rom_name]]
+const max_fitness = [soa_scores[rom_name], soa_scores[rom_name]]
 
 # Get timing image
 g = Game(rom_name, 0)
@@ -165,12 +179,28 @@ end
 function my_fitness(ind::NSGA2ECInd, seed::Int64, game::Game)
     enco = IPCGPInd(ecfg, ind.e_chromosome)
     cont = CGPInd(ccfg, ind.c_chromosome)
-    o1, frames = atari_score(game, enco, reducer, cont, seed)
+
+	# Parallel objectives evaluation
+	o1, f1 = 0.0, 0
+	o2, f2 = 0.0, 0
+	@sync begin
+		Threads.@spawn begin
+			o1, f1 = atari_score(game, enco, reducer, cont, seed)
+		end
+		Threads.@spawn begin
+			o2, f2 = atari_score(game, enco, reducer, cont, seed)
+		end
+    end
+
+	# Sequential objectives evaluation
+    #o1, f1 = atari_score(game, enco, reducer, cont, seed)
     #o2 = sparsity_score(enco, cont)
-	o2 = timing_score(enco, reducer, cont)
-	# WARNING: set fitness_norm accordingly to objectives
-	ind.reached_frames = frames
-    [o1, o2] ./ fitness_norm
+	#o2 = timing_score(enco, reducer, cont)
+    #o2, f2 = atari_score(game, enco, reducer, cont, seed)
+
+	# WARNING: set min max fitnesses accordingly to objectives
+	ind.reached_frames = f1 + f2
+    ([o1, o2] .- min_fitness) ./ (max_fitness .- min_fitness)
 end
 
 # User-defined mutation function
