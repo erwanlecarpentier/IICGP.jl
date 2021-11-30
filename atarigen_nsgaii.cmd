@@ -18,7 +18,7 @@
 # frostbite riverraid
 
 CMD_PREFIX="atari_"
-CFGS=("cfg/eccgp_atari.yaml") # WARNING: sync with REDS
+CFGS=("cfg/eccgp_atari_nsga2.yaml") # WARNING: sync with REDS
 REDS=("nsgaii_") # WARNING: sync with CFGS
 GAMES="asteroids"
 SCRIPT="scripts/atari_nsgaii.jl"

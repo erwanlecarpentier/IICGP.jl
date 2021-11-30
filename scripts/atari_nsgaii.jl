@@ -75,7 +75,7 @@ s = ArgParseSettings()
 @add_arg_table! s begin
     "--cfg"
     help = "configuration script"
-    default = joinpath(default_cfgdir, "eccgp_atari.yaml")
+    default = joinpath(default_cfgdir, "eccgp_atari_nsga2.yaml")
     "--game"
     help = "game rom name"
     default = "boxing"

@@ -35,7 +35,8 @@ const cfg = get_config(cfg_path)
 
 # Specific functions for this example of learning two functions
 x = [i for i in 0:0.05:1]
-const fitness_norm = length(x) * ones(cfg.d_fitness)
+const max_fitness = [0.0, 0.0]
+const min_fitness = - length(x) * ones(cfg.d_fitness)
 f1(x) = 0.2 * (2.0 + cos(2.0*π*x))
 f2(x) = 0.25 * (2.0 + cos(4*π*x))
 y1 = f1.(x)
@@ -56,7 +57,7 @@ function my_fitness(ind::NSGA2Ind, seed::Int64, game::Game) # game is a placehol
     end
     o1 = - norm(y1 - y_hat)
     o2 = - norm(y2 - y_hat)
-    [o1, o2] ./ fitness_norm
+    ([o1, o2] .- min_fitness) ./ (max_fitness .- min_fitness)
 end
 
 # User-defined mutation function
@@ -82,9 +83,9 @@ for i in 1:e.config.n_gen
     end
     evaluate(e)
     display_paretto(e)
-    generation(e, fitness_norm, is_ec=false)
+    generation(e, max_fitness, min_fitness)
     #=if ((e.config.log_gen > 0) && mod(e.gen, e.config.log_gen) == 0)
-        log_gen(e, fitness_norm)
+        log_gen(e, max_fitness, min_fitness)
     end
     if ((e.config.save_gen > 0) && mod(e.gen, e.config.save_gen) == 0)
         save_gen(e)
