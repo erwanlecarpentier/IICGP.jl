@@ -34,7 +34,7 @@ function fitness_evaluate(e::NSGA2Evo{T}, fitness::Function) where T
 			o1[i], f1[i] = fitness(e.population[i], e.gen, e.atari_games[i][1])
 		end
 		Threads.@spawn begin
-			o2[i], f2[i] = fitness(e.population[i], e.gen, e.atari_games[i][2])
+			o2[i], f2[i] = fitness(e.population[i], 25000+e.gen, e.atari_games[i][2])
 		end
     end
 	@inbounds for i in eachindex(e.population)

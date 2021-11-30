@@ -3,13 +3,14 @@ optimizer: "ucea"
 seed: 0
 max_frames: 10 # 10000 # TODO put back
 stickiness: 0.25
-d_fitness: 2 # atari timing
+d_fitness: 1
 n_gen: 10 # 25000 # TODO put back
-n_eval: 20 # maximum number of evaluations per generation
+n_eval: 20 # number of evaluations per generation
 n_population: 10
 n_elite: 5 # Number of elite pairs per generation
 #eval_mutant: false # GA
-#tournament_size: 3 # GA
+tournament_size: 3
+greedy_elitism: true
 log_gen: 1 # 200 # TODO put back
 save_gen: 1 # 200 # TODO put back
 bootstrap: false

@@ -1,19 +1,21 @@
-export UCEvo, evaluate, populate, generation, get_log
+export UCEvo, UCInd, evaluate, populate, generation
 
 using Cambrian
+using Statistics
 
 import Cambrian.populate, Cambrian.evaluate, Cambrian.log_gen, Cambrian.save_gen
 
 
 mutable struct UCInd <: Cambrian.Individual
-    chromosome::Vector{Float64}
+    e_chromosome::Vector{Float64}
+    c_chromosome::Vector{Float64}
     fitnesses::Vector{Float64}
-    expected_fitness::Float64
     lifetime::Int64
+    reached_frames::Int64
 end
 
-function UCInd(chromosome::Vector{Float64})
-    UCInd(chromosome, Vector{Float64}(), -Inf, 0)
+function UCInd(e_chromosome::Vector{Float64}, c_chromosome::Vector{Float64})
+    UCInd(e_chromosome, c_chromosome, Vector{Float64}(), 0, 0)
 end
 
 mutable struct UCEvo{T} <: Cambrian.AbstractEvolution
@@ -28,8 +30,25 @@ function UCEvo{T}(config::NamedTuple, init::Function, fitness::Function) where T
     UCEvo(config, population, fitness, 0)
 end
 
-evaluate(e::UCEvo{T}) where T = UCEA.fitness_evaluate(e, e.fitness)
-populate(e::UCEvo{T}) where T = UCEA.tournament_populate(e)
+evaluate(e::UCEvo{T}) where T = fitness_evaluate(e, e.fitness)
+populate(e::UCEvo{T}) where T = tournament_populate(e)
+
+function ucb(ind::UCInd)
+	n_eval = length(ind.fitnesses)
+	if n_eval > 0
+		return mean(ind.fitnesses) + sqrt(2.0 * log(ind.lifetime) / n_eval)
+	else
+		return Inf
+	end
+end
+
+function mean_fitness(ind::UCInd)
+	if length(ind.fitnesses) > 0
+		return mean(ind.fitnesses)
+	else
+		return -Inf
+	end
+end
 
 """
     generation(e::UCEvo{T}) where T
@@ -45,6 +64,21 @@ function generation(e::UCEvo{T}) where T
     e.population = e.population[1:e.config.n_elite]
 end
 
-function get_log(e::UCEvo{T}) where T
-    [:expected_fitness, :fitnesses, :lifetime]
+function increment_lifetime!(e::UCEvo{T}) where T
+	for ind in e.population
+		ind.lifetime += 1
+	end
+end
+
+function fitness_evaluate(e::UCEvo{T}, fitness::Function) where T
+	n_children = e.config.n_population - e.config.n_elite
+	# TODO here
+
+	for i in 1:e.config.n_eval
+		sort!(e.population, by=ind->ucb(ind), rev=true)
+		expected, noise = fitness(e.population[1])
+		push!(e.population[1].fitnesses, expected+noise)
+		e.population[1].expected_fitness = expected
+		increment_lifetime!(e)
+	end
 end
