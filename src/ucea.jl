@@ -6,6 +6,9 @@ using Statistics
 import Cambrian.populate, Cambrian.evaluate, Cambrian.log_gen, Cambrian.save_gen
 
 
+"""
+Individuals definition
+"""
 mutable struct UCInd <: Cambrian.Individual
     e_chromosome::Vector{Float64}
     c_chromosome::Vector{Float64}
@@ -18,16 +21,34 @@ function UCInd(e_chromosome::Vector{Float64}, c_chromosome::Vector{Float64})
     UCInd(e_chromosome, c_chromosome, Vector{Float64}(), 0, 0)
 end
 
+"""
+Evolution framework
+"""
 mutable struct UCEvo{T} <: Cambrian.AbstractEvolution
     config::NamedTuple
+    logid::String
+    logger::CambrianLogger
+	resdir::String
     population::Vector{T}
     fitness::Function
     gen::Int64
+    atari_games::Vector{Game}
 end
 
-function UCEvo{T}(config::NamedTuple, init::Function, fitness::Function) where T
-    population = init(T, config)
-    UCEvo(config, population, fitness, 0)
+function UCEvo{T}(
+	config::NamedTuple,
+    resdir::String,
+	fitness::Function
+    init_population::Function,
+    rom_name::String
+) where T
+    logid = config.id
+    log_path = joinpath(resdir, logid, "logs/logs.csv")
+    logger = CambrianLogger(log_path)
+    population = init_population(T, config)
+	n_children = config.n_population - config.n_elite
+	atari_games = [Game(rom_name, 0) for _ in 1:n_children] # only n_children eval in parallel
+    UCEvo(config, logid, logger, resdir, population, fitness, 0, atari_games)
 end
 
 evaluate(e::UCEvo{T}) where T = fitness_evaluate(e, e.fitness)
@@ -50,10 +71,14 @@ function mean_fitness(ind::UCInd)
 	end
 end
 
-"""
-    generation(e::UCEvo{T}) where T
+function increment_lifetime!(e::UCEvo{T}, n::Int64) where T
+	for ind in e.population
+		ind.lifetime += n
+	end
+end
 
-Select elites
+"""
+Elite selection function
 """
 function generation(e::UCEvo{T}) where T
     if e.config.greedy_elitism
@@ -64,21 +89,93 @@ function generation(e::UCEvo{T}) where T
     e.population = e.population[1:e.config.n_elite]
 end
 
-function increment_lifetime!(e::UCEvo{T}) where T
-	for ind in e.population
-		ind.lifetime += 1
+"""
+Evaluation function
+"""
+function fitness_evaluate(e::UCEvo{T}, fitness::Function) where T
+	# 1. Evaluate all new individuals in parallel
+	n_children = e.config.n_population - e.config.n_elite
+	sort!(e.population, by=ind->ucb(ind), rev=true) # Children are 1st
+	@sync for i in 1:n_children
+        Threads.@spawn begin
+			push!(e.population[i].fitnesses,
+				  fitness(e.population[i], e.gen, e.atari_games[i]))
+        end
+    end
+	increment_lifetime!(e, n_children)
+	@assert all([length(ind.fitnesses) > 0 for ind in e.population])
+	# 2. Finish evaluation budget sequentially
+	n_remaining_eval = e.config.n_eval - n_children
+	for _ in 1:n_remaining_eval
+		sort!(e.population, by=ind->ucb(ind), rev=true)
+		push!(e.population[1].fitnesses,
+			  fitness(e.population[1], e.gen, e.atari_games[1]))
+		increment_lifetime!(e, 1)
 	end
 end
 
-function fitness_evaluate(e::UCEvo{T}, fitness::Function) where T
-	n_children = e.config.n_population - e.config.n_elite
-	# TODO here
+"""
+Populate function
+"""
+function tournament_populate(e::UCEvo{T}) where T
+    children = Vector{T}()
+    for _ in e.config.n_elite+1:e.config.n_population
+        parent = ucb_tournament_selection(e.population, e.config.tournament_size)
+        push!(children, mutate(parent))
+    end
+    push!(e.population, children...)
+end
 
-	for i in 1:e.config.n_eval
-		sort!(e.population, by=ind->ucb(ind), rev=true)
-		expected, noise = fitness(e.population[1])
-		push!(e.population[1].fitnesses, expected+noise)
-		e.population[1].expected_fitness = expected
-		increment_lifetime!(e)
-	end
+function ucb_tournament_selection(
+    pop::Vector{T},
+    tournament_size::Int64
+) where T
+    inds = shuffle!(collect(1:length(pop)))
+    sort(pop[inds[1:tournament_size]], by=ind->ucb(ind))[end]
+end
+
+function fitness_tournament_selection(
+    pop::Vector{T},
+    tournament_size::Int64
+) where T
+    inds = shuffle!(collect(1:length(pop)))
+    sort(pop[inds[1:tournament_size]], by=ind->ind.fitness)[end]
+end
+
+"""
+Logging
+"""
+function log_gen(e::UCEvo{T}) where T
+	sep = ";"
+    if e.gen == 1
+        f = open(joinpath(e.resdir, e.logid, "logs/logs.csv"), "w+")
+        write(f, string("gen_number", sep, "fitnesses", sep,
+			"reached_frames", sep, "dna_id\n"))
+        close(f)
+    end
+	enco_path = joinpath(e.resdir, e.logid, Formatting.format("gens/encoder_{1:04d}", e.gen))
+    cont_path = joinpath(e.resdir, e.logid, Formatting.format("gens/controller_{1:04d}", e.gen))
+    mkpath(enco_path)
+    mkpath(cont_path)
+    for i in eachindex(e.population)
+        dna_id = Formatting.format("{1:04d}", i)
+		# Log results
+		f = open(joinpath(e.resdir, e.logid, "logs/logs.csv"), "a+")
+        write(f, Formatting.format(string(e.gen, sep,
+			   e.population[i].fitnesses, sep,
+			   e.population[i].reached_frames, sep, dna_id, "\n")))
+        close(f)
+		# Log individuals
+		ind_fit = [mean_fitness(e.population[i])]
+		enco = IPCGPInd(e.config.e_config, e.population[i].e_chromosome)
+		enco.fitness .= ind_fit
+		f = open(string(enco_path, "/", dna_id, ".dna"), "w+")
+        write(f, string(enco))
+        close(f)
+        cont = CGPInd(e.config.c_config, e.population[i].c_chromosome)
+		cont.fitness .= ind_fit
+        f = open(string(cont_path, "/", dna_id, ".dna"), "w+")
+        write(f, string(cont))
+        close(f)
+    end
 end

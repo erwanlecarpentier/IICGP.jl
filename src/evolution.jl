@@ -9,7 +9,7 @@ mutable struct NSGA2Evo{T} <: Cambrian.AbstractEvolution
     logid::String
     logger::CambrianLogger
 	resdir::String
-    population::Array{T}
+    population::Vector{T}
     fitness::Function
     gen::Int64
     atari_games::Vector{Vector{Game}} # TODO put Vector{Game} back
