@@ -12,7 +12,7 @@ mutable struct NSGA2Evo{T} <: Cambrian.AbstractEvolution
     population::Array{T}
     fitness::Function
     gen::Int64
-    atari_games::Vector{Vector{Game}}
+    atari_games::Vector{Vector{Game}} # TODO put Vector{Game} back
 end
 
 function NSGA2Evo(
@@ -26,7 +26,8 @@ function NSGA2Evo(
     log_path = joinpath(resdir, logid, "logs/logs.csv")
     logger = CambrianLogger(log_path)
     population = init_population(config)
-    atari_games = [[Game(rom_name, 0), Game(rom_name, 0)] for _ in 1:length(population)]
+    #atari_games = [Game(rom_name, 0) for _ in 1:length(population)] # TODO put back
+    atari_games = [[Game(rom_name, 0), Game(rom_name, 0)] for _ in 1:length(population)] # TODO remove
     NSGA2Evo(config, logid, logger, resdir, population, fitness, 0, atari_games)
 end
 
