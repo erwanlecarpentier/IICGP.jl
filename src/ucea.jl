@@ -62,10 +62,12 @@ end
 evaluate(e::UCEvo{T}) where T = fitness_evaluate(e, e.fitness)
 populate(e::UCEvo{T}) where T = tournament_populate(e)
 
+ucb(m::Float64, n_total::Int64, n_eval::Int64) = m + sqrt(2.0 * log(n_total) / n_eval)
+
 function ucb(ind::UCInd)
 	n_eval = length(ind.fitnesses)
 	if n_eval > 0
-		return mean(ind.fitnesses) + sqrt(2.0 * log(ind.lifetime) / n_eval)
+		return ucb(mean(ind.fitnesses), ind.lifetime, n_eval)
 	else
 		return Inf
 	end
@@ -101,6 +103,18 @@ end
 Evaluation function
 """
 function fitness_evaluate(e::UCEvo{T}, fitness::Function) where T
+	if e.config.surrogate
+		if e.gen == 1
+			exact_fitness_evaluate(e, fitness)
+		else
+			surrogate_fitness_evaluate(e, fitness)
+		end
+	else
+		exact_fitness_evaluate(e, fitness)
+	end
+end
+
+function exact_fitness_evaluate(e::UCEvo{T}, fitness::Function) where T
 	# 1. Evaluate all new individuals in parallel
 	n_children = e.config.n_population - e.config.n_elite
 	sort!(e.population, by=ind->ucb(ind), rev=true) # Children are 1st
@@ -120,6 +134,43 @@ function fitness_evaluate(e::UCEvo{T}, fitness::Function) where T
 			  fitness(e.population[1], e.gen, e.atari_games[1]))
 		increment_lifetime!(e, 1)
 	end
+end
+
+function surrogate_fitness_evaluate(e::UCEvo{T}, fitness::Function) where T
+	# 1. Evaluate all new individuals in parallel
+	n_children = e.config.n_population - e.config.n_elite
+	sort!(e.population, by=ind->ucb(ind), rev=true) # Children are 1st
+	@sync for i in 1:n_children
+        Threads.@spawn begin
+			push!(e.population[i].fitnesses,
+				  fitness(e.population[i], e.gen, e.atari_games[i]))
+        end
+    end
+	increment_lifetime!(e, n_children)
+	@assert all([length(ind.fitnesses) > 0 for ind in e.population])
+	# 2. Determine individuals to evaluate next
+	n_remaining_eval = e.config.n_eval - n_children
+	f = [mean_fitness(ind) for ind in e.population]
+	N = [ind.lifetime for ind in e.population]
+	n = [length(ind.fitnesses) for ind in e.population]
+	to_eval = Vector{Int64}()
+	for i in 1:n_remaining_eval
+		ucbs = [ucb(f[i], N[i], n[i]) for i in eachindex(f)]
+		index = argmax(ucbs)
+		push!(to_eval, index)
+		N .+= 1
+		n[index] += 1
+	end
+	# 3. Evaluate remaining individuals
+	@sync for k in eachindex(to_eval)
+        Threads.@spawn begin
+			i = to_eval[k]
+			push!(e.population[i].fitnesses,
+				  fitness(e.population[i], e.gen, e.atari_games[i]))
+		end
+    end
+end
+	increment_lifetime!(e, n_remaining_eval)
 end
 
 """
