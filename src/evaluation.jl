@@ -39,7 +39,7 @@ function fitness_evaluate(e::NSGA2Evo{T}, fitness::Function) where T
     end
 	@inbounds for i in eachindex(e.population)
 		e.population[i].fitness .= [o1[i], o2[i]]
-		e.population[i].reached_frames .= f1[i] + f2[i]
+		e.population[i].reached_frames = f1[i] + f2[i]
 	end
 	# TODO remove END
 end
