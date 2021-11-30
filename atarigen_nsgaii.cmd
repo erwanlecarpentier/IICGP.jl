@@ -20,7 +20,7 @@
 CMD_PREFIX="atari_"
 CFGS=("cfg/eccgp_atari_nsga2.yaml") # WARNING: sync with REDS
 REDS=("nsgaii_") # WARNING: sync with CFGS
-GAMES="asteroids"
+GAMES="boxing space_invaders"
 SCRIPT="scripts/atari_nsgaii.jl"
 PROJECT="$PWD"
 USERNAME=$(whoami)
