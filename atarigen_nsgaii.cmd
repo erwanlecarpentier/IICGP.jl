@@ -26,7 +26,7 @@ PROJECT="$PWD"
 USERNAME=$(whoami)
 OUTDIR="/tmpdir/$USERNAME/ICGP-results/results"
 N_THREADS="36" # WARNING: sync with MEM
-MEM="192000" # WARNING: sync with N_THREADS
+# MEM="192000" # WARNING: sync with N_THREADS
 
 for i in "${!CFGS[@]}"; do
 	for GAME in $GAMES; do
