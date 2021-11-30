@@ -115,7 +115,6 @@ end
 
 # User-defined mutation function
 function mutate(ind::UCInd)
-	println("I am mutating!") # TODO test called
     e = IPCGPInd(ecfg, ind.e_chromosome)
     e_child = goldman_mutate(ecfg, e, init_function=IPCGPInd)
     c = CGPInd(ccfg, ind.c_chromosome)
@@ -158,8 +157,6 @@ function cstind_init(indtype::Type, config::NamedTuple)
 	cstinds
 end
 
-##
-
 # Create evolution framework
 e = UCEvo{UCInd}(mcfg, resdir, my_fitness, cstind_init, rom_name)
 mem_usage = Vector{Float64}()
@@ -172,13 +169,11 @@ for i in 1:e.config.n_gen
         populate(e)
     end
     evaluate(e)
-    generation(e, max_fitness, min_fitness)
-    #=if ((e.config.log_gen > 0) && mod(e.gen, e.config.log_gen) == 0)
-        log_gen(e, max_fitness, min_fitness, is_ec=true)
+	if (e.config.log_gen > 0) && (e.gen == 1 || mod(e.gen, e.config.log_gen) == 0)
+    	log_gen(e)
     end
-    if ((e.config.save_gen > 0) && mod(e.gen, e.config.save_gen) == 0)
-        save_gen(e)
-    end=#
+    generation(e)
+	# Track memory usage
 	mem = print_usage(i)
 	push!(mem_usage, mem)
 	out(lineplot(mem_usage, title = "%MEM"))
