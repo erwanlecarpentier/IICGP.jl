@@ -1,5 +1,6 @@
 export process_results, process_nsga2_results, process_ucea_results
 
+using DataFrames
 using Plots
 using ImageFiltering
 using OffsetArrays
@@ -286,6 +287,97 @@ function strvec2vec(x::Union{CSV.InlineString,CSV.String31,String})
     [parse(Float64, xi) for xi in split(x, ",")]
 end
 
+replace_nan(v::Vector{T}, val::T) where T = map(x -> isnan(x) ? val : x, v)
+
+function retrieve_ucea_statistics(log::CSV.File)
+    df = DataFrame(log)
+    datadict = Dict()
+    datadict["gen"] = Vector{Int64}()
+    datadict["best_mean"] = Vector{Float64}()
+    datadict["best_means_std"] = Vector{Float64}()
+    datadict["best_means_best_score"] = Vector{Float64}()
+    datadict["best_means_neval"] = Vector{Int64}()
+    datadict["best_score"] = Vector{Float64}()
+    datadict["best_scores_neval"] = Vector{Int64}()
+    for row in eachrow(df)
+        if row.gen_number ∉ datadict["gen"]
+            push!(datadict["gen"], row.gen_number)
+        end
+    end
+    for gen in datadict["gen"]
+        df_gen = filter(row -> row.gen_number == gen, df)
+        fitnesses = [strvec2vec(f) for f in df_gen.fitnesses]
+        bests = [maximum(f) for f in fitnesses]
+        means = [mean(f) for f in fitnesses]
+        nevals = [length(f) for f in fitnesses]
+        stds = replace_nan([std(f) for f in fitnesses], 0.0)
+        best_mean_index = argmax(means)
+        best_score_index = argmax(bests)
+        push!(datadict["best_mean"], means[best_mean_index])
+        push!(datadict["best_means_std"], stds[best_mean_index])
+        push!(datadict["best_means_best_score"], bests[best_mean_index])
+        push!(datadict["best_means_neval"], nevals[best_mean_index])
+        push!(datadict["best_score"], maximum(bests))
+        push!(datadict["best_scores_neval"], nevals[best_score_index])
+    end
+    datadict
+end
+
+function process_ucea_results(
+    exp_dirs::Vector{String},
+    games::Vector{String},
+    colors::Vector{Symbol},
+    labels::Vector{String};
+    do_display::Bool=true,
+    do_save::Bool=true,
+    savedir_index::Int64=1
+)
+    @assert all([g == games[1] for g in games])
+    game = games[1]
+    gamename = gamename_from_romname(game)
+    # Create plots
+    xl = "Generation"
+    yl_fit = string("Score ", gamename)
+    yl_neval = string("Number of evaluations ", gamename)
+    plt_fit = plot(ylabel=yl_fit, xlabel=xl, legend=:bottomright)
+    plt_neval = plot(ylabel=yl_neval, xlabel=xl, legend=:topleft)
+    # Fetch logs and plotpareto_gen
+    for k in eachindex(exp_dirs)
+        exp_dir = exp_dirs[k]
+        cfg = cfg_from_exp_dir(exp_dir)
+        log = log_from_exp_dir(exp_dir, log_file="logs/logs.csv",
+            header=1, sep=";")
+        datadict = retrieve_ucea_statistics(log)
+        lb_mean = string(labels[k], " best mean")
+        lb_best = string(labels[k], " best score of best mean individual")
+        lb_best_ever = string(labels[k], " best score across all individuals")
+        lb_best_means_neval = string(labels[k], " individual with best mean")
+        lb_best_scores_neval = string(labels[k], " individual with best score")
+        plot!(plt_fit, datadict["gen"], datadict["best_mean"],
+            ribbon=datadict["best_means_std"],
+            label=lb_mean, color=colors[k])
+        plot!(plt_fit, datadict["gen"], datadict["best_means_best_score"],
+            label=lb_best, color=colors[k], linewidth=2)
+        plot!(plt_fit, datadict["gen"], datadict["best_score"],
+            label=lb_best_ever, color=:red, linewidth=2)
+        plot!(plt_neval, datadict["gen"], datadict["best_means_neval"],
+            label=lb_best_means_neval, color=colors[k], linewidth=2)
+        plot!(plt_neval, datadict["gen"], datadict["best_scores_neval"],
+            label=lb_best_scores_neval, color=:red, linewidth=2)
+    end
+    # Display
+    if do_display
+        display(plt_fit)
+        display(plt_neval)
+    end
+    # Save
+    if do_save
+        graph_dir = set_graph_dir(exp_dirs, savedir_index, game)
+        savefig(plt_fit, joinpath(graph_dir, "ucea_fitness.png"))
+        savefig(plt_neval, joinpath(graph_dir, "ucea_neval.png"))
+    end
+end
+
 tofilename(s::String) = replace(lowercase(s), " " => "_")
 pareto_key(i::Int64) = string("pareto_", i)
 rawfit_max_key(i::Int64) = string("obj_", i, "_best_rawfit")
@@ -294,26 +386,6 @@ rawfit_std_key(i::Int64) = string("obj_", i, "_std_rawfit")
 norfit_max_key(i::Int64) = string("obj_", i, "_best_norfit")
 norfit_mea_key(i::Int64) = string("obj_", i, "_mean_norfit")
 norfit_std_key(i::Int64) = string("obj_", i, "_std_norfit")
-
-function retrieve_ucea_statistics(log::CSV.File)
-    datadict = Dict()
-    datadict["gen"] = Vector{Int64}()
-    datadict["maxmeanfit"] = Vector{Float64}()
-    datadict["maxmaxfit"] = Vector{Float64}()
-    for row in log
-        if row.gen_number ∉ datadict["gen"]
-            push!(datadict["gen"], row.gen_number)
-        end
-    end
-    for gen in datadict["gen"]
-        fitnesses = [strvec2vec(r.fitnesses) for r in log[log.gen_number .== gen]]
-        mean_fitnesses = [mean(f) for f in fitnesses]
-        max_fitnesses = [maximum(f) for f in fitnesses]
-        push!(datadict["maxmeanfit"], maximum([f for f in mean_fitnesses]))
-        push!(datadict["maxmaxfit"], maximum([f for f in max_fitnesses]))
-    end
-    datadict
-end
 
 function retrieve_nsga2_statistics(
     log::CSV.File;
@@ -351,55 +423,6 @@ function retrieve_nsga2_statistics(
         datadict[pareto_key(gen)] = [strvec2vec(r.normalized_fitness) for r in log[log.gen_number .== gen]]
     end
     datadict
-end
-
-function process_ucea_results(
-    exp_dirs::Vector{String},
-    games::Vector{String},
-    objectives_names::Vector{String},
-    colors::Vector{Symbol},
-    labels::Vector{String};
-    pareto_gen::Vector{Int64}=Vector{Int64}(),
-    pareto_xlim::Tuple=(0, 1),
-    pareto_ylim::Tuple=(0, 1),
-    do_display::Bool=true,
-    do_save::Bool=true,
-    savedir_index::Int64=1
-)
-    @assert all([g == games[1] for g in games])
-    game = games[1]
-    gamename = gamename_from_romname(game)
-    # Create plots
-    xl = "Generation"
-    yl = string("Maximum mean fitness (", gamename, ")")
-    plt_maxmeanfit = plot(ylabel=yl, xlabel=xl)
-    yl = string("Maximum max fitness (", gamename, ")")
-    plt_maxmaxfit = plot(ylabel=yl, xlabel=xl)
-    # Fetch logs and plotpareto_gen
-    for k in eachindex(exp_dirs)
-        exp_dir = exp_dirs[k]
-        cfg = cfg_from_exp_dir(exp_dir)
-        log = log_from_exp_dir(exp_dir, log_file="logs/logs.csv",
-            header=1, sep=";")
-        datadict = retrieve_ucea_statistics(log)
-        plot!(plt_maxmeanfit, datadict["gen"], datadict["maxmeanfit"],
-            label=labels[1], color=colors[1], linewidth=2)
-        plot!(plt_maxmaxfit, datadict["gen"], datadict["maxmaxfit"],
-            label=labels[1], color=colors[1], linewidth=2)
-    end
-    # Display
-    if do_display
-        display(plt_maxmeanfit)
-        display(plt_maxmaxfit)
-    end
-    # Save
-    if do_save
-        graph_dir = set_graph_dir(exp_dirs, savedir_index, game)
-        figname = "maxmean_fitness.png"
-        savefig(plt_maxmeanfit, joinpath(graph_dir, figname))
-        figname = "maxmax_fitness.png"
-        savefig(plt_maxmaxfit, joinpath(graph_dir, figname))
-    end
 end
 
 function process_nsga2_results(

@@ -13,16 +13,16 @@ max_date = DateTime(2021, 11, 30, 15)
 #savedir_index = 1
 labels = Vector{String}()
 colors = Vector{Symbol}()
-rom_names = ["boxing"]
+rom_names = ["space_invaders"]
 reducers = ["pooling"]
 dotime = false
 dosave = true
 baselines = true
 
 objectives_names = ["Atari score", "Atari score (≠ seed)"]
-pareto_gen = [1, 2000, 5000, 9800]#, 25000]
-pareto_xlim = (-100, 100)
-pareto_ylim = (-100, 100)
+pareto_gen = [1, 9000, 17000, 25000]
+pareto_xlim = (0, 1)
+pareto_ylim = (0, 1)
 
 colors = [:skyblue3]
 labels = ["NSGA2"]

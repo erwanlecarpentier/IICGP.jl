@@ -158,10 +158,6 @@ function get_exp_dir(
         exp_date = DateTime(exp_dir[1:splt-1])
         exp_game = exp_dir[splt+1:end]
         if no_time || (min_date < exp_date < max_date)
-            println(min_date.instant.periods.value, " ", min_date)
-            println(exp_date.instant.periods.value, " ", exp_date)
-            println(max_date.instant.periods.value, " ", max_date)
-            println((exp_date < max_date))
             if no_specified_games || (exp_game in games)
                 exp_full_path = string(resdir, exp_dir)
                 cfg = cfg_from_exp_dir(exp_full_path)

@@ -183,6 +183,7 @@ function my_fitness(ind::NSGA2ECInd, seed::Int64, game::Game)
     o1, f1 = atari_score(game, enco, reducer, cont, seed)
     #o2 = sparsity_score(enco, cont)
 	#o2 = timing_score(enco, reducer, cont) # TODO put back
+	o1 = o1 - min_fitness[1] / (max_fitness[1] - min_fitness[1]) # TODO remove
 	return o1, f1  # TODO remove
 
 	# WARNING: set min max fitnesses accordingly to objectives
