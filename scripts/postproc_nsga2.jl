@@ -9,7 +9,7 @@ resdir = joinpath(rootdir, "results/")
 
 # Filters parameters
 min_date = DateTime(2021, 11, 29)
-max_date = DateTime(2021, 12, 30)
+max_date = DateTime(2021, 11, 30, 15)
 #savedir_index = 1
 labels = Vector{String}()
 colors = Vector{Symbol}()
@@ -30,8 +30,9 @@ labels = ["NSGA2"]
 for rom_name in rom_names
     exp_dirs, games = get_exp_dir(resdir, min_date=min_date, max_date=max_date,
         games=[rom_name], reducers=reducers)
-    process_nsga2_results([exp_dirs[1]], [games[1]], objectives_names, colors, labels,
-        pareto_gen=pareto_gen, pareto_xlim=pareto_xlim, pareto_ylim=pareto_ylim)
+    process_nsga2_results([exp_dirs[1]], [games[1]], objectives_names, colors,
+        labels, pareto_gen=pareto_gen, pareto_xlim=pareto_xlim,
+        pareto_ylim=pareto_ylim)
 end
 
 #=

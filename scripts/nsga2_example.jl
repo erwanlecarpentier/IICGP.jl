@@ -17,7 +17,7 @@ s = ArgParseSettings()
 @add_arg_table! s begin
     "--cfg"
     help = "configuration script"
-    default = joinpath(default_cfgdir, "nsgaii_example.yaml")
+    default = joinpath(default_cfgdir, "nsga2_example.yaml")
     "--seed"
     help = "random seed"
     default = 0

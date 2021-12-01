@@ -19,9 +19,9 @@
 
 CMD_PREFIX="atari_"
 CFGS=("cfg/eccgp_atari_nsga2.yaml") # WARNING: sync with REDS
-REDS=("nsgaii_") # WARNING: sync with CFGS
+REDS=("nsga2_") # WARNING: sync with CFGS
 GAMES="boxing space_invaders"
-SCRIPT="scripts/atari_nsgaii.jl"
+SCRIPT="scripts/atari_nsga2.jl"
 PROJECT="$PWD"
 USERNAME=$(whoami)
 OUTDIR="/tmpdir/$USERNAME/ICGP-results/results"

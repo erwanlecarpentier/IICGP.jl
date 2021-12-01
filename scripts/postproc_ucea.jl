@@ -8,8 +8,8 @@ resdir = joinpath(rootdir, "results/")
 #fetch_backup(rootdir, clean=true)
 
 # Filters parameters
-min_date = DateTime(2021, 11, 29)
-max_date = DateTime(2021, 12, 31)
+min_date = DateTime(2021, 11, 30, 15)
+max_date = DateTime(2021, 11, 31)
 #savedir_index = 1
 labels = Vector{String}()
 colors = Vector{Symbol}()

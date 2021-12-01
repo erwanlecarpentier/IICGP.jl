@@ -66,7 +66,7 @@ function log_gen(
     for i in eachindex(e.population)
         dna_id = Formatting.format("{1:04d}", i)
 		# Log results
-		raw_fitness = (e.population[i].fitness .- min_fitness) ./ (max_fitness .- min_fitness)
+		raw_fitness = e.population[i].fitness .* (max_fitness .- min_fitness) .+ min_fitness
         #=
 		with_logger(e.logger) do
             @info Formatting.format(
@@ -77,9 +77,9 @@ function log_gen(
         end
 		=#
 		f = open(joinpath(e.resdir, e.logid, "logs/logs.csv"), "a+")
-        write(f, Formatting.format(string(e.gen, sep, e.population[i].rank, sep, raw_fitness, sep,
-			   e.population[i].fitness, sep,
-			   e.population[i].reached_frames, sep, dna_id, "\n")))
+        write(f, Formatting.format(string(e.gen, sep, e.population[i].rank, sep,
+			raw_fitness, sep, e.population[i].fitness, sep,
+			e.population[i].reached_frames, sep, dna_id, "\n")))
         close(f)
 		# Log individuals
 		enco = IPCGPInd(e.config.e_config, e.population[i].e_chromosome)
