@@ -169,7 +169,6 @@ function surrogate_fitness_evaluate(e::UCEvo{T}, fitness::Function) where T
 				  fitness(e.population[i], e.gen, e.atari_games[i]))
 		end
     end
-end
 	increment_lifetime!(e, n_remaining_eval)
 end
 

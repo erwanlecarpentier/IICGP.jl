@@ -1,4 +1,4 @@
-export process_results, process_nsga2_results
+export process_results, process_nsga2_results, process_ucea_results
 
 using Plots
 using ImageFiltering
@@ -295,6 +295,26 @@ norfit_max_key(i::Int64) = string("obj_", i, "_best_norfit")
 norfit_mea_key(i::Int64) = string("obj_", i, "_mean_norfit")
 norfit_std_key(i::Int64) = string("obj_", i, "_std_norfit")
 
+function retrieve_ucea_statistics(log::CSV.File)
+    datadict = Dict()
+    datadict["gen"] = Vector{Int64}()
+    datadict["maxmeanfit"] = Vector{Float64}()
+    datadict["maxmaxfit"] = Vector{Float64}()
+    for row in log
+        if row.gen_number ∉ datadict["gen"]
+            push!(datadict["gen"], row.gen_number)
+        end
+    end
+    for gen in datadict["gen"]
+        fitnesses = [strvec2vec(r.fitnesses) for r in log[log.gen_number .== gen]]
+        mean_fitnesses = [mean(f) for f in fitnesses]
+        max_fitnesses = [maximum(f) for f in fitnesses]
+        push!(datadict["maxmeanfit"], maximum([f for f in mean_fitnesses]))
+        push!(datadict["maxmaxfit"], maximum([f for f in max_fitnesses]))
+    end
+    datadict
+end
+
 function retrieve_nsga2_statistics(
     log::CSV.File;
     pareto_gen::Vector{Int64}=Vector{Int64}()
@@ -331,6 +351,55 @@ function retrieve_nsga2_statistics(
         datadict[pareto_key(gen)] = [strvec2vec(r.normalized_fitness) for r in log[log.gen_number .== gen]]
     end
     datadict
+end
+
+function process_ucea_results(
+    exp_dirs::Vector{String},
+    games::Vector{String},
+    objectives_names::Vector{String},
+    colors::Vector{Symbol},
+    labels::Vector{String};
+    pareto_gen::Vector{Int64}=Vector{Int64}(),
+    pareto_xlim::Tuple=(0, 1),
+    pareto_ylim::Tuple=(0, 1),
+    do_display::Bool=true,
+    do_save::Bool=true,
+    savedir_index::Int64=1
+)
+    @assert all([g == games[1] for g in games])
+    game = games[1]
+    gamename = gamename_from_romname(game)
+    # Create plots
+    xl = "Generation"
+    yl = string("Maximum mean fitness (", gamename, ")")
+    plt_maxmeanfit = plot(ylabel=yl, xlabel=xl)
+    yl = string("Maximum max fitness (", gamename, ")")
+    plt_maxmaxfit = plot(ylabel=yl, xlabel=xl)
+    # Fetch logs and plotpareto_gen
+    for k in eachindex(exp_dirs)
+        exp_dir = exp_dirs[k]
+        cfg = cfg_from_exp_dir(exp_dir)
+        log = log_from_exp_dir(exp_dir, log_file="logs/logs.csv",
+            header=1, sep=";")
+        datadict = retrieve_ucea_statistics(log)
+        plot!(plt_maxmeanfit, datadict["gen"], datadict["maxmeanfit"],
+            label=labels[1], color=colors[1], linewidth=2)
+        plot!(plt_maxmaxfit, datadict["gen"], datadict["maxmaxfit"],
+            label=labels[1], color=colors[1], linewidth=2)
+    end
+    # Display
+    if do_display
+        display(plt_maxmeanfit)
+        display(plt_maxmaxfit)
+    end
+    # Save
+    if do_save
+        graph_dir = set_graph_dir(exp_dirs, savedir_index, game)
+        figname = "maxmean_fitness.png"
+        savefig(plt_maxmeanfit, joinpath(graph_dir, figname))
+        figname = "maxmax_fitness.png"
+        savefig(plt_maxmaxfit, joinpath(graph_dir, figname))
+    end
 end
 
 function process_nsga2_results(
