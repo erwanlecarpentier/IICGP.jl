@@ -43,6 +43,7 @@ function Game(romfile::String, seed::Int64; kwargs...)
         lock(kwargs_dict[:lck]) do
             loadROM(ale, romfile)
         end
+        # unlock(kwargs_dict[:lck])
     else
         loadROM(ale, romfile)
     end

@@ -175,7 +175,7 @@ function surrogate_fitness_evaluate(e::UCEvo{T}, fitness::Function) where T
 	@sync for i in 1:n_children
         Threads.@spawn begin
 			push!(e.population[i].fitnesses,
-				  fitness(e.population[i], e.gen, e.atari_games[i]))
+				fitness(e.population[i], e.gen, e.atari_games[i]))
         end
     end
 	increment_lifetime!(e, n_children)
@@ -197,8 +197,17 @@ function surrogate_fitness_evaluate(e::UCEvo{T}, fitness::Function) where T
 	@sync for k in eachindex(to_eval)
         Threads.@spawn begin
 			i = to_eval[k]
-			push!(e.population[i].fitnesses,
-				  fitness(e.population[i], e.gen, e.atari_games[i]))
+			# OUTDATED unsafe
+			#=push!(e.population[i].fitnesses,
+				fitness(e.population[i], e.gen, e.atari_games[i]))=#
+			# NEW safe
+			f = fitness(e.population[i], e.gen, e.atari_games[i])
+			lock(lck)
+			try
+				push!(e.population[i].fitnesses, f)
+			finally
+				unlock(lck)
+			end
 		end
     end
 	increment_lifetime!(e, n_remaining_eval)
