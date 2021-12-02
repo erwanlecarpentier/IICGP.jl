@@ -114,6 +114,38 @@ function fitness_evaluate(e::UCEvo{T}, fitness::Function) where T
 	end
 end
 
+"""
+An individual is not evaluated if enough evaluations have been made.
+"""
+function evaluation_utility(n_eval_max::Int64, ind::UCInd) where T
+	if n_eval_max > 0
+		if length(ind.fitnesses) < n_eval_max
+			ucb(ind)
+		else
+			-Inf
+		end
+	else
+		ucb(ind)
+	end
+end
+
+function evaluation_utility(
+	n_eval_max::Int64,
+	m::Float64,
+	n_total::Int64,
+	n_eval::Int64
+) where T
+	if n_eval_max > 0
+		if n_eval < n_eval_max
+			ucb(m, n_total, n_eval)
+		else
+			-Inf
+		end
+	else
+		ucb(m, n_total, n_eval)
+	end
+end
+
 function exact_fitness_evaluate(e::UCEvo{T}, fitness::Function) where T
 	# 1. Evaluate all new individuals in parallel
 	n_children = e.config.n_population - e.config.n_elite
@@ -129,7 +161,7 @@ function exact_fitness_evaluate(e::UCEvo{T}, fitness::Function) where T
 	# 2. Finish evaluation budget sequentially
 	n_remaining_eval = e.config.n_eval - n_children
 	for _ in 1:n_remaining_eval
-		sort!(e.population, by=ind->ucb(ind), rev=true)
+		sort!(e.population, by=ind->evaluation_utility(e.config.n_eval_max, ind), rev=true)
 		push!(e.population[1].fitnesses,
 			  fitness(e.population[1], e.gen, e.atari_games[1]))
 		increment_lifetime!(e, 1)
@@ -155,8 +187,8 @@ function surrogate_fitness_evaluate(e::UCEvo{T}, fitness::Function) where T
 	n = [length(ind.fitnesses) for ind in e.population]
 	to_eval = Vector{Int64}()
 	for i in 1:n_remaining_eval
-		ucbs = [ucb(f[i], N[i], n[i]) for i in eachindex(f)]
-		index = argmax(ucbs)
+		utilities = [evaluation_utility(e.config.n_eval_max, f[i], N[i], n[i]) for i in eachindex(f)]
+		index = argmax(utilities)
 		push!(to_eval, index)
 		N .+= 1
 		n[index] += 1
