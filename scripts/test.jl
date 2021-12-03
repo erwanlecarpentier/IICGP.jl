@@ -55,7 +55,7 @@ Random.seed!(seed)
 n_iter = 25000
 n_para = 4
 n_steps = 10000
-rom_name = "boxing"
+rom_name = "space_invaders"
 #games = [Game(rom_name, 0) for _ in 1:n_para]
 mem_usage = Vector{Float64}()
 cfgpath = "/home/opaweynch/.julia/environments/v1.6/dev/IICGP/cfg/eccgp_atari_nsga2.yaml"
@@ -63,6 +63,7 @@ mcfg, ecfg, ccfg, redu, bootstrap = IICGP.dualcgp_config(cfgpath, rom_name)
 enco = IPCGPInd(ecfg)
 cont = CGPInd(ccfg)
 grayscale, downscale = true, true
+
 ##
 
 for e in 1:n_iter

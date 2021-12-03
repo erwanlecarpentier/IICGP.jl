@@ -151,24 +151,26 @@ function get_observation!(
     if grayscale
         if downscale
             o .= [convert(Matrix{UInt8},
-                imresize(reshape(s, (game.width, game.height)),
-                ratio=0.5, method=BSpline(Constant())))]
+                floor.(imresize(reshape(s, (game.width, game.height)),
+                ratio=0.5, method=BSpline(Linear()))))]
+            #    convert(Matrix{UInt8},
+            #    imresize(reshape(s, (game.width, game.height)),
+            #    ratio=0.5, method=BSpline(Constant())))]
         else
             o .= [reshape(s, (game.width, game.height))]
         end
     else
         if downscale
             o .= [
-                convert(
-                    Matrix{UInt8},
-                    imresize(
+                convert(Matrix{UInt8},
+                    floor.(imresize(
                         reshape(
                             @view(s[i:3:length(s)]),
                             (game.width, game.height)
                         ),
                         ratio=0.5,
-                        method=BSpline(Constant())
-                    )
+                        method=BSpline(Linear())
+                    ))
                 ) for i in 1:3
             ]
         else
@@ -194,8 +196,8 @@ function get_state(
     if downscale
         @inbounds for i in eachindex(s)
             # s[i] = scale(s[i])
-            s[i] = convert(Matrix{UInt8}, imresize(s[i], ratio=0.5, method=BSpline(Constant())))
-            # s[i] = convert(Matrix{UInt8}, floor.(imresize(s[i], ratio=0.5, method=BSpline(Linear()))))
+            #s[i] = convert(Matrix{UInt8}, imresize(s[i], ratio=0.5, method=BSpline(Constant())))
+            s[i] = convert(Matrix{UInt8}, floor.(imresize(s[i], ratio=0.5, method=BSpline(Linear()))))
             #s[i] = convert(Matrix{UInt8}, floor.(restrict(s[i]))) # Memory issues ?
         end
     end
