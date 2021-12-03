@@ -54,8 +54,8 @@ function UCEvo{T}(
     log_path = joinpath(resdir, logid, "logs/logs.csv")
     logger = CambrianLogger(log_path)
     population = init_population(T, config)
-	n_children = config.n_population - config.n_elite
-	atari_games = [Game(rom_name, 0) for _ in 1:n_children] # only n_children eval in parallel
+	# n_children = config.n_population - config.n_elite
+	atari_games = [Game(rom_name, 0) for _ in 1:length(population)]
     UCEvo(config, logid, logger, resdir, population, fitness, 0, atari_games)
 end
 
@@ -150,16 +150,21 @@ function exact_fitness_evaluate(e::UCEvo{T}, fitness::Function) where T
 	# 1. Evaluate all new individuals in parallel
 	n_children = e.config.n_population - e.config.n_elite
 	sort!(e.population, by=ind->ucb(ind), rev=true) # Children are 1st
-	@sync for i in 1:n_children
+	n = e.gen == 1 ? length(e.population) : n_children
+	for i in 1:n
+		push!(e.population[i].fitnesses,
+			  fitness(e.population[i], e.gen, e.atari_games[i]))
+	end
+	#=@sync for i in 1:n
         Threads.@spawn begin
 			push!(e.population[i].fitnesses,
 				  fitness(e.population[i], e.gen, e.atari_games[i]))
         end
-    end
-	increment_lifetime!(e, n_children)
+    end=#
+	increment_lifetime!(e, n)
 	@assert all([length(ind.fitnesses) > 0 for ind in e.population])
 	# 2. Finish evaluation budget sequentially
-	n_remaining_eval = e.config.n_eval - n_children
+	n_remaining_eval = e.config.n_eval - n
 	for _ in 1:n_remaining_eval
 		sort!(e.population, by=ind->evaluation_utility(e.config.n_eval_max, ind), rev=true)
 		push!(e.population[1].fitnesses,
