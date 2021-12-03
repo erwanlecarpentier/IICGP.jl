@@ -17,15 +17,14 @@ end
 Evaluation function for the NSGA-II algorithm.
 """
 function fitness_evaluate(e::NSGA2Evo{T}, fitness::Function) where T
-	#=
-	# TODO put back
 	@sync @inbounds for i in eachindex(e.population)
 		Threads.@spawn begin
 			e.population[i].fitness .= fitness(e.population[i], e.gen, e.atari_games[i])
 		end
     end
-	=#
-	# TODO remove START
+end
+
+function fitness_evaluate_two_atari_runs(e::NSGA2Evo{T}, fitness::Function) where T
 	n = length(e.population)
 	o1, f1 = zeros(n), zeros(Int64, n)
 	o2, f2 = zeros(n), zeros(Int64, n)
@@ -41,7 +40,6 @@ function fitness_evaluate(e::NSGA2Evo{T}, fitness::Function) where T
 		e.population[i].fitness .= [o1[i], o2[i]]
 		e.population[i].reached_frames = f1[i] + f2[i]
 	end
-	# TODO remove END
 end
 
 """

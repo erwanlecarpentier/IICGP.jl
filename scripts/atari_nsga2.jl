@@ -182,10 +182,7 @@ function my_fitness(ind::NSGA2ECInd, seed::Int64, game::Game)
 	# Sequential objectives evaluation
     o1, f1 = atari_score(game, enco, reducer, cont, seed)
     #o2 = sparsity_score(enco, cont)
-	#o2 = timing_score(enco, reducer, cont) # TODO put back
-	o1 = o1 - min_fitness[1] / (max_fitness[1] - min_fitness[1]) # TODO remove
-	return o1, f1  # TODO remove
-
+	o2 = timing_score(enco, reducer, cont)
 	# WARNING: set min max fitnesses accordingly to objectives
 	ind.reached_frames = f1 + f2
     ([o1, o2] .- min_fitness) ./ (max_fitness .- min_fitness)
@@ -212,7 +209,7 @@ end
 # Initial population containing best constant action individuals
 function cstind_init(cfg::NamedTuple)
     # Create cst individuals
-    cstinds = IICGP.get_cstind(rom_name, cfg, ecfg, ccfg, reducer)
+    cstinds = IICGP.get_cstind(NSGA2ECInd, rom_name, cfg, ecfg, ccfg, reducer)
     # Evaluate cst individuals and sort by 1st objective
     @inbounds for i in eachindex(cstinds)
 		seed = 0
@@ -257,6 +254,6 @@ for i in 1:e.config.n_gen
 end
 
 # Close games
-for g in e.atari_games
-	close!(g)
+for i in eachindex(e.atari_games)
+	close!(e.atari_games[i])
 end

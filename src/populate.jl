@@ -115,7 +115,7 @@ function ga_populate(e::DualCGPGAEvo)
         e.eval_matrix[index...] = true
     end
     if e.eval_mutant
-        for index in new_mutant_indexes # TODO test
+        for index in new_mutant_indexes
             e.eval_matrix[index...] = true
         end
     end
