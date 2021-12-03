@@ -18,7 +18,7 @@
 # frostbite riverraid
 
 CMD_PREFIX="atari_"
-CFGS=("cfg/eccgp_atari_ucea_surrogate.yaml") # WARNING: sync with REDS # TODO are you sure you want to do surrogate?
+CFGS=("cfg/eccgp_atari_ucea.yaml") # WARNING: sync with REDS
 REDS=("ucea_") # WARNING: sync with CFGS
 GAMES="boxing space_invaders"
 SCRIPT="scripts/atari_ucea.jl"
