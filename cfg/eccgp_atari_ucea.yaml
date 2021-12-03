@@ -1,7 +1,7 @@
 # General parameters
 optimizer: "ucea"
 seed: 0
-max_frames: 10 #000 TODO 10000
+max_frames: 10000
 stickiness: 0.25
 d_fitness: 1
 n_gen: 25000
