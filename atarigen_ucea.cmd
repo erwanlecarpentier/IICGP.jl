@@ -20,7 +20,7 @@
 CMD_PREFIX="atari_"
 CFGS=("cfg/eccgp_atari_ucea.yaml") # WARNING: sync with REDS
 REDS=("ucea_") # WARNING: sync with CFGS
-GAMES="solaris" #boxing space_invaders"
+GAMES="solaris boxing space_invaders"
 SCRIPT="scripts/atari_ucea.jl"
 PROJECT="$PWD"
 USERNAME=$(whoami)

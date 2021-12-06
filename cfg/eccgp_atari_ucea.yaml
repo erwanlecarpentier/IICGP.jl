@@ -12,7 +12,7 @@ n_elite: 5 # Number of elite pairs per generation
 #eval_mutant: false # GA
 tournament_size: 3
 greedy_elitism: true
-surrogate: false
+surrogate: true
 log_gen: 50
 save_gen: 50
 bootstrap: false
