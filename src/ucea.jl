@@ -151,16 +151,23 @@ function exact_fitness_evaluate(e::UCEvo{T}, fitness::Function) where T
 	n_children = e.config.n_population - e.config.n_elite
 	sort!(e.population, by=ind->ucb(ind), rev=true) # Children are 1st
 	n = e.gen == 1 ? length(e.population) : n_children
+	#=
 	for i in 1:n
 		push!(e.population[i].fitnesses,
 			  fitness(e.population[i], e.gen, e.atari_games[i]))
 	end
-	#=@sync for i in 1:n
+	=#
+	@sync for i in 1:n
         Threads.@spawn begin
-			push!(e.population[i].fitnesses,
-				  fitness(e.population[i], e.gen, e.atari_games[i]))
+  			f = fitness(e.population[i], e.gen, e.atari_games[i])
+  			lock(lck)
+  			try
+  				push!(e.population[i].fitnesses, f)
+  			finally
+  				unlock(lck)
+  			end
         end
-    end=#
+    end
 	increment_lifetime!(e, n)
 	@assert all([length(ind.fitnesses) > 0 for ind in e.population])
 	# 2. Finish evaluation budget sequentially
@@ -179,8 +186,17 @@ function surrogate_fitness_evaluate(e::UCEvo{T}, fitness::Function) where T
 	sort!(e.population, by=ind->ucb(ind), rev=true) # Children are 1st
 	@sync for i in 1:n_children
         Threads.@spawn begin
-			push!(e.population[i].fitnesses,
-				fitness(e.population[i], e.gen, e.atari_games[i]))
+			# OUTDATED unsafe (I thought it was safe)
+			#=push!(e.population[i].fitnesses,
+				fitness(e.population[i], e.gen, e.atari_games[i]))=#
+			# NEW safe
+			f = fitness(e.population[i], e.gen, e.atari_games[i])
+			lock(lck)
+			try
+				push!(e.population[i].fitnesses, f)
+			finally
+				unlock(lck)
+			end
         end
     end
 	increment_lifetime!(e, n_children)
