@@ -157,6 +157,7 @@ function exact_fitness_evaluate(e::UCEvo{T}, fitness::Function) where T
 			  fitness(e.population[i], e.gen, e.atari_games[i]))
 	end
 	=#
+	lck = ReentrantLock()
 	@sync for i in 1:n
         Threads.@spawn begin
   			f = fitness(e.population[i], e.gen, e.atari_games[i])
@@ -184,6 +185,7 @@ function surrogate_fitness_evaluate(e::UCEvo{T}, fitness::Function) where T
 	# 1. Evaluate all new individuals in parallel
 	n_children = e.config.n_population - e.config.n_elite
 	sort!(e.population, by=ind->ucb(ind), rev=true) # Children are 1st
+	lck = ReentrantLock()
 	@sync for i in 1:n_children
         Threads.@spawn begin
 			# OUTDATED unsafe (I thought it was safe)
@@ -215,6 +217,7 @@ function surrogate_fitness_evaluate(e::UCEvo{T}, fitness::Function) where T
 		n[index] += 1
 	end
 	# 3. Evaluate remaining individuals
+	lck = ReentrantLock()
 	@sync for k in eachindex(to_eval)
         Threads.@spawn begin
 			i = to_eval[k]
