@@ -6,7 +6,7 @@ stickiness: 0.25
 d_fitness: 1
 n_gen: 25000
 n_eval: 20 # Number of eval per generation
-n_eval_max: 50 # Max number of eval per ind
+n_eval_max: 0 # Max number of eval per ind
 n_population: 10
 n_elite: 5 # Number of elite pairs per generation
 #eval_mutant: false # GA
