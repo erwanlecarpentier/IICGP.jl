@@ -1,20 +1,24 @@
 # General parameters
 optimizer: "lucie"
 seed: 0
-max_frames: 10000
+max_frames: 10 # TODO 10000
 stickiness: 0.25
 d_fitness: 1
-n_gen: 25000
-n_eval_max: 120 # Max number of eval per ind
+n_gen: 5 # TODO 25000
+n_eval_max: 20 # TODO 120 # Max number of eval per ind
 n_population: 12
 n_elite: 3 # Number of elite pairs per generation
 #eval_mutant: false # GA
 tournament_size: 3
 greedy_elitism: true
+epsilon: 1.0 # Initial epsilon
+epsilon_ratio: 0.05 # epsilon = epsilon_ratio * bound_scale if is_epsilon_dynamic
+is_epsilon_dynamic: true
+delta: 0.1
 bound_type: "lucie"
 bound_scale: 1.0 # Initial bound scale
 is_bound_scale_dynamic: true
-log_gen: 50
+log_gen: 1 # TODO 50
 save_gen: 50
 bootstrap: false
 grayscale: true

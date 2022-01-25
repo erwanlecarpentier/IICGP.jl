@@ -1,6 +1,15 @@
-export load_img, save_img, split_rgb
+export load_img, save_img, split_rgb, to_csv_row
 
 using Images
+
+function to_csv_row(v::AbstractArray, sep::String)
+    string(
+        [i == length(v) ?
+        string(v[i], "\n") :
+        string(v[i], sep)
+        for i in eachindex(v)]...
+    )
+end
 
 """
     load_img(filename::String)

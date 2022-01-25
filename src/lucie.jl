@@ -3,6 +3,8 @@ export LUCIEEvo, LUCIEInd, evaluate, populate, generation
 using Cambrian
 using Statistics
 
+import Cambrian.populate, Cambrian.evaluate, Cambrian.log_gen, Cambrian.save_gen
+
 
 mutable struct LUCIEInd{T} <: Cambrian.Individual
     e_chromosome::Vector{T}
@@ -19,6 +21,14 @@ function LUCIEInd{T}(e_chromosome::Vector{T}, c_chromosome::Vector{T}) where T
 		0, 0, 0.0)
 end
 
+function LUCIEInd{T}(
+	config::NamedTuple,
+	e_chromosome::Vector{Float64},
+	c_chromosome::Vector{Float64}
+) where T
+    LUCIEInd{T}(e_chromosome, c_chromosome)
+end
+
 mutable struct LUCIEEvo{T} <: AbstractEvolution
     config::NamedTuple
     population::Vector{T}
@@ -26,18 +36,29 @@ mutable struct LUCIEEvo{T} <: AbstractEvolution
     gen::Int64 # current generation number
 	step::Int64 # current step (number of pairs of evals during this generation)
 	total_n_eval::Int64
-	total_n_eval_par::Int64
 	bound_scale::Float64
+	epsilon::Float64
+	resdir::String
+    atari_games::Vector{Game}
 end
 
-function LUCIEEvo{T}(config::NamedTuple, init::Function, fitness::Function) where T
-	if config.n_eval == Inf
+function LUCIEEvo{T}(
+	config::NamedTuple,
+    resdir::String,
+	fitness::Function,
+	init::Function,
+    rom_name::String
+) where T
+	if config.n_eval_max == Inf
 		@assert e.config.epsilon > 0.0
 		@assert 0.0 < e.config.delta < 1.0
 	end
 	population = init(T, config)
 	bound_scale = config.bound_scale
-    LUCIEEvo(config, population, fitness, 0, 0, 0, 0, bound_scale)
+	epsilon = config.epsilon
+	atari_games = [Game(rom_name, 0) for _ in 1:length(population)]
+    LUCIEEvo(config, population, fitness, 0, 0, 0, bound_scale, epsilon,
+		resdir, atari_games)
 end
 
 evaluate(e::LUCIEEvo{T}) where T = fitness_evaluate(e, e.fitness)
@@ -58,20 +79,23 @@ end
 
 function increment_n_eval!(e::LUCIEEvo{T}; n::Int64=1) where T
 	e.total_n_eval += n
-	e.total_n_eval_par += ceil(Int64, n / e.config.n_threads)
+	#e.total_n_eval_par += ceil(Int64, n / e.config.n_threads)
+end
+
+function get_seed(e::LUCIEEvo{T}) where T
+	Int64((e.gen - 1) * e.config.n_eval_max / 2 + 2 * e.step)
 end
 
 function evaluate_new_ind!(e::LUCIEEvo{T}, fitness::Function) where T
-	n_eval = 0
-	for i in eachindex(e.population)
+	n_eval = sum([length(ind.fitnesses) < 1 for ind in e.population])
+	Threads.@threads for i in eachindex(e.population)
 		if length(e.population[i].fitnesses) < 1
-			expected, noise = fitness(e.population[i])
-			push!(e.population[i].fitnesses, expected + noise)
-			e.population[i].expected_fitness = expected
-			increment_lifetime!(e)
-			n_eval += 1
+			seed = get_seed(e)
+			score = fitness(e.population[i], seed, e.atari_games[i])
+			push!(e.population[i].fitnesses, score)
 		end
 	end
+	increment_lifetime!(e, n=n_eval)
 	increment_n_eval!(e, n=n_eval)
 	n_eval
 end
@@ -84,33 +108,12 @@ function evaluate_pair!(
 ) where T
 	@assert h_index < l_index
 	Threads.@threads for i in [h_index, l_index]
-		expected, noise = fitness(e.population[i])
-		push!(e.population[i].fitnesses, expected + noise)
-		e.population[i].expected_fitness = expected
-	end
-	#increment_lifetime!(e, n=2) #TODO check
-end
-
-#=
-function update_bounds!(e::LUCIEEvo{T}) where T
-	update_bounds!(e.population, e.config.bounds_scale, e.config.delta)
-end
-
-function update_bounds!(
-	population::Vector{T},
-	bounds_scale::Float64,
-	delta::Float64
-) where T
-	n = Float64(length(population))
-	for i in eachindex(population)
-		l = Float64(population[i].lifetime)
-		u = Float64(length(population[i].fitnesses))
-		population[i].confidence_bound = bounds_scale * sqrt(
-			log(1.25 * n * l^4 / delta) / (2.0 * u)
-		)
+		seed = get_seed(e)
+		seed += i == h_index ? 1 : 0
+		score = fitness(e.population[i], seed, e.atari_games[i])
+		push!(e.population[i].fitnesses, score)
 	end
 end
-=#
 
 function update_bounds!(e::LUCIEEvo{T}) where T
 	population_size = Float64(length(e.population))
@@ -137,16 +140,16 @@ function confidence_bound(
 		cb = sqrt(log(1.25 * population_size * l^4 / e.config.delta) / (2.0 * u))
 	elseif e.config.bound_type == "lucie"
 		u_init = Float64(e.population[i].n_eval_init)
-		cb = sqrt(log(1.2 * population_size * e.step^3 * (u_init+e.step) / e.config.delta) / (2.0 * u))
+		cb = sqrt(log(1.2 * population_size * e.step^3 * (u_init + e.step) / e.config.delta) / (2.0 * u))
 	elseif e.config.bound_type == "lucie-tmax"
-		k = 1.21 + sum([1.0 / (j^1.1) for j in 1:e.config.n_eval])
-		cb = sqrt(log(population_size * k * (e.gen^2.1) * (e.step^1.1) * (e.step + (e.gen-1.0) * e.config.n_eval) / e.config.delta) / (2.0 * u))
+		k = 1.21 + sum([1.0 / (j^1.1) for j in 1:e.config.n_eval_max])
+		cb = sqrt(log(population_size * k * (e.gen^2.1) * (e.step^1.1) * (e.step + (e.gen-1.0) * e.config.n_eval_max) / e.config.delta) / (2.0 * u))
 	elseif e.config.bound_type == "lucie-tinf"
 		cb = sqrt(log(population_size * 4.45 * (e.gen^2.1) * (e.step^2.1) * (u^2.1) / e.config.delta) / (2.0 * u))
 	else
 		error("Bound type ", e.config.bound_type, " not implemented.")
 	end
-	e.bounds_scale * cb
+	e.bound_scale * cb
 end
 
 function sort_and_pick!(e::LUCIEEvo{T}) where T
@@ -163,12 +166,19 @@ function stopping_criterion(
 ) where T
 	upper_l = upper_bound(e.population[l_index])
 	lower_h = lower_bound(e.population[h_index])
-	upper_l - lower_h < e.config.epsilon
+	upper_l - lower_h < e.epsilon
 end
 
 function update_bound_scale!(e::LUCIEEvo{T}) where T
 	if e.config.is_bound_scale_dynamic
-		e.bound_scale = max([mean_fitness(ind) for ind in e.population])
+		e.bound_scale = maximum([mean_fitness(ind) for ind in e.population])
+		e.bound_scale = max(e.bound_scale, 1.0)
+	end
+end
+
+function update_epsilon!(e::LUCIEEvo{T}) where T
+	if e.config.is_epsilon_dynamic
+		e.epsilon = e.config.epsilon_ratio * e.bound_scale
 	end
 end
 
@@ -180,7 +190,8 @@ Main evaluation function for LUCIEEvo.
 function fitness_evaluate(e::LUCIEEvo{T}, fitness::Function) where T
 	n_init_eval = evaluate_new_ind!(e, fitness)
 	e.step = floor(Int64, n_init_eval / 2)
-	n_eval = e.config.n_eval - n_init_eval
+	e.step = max(e.step, 1) # Domain check
+	n_eval = e.config.n_eval_max - n_init_eval
 	pac_evaluation(e, fitness, n_eval)
 end
 
@@ -202,6 +213,7 @@ function pac_evaluation(e::LUCIEEvo{T}, fitness::Function, n_eval_max::Int64) wh
 		h_index, l_index = sort_and_pick!(e)
 	end
 	update_bound_scale!(e)
+	update_epsilon!(e)
 end
 
 """
@@ -213,6 +225,14 @@ function generation(e::LUCIEEvo{T}) where T
     nothing
 end
 
+function mean_fitness_tournament_selection(
+    pop::Vector{T},
+    tournament_size::Int64
+) where T
+    inds = shuffle!(collect(1:length(pop)))
+    sort(pop[inds[1:tournament_size]], by=ind->mean_fitness(ind))[end]
+end
+
 """
 	tournament_populate(e::LUCIEEvo{T}) where T
 
@@ -221,17 +241,10 @@ Main populate function for LUCIEEvo.
 function tournament_populate(e::LUCIEEvo{T}) where T
     children = Vector{T}()
     for _ in e.config.n_elite+1:e.config.n_population
-		parent = tournament_selection(e.population,
-            e.config.tournament_size, mean_fitness)
-		child = T(parent.chromosome)
-		if e.config.p_crossover > 0 && rand() < e.config.p_crossover
-			parents = vcat(parent, [tournament_selection(e.population,
-				e.config.tournament_size, mean_fitness) for i in 2:e.config.n_parents])
-			child = crossover(parents)
-		end
-		if e.config.p_mutation > 0 && rand() < e.config.p_mutation
-			child = mutate(child, e.config.m_rate)
-		end
+		parent = mean_fitness_tournament_selection(e.population,
+            e.config.tournament_size)
+		child = T(parent.e_chromosome, parent.c_chromosome)
+		child = mutate(child)
 		push!(children, child)
     end
     return children
@@ -256,25 +269,30 @@ end
 Logging
 """
 function log_gen(e::LUCIEEvo{T}) where T
+	logid = e.config.id
 	sep = ";"
+	logged_data_header = ["gen_number", "fitnesses", "reached_frames",
+		"total_n_eval", "epsilon", "bound_scale", "dna_id"]
     if e.gen == 1
-        f = open(joinpath(e.resdir, e.logid, "logs/logs.csv"), "w+")
-		header = string("gen_number", sep, "fitnesses", sep, "reached_frames",
-			sep, "dna_id\n")
+        f = open(joinpath(e.resdir, logid, "logs/logs.csv"), "w+")
+		header = to_csv_row(logged_data_header, sep)
         write(f, header)
         close(f)
     end
-	enco_path = joinpath(e.resdir, e.logid, Formatting.format("gens/encoder_{1:04d}", e.gen))
-    cont_path = joinpath(e.resdir, e.logid, Formatting.format("gens/controller_{1:04d}", e.gen))
+	enco_path = joinpath(e.resdir, logid, Formatting.format("gens/encoder_{1:04d}", e.gen))
+    cont_path = joinpath(e.resdir, logid, Formatting.format("gens/controller_{1:04d}", e.gen))
     mkpath(enco_path)
     mkpath(cont_path)
     for i in eachindex(e.population)
         dna_id = Formatting.format("{1:04d}", i)
 		# Log results
-		f = open(joinpath(e.resdir, e.logid, "logs/logs.csv"), "a+")
-        write(f, Formatting.format(string(e.gen, sep,
-			   e.population[i].fitnesses, sep,
-			   e.population[i].reached_frames, sep, dna_id, "\n")))
+		f = open(joinpath(e.resdir, logid, "logs/logs.csv"), "a+")
+		data = [
+			e.gen, e.population[i].fitnesses,
+			e.population[i].reached_frames, e.total_n_eval, e.epsilon,
+			e.bound_scale, dna_id
+		]
+        write(f, Formatting.format(to_csv_row(data, sep)))
         close(f)
 		# Log individuals
 		ind_fit = [mean_fitness(e.population[i])]

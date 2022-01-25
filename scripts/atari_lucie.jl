@@ -106,20 +106,20 @@ end
 
 # User-defined fitness function
 function my_fitness(ind::LUCIEInd, seed::Int64, game::Game)
-    e = IPCGPInd(ecfg, ind.e_chromosome)
-    c = CGPInd(ccfg, ind.c_chromosome)
-    score, f = atari_score(game, e, reducer, c, seed)
+    enco = IPCGPInd(ecfg, ind.e_chromosome)
+    cont = CGPInd(ccfg, ind.c_chromosome)
+	score, f = atari_score(game, enco, reducer, cont, seed)
 	push!(ind.reached_frames, f)
     score
 end
 
 # User-defined mutation function
-function mutate(ind::UCInd)
-    e = IPCGPInd(ecfg, ind.e_chromosome)
-    e_child = goldman_mutate(ecfg, e, init_function=IPCGPInd)
-    c = CGPInd(ccfg, ind.c_chromosome)
-    c_child = goldman_mutate(ccfg, c)
-    UCInd(e_child.chromosome, c_child.chromosome)
+function mutate(ind::LUCIEInd)
+    enco = IPCGPInd(ecfg, ind.e_chromosome)
+    e_child = goldman_mutate(ecfg, enco, init_function=IPCGPInd)
+    cont = CGPInd(ccfg, ind.c_chromosome)
+    c_child = goldman_mutate(ccfg, cont)
+    LUCIEInd{Float64}(e_child.chromosome, c_child.chromosome)
 end
 
 # User-defined population initialization function
@@ -158,7 +158,7 @@ function cstind_init(indtype::Type, config::NamedTuple)
 end
 
 # Create evolution framework
-e = UCEvo{UCInd}(mcfg, resdir, my_fitness, cstind_init, rom_name)
+e = LUCIEEvo{LUCIEInd{Float64}}(mcfg, resdir, my_fitness, cstind_init, rom_name)
 mem_usage = Vector{Float64}()
 
 # Run experiment
