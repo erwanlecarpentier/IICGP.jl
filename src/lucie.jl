@@ -67,6 +67,7 @@ function get_log(e::LUCIEEvo{T}) where T
     [:expected_fitness, :fitnesses, :lifetime]
 end
 
+median_fitness(ind::LUCIEInd) = length(ind.fitnesses) > 0 ? median(ind.fitnesses) : -Inf
 mean_fitness(ind::LUCIEInd) = length(ind.fitnesses) > 0 ? mean(ind.fitnesses) : -Inf
 lower_bound(ind::LUCIEInd) = mean_fitness(ind) - ind.confidence_bound
 upper_bound(ind::LUCIEInd) = mean_fitness(ind) + ind.confidence_bound
@@ -225,12 +226,12 @@ function generation(e::LUCIEEvo{T}) where T
     nothing
 end
 
-function mean_fitness_tournament_selection(
+function median_fitness_tournament_selection(
     pop::Vector{T},
     tournament_size::Int64
 ) where T
     inds = shuffle!(collect(1:length(pop)))
-    sort(pop[inds[1:tournament_size]], by=ind->mean_fitness(ind))[end]
+    sort(pop[inds[1:tournament_size]], by=ind->median_fitness(ind))[end]
 end
 
 """
@@ -241,7 +242,7 @@ Main populate function for LUCIEEvo.
 function tournament_populate(e::LUCIEEvo{T}) where T
     children = Vector{T}()
     for _ in e.config.n_elite+1:e.config.n_population
-		parent = mean_fitness_tournament_selection(e.population,
+		parent = median_fitness_tournament_selection(e.population,
             e.config.tournament_size)
 		child = T(parent.e_chromosome, parent.c_chromosome)
 		child = mutate(child)
