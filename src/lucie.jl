@@ -8,13 +8,15 @@ mutable struct LUCIEInd{T} <: Cambrian.Individual
     e_chromosome::Vector{T}
     c_chromosome::Vector{T}
     fitnesses::Vector{Float64}
+	reached_frames::Vector{Int64}
     lifetime::Int64
 	n_eval_init::Int64
 	confidence_bound::Float64
 end
 
 function LUCIEInd{T}(e_chromosome::Vector{T}, c_chromosome::Vector{T}) where T
-    LUCIEInd(e_chromosome, c_chromosome, Vector{Float64}(), 0, 0, 0.0)
+    LUCIEInd(e_chromosome, c_chromosome, Vector{Float64}(), Vector{Int64}(),
+		0, 0, 0.0)
 end
 
 mutable struct LUCIEEvo{T} <: AbstractEvolution
@@ -248,4 +250,43 @@ function populate(e::LUCIEEvo{T}) where T
     children = tournament_populate(e)
     push!(new_pop, children...)
     e.population = new_pop
+end
+
+"""
+Logging
+"""
+function log_gen(e::LUCIEEvo{T}) where T
+	sep = ";"
+    if e.gen == 1
+        f = open(joinpath(e.resdir, e.logid, "logs/logs.csv"), "w+")
+		header = string("gen_number", sep, "fitnesses", sep, "reached_frames",
+			sep, "dna_id\n")
+        write(f, header)
+        close(f)
+    end
+	enco_path = joinpath(e.resdir, e.logid, Formatting.format("gens/encoder_{1:04d}", e.gen))
+    cont_path = joinpath(e.resdir, e.logid, Formatting.format("gens/controller_{1:04d}", e.gen))
+    mkpath(enco_path)
+    mkpath(cont_path)
+    for i in eachindex(e.population)
+        dna_id = Formatting.format("{1:04d}", i)
+		# Log results
+		f = open(joinpath(e.resdir, e.logid, "logs/logs.csv"), "a+")
+        write(f, Formatting.format(string(e.gen, sep,
+			   e.population[i].fitnesses, sep,
+			   e.population[i].reached_frames, sep, dna_id, "\n")))
+        close(f)
+		# Log individuals
+		ind_fit = [mean_fitness(e.population[i])]
+		enco = IPCGPInd(e.config.e_config, e.population[i].e_chromosome)
+		enco.fitness .= ind_fit
+		f = open(string(enco_path, "/", dna_id, ".dna"), "w+")
+        write(f, string(enco))
+        close(f)
+        cont = CGPInd(e.config.c_config, e.population[i].c_chromosome)
+		cont.fitness .= ind_fit
+        f = open(string(cont_path, "/", dna_id, ".dna"), "w+")
+        write(f, string(cont))
+        close(f)
+    end
 end

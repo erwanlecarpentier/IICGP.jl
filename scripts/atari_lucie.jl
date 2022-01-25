@@ -106,10 +106,10 @@ end
 
 # User-defined fitness function
 function my_fitness(ind::LUCIEInd, seed::Int64, game::Game)
-    enco = IPCGPInd(ecfg, ind.e_chromosome)
-    cont = CGPInd(ccfg, ind.c_chromosome)
-    score, f = atari_score(game, enco, reducer, cont, seed)
-	ind.reached_frames = f
+    e = IPCGPInd(ecfg, ind.e_chromosome)
+    c = CGPInd(ccfg, ind.c_chromosome)
+    score, f = atari_score(game, e, reducer, c, seed)
+	push!(ind.reached_frames, f)
     score
 end
 
