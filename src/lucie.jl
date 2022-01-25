@@ -5,16 +5,16 @@ using Statistics
 
 
 mutable struct LUCIEInd{T} <: Cambrian.Individual
-    chromosome::Vector{T}
+    e_chromosome::Vector{T}
+    c_chromosome::Vector{T}
     fitnesses::Vector{Float64}
-    expected_fitness::Float64 # For logging if deterministic
     lifetime::Int64
 	n_eval_init::Int64
 	confidence_bound::Float64
 end
 
-function LUCIEInd{T}(chromosome::Vector{T}) where T
-    LUCIEInd(chromosome, Vector{Float64}(), -Inf, 0, 0, 0.0)
+function LUCIEInd{T}(e_chromosome::Vector{T}, c_chromosome::Vector{T}) where T
+    LUCIEInd(e_chromosome, c_chromosome, Vector{Float64}(), 0, 0, 0.0)
 end
 
 mutable struct LUCIEEvo{T} <: AbstractEvolution
