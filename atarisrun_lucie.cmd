@@ -5,8 +5,8 @@
 #SBATCH --ntasks-per-node=36
 #SBATCH --ntasks-per-core=1
 #SBATCH --threads-per-core=1
-#SBATCH -o /tmpdir/%u/logs/job%J_atari_lucie.out
-#SBATCH -e /tmpdir/%u/logs/job%J_atari_lucie.log
+#SBATCH -o /tmpdir/%u/logs/slurm.%N.%j.out # STDOUT
+#SBATCH -e /tmpdir/%u/logs/slurm.%N.%j.err # STDERR
 #SBATCH --mem=192000
 #SBATCH --time=00:00:10
 #SBATCH --mail-user=erwanlecarpentier@mailbox.org
@@ -23,7 +23,7 @@ NINSTANCES=3
 
 for GAME in $GAMES; do
 	for i in $(seq 1 $NINSTANCES); do
-		srun -N 1 -n 2 julia --threads 2 --project=$PROJECT $SCRIPT --cfg=$CFG --game=$GAME --out=$OUTDIR &
+		echo srun -N 1 -n 2 julia --threads 2 --project=$PROJECT $SCRIPT --cfg=$CFG --game=$GAME --out=$OUTDIR &
 		sleep 0.1
 	done
 done
