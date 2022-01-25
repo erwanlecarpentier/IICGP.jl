@@ -9,11 +9,12 @@ mutable struct LUCIEInd{T} <: Cambrian.Individual
     fitnesses::Vector{Float64}
     expected_fitness::Float64 # For logging if deterministic
     lifetime::Int64
+	n_eval_init::Int64
 	confidence_bound::Float64
 end
 
 function LUCIEInd{T}(chromosome::Vector{T}) where T
-    LUCIEInd(chromosome, Vector{Float64}(), -Inf, 0, 0.0)
+    LUCIEInd(chromosome, Vector{Float64}(), -Inf, 0, 0, 0.0)
 end
 
 mutable struct LUCIEEvo{T} <: AbstractEvolution
@@ -24,6 +25,7 @@ mutable struct LUCIEEvo{T} <: AbstractEvolution
 	step::Int64 # current step (number of pairs of evals during this generation)
 	total_n_eval::Int64
 	total_n_eval_par::Int64
+	bound_scale::Float64
 end
 
 function LUCIEEvo{T}(config::NamedTuple, init::Function, fitness::Function) where T
@@ -32,7 +34,8 @@ function LUCIEEvo{T}(config::NamedTuple, init::Function, fitness::Function) wher
 		@assert 0.0 < e.config.delta < 1.0
 	end
 	population = init(T, config)
-    LUCIEEvo(config, population, fitness, 0, 0, 0, 0)
+	bound_scale = config.bound_scale
+    LUCIEEvo(config, population, fitness, 0, 0, 0, 0, bound_scale)
 end
 
 evaluate(e::LUCIEEvo{T}) where T = fitness_evaluate(e, e.fitness)
@@ -114,6 +117,12 @@ function update_bounds!(e::LUCIEEvo{T}) where T
 	end
 end
 
+function update_n_eval_init!(e::LUCIEEvo{T}) where T
+	for i in eachindex(e.population)
+		e.population[i].n_eval_init = Float64(length(e.population[i].fitnesses))
+	end
+end
+
 function confidence_bound(
 	e::LUCIEEvo{T},
 	population_size::Float64,
@@ -124,15 +133,18 @@ function confidence_bound(
 	if e.config.bound_type == "lucb1"
 		l = Float64(e.population[i].lifetime)
 		cb = sqrt(log(1.25 * population_size * l^4 / e.config.delta) / (2.0 * u))
-	elseif e.config.bound_type == "lucbea-tmax"
-		k = 1.21 + sum([1.0 / (i^1.1) for i in 1:e.config.n_eval])
+	elseif e.config.bound_type == "lucie"
+		u_init = Float64(e.population[i].n_eval_init)
+		cb = sqrt(log(1.2 * population_size * e.step^3 * (u_init+e.step) / e.config.delta) / (2.0 * u))
+	elseif e.config.bound_type == "lucie-tmax"
+		k = 1.21 + sum([1.0 / (j^1.1) for j in 1:e.config.n_eval])
 		cb = sqrt(log(population_size * k * (e.gen^2.1) * (e.step^1.1) * (e.step + (e.gen-1.0) * e.config.n_eval) / e.config.delta) / (2.0 * u))
-	elseif e.config.bound_type == "lucbea-tinf"
+	elseif e.config.bound_type == "lucie-tinf"
 		cb = sqrt(log(population_size * 4.45 * (e.gen^2.1) * (e.step^2.1) * (u^2.1) / e.config.delta) / (2.0 * u))
 	else
 		error("Bound type ", e.config.bound_type, " not implemented.")
 	end
-	e.config.bounds_scale * cb
+	e.bounds_scale * cb
 end
 
 function sort_and_pick!(e::LUCIEEvo{T}) where T
@@ -152,6 +164,12 @@ function stopping_criterion(
 	upper_l - lower_h < e.config.epsilon
 end
 
+function update_bound_scale!(e::LUCIEEvo{T}) where T
+	if e.config.is_bound_scale_dynamic
+		e.bound_scale = max([mean_fitness(ind) for ind in e.population])
+	end
+end
+
 """
 	fitness_evaluate(e::LUCIEEvo{T}, fitness::Function) where T
 
@@ -165,6 +183,7 @@ function fitness_evaluate(e::LUCIEEvo{T}, fitness::Function) where T
 end
 
 function pac_evaluation(e::LUCIEEvo{T}, fitness::Function, n_eval_max::Int64) where T
+	update_n_eval_init!(e)
 	update_bounds!(e)
 	h_index, l_index = sort_and_pick!(e)
 	n_eval = 0
@@ -180,6 +199,7 @@ function pac_evaluation(e::LUCIEEvo{T}, fitness::Function, n_eval_max::Int64) wh
 		update_bounds!(e)
 		h_index, l_index = sort_and_pick!(e)
 	end
+	update_bound_scale!(e)
 end
 
 """
