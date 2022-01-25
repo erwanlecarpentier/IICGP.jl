@@ -23,7 +23,7 @@ NINSTANCES=3
 
 for GAME in $GAMES; do
 	for i in $(seq 1 $NINSTANCES); do
-		srun -N 1 -n 2 julia --threads 2 --project=$PROJECT $SCRIPT --cfg=$CFG --game=$GAME --out=$OUTDIR &
+		srun --exclusive -N 1 -n 1 -c 2 --time=00:10:00 julia --threads 2 --project=$PROJECT $SCRIPT --cfg=$CFG --game=$GAME --out=$OUTDIR &
 		sleep 0.1
 	done
 done
