@@ -24,5 +24,6 @@ include("init.jl")
 include("saving.jl")
 include("visual.jl")
 include("ucea.jl")
+include("lucie.jl")
 
 end
