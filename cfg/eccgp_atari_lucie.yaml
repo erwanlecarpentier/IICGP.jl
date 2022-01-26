@@ -1,7 +1,7 @@
 # General parameters
 optimizer: "lucie"
 seed: 0
-max_frames: 10 # TODO 10000
+max_frames: 10000
 stickiness: 0.25
 d_fitness: 1
 n_gen: 5 # TODO 25000
@@ -12,7 +12,7 @@ n_elite: 3 # Number of elite pairs per generation
 tournament_size: 3
 greedy_elitism: true
 epsilon: 1.0 # Initial epsilon
-epsilon_ratio: 0.05 # epsilon = epsilon_ratio * bound_scale if is_epsilon_dynamic
+epsilon_ratio: 0.1 # epsilon = epsilon_ratio * bound_scale if is_epsilon_dynamic
 is_epsilon_dynamic: true
 delta: 0.1
 bound_type: "lucie"
