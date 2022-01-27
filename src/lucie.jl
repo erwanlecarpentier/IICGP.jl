@@ -141,7 +141,7 @@ function confidence_bound(
 		cb = sqrt(log(1.25 * population_size * l^4 / e.config.delta) / (2.0 * u))
 	elseif e.config.bound_type == "lucie"
 		u_init = Float64(e.population[i].n_eval_init)
-		cb = sqrt(log(1.2 * population_size * e.step^3 * (u_init + e.step) / e.config.delta) / (2.0 * u))
+		cb = sqrt(log(2.3 * population_size * e.step^4 / e.config.delta) / (2.0 * u))
 	elseif e.config.bound_type == "lucie-tmax"
 		k = 1.21 + sum([1.0 / (j^1.1) for j in 1:e.config.n_eval_max])
 		cb = sqrt(log(population_size * k * (e.gen^2.1) * (e.step^1.1) * (e.step + (e.gen-1.0) * e.config.n_eval_max) / e.config.delta) / (2.0 * u))
