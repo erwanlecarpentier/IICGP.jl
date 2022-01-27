@@ -1,14 +1,15 @@
 #!/bin/bash
 #SBATCH -J lucie-atari
 #SBATCH -N 1
-#SBATCH -n 36
+#SBATCH -n 18
+#SBATCH --cpus-per-task=2
+#SBATCH -o /tmpdir/%u/logs/job%J_atari_lucie.out
+#SBATCH -e /tmpdir/%u/logs/job%J_atari_lucie.log
+#SBATCH --time=00:10:00
+#SBATCH --mail-user=erwanlecarpentier@mailbox.org
 # SBATCH --ntasks-per-node=36
 # SBATCH --ntasks-per-core=1
 # SBATCH --threads-per-core=1
-# SBATCH -o /tmpdir/%u/logs/job%J_atari_lucie.out
-# SBATCH -e /tmpdir/%u/logs/job%J_atari_lucie.log
-#SBATCH --time=00:10:00
-# SBATCH --mail-user=erwanlecarpentier@mailbox.org
 
 USERNAME=$(whoami)
 OUTDIR="/tmpdir/$USERNAME/ICGP-results/results"
