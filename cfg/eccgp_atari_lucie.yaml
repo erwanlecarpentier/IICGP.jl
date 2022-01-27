@@ -4,8 +4,8 @@ seed: 0
 max_frames: 10000
 stickiness: 0.25
 d_fitness: 1
-n_gen: 5 # TODO 25000
-n_eval_max: 20 # TODO 120 # Max number of eval per ind
+n_gen: 25000
+n_eval_max: 120 # Max number of eval per gen
 n_population: 12
 n_elite: 3 # Number of elite pairs per generation
 #eval_mutant: false # GA
@@ -19,7 +19,7 @@ bound_type: "lucie"
 bound_scale: 1.0 # Initial bound scale
 is_bound_scale_dynamic: true
 log_gen: 1 # TODO 50
-save_gen: 50
+save_gen: 1 # TODO 50
 bootstrap: false
 grayscale: true
 downscale: true

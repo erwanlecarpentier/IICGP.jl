@@ -7,9 +7,12 @@
 #SBATCH -e /tmpdir/%u/logs/job%J_atari_lucie.log
 #SBATCH --time=00:10:00
 #SBATCH --mail-user=erwanlecarpentier@mailbox.org
+
 # SBATCH --ntasks-per-node=36
 # SBATCH --ntasks-per-core=1
 # SBATCH --threads-per-core=1
+
+export OMP_NUM_THREADS=2
 
 USERNAME=$(whoami)
 OUTDIR="/tmpdir/$USERNAME/ICGP-results/results"
