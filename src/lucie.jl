@@ -172,7 +172,9 @@ end
 
 function update_bound_scale!(e::LUCIEEvo{T}) where T
 	if e.config.is_bound_scale_dynamic
-		e.bound_scale = maximum([mean_fitness(ind) for ind in e.population])
+		max_mean = maximum([mean_fitness(ind) for ind in e.population])
+		min_mean = minimum([mean_fitness(ind) for ind in e.population])
+		e.bound_scale = abs(max_mean - min_mean)
 		e.bound_scale = max(e.bound_scale, 1.0)
 	end
 end
