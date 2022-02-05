@@ -1,4 +1,5 @@
 export process_results, process_nsga2_results, process_ucea_results
+export process_lucie_results
 
 using DataFrames
 using Plots
@@ -153,6 +154,25 @@ function getcolor(colors::Vector{Symbol}, i::Int64, reducer_type::String)
     end
 end
 
+function group_by_cfg(exp_dirs::Vector{String})
+    n_cat = 0
+    cfg2cat = Dict{Dict{Any,Any},Int64}() # Link cfg to category
+    ind2cat = Dict{Int64,Int64}() # Link index to category
+    for i in eachindex(exp_dirs)
+        exp_dir = exp_dirs[i]
+        cfg = cfg_from_exp_dir(exp_dir)
+        if cfg in keys(cfg2cat) # Link index to existing category
+            cat = cfg2cat[cfg]
+            ind2cat[i] = cat
+        else # Add a new category
+            n_cat += 1
+            cfg2cat[cfg] = n_cat
+            ind2cat[i] = n_cat
+        end
+    end
+    cfg2cat, ind2cat
+end
+
 """
     plot_cibest(
         exp_dirs::Vector{String},
@@ -176,21 +196,7 @@ function plot_cibest(
     ma::Int64=1
 )
     # 1. Link cfgs and indexes to categories
-    n_cat = 0
-    cfg2cat = Dict{Dict{Any,Any},Int64}() # Link cfg to category
-    ind2cat = Dict{Int64,Int64}() # Link index to category
-    for i in eachindex(exp_dirs)
-        exp_dir = exp_dirs[i]
-        cfg = cfg_from_exp_dir(exp_dir)
-        if cfg in keys(cfg2cat) # Link index to existing category
-            cat = cfg2cat[cfg]
-            ind2cat[i] = cat
-        else # Add a new category
-            n_cat += 1
-            cfg2cat[cfg] = n_cat
-            ind2cat[i] = n_cat
-        end
-    end
+    cfg2cat, ind2cat = group_by_cfg(exp_dirs)
     # 2. Fetch logs
     cat2logs = Dict{Int64,Vector{Vector{Float64}}}()
     for i in eachindex(exp_dirs)
@@ -289,7 +295,58 @@ end
 
 replace_nan(v::Vector{T}, val::T) where T = map(x -> isnan(x) ? val : x, v)
 
-function retrieve_ucea_statistics(log::CSV.File)
+function fetch_lucie_data(
+    exp_dirs::Vector{String},
+    cfg2cat::Dict{Dict{Any,Any},Int64},
+    ind2cat::Dict{Int64,Int64};
+    verbose::Bool=true
+)
+    ind2data = Dict{Int64,Dict{Any,Any}}()
+    for i in eachindex(exp_dirs)
+        exp_dir = exp_dirs[i]
+        #cfg = cfg_from_exp_dir(exp_dir)
+        log = log_from_exp_dir(exp_dir, log_file="logs/logs.csv",
+            header=1, sep=";")
+        df = DataFrame(log)
+        ind2data[i] = Dict()
+        ind2data[i]["gen"] = Vector{Int64}()
+        for row in eachrow(df)
+            if row.gen_number ∉ ind2data[i]["gen"]
+                push!(ind2data[i]["gen"], row.gen_number)
+            end
+        end
+        for gen in ind2data[i]["gen"]
+            df_gen = filter(row -> row.gen_number == gen, df)
+            println(length(eachrow(df_gen)))
+            # TODO here
+        end
+        if verbose
+            println()
+            println("index       : ", i)
+            println("n points    : ", length(ind2data[i]["gen"]))
+            println("reached gen : ", ind2data[i]["gen"][end])
+        end
+    end
+end
+
+function process_lucie_results(
+    exp_dirs::Vector{String},
+    games::Vector{String},
+    colors::Vector{Symbol},
+    labels::Vector{String};
+    do_display::Bool=true,
+    do_save::Bool=true,
+)
+    @assert all([g == games[1] for g in games])
+    game = games[1]
+    gamename = gamename_from_romname(game)
+    # 1. Link cfgs and indexes to categories
+    cfg2cat, ind2cat = group_by_cfg(exp_dirs)
+    # 2. Fetch data
+    d = fetch_lucie_data(exp_dirs, cfg2cat, ind2cat)
+end
+
+function fetch_ucea_data(log::CSV.File)
     df = DataFrame(log)
     datadict = Dict()
     datadict["gen"] = Vector{Int64}()
@@ -341,13 +398,13 @@ function process_ucea_results(
     yl_neval = string("Number of evaluations ", gamename)
     plt_fit = plot(ylabel=yl_fit, xlabel=xl, legend=:bottomright)
     plt_neval = plot(ylabel=yl_neval, xlabel=xl, legend=:topleft)
-    # Fetch logs and plotpareto_gen
+    # Fetch logs and plot
     for k in eachindex(exp_dirs)
         exp_dir = exp_dirs[k]
         cfg = cfg_from_exp_dir(exp_dir)
         log = log_from_exp_dir(exp_dir, log_file="logs/logs.csv",
             header=1, sep=";")
-        datadict = retrieve_ucea_statistics(log)
+        datadict = fetch_ucea_data(log)
         lb_mean = string(labels[k], " best mean")
         lb_best = string(labels[k], " best score of best mean individual")
         lb_best_ever = string(labels[k], " best score across all individuals")
