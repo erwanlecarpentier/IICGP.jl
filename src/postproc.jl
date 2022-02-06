@@ -429,7 +429,7 @@ function process_lucie_results(
     if do_save
         for g in graphs
             graph_dir = set_graph_dir(exp_dirs, savedir_index, game)
-            graph_name = string(game, "_", g, ".png")
+            graph_name = string(g, ".png")
             graph_path = joinpath(graph_dir, graph_name)
             savefig(plt_dict[g], graph_path)
         end
