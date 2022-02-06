@@ -253,21 +253,6 @@ function plot_cibest(
         col = cat2col[cat]
         plot!(plt, y, ribbon=ci, label=lab, color=col)
     end
-    #=
-    # Re-plot particular experiments
-    for i in eachindex(exp_dirs)
-        exp_dir = exp_dirs[i]
-        cfg = cfg_from_exp_dir(exp_dir)
-        log = log_from_exp_dir(exp_dir)
-        kernel = OffsetArray(fill(1/(2*ma+1), 2*ma+1), -ma:ma)
-        best = (ma == 1) ? log.best : imfilter(log.best, kernel)
-        mean = (ma == 1) ? log.mean : imfilter(log.mean, kernel)
-        std = (ma == 1) ? log.std : imfilter(log.std, kernel)
-        save_gen = cfg["save_gen"]
-        x = 1:save_gen:save_gen*length(best)
-        plot!(plt, x, best)#, label=label_i, color=color_i)
-    end
-    =#
     plt
 end
 
@@ -295,10 +280,65 @@ end
 
 replace_nan(v::Vector{T}, val::T) where T = map(x -> isnan(x) ? val : x, v)
 
+# LUCIE_PLOTS = []
+
+function init_lucie_plots()
+    plt_dict = Dict()
+    plt_dict["meanfit_vs_gen"] = plot(ylabel="Best mean fitness",
+        xlabel="Generation", legend=:bottomright)
+    plt_dict["maxfit_vs_gen"] = plot(ylabel="Best max fitness",
+        xlabel="Generation", legend=:bottomright)
+    #plt_dict["all_n_eval_vs_gen"] = heatmap()
+    plt_dict
+end
+
+function fill_lucie_plots!(
+    plt_dict::Dict{Any,Any},
+    ind2data::Dict{Int64, Dict{Any, Any}}
+)
+    hms = Vector{Any}()
+    for k in keys(ind2data)
+        plot!(plt_dict["meanfit_vs_gen"], ind2data[k]["gen"], ind2data[k]["best_mean_fit"],
+            ribbon=ind2data[k]["best_mean_fit_ind_std"],
+            label=string("run ", k)) #, color=colors[k])
+        plot!(plt_dict["maxfit_vs_gen"], ind2data[k]["gen"], ind2data[k]["best_best_fit"],
+            label=string("run ", k))
+        n_points = length(ind2data[k]["all_n_eval"])
+        n_ind = length(ind2data[k]["all_n_eval"][1])
+        nevals = zeros(Int64, (n_ind, n_points))
+        for j in eachindex(ind2data[k]["all_n_eval"])
+            nevals[:,j] .= reverse(ind2data[k]["all_n_eval"][j])
+        end
+        push!(hms, heatmap(nevals))
+    end
+    plt_dict["neval_vs_gen"] = plot(hms..., layout=(length(keys(ind2data)),1),
+        ylabel="n_eval")
+end
+
+function add_pergen_lucie_data!(d::Dict{Any,Any}, df_gen::DataFrame)
+    ks = ["best_mean_fit", "best_best_fit", "all_n_eval",
+        "best_mean_fit_ind_std", "best_mean_fit_ind_neval"]
+    for k in ks
+        if k ∉ keys(d)
+            d[k] = Vector{Union{Int64,Float64,Vector{Int64}}}()
+        end
+    end
+    fitnesses = [strvec2vec(f) for f in df_gen.fitnesses]
+    means = [mean(f) for f in fitnesses] # mean of each ind
+    bests = [maximum(f) for f in fitnesses] # best score of each ind
+    neval = [length(f) for f in fitnesses] # n_eval of each ind
+    stds = replace_nan([std(f) for f in fitnesses], 0.0)
+    best_mean_fit_ind_index = argmax(means)
+    best_best_fit_index = argmax(bests)
+    push!(d["best_mean_fit"], means[best_mean_fit_ind_index])
+    push!(d["best_best_fit"], bests[best_best_fit_index])
+    push!(d["best_mean_fit_ind_std"], stds[best_mean_fit_ind_index])
+    push!(d["best_mean_fit_ind_neval"], neval[best_mean_fit_ind_index])
+    push!(d["all_n_eval"], neval)
+end
+
 function fetch_lucie_data(
-    exp_dirs::Vector{String},
-    cfg2cat::Dict{Dict{Any,Any},Int64},
-    ind2cat::Dict{Int64,Int64};
+    exp_dirs::Vector{String};
     verbose::Bool=true
 )
     ind2data = Dict{Int64,Dict{Any,Any}}()
@@ -317,16 +357,17 @@ function fetch_lucie_data(
         end
         for gen in ind2data[i]["gen"]
             df_gen = filter(row -> row.gen_number == gen, df)
-            println(length(eachrow(df_gen)))
-            # TODO here
+            add_pergen_lucie_data!(ind2data[i], df_gen)
         end
         if verbose
             println()
             println("index       : ", i)
             println("n points    : ", length(ind2data[i]["gen"]))
             println("reached gen : ", ind2data[i]["gen"][end])
+            println("keys        : ", keys(ind2data[i]))
         end
     end
+    ind2data
 end
 
 function process_lucie_results(
@@ -343,7 +384,20 @@ function process_lucie_results(
     # 1. Link cfgs and indexes to categories
     cfg2cat, ind2cat = group_by_cfg(exp_dirs)
     # 2. Fetch data
-    d = fetch_lucie_data(exp_dirs, cfg2cat, ind2cat)
+    ind2data = fetch_lucie_data(exp_dirs)
+    # 3. Plot
+    plt_dict = init_lucie_plots()
+    fill_lucie_plots!(plt_dict, ind2data)
+    # 4. Display
+    if do_display
+        display(plt_dict["meanfit_vs_gen"])
+        display(plt_dict["maxfit_vs_gen"])
+        display(plt_dict["neval_vs_gen"])
+    end
+    # 5. Save
+    if do_save
+        println("TODO save")
+    end
 end
 
 function fetch_ucea_data(log::CSV.File)

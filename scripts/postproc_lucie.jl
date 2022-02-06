@@ -1,5 +1,6 @@
 using IICGP
 using Dates
+using Plots
 
 
 rootdir = joinpath(homedir(), "Documents/git/ICGP-results/")
@@ -21,6 +22,7 @@ baselines = true
 
 colors = [:skyblue3]
 labels = ["LUCIE"]
+theme(:ggplot2) # :default
 
 for rom_name in rom_names
     exp_dirs, games = get_exp_dir(resdir, min_date=min_date, max_date=max_date,
