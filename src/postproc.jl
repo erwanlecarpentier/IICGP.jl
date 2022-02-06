@@ -288,7 +288,12 @@ function init_lucie_plots()
         xlabel="Generation", legend=:bottomright)
     plt_dict["maxfit_vs_gen"] = plot(ylabel="Best max fitness",
         xlabel="Generation", legend=:bottomright)
-    #plt_dict["all_n_eval_vs_gen"] = heatmap()
+    plt_dict["epsilon_vs_gen"] = plot(ylabel="Epsilon",
+        xlabel="Generation", legend=:bottomright)
+    plt_dict["bound_scale_vs_gen"] = plot(ylabel="Scaling factor",
+        xlabel="Generation", legend=:bottomright)
+    plt_dict["total_n_eval"] = plot(ylabel="Total number of evaluations",
+        xlabel="Generation", legend=:bottomright)
     plt_dict
 end
 
@@ -297,32 +302,52 @@ function fill_lucie_plots!(
     ind2data::Dict{Int64, Dict{Any, Any}}
 )
     hms = Vector{Any}()
+    log_hms = Vector{Any}()
     for k in keys(ind2data)
         plot!(plt_dict["meanfit_vs_gen"], ind2data[k]["gen"], ind2data[k]["best_mean_fit"],
             ribbon=ind2data[k]["best_mean_fit_ind_std"],
             label=string("run ", k)) #, color=colors[k])
         plot!(plt_dict["maxfit_vs_gen"], ind2data[k]["gen"], ind2data[k]["best_best_fit"],
             label=string("run ", k))
+        plot!(plt_dict["epsilon_vs_gen"], ind2data[k]["gen"], ind2data[k]["epsilon"],
+            label=string("run ", k))
+        plot!(plt_dict["bound_scale_vs_gen"], ind2data[k]["gen"], ind2data[k]["bound_scale"],
+            label=string("run ", k))
+        plot!(plt_dict["total_n_eval"], ind2data[k]["gen"], ind2data[k]["total_n_eval"],
+            label=string("run ", k))
         n_points = length(ind2data[k]["all_n_eval"])
         n_ind = length(ind2data[k]["all_n_eval"][1])
         nevals = zeros(Int64, (n_ind, n_points))
+        log_nevals = zeros(Float64, (n_ind, n_points))
         for j in eachindex(ind2data[k]["all_n_eval"])
             nevals[:,j] .= reverse(ind2data[k]["all_n_eval"][j])
+            log_nevals[:,j] .= log.(reverse(ind2data[k]["all_n_eval"][j]))
         end
         push!(hms, heatmap(nevals))
+        push!(log_hms, heatmap(log_nevals))
     end
     plt_dict["neval_vs_gen"] = plot(hms..., layout=(length(keys(ind2data)),1),
         ylabel="n_eval")
+    plt_dict["log_neval_vs_gen"] = plot(log_hms..., layout=(length(keys(ind2data)),1),
+        ylabel="log(n_eval)")
 end
 
 function add_pergen_lucie_data!(d::Dict{Any,Any}, df_gen::DataFrame)
+    # TODO reached_frames
     ks = ["best_mean_fit", "best_best_fit", "all_n_eval",
-        "best_mean_fit_ind_std", "best_mean_fit_ind_neval"]
+        "best_mean_fit_ind_std", "best_mean_fit_ind_neval", "bound_scale",
+        "epsilon", "total_n_eval"]
     for k in ks
         if k ∉ keys(d)
             d[k] = Vector{Union{Int64,Float64,Vector{Int64}}}()
         end
     end
+    epsilon = df_gen.epsilon[1]
+    bound_scale = df_gen.bound_scale[1]
+    total_n_eval = df_gen.total_n_eval[1]
+    @assert all(df_gen.epsilon .== epsilon)
+    @assert all(df_gen.bound_scale .== bound_scale)
+    @assert all(df_gen.total_n_eval .== total_n_eval)
     fitnesses = [strvec2vec(f) for f in df_gen.fitnesses]
     means = [mean(f) for f in fitnesses] # mean of each ind
     bests = [maximum(f) for f in fitnesses] # best score of each ind
@@ -335,6 +360,9 @@ function add_pergen_lucie_data!(d::Dict{Any,Any}, df_gen::DataFrame)
     push!(d["best_mean_fit_ind_std"], stds[best_mean_fit_ind_index])
     push!(d["best_mean_fit_ind_neval"], neval[best_mean_fit_ind_index])
     push!(d["all_n_eval"], neval)
+    push!(d["epsilon"], epsilon)
+    push!(d["bound_scale"], bound_scale)
+    push!(d["total_n_eval"], total_n_eval)
 end
 
 function fetch_lucie_data(
@@ -392,7 +420,11 @@ function process_lucie_results(
     if do_display
         display(plt_dict["meanfit_vs_gen"])
         display(plt_dict["maxfit_vs_gen"])
+        display(plt_dict["epsilon_vs_gen"])
+        display(plt_dict["bound_scale_vs_gen"])
+        display(plt_dict["total_n_eval"])
         display(plt_dict["neval_vs_gen"])
+        display(plt_dict["log_neval_vs_gen"])
     end
     # 5. Save
     if do_save
