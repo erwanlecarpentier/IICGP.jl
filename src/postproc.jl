@@ -403,6 +403,7 @@ function process_lucie_results(
     games::Vector{String},
     colors::Vector{Symbol},
     labels::Vector{String};
+    savedir_index::Int64=1,
     do_display::Bool=true,
     do_save::Bool=true,
 )
@@ -417,18 +418,21 @@ function process_lucie_results(
     plt_dict = init_lucie_plots()
     fill_lucie_plots!(plt_dict, ind2data)
     # 4. Display
+    graphs = ["meanfit_vs_gen", "maxfit_vs_gen", "epsilon_vs_gen",
+        "bound_scale_vs_gen", "total_n_eval", "neval_vs_gen", "log_neval_vs_gen"]
     if do_display
-        display(plt_dict["meanfit_vs_gen"])
-        display(plt_dict["maxfit_vs_gen"])
-        display(plt_dict["epsilon_vs_gen"])
-        display(plt_dict["bound_scale_vs_gen"])
-        display(plt_dict["total_n_eval"])
-        display(plt_dict["neval_vs_gen"])
-        display(plt_dict["log_neval_vs_gen"])
+        for g in graphs
+            display(plt_dict[g])
+        end
     end
     # 5. Save
     if do_save
-        println("TODO save")
+        for g in graphs
+            graph_dir = set_graph_dir(exp_dirs, savedir_index, game)
+            graph_name = string(game, "_", g, ".png")
+            graph_path = joinpath(graph_dir, graph_name)
+            savefig(plt_dict[g], graph_path)
+        end
     end
 end
 
