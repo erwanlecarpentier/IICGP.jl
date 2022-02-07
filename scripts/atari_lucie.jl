@@ -66,8 +66,6 @@ const downscale = mcfg.downscale
 const stickiness = mcfg.stickiness
 const lck = ReentrantLock()
 
-##
-
 function atari_score(
 	game::Game,
     encoder::CGPInd,
