@@ -1,7 +1,7 @@
 # General parameters
 optimizer: "lucie"
 seed: 0
-max_frames: 10000
+max_frames: 10
 stickiness: 0.25
 d_fitness: 1
 n_gen: 25000
@@ -13,13 +13,13 @@ tournament_size: 3
 greedy_elitism: true
 is_epsilon_dynamic: true
 epsilon: 1.0 # Initial epsilon
-epsilon_ratio: 0.2 # epsilon = epsilon_ratio * bound_scale if is_epsilon_dynamic
+epsilon_ratio: 2 # epsilon = epsilon_ratio * bound_scale if is_epsilon_dynamic
 delta: 0.1
 bound_type: "lucie"
 bound_scale: 1.0 # Initial bound scale
 is_bound_scale_dynamic: true
-log_gen: 50
-save_gen: 50
+log_gen: 1
+save_gen: 1
 bootstrap: false
 grayscale: true
 downscale: true
