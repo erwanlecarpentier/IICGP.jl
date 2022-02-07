@@ -7,14 +7,14 @@ function dict_to_namedtuple(d::Dict)
     NamedTuple{Tuple(keys(d))}(values(d))
 end
 
-function dualcgp_config(dualcgp_cfg_filename::String, game_name::String)
+function dualcgp_config(dualcgp_cfg_filename::String, game_name::String, saving_id::Int64)
     cfg = YAML.load_file(dualcgp_cfg_filename)
-    dualcgp_config(cfg, game_name)
+    dualcgp_config(cfg, game_name, saving_id)
 end
 
-function dualcgp_config(cfg::NamedTuple, game_name::String)
+function dualcgp_config(cfg::NamedTuple, game_name::String, saving_id::Int64)
     cfg_dict = Dict(pairs(cfg))
-    dualcgp_config(cfg_dict, game_name)
+    dualcgp_config(cfg_dict, game_name, saving_id)
 end
 
 """
@@ -24,7 +24,7 @@ Retrieve the encoder and controller configuration files from the main dual CGP
 configuration file.
 Return both config dictionaries along with the corresponding reducer.
 """
-function dualcgp_config(cfg::Dict, game_name::String)
+function dualcgp_config(cfg::Dict, game_name::String, saving_id::Int64)
     # Temporarily open a game to retrieve parameters
     seed = cfg["seed"]
     game = Game(game_name, seed)
@@ -46,7 +46,7 @@ function dualcgp_config(cfg::Dict, game_name::String)
     reducer_cfg = cfg["reducer"]
     controller_cfg = cfg["controller"]
     reducer_type = reducer_cfg["type"]
-    logid = string(Dates.now(), "_", game_name)
+    logid = string(Dates.now(), "_", saving_id, "_", game_name)
     for k in ["seed", "d_fitness", "n_gen", "log_gen", "save_gen"]
         encoder_cfg[k] = cfg[k]
         controller_cfg[k] = cfg[k]

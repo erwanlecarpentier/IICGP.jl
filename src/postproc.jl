@@ -113,7 +113,7 @@ function time_dualcgp_ms(
     enco_time, redu_time, flat_time, cont_time
 end
 
-function add_baselines(graphs::Vector{Plots.Plot{Plots.GRBackend}}, game::String)
+function add_baselines!(graphs::Vector{Plots.Plot{Plots.GRBackend}}, game::String)
     if haskey(BASELINES, game)
         baselines = BASELINES[game]
         for g in graphs
@@ -299,22 +299,26 @@ end
 
 function fill_lucie_plots!(
     plt_dict::Dict{Any,Any},
-    ind2data::Dict{Int64, Dict{Any, Any}}
+    ind2data::Dict{Int64, Dict{Any, Any}},
+    game::String,
+    baseline::Bool;
+    lw::Int64=2,
+    p::Symbol=:tab20b
 )
     hms = Vector{Any}()
     log_hms = Vector{Any}()
     for k in keys(ind2data)
         plot!(plt_dict["meanfit_vs_gen"], ind2data[k]["gen"], ind2data[k]["best_mean_fit"],
             ribbon=ind2data[k]["best_mean_fit_ind_std"],
-            label=string("run ", k)) #, color=colors[k])
+            label=string("run ", k), linewidth=lw, palette=p)
         plot!(plt_dict["maxfit_vs_gen"], ind2data[k]["gen"], ind2data[k]["best_best_fit"],
-            label=string("run ", k))
+            label=string("run ", k), linewidth=lw, palette=p)
         plot!(plt_dict["epsilon_vs_gen"], ind2data[k]["gen"], ind2data[k]["epsilon"],
-            label=string("run ", k))
+            label=string("run ", k), linewidth=lw, palette=p)
         plot!(plt_dict["bound_scale_vs_gen"], ind2data[k]["gen"], ind2data[k]["bound_scale"],
-            label=string("run ", k))
+            label=string("run ", k), linewidth=lw, palette=p)
         plot!(plt_dict["total_n_eval"], ind2data[k]["gen"], ind2data[k]["total_n_eval"],
-            label=string("run ", k))
+            label=string("run ", k), linewidth=lw, palette=p)
         n_points = length(ind2data[k]["all_n_eval"])
         n_ind = length(ind2data[k]["all_n_eval"][1])
         nevals = zeros(Int64, (n_ind, n_points))
@@ -325,6 +329,9 @@ function fill_lucie_plots!(
         end
         push!(hms, heatmap(nevals))
         push!(log_hms, heatmap(log_nevals))
+    end
+    if baseline
+        add_baselines!([plt_dict["meanfit_vs_gen"], plt_dict["maxfit_vs_gen"]], game)
     end
     plt_dict["neval_vs_gen"] = plot(hms..., layout=(length(keys(ind2data)),1),
         ylabel="n_eval")
@@ -406,6 +413,7 @@ function process_lucie_results(
     savedir_index::Int64=1,
     do_display::Bool=true,
     do_save::Bool=true,
+    baseline::Bool=true
 )
     @assert all([g == games[1] for g in games])
     game = games[1]
@@ -416,7 +424,7 @@ function process_lucie_results(
     ind2data = fetch_lucie_data(exp_dirs)
     # 3. Plot
     plt_dict = init_lucie_plots()
-    fill_lucie_plots!(plt_dict, ind2data)
+    fill_lucie_plots!(plt_dict, ind2data, game, baseline)
     # 4. Display
     graphs = ["meanfit_vs_gen", "maxfit_vs_gen", "epsilon_vs_gen",
         "bound_scale_vs_gen", "total_n_eval", "neval_vs_gen", "log_neval_vs_gen"]
@@ -778,13 +786,13 @@ function process_results(
         end
     end
     if baselines
-        add_baselines([plt_best, plt_mean], game)
+        add_baselines!([plt_best, plt_mean], game)
     end
     display(plt_best)
     display(plt_mean)
     if plotci
         if baselines
-            add_baselines([plt_mbst], game)
+            add_baselines!([plt_mbst], game)
         end
         display(plt_mbst)
     end

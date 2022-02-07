@@ -45,6 +45,10 @@ s = ArgParseSettings()
     help = "output directory"
     arg_type = String
     default = default_resdir
+    "--id"
+    help = "logging id"
+    arg_type = Int64
+    default = 1
 end
 
 args = parse_args(ARGS, s)
@@ -52,7 +56,8 @@ const cfg_path = args["cfg"]
 const rom_name = args["game"]
 #const seed = args["seed"]
 const resdir = args["out"]
-mcfg, ecfg, ccfg, reducer, bootstrap = IICGP.dualcgp_config(cfg_path, rom_name)
+const saving_id = args["id"]
+mcfg, ecfg, ccfg, reducer, bootstrap = IICGP.dualcgp_config(cfg_path, rom_name, saving_id)
 append_ec_cfgs!(mcfg, ecfg, ccfg) # Fix for tracking e/c configs
 mcfg = dict2namedtuple(mcfg)
 const max_frames = mcfg.max_frames
@@ -60,6 +65,8 @@ const grayscale = mcfg.grayscale
 const downscale = mcfg.downscale
 const stickiness = mcfg.stickiness
 const lck = ReentrantLock()
+
+##
 
 function atari_score(
 	game::Game,
