@@ -175,7 +175,8 @@ for i in 1:e.config.n_gen
     end
     evaluate(e)
 	if (e.config.log_gen > 0) && (e.gen == 1 || mod(e.gen, e.config.log_gen) == 0)
-    	log_gen(e)
+		do_validate = (e.gen == 1 || mod(e.gen, e.config.validation_freq) == 0)
+		log_gen(e, do_validate)
     end
     generation(e)
 	# Track memory usage

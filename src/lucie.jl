@@ -103,6 +103,32 @@ function evaluate_new_ind!(e::LUCIEEvo{T}, fitness::Function) where T
 	n_eval
 end
 
+"""
+	validate(
+		e::LUCIEEvo{T},
+		ind_index::Int64,
+		fitness::Function
+	) where T
+
+Validation function. Evaluate an individual sequentially for
+`e.config.validation_size` runs with new seeds. Each run has a different seed,
+never seen during training. All individuals of the generation are validated on
+the same seeds.
+"""
+function validate(
+	e::LUCIEEvo{T},
+	ind_index::Int64,
+	fitness::Function
+) where T
+	validation_fitnesses = Vector{Float64}()
+	for i in 1:e.config.validation_size
+		seed = e.config.n_gen * e.config.n_eval_max + i + e.gen * e.config.validation_size
+		score = fitness(e.population[ind_index], seed, e.atari_games[ind_index])
+		push!(validation_fitnesses, score)
+	end
+	validation_fitnesses
+end
+
 function evaluate_pair!(
 	e::LUCIEEvo{T},
 	fitness::Function,
@@ -274,11 +300,11 @@ end
 """
 Logging
 """
-function log_gen(e::LUCIEEvo{T}) where T
+function log_gen(e::LUCIEEvo{T}, do_validate::Bool) where T
 	logid = e.config.id
 	sep = ";"
 	logged_data_header = ["gen_number", "fitnesses", "reached_frames",
-		"total_n_eval", "gen_n_eval", "epsilon", "bound_scale", "dna_id"]
+		"total_n_eval", "gen_n_eval", "epsilon", "bound_scale", "dna_id", "validation_fitnesses"]
     if e.gen == 1
         f = open(joinpath(e.resdir, logid, "logs/logs.csv"), "w+")
 		header = to_csv_row(logged_data_header, sep)
@@ -291,12 +317,17 @@ function log_gen(e::LUCIEEvo{T}) where T
     mkpath(cont_path)
     for i in eachindex(e.population)
         dna_id = Formatting.format("{1:04d}", i)
+		if do_validate
+			validation_fitnesses = validate(e, i, e.fitness)
+		else
+			validation_fitnesses = NaN
+		end
 		# Log results
 		f = open(joinpath(e.resdir, logid, "logs/logs.csv"), "a+")
 		data = [
 			e.gen, e.population[i].fitnesses,
 			e.population[i].reached_frames, e.total_n_eval, e.gen_n_eval,
-			e.epsilon, e.bound_scale, dna_id
+			e.epsilon, e.bound_scale, dna_id, validation_fitnesses
 		]
         write(f, Formatting.format(to_csv_row(data, sep)))
         close(f)
