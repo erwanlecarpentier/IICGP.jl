@@ -60,7 +60,7 @@ const saving_id = args["id"]
 mcfg, ecfg, ccfg, reducer, bootstrap = IICGP.dualcgp_config(cfg_path, rom_name, saving_id)
 append_ec_cfgs!(mcfg, ecfg, ccfg) # Fix for tracking e/c configs
 mcfg = dict2namedtuple(mcfg)
-const max_frames = mcfg.max_frames
+# const max_frames = mcfg.max_frames
 const grayscale = mcfg.grayscale
 const downscale = mcfg.downscale
 const stickiness = mcfg.stickiness
@@ -71,10 +71,10 @@ function atari_score(
     encoder::CGPInd,
     reducer::Reducer,
     controller::CGPInd,
-    seed::Int64;
+    seed::Int64,
+	max_frames::Int64;
     lck::ReentrantLock=lck,
     rom::String=rom_name,
-    max_frames::Int64=max_frames,
     grayscale::Bool=grayscale,
     downscale::Bool=downscale,
     stickiness::Float64=stickiness
@@ -110,10 +110,10 @@ function atari_score(
 end
 
 # User-defined fitness function
-function my_fitness(ind::LUCIEInd, seed::Int64, game::Game)
+function my_fitness(ind::LUCIEInd, seed::Int64, game::Game, max_frames::Int64)
     enco = IPCGPInd(ecfg, ind.e_chromosome)
     cont = CGPInd(ccfg, ind.c_chromosome)
-	score, f = atari_score(game, enco, reducer, cont, seed)
+	score, f = atari_score(game, enco, reducer, cont, seed, max_frames)
 	push!(ind.reached_frames, f)
     score
 end
@@ -144,7 +144,7 @@ function cstind_init(indtype::Type, config::NamedTuple)
 	game = Game(rom_name, seed)
     @inbounds for i in eachindex(cstinds)
 		IICGP.reset!(game)
-		push!(cstinds[i].fitnesses, my_fitness(cstinds[i], seed, game))
+		push!(cstinds[i].fitnesses, my_fitness(cstinds[i], seed, game, config.max_frames))
     end
 	close!(game)
 	for ind in cstinds

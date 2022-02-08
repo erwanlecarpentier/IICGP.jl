@@ -1,13 +1,14 @@
 # General parameters
 optimizer: "lucie"
 seed: 0
-max_frames: 10
+max_frames: 10 # TODO 10000
 stickiness: 0.25
 d_fitness: 1
-n_gen: 10 # 100000
+n_gen: 10 # TODO 100000
 validation: true
 validation_size: 10
 validation_freq: 3 # TODO 200
+validation_max_frames: 18000
 n_eval_max: 120 # Max number of eval per gen
 n_population: 12
 n_elite: 3 # Number of elite pairs per generation

@@ -94,7 +94,7 @@ function evaluate_new_ind!(e::LUCIEEvo{T}, fitness::Function) where T
 	Threads.@threads for i in eachindex(e.population)
 		if length(e.population[i].fitnesses) < 1
 			seed = get_seed(e)
-			score = fitness(e.population[i], seed, e.atari_games[i])
+			score = fitness(e.population[i], seed, e.atari_games[i], e.config.max_frames)
 			push!(e.population[i].fitnesses, score)
 		end
 	end
@@ -123,7 +123,7 @@ function validate(
 	validation_fitnesses = Vector{Float64}()
 	for i in 1:e.config.validation_size
 		seed = e.config.n_gen * e.config.n_eval_max + i + e.gen * e.config.validation_size
-		score = fitness(e.population[ind_index], seed, e.atari_games[ind_index])
+		score = fitness(e.population[ind_index], seed, e.atari_games[ind_index], e.config.validation_max_frames)
 		push!(validation_fitnesses, score)
 	end
 	validation_fitnesses
@@ -139,7 +139,7 @@ function evaluate_pair!(
 	Threads.@threads for i in [h_index, l_index]
 		seed = get_seed(e)
 		seed += i == h_index ? 1 : 0
-		score = fitness(e.population[i], seed, e.atari_games[i])
+		score = fitness(e.population[i], seed, e.atari_games[i], e.config.max_frames)
 		push!(e.population[i].fitnesses, score)
 	end
 end
