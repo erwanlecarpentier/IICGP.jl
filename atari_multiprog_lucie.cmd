@@ -5,7 +5,7 @@
 #SBATCH --cpus-per-task=2
 #SBATCH -o /tmpdir/%u/logs/job.%j.atarilucie.out
 #SBATCH -e /tmpdir/%u/logs/job.%j.atarilucie.log
-#SBATCH --time=00:03:00
+#SBATCH --time=00:10:00
 #SBATCH --mail-user=erwanlecarpentier@mailbox.org
 
 # SBATCH --ntasks-per-node=36
