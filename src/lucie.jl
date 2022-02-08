@@ -123,7 +123,8 @@ function validate(
 	validation_fitnesses = Vector{Float64}()
 	for i in 1:e.config.validation_size
 		seed = e.config.n_gen * e.config.n_eval_max + i + e.gen * e.config.validation_size
-		score = fitness(e.population[ind_index], seed, e.atari_games[ind_index], e.config.validation_max_frames)
+		score = fitness(e.population[ind_index], seed, e.atari_games[ind_index],
+			e.config.validation_max_frames, is_validation=true)
 		push!(validation_fitnesses, score)
 	end
 	validation_fitnesses

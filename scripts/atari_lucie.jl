@@ -110,11 +110,19 @@ function atari_score(
 end
 
 # User-defined fitness function
-function my_fitness(ind::LUCIEInd, seed::Int64, game::Game, max_frames::Int64)
+function my_fitness(
+	ind::LUCIEInd,
+	seed::Int64,
+	game::Game,
+	max_frames::Int64;
+	is_validation::Bool=false
+)
     enco = IPCGPInd(ecfg, ind.e_chromosome)
     cont = CGPInd(ccfg, ind.c_chromosome)
 	score, f = atari_score(game, enco, reducer, cont, seed, max_frames)
-	push!(ind.reached_frames, f)
+	if !is_validation
+		push!(ind.reached_frames, f)
+	end
     score
 end
 
