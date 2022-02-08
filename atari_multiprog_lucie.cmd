@@ -12,7 +12,7 @@
 # SBATCH --ntasks-per-core=1
 # SBATCH --threads-per-core=1
 
-export OMP_NUM_THREADS=2
+# export OMP_NUM_THREADS=2
 
 USERNAME=$(whoami)
 OUTDIR="/tmpdir/$USERNAME/ICGP-results/results"
