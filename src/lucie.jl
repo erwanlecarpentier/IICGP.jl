@@ -35,6 +35,7 @@ mutable struct LUCIEEvo{T} <: AbstractEvolution
     fitness::Function
     gen::Int64 # current generation number
 	step::Int64 # current step (number of pairs of evals during this generation)
+	gen_n_eval::Int64
 	total_n_eval::Int64
 	bound_scale::Float64
 	epsilon::Float64
@@ -57,7 +58,7 @@ function LUCIEEvo{T}(
 	bound_scale = config.bound_scale
 	epsilon = config.epsilon
 	atari_games = [Game(rom_name, 0) for _ in 1:length(population)]
-    LUCIEEvo(config, population, fitness, 0, 0, 0, bound_scale, epsilon,
+    LUCIEEvo(config, population, fitness, 0, 0, 0, 0, bound_scale, epsilon,
 		resdir, atari_games)
 end
 
@@ -79,6 +80,7 @@ function increment_lifetime!(e::LUCIEEvo{T}; n::Int64=1) where T
 end
 
 function increment_n_eval!(e::LUCIEEvo{T}; n::Int64=1) where T
+	e.gen_n_eval += n
 	e.total_n_eval += n
 	#e.total_n_eval_par += ceil(Int64, n / e.config.n_threads)
 end
@@ -140,7 +142,7 @@ function confidence_bound(
 		l = Float64(e.population[i].lifetime)
 		cb = sqrt(log(1.25 * population_size * l^4 / e.config.delta) / (2.0 * u))
 	elseif e.config.bound_type == "lucie"
-		u_init = Float64(e.population[i].n_eval_init)
+		# u_init = Float64(e.population[i].n_eval_init)
 		cb = sqrt(log(2.3 * population_size * e.step^4 / e.config.delta) / (2.0 * u))
 	elseif e.config.bound_type == "lucie-tmax"
 		k = 1.21 + sum([1.0 / (j^1.1) for j in 1:e.config.n_eval_max])
@@ -191,6 +193,7 @@ end
 Main evaluation function for LUCIEEvo.
 """
 function fitness_evaluate(e::LUCIEEvo{T}, fitness::Function) where T
+	e.gen_n_eval = 0
 	n_init_eval = evaluate_new_ind!(e, fitness)
 	e.step = floor(Int64, n_init_eval / 2)
 	e.step = max(e.step, 1) # Domain check
@@ -275,7 +278,7 @@ function log_gen(e::LUCIEEvo{T}) where T
 	logid = e.config.id
 	sep = ";"
 	logged_data_header = ["gen_number", "fitnesses", "reached_frames",
-		"total_n_eval", "epsilon", "bound_scale", "dna_id"]
+		"total_n_eval", "gen_n_eval", "epsilon", "bound_scale", "dna_id"]
     if e.gen == 1
         f = open(joinpath(e.resdir, logid, "logs/logs.csv"), "w+")
 		header = to_csv_row(logged_data_header, sep)
@@ -292,8 +295,8 @@ function log_gen(e::LUCIEEvo{T}) where T
 		f = open(joinpath(e.resdir, logid, "logs/logs.csv"), "a+")
 		data = [
 			e.gen, e.population[i].fitnesses,
-			e.population[i].reached_frames, e.total_n_eval, e.epsilon,
-			e.bound_scale, dna_id
+			e.population[i].reached_frames, e.total_n_eval, e.gen_n_eval,
+			e.epsilon, e.bound_scale, dna_id
 		]
         write(f, Formatting.format(to_csv_row(data, sep)))
         close(f)
