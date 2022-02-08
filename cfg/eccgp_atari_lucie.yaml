@@ -17,7 +17,7 @@ tournament_size: 3
 greedy_elitism: true
 is_epsilon_dynamic: true
 epsilon: 1.0 # Initial epsilon
-epsilon_ratio: 1 # epsilon = epsilon_ratio * bound_scale if is_epsilon_dynamic
+epsilon_ratio: 2.0 # epsilon = epsilon_ratio * bound_scale if is_epsilon_dynamic
 delta: 0.1
 bound_type: "lucie"
 bound_scale: 1.0 # Initial bound scale
