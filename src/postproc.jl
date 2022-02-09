@@ -341,6 +341,7 @@ end
 
 function add_pergen_lucie_data!(d::Dict{Any,Any}, df_gen::DataFrame)
     # TODO reached_frames
+    # TODO validation fitness
     ks = ["best_mean_fit", "best_best_fit", "all_n_eval",
         "best_mean_fit_ind_std", "best_mean_fit_ind_neval", "bound_scale",
         "epsilon", "total_n_eval"]

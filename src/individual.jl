@@ -219,9 +219,25 @@ function IPCGPCopy(ind::CGPInd)
     )
 end
 
-function get_best_lucie_ind(exp_dir::String)
+function get_best_lucie_ind(exp_dir::String; gen::Int64=0)
     cfg = cfg_from_exp_dir(exp_dir)
-    println("Here")
+    log = log_from_exp_dir(exp_dir, log_file="logs/logs.csv",
+        header=1, sep=";")
+    df = DataFrame(log)
+    gen = gen == 0 ? df.gen_number[end] : gen
+    df = filter(row -> row.gen_number == gen, df)
+    for row in eachrow(df)
+        fitnesses = strvec2vec(row.fitnesses)
+        n_eval = length(fitnesses)
+        mean = Statistics.mean(fitnesses)
+        dna_id = row.dna_id
+        println(string(
+            "dna_id: ", dna_id,
+            "   mean: ", mean,
+            "   n_eval: ", n_eval
+        ))
+    end
+    # TODO here
     nothing, nothing, nothing
 end
 
