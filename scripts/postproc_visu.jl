@@ -303,6 +303,9 @@ end
 function visu_ingame(
     exp_dir::String,
     game::String,
+    enco::CGPInd,
+    redu::Reducer,
+    cont::CGPInd,
     max_frames::Int64;
     do_save::Bool,
     do_display::Bool,
@@ -315,7 +318,6 @@ function visu_ingame(
     downscale = cfg["downscale"]
     is_dualcgp = haskey(cfg, "encoder")
     @assert is_dualcgp
-    enco, redu, cont = get_last_dualcgp(exp_dir, game, cfg)
     mini_actions = get_minimal_actions_set(game)
     if do_save
         graph_path = joinpath(exp_dir, "graphs")
@@ -355,20 +357,35 @@ end
 
 rootdir = joinpath(homedir(), "Documents/git/ICGP-results/")
 resdir = joinpath(rootdir, "results/")
-min_date = DateTime(2021, 09, 01)
-max_date = DateTime(2021, 10, 03)
+min_date = DateTime(2022, 01, 27)
+max_date = DateTime(2022, 01, 28)
 games = ["boxing", "asteroids", "breakout", "freeway", "gravitar", "riverraid", "space_invaders"]
-games = ["freeway"]
+games = ["boxing"]
+ids = [1]
 reducers = ["pooling"] # Array{String,1}() # ["pooling"]
-exp_dirs, games = get_exp_dir(resdir, min_date=min_date, max_date=max_date,
-                              games=games, reducers=reducers)
-max_frames = 10000
+exp_dirs, ids, games = get_exp_dir(resdir, min_date=min_date, max_date=max_date,
+                              games=games, reducers=reducers, ids=ids)
+max_frames = 18000
 render_graph = false
 seed = 0
 
+
+
+
+
+
+enco, redu, cont = get_best_lucie_ind(exp_dirs[1])
+
+
+
+##
+
 for i in eachindex(exp_dirs)
+    # Fetch individuals
+    #enco, redu, cont = get_last_dualcgp(exp_dirs[i])
+    enco, redu, cont = get_best_lucie_ind(exp_dirs[i])
     # Generate images (may display / save)
-    visu_ingame(exp_dirs[i], games[i], max_frames,
+    visu_ingame(exp_dirs[i], games[i], enco, redu, cont, max_frames,
                 do_save=true, do_display=false, seed)
     #test_manyvis(exp_dirs[i], games[i], max_frames, do_save=true, do_display=false)
 

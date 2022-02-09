@@ -1,4 +1,4 @@
-export IPCGPInd, IPCGPCopy, image_buffer, get_last_dualcgp
+export IPCGPInd, IPCGPCopy, image_buffer, get_last_dualcgp, get_best_lucie_ind
 export SymInd, SymIndCopy
 export NSGA2Ind, NSGA2IndCopy, dominates
 export NSGA2ECInd, NSGA2ECIndCopy, dominates
@@ -219,9 +219,21 @@ function IPCGPCopy(ind::CGPInd)
     )
 end
 
-function get_last_dualcgp(path::String, game::String, cfg::Dict)
-    enco_dna_path, cont_dna_path = get_last_dualcgp_paths(path)
-    _, enco_cfg, cont_cfg, reducer, _ = dualcgp_config(cfg, game)
+function get_best_lucie_ind(exp_dir::String)
+    cfg = cfg_from_exp_dir(exp_dir)
+    println("Here")
+    nothing, nothing, nothing
+end
+
+function get_last_dualcgp(exp_dir::String)
+    cfg = cfg_from_exp_dir(exp_dir)
+    get_last_dualcgp(exp_dir, cfg)
+end
+
+function get_last_dualcgp(exp_dir::String, cfg::Dict)
+    _, exp_id, game = parse_log_entry(exp_dir)
+    enco_dna_path, cont_dna_path = get_last_dualcgp_paths(exp_dir)
+    _, enco_cfg, cont_cfg, reducer, _ = dualcgp_config(cfg, game, exp_id)
     enco = IPCGPInd(enco_cfg, read(enco_dna_path, String))
     cont = CGPInd(cont_cfg, read(cont_dna_path, String))
     enco, reducer, cont

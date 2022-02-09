@@ -1,5 +1,6 @@
 export get_exp_dir, get_exp_path, get_bootstrap_paths
 export get_last_dualcgp_paths, get_last_ind_path
+export parse_log_entry
 export init_backup, fetch_backup
 export find_yaml, cfg_from_exp_dir, log_from_exp_dir
 
@@ -116,6 +117,14 @@ function get_exp_path(game_name::String, resdir::String)
     joinpath(resdir, exp_dir)
 end
 
+function parse_log_entry(exp_dir::String)
+    splt1 = findnext('_', exp_dir, 1)
+    splt2 = findnext('_', exp_dir, splt1+1)
+    exp_date = DateTime(exp_dir[1:splt1-1])
+    exp_id = parse(Int64, exp_dir[splt1+1:splt2-1])
+    exp_game = exp_dir[splt2+1:end]
+    exp_date, exp_id, exp_game
+end
 """
     function get_exp_dir(
         resdir::String;
@@ -144,31 +153,35 @@ function get_exp_dir(
     resdir::String;
     min_date::DateTime=DateTime(0),
     max_date::DateTime=DateTime(0),
-    games::Array{String,1}=Array{String,1}(),
-    reducers::Array{String,1}=Array{String,1}()
+    games::Vector{String}=Vector{String}(),
+    reducers::Vector{String}=Vector{String}(),
+    ids::Vector{Int64}=Vector{Int64}()
 )
     no_time = min_date == max_date == DateTime(0)
     no_specified_games = length(games) == 0
+    no_specified_ids = length(ids) == 0
     no_specified_reducers = length(reducers) == 0
     existing_res = readdir(resdir)
     filtered_res = Array{String,1}()
+    filtered_id = Array{Int64,1}()
     filtered_games = Array{String,1}()
     for exp_dir in existing_res
-        splt = findnext('_', exp_dir, 1)
-        exp_date = DateTime(exp_dir[1:splt-1])
-        exp_game = exp_dir[splt+1:end]
+        exp_date, exp_id, exp_game = parse_log_entry(exp_dir)
         if no_time || (min_date < exp_date < max_date)
             if no_specified_games || (exp_game in games)
                 exp_full_path = string(resdir, exp_dir)
                 cfg = cfg_from_exp_dir(exp_full_path)
                 if no_specified_reducers || (cfg["reducer"]["type"] in reducers)
-                    push!(filtered_res, exp_full_path)
-                    push!(filtered_games, exp_game)
+                    if no_specified_ids || exp_id ∈ ids
+                        push!(filtered_res, exp_full_path)
+                        push!(filtered_id, exp_id)
+                        push!(filtered_games, exp_game)
+                    end
                 end
             end
         end
     end
-    filtered_res, filtered_games
+    filtered_res, filtered_id, filtered_games
 end
 
 function are_same_cfg(cfg_a::NamedTuple, cfg_b::NamedTuple)
@@ -223,19 +236,6 @@ function get_last_dualcgp_paths(exp_dir::String)
     enco_dna_path = get_last_ind_path(exp_dir, "encoder")
     cont_dna_path = get_last_ind_path(exp_dir, "controller")
     enco_dna_path, cont_dna_path
-    #=
-    gens_dir = joinpath(exp_dir, "gens")
-    n_gen = readdir(gens_dir)[end]  # Last subdir in alphabetical order
-    n_gen = n_gen[length("encoder_")+1:end]  # Gen number as a String
-    enco_dna_path = joinpath(exp_dir, "gens", string("encoder_", n_gen))
-    cont_dna_path = joinpath(exp_dir, "gens", string("controller_", n_gen))
-    n_indiv = length(readdir(enco_dna_path))
-    dna_file_length = maximum([length(p) for p in readdir(enco_dna_path)]) - length(".dna")
-    dna_file = string(lpad(n_indiv, dna_file_length, "0"), ".dna")
-    enco_dna_path = joinpath(enco_dna_path, dna_file)
-    cont_dna_path = joinpath(cont_dna_path, dna_file)
-    enco_dna_path, cont_dna_path
-    =#
 end
 
 """
