@@ -378,7 +378,7 @@ enco, redu, cont = get_best_lucie_ind(exp_dirs[1])
 
 
 
-##
+#=
 
 for i in eachindex(exp_dirs)
     # Fetch individuals
@@ -395,3 +395,4 @@ for i in eachindex(exp_dirs)
         run(`python3.8 pytexgraph.py $exp_dir`)
     end
 end
+=#

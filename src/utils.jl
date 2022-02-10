@@ -1,6 +1,9 @@
 export load_img, save_img, split_rgb, to_csv_row
+export int2dnaid
 
 using Images
+
+int2dnaid(i::Int64) = Formatting.format("{1:04d}", i)
 
 function to_csv_row(v::AbstractArray, sep::String)
     string(

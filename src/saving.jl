@@ -1,5 +1,6 @@
 export get_exp_dir, get_exp_path, get_bootstrap_paths
 export get_last_dualcgp_paths, get_last_ind_path
+export get_ec_dna_paths
 export parse_log_entry
 export init_backup, fetch_backup
 export find_yaml, cfg_from_exp_dir, log_from_exp_dir
@@ -224,6 +225,23 @@ function get_last_ind_path(exp_dir::String, indname::String)
     dna_file = string(lpad(n_ind, dna_filename_length, "0"), ".dna")
     dna_path = joinpath(dna_dir, dna_file)
     dna_path
+end
+
+function get_ind_dna_path(
+    exp_dir::String,
+    ind_name::String,
+    gen::String,
+    dna_id::String
+)
+    folder = string(ind_name, "_", gen)
+    file = string(dna_id, ".dna")
+    joinpath(exp_dir, "gens", folder, file)
+end
+
+function get_ec_dna_paths(exp_dir::String, gen::String, dna_id::String)
+    enco_dna_path = get_ind_dna_path(exp_dir, "encoder", gen, dna_id)
+    cont_dna_path = get_ind_dna_path(exp_dir, "controller", gen, dna_id)
+    enco_dna_path, cont_dna_path
 end
 
 """
