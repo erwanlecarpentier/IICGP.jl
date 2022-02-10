@@ -219,7 +219,12 @@ function IPCGPCopy(ind::CGPInd)
     )
 end
 
-function get_best_lucie_ind(exp_dir::String; gen::Int64=0, verbose::Bool=true)
+function get_best_lucie_ind(
+    exp_dir::String;
+    gen::Int64=0,
+    verbose::Bool=true
+)
+    _, exp_id, game = parse_log_entry(exp_dir)
     cfg = cfg_from_exp_dir(exp_dir)
     log = log_from_exp_dir(exp_dir, log_file="logs/logs.csv",
         header=1, sep=";")
@@ -246,10 +251,13 @@ function get_best_lucie_ind(exp_dir::String; gen::Int64=0, verbose::Bool=true)
                 n_eval))
         end
     end
-    e_dna_path, c_dna_path = get_ec_dna_paths(exp_dir, string(gen), best_ind_dna_id)
-    println(e_dna_path)
-    println(c_dna_path)
-    nothing, nothing, nothing
+    enco_dna_path, cont_dna_path = get_ec_dna_paths(exp_dir, string(gen), best_ind_dna_id)
+    enco_dna = read(enco_dna_path, String)
+    cont_dna = read(cont_dna_path, String)
+    _, enco_cfg, cont_cfg, reducer, _ = dualcgp_config(cfg, game, exp_id)
+    enco = IPCGPInd(enco_cfg, enco_dna)
+    cont = CGPInd(cont_cfg, cont_dna)
+    enco, reducer, cont
 end
 
 function get_last_dualcgp(exp_dir::String)

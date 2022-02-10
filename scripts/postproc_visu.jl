@@ -168,7 +168,8 @@ function visu_dualcgp_ingame(
     stickiness::Float64;
     do_save::Bool,
     do_display::Bool,
-    buffer_path::String
+    buffer_path::String,
+    verbose::Bool=true
 )
     Random.seed!(seed)
     mt = MersenneTwister(seed)
@@ -245,13 +246,15 @@ function visu_dualcgp_ingame(
         plot_pipeline(visu)
     end
 
-    println()
-    println("-"^20)
-    println("Game             : ", game)
-    println("Seed             : ", seed)
-    println("Total return     : ", reward)
-    println("Number of frames : ", frames)
-    println("-"^20)
+    if verbose
+        println()
+        println("-"^20)
+        println("Game             : ", game)
+        println("Seed             : ", seed)
+        println("Total return     : ", reward)
+        println("Number of frames : ", frames)
+        println("-"^20)
+    end
     reward
 end
 
@@ -307,9 +310,10 @@ function visu_ingame(
     redu::Reducer,
     cont::CGPInd,
     max_frames::Int64;
-    do_save::Bool,
-    do_display::Bool,
-    seed::Int64
+    do_save::Bool=true,
+    do_display::Bool=false,
+    seed::Int64=0,
+    verbose::Bool=true
 )
     cfg = cfg_from_exp_dir(exp_dir)
     # seed = cfg["seed"]
@@ -330,7 +334,7 @@ function visu_ingame(
     reward = visu_dualcgp_ingame(
         enco, redu, cont, game, seed, max_frames, grayscale,
         downscale, stickiness, do_save=do_save,
-        do_display=do_display, buffer_path=buffer_path
+        do_display=do_display, buffer_path=buffer_path, verbose=verbose
     )
     reward
 end
@@ -362,23 +366,12 @@ max_date = DateTime(2022, 01, 28)
 games = ["boxing", "asteroids", "breakout", "freeway", "gravitar", "riverraid", "space_invaders"]
 games = ["boxing"]
 ids = [1]
-reducers = ["pooling"] # Array{String,1}() # ["pooling"]
+reducers = ["pooling"]
 exp_dirs, ids, games = get_exp_dir(resdir, min_date=min_date, max_date=max_date,
-                              games=games, reducers=reducers, ids=ids)
+    games=games, reducers=reducers, ids=ids)
 max_frames = 18000
 render_graph = false
 seed = 0
-
-
-
-
-
-
-enco, redu, cont = get_best_lucie_ind(exp_dirs[1])
-
-
-
-#=
 
 for i in eachindex(exp_dirs)
     # Fetch individuals
@@ -386,7 +379,7 @@ for i in eachindex(exp_dirs)
     enco, redu, cont = get_best_lucie_ind(exp_dirs[i])
     # Generate images (may display / save)
     visu_ingame(exp_dirs[i], games[i], enco, redu, cont, max_frames,
-                do_save=true, do_display=false, seed)
+        do_save=true, do_display=false, seed=seed)
     #test_manyvis(exp_dirs[i], games[i], max_frames, do_save=true, do_display=false)
 
     # Launch python script
@@ -395,4 +388,3 @@ for i in eachindex(exp_dirs)
         run(`python3.8 pytexgraph.py $exp_dir`)
     end
 end
-=#

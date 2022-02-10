@@ -119,11 +119,12 @@ function get_exp_path(game_name::String, resdir::String)
 end
 
 function parse_log_entry(exp_dir::String)
-    splt1 = findnext('_', exp_dir, 1)
-    splt2 = findnext('_', exp_dir, splt1+1)
-    exp_date = DateTime(exp_dir[1:splt1-1])
-    exp_id = parse(Int64, exp_dir[splt1+1:splt2-1])
-    exp_game = exp_dir[splt2+1:end]
+    dir = basename(exp_dir)
+    splt1 = findnext('_', dir, 1)
+    splt2 = findnext('_', dir, splt1+1)
+    exp_date = DateTime(dir[1:splt1-1])
+    exp_id = parse(Int64, dir[splt1+1:splt2-1])
+    exp_game = dir[splt2+1:end]
     exp_date, exp_id, exp_game
 end
 """
