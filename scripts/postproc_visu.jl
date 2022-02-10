@@ -259,7 +259,8 @@ function visu_dualcgp_ingame(
 end
 
 function save_graph_struct(
-    inds::Array{CGPInd,1},
+    inds::Vector{CGPInd},
+    ccfg::NamedTuple,
     saving_dir::String,
     actions::Vector{Int32}
 )
@@ -289,6 +290,7 @@ function save_graph_struct(
         is_controller = typeof(ind.buffer[1]) == Float64
         if is_controller
             data["actions"] = actions
+            data["n_cst_input"] = ccfg.n_cst_inputs
         end
         graph_name = is_controller ? "controller.yaml" : "encoder.yaml"
         graph_path = joinpath(saving_dir, graph_name)
@@ -330,7 +332,7 @@ function visu_ingame(
         buffer_path = joinpath(exp_dir, "buffers")
         rm(buffer_path, recursive=true, force=true)
         mkpath(buffer_path)
-        save_graph_struct([enco, cont], graph_path, mini_actions)
+        save_graph_struct([enco, cont], ccfg, graph_path, mini_actions)
     end
     reward = visu_dualcgp_ingame(
         enco, redu, cont, ccfg, game, seed, max_frames, grayscale,
