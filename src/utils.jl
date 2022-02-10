@@ -1,9 +1,12 @@
 export load_img, save_img, split_rgb, to_csv_row
-export int2dnaid
+export int2dnaid, dict2namedtuple, namedtuple2dict
 
 using Images
 
 int2dnaid(i::Int64) = Formatting.format("{1:04d}", i)
+
+dict2namedtuple(d::Dict) = (; (Symbol(k)=>v for (k, v) in d)...)
+namedtuple2dict(nt::NamedTuple) = Dict(pairs(nt))
 
 function to_csv_row(v::AbstractArray, sep::String)
     string(

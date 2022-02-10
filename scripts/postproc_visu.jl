@@ -160,6 +160,7 @@ function visu_dualcgp_ingame(
     enco::CGPInd,
     redu::Reducer,
     cont::CGPInd,
+    ccfg::NamedTuple,
     game::String,
     seed::Int64,
     max_frames::Int64,
@@ -174,36 +175,38 @@ function visu_dualcgp_ingame(
     Random.seed!(seed)
     mt = MersenneTwister(seed)
     g = Game(game, seed)
-    img_size = size(get_state(g, grayscale, downscale)[1])
-    IICGP.reset!(redu) # zero the buffers
+	IICGP.reset!(g)
+    IICGP.reset!(redu) # zero buffers
+	s = get_state_buffer(g, grayscale)
+	o = get_observation_buffer(g, grayscale, downscale)
     reward = 0.0
     frames = 1
     prev_action = Int32(0)
     prev_chosen_output = 1
     features = Vector{Matrix{Float64}}()
     active = [enco.nodes[i].active for i in eachindex(enco.nodes)]
-
     # Init rendering buffer
     if do_display
         visu = []
     end
-
+    # Run
     while ~game_over(g.ale)
-        s = get_state(g, grayscale, downscale)
+        # s = get_state(g, grayscale, downscale) # outdated
+		get_state!(s, g, grayscale)
+		get_observation!(o, s, g, grayscale, downscale)
         rgb = get_rgb(g)
         is_sticky = rand(mt) < stickiness
         if frames == 1
             is_sticky = false
         end
         if !is_sticky
-            features, output = IICGP.process_f(enco, redu, cont, s)
+            features, output = IICGP.process_f(enco, redu, cont, ccfg, o)
             chosen_output = argmax(output)
             action = g.actions[chosen_output]
         else
             chosen_output = prev_chosen_output
             action = prev_action
         end
-
         # Scan which nodes were activated
         c_output = cont.outputs[chosen_output]
         c_activated = find_activated_nodes(cont, c_output)
@@ -212,7 +215,6 @@ function visu_dualcgp_ingame(
         for node in e_output
             push!(e_activated, find_activated_nodes(enco, node)...)
         end
-
         # Saving
         if do_save
             metadata = get_metadata(action, is_sticky, reward, e_activated,
@@ -223,7 +225,6 @@ function visu_dualcgp_ingame(
             save_features(features, buffer_path, frames, enco.outputs)
             save_cont_buffer(cont, buffer_path, frames)
         end
-
         # Rendering
         if do_display
             snap = buffer_snapshot(enco, active)
@@ -245,7 +246,6 @@ function visu_dualcgp_ingame(
     if do_display
         plot_pipeline(visu)
     end
-
     if verbose
         println()
         println("-"^20)
@@ -316,6 +316,7 @@ function visu_ingame(
     verbose::Bool=true
 )
     cfg = cfg_from_exp_dir(exp_dir)
+    ccfg = dict2namedtuple(cfg["controller"])
     # seed = cfg["seed"]
     stickiness = cfg["stickiness"]
     grayscale = cfg["grayscale"]
@@ -332,7 +333,7 @@ function visu_ingame(
         save_graph_struct([enco, cont], graph_path, mini_actions)
     end
     reward = visu_dualcgp_ingame(
-        enco, redu, cont, game, seed, max_frames, grayscale,
+        enco, redu, cont, ccfg, game, seed, max_frames, grayscale,
         downscale, stickiness, do_save=do_save,
         do_display=do_display, buffer_path=buffer_path, verbose=verbose
     )
