@@ -12,12 +12,12 @@ import operator
 from pdf2image import convert_from_path
 
 # COMMANDS
-ONLYENCO = False
+ONLYENCO = True
 ONLYCONT = False
-SHOWGRAPHS = False # Show separate graphs
+SHOWGRAPHS = True # Show separate graphs
 DOFRAMES = True
-SHOWFRAMES = False # Show canvas
-DOVIDEO = True
+SHOWFRAMES = False # Show canvas (full frame with assembled graphs)
+DOVIDEO = False
 
 PRINTPDFLATEXOUT = False
 
@@ -962,19 +962,19 @@ def make_frames(paths, max_frame, verbose=True):
 def get_exp_dir(rom):
 	exp_dir = ICGPRES_DIR + "/results/"
 	if rom == "boxing":
-		return exp_dir + "2021-09-01T17:44:01.968_boxing"
+		return exp_dir + "2021-09-01T17:44:01.968_1_boxing"
 	elif rom == "freeway":
-		return exp_dir + "2021-09-03T18:18:35.090_freeway"
+		return exp_dir + "2021-09-03T18:18:35.090_1_freeway"
 	elif rom == "asteroids":
-		return exp_dir + "2021-09-23T18:31:09.813_asteroids"
+		return exp_dir + "2021-09-23T18:31:09.813_1_asteroids"
 	elif rom == "space_invaders":
-		return exp_dir + "2021-10-01T18:23:26.293_space_invaders"
+		return exp_dir + "2021-10-01T18:23:26.293_1_space_invaders"
 	elif rom == "breakout":
-		return exp_dir + "2021-09-23T18:31:09.829_breakout"
+		return exp_dir + "2021-09-23T18:31:09.829_1_breakout"
 	elif rom == "riverraid":
-		return exp_dir + "2021-10-01T18:22:33.340_riverraid"
+		return exp_dir + "2021-10-01T18:22:33.340_1_riverraid"
 	elif rom == "gravitar":
-		return exp_dir + "2021-09-07T17:17:40.579_gravitar"
+		return exp_dir + "2021-09-07T17:17:40.579_1_gravitar"
 	else:
 		raise NameError(rom)
 	
@@ -982,7 +982,8 @@ def get_exp_dir(rom):
 Main make method calling frame-maker and video-maker sequentially.
 """
 def make(rom):
-	exp_dir = get_exp_dir(rom)
+	#exp_dir = get_exp_dir(rom)
+	exp_dir = rom # new exp_dir
 	paths = get_paths(exp_dir)
 	max_frame = get_max_frame(exp_dir)
 	random.seed(SEED)
