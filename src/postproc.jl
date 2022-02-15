@@ -294,6 +294,8 @@ function init_lucie_plots()
         xlabel="Generation", legend=:bottomright)
     plt_dict["total_n_eval"] = plot(ylabel="Total number of evaluations",
         xlabel="Generation", legend=:bottomright)
+    plt_dict["neval_vs_gen"] = plot(ylabel="Number of evaluations",
+        xlabel="Generation", legend=:bottomright)
     plt_dict
 end
 
@@ -319,13 +321,16 @@ function fill_lucie_plots!(
             label=string("run ", k), linewidth=lw, palette=p)
         plot!(plt_dict["total_n_eval"], ind2data[k]["gen"], ind2data[k]["total_n_eval"],
             label=string("run ", k), linewidth=lw, palette=p)
+        plot!(plt_dict["neval_vs_gen"], ind2data[k]["gen"], ind2data[k]["gen_n_eval"],
+            label=string("run ", k), linewidth=lw, palette=p)
         n_points = length(ind2data[k]["all_n_eval"])
         n_ind = length(ind2data[k]["all_n_eval"][1])
         nevals = zeros(Int64, (n_ind, n_points))
         log_nevals = zeros(Float64, (n_ind, n_points))
         for j in eachindex(ind2data[k]["all_n_eval"])
-            nevals[:,j] .= reverse(ind2data[k]["all_n_eval"][j])
-            log_nevals[:,j] .= log.(reverse(ind2data[k]["all_n_eval"][j]))
+            n_evals_gen_j = reverse(ind2data[k]["all_n_eval"][j])
+            nevals[:,j] .= n_evals_gen_j
+            log_nevals[:,j] .= log.(n_evals_gen_j)
         end
         push!(hms, heatmap(nevals))
         push!(log_hms, heatmap(log_nevals))
@@ -333,9 +338,9 @@ function fill_lucie_plots!(
     if baseline
         add_baselines!([plt_dict["meanfit_vs_gen"], plt_dict["maxfit_vs_gen"]], game)
     end
-    plt_dict["neval_vs_gen"] = plot(hms..., layout=(length(keys(ind2data)),1),
+    plt_dict["nevalperind_vs_gen"] = plot(hms..., layout=(length(keys(ind2data)),1),
         ylabel="n_eval")
-    plt_dict["log_neval_vs_gen"] = plot(log_hms..., layout=(length(keys(ind2data)),1),
+    plt_dict["log_nevalperind_vs_gen"] = plot(log_hms..., layout=(length(keys(ind2data)),1),
         ylabel="log(n_eval)")
 end
 
@@ -344,7 +349,7 @@ function add_pergen_lucie_data!(d::Dict{Any,Any}, df_gen::DataFrame)
     # TODO validation fitness
     ks = ["best_mean_fit", "best_best_fit", "all_n_eval",
         "best_mean_fit_ind_std", "best_mean_fit_ind_neval", "bound_scale",
-        "epsilon", "total_n_eval"]
+        "epsilon", "total_n_eval", "gen_n_eval"]
     for k in ks
         if k ∉ keys(d)
             d[k] = Vector{Union{Int64,Float64,Vector{Int64}}}()
@@ -353,6 +358,7 @@ function add_pergen_lucie_data!(d::Dict{Any,Any}, df_gen::DataFrame)
     epsilon = df_gen.epsilon[1]
     bound_scale = df_gen.bound_scale[1]
     total_n_eval = df_gen.total_n_eval[1]
+    gen_n_eval = df_gen.gen_n_eval[1]
     @assert all(df_gen.epsilon .== epsilon)
     @assert all(df_gen.bound_scale .== bound_scale)
     @assert all(df_gen.total_n_eval .== total_n_eval)
@@ -371,6 +377,7 @@ function add_pergen_lucie_data!(d::Dict{Any,Any}, df_gen::DataFrame)
     push!(d["epsilon"], epsilon)
     push!(d["bound_scale"], bound_scale)
     push!(d["total_n_eval"], total_n_eval)
+    push!(d["gen_n_eval"], gen_n_eval)
 end
 
 function fetch_lucie_data(
@@ -428,7 +435,8 @@ function process_lucie_results(
     fill_lucie_plots!(plt_dict, ind2data, game, baseline)
     # 4. Display
     graphs = ["meanfit_vs_gen", "maxfit_vs_gen", "epsilon_vs_gen",
-        "bound_scale_vs_gen", "total_n_eval", "neval_vs_gen", "log_neval_vs_gen"]
+        "bound_scale_vs_gen", "total_n_eval", "neval_vs_gen",
+        "nevalperind_vs_gen", "log_nevalperind_vs_gen"]
     if do_display
         for g in graphs
             display(plt_dict[g])
