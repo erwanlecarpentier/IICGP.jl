@@ -114,16 +114,11 @@ function my_fitness(
 	ind::LUCIEInd,
 	seed::Int64,
 	game::Game,
-	max_frames::Int64;
-	is_validation::Bool=false
+	max_frames::Int64
 )
     enco = IPCGPInd(ecfg, ind.e_chromosome)
     cont = CGPInd(ccfg, ind.c_chromosome)
-	score, f = atari_score(game, enco, reducer, cont, seed, max_frames)
-	if !is_validation
-		push!(ind.reached_frames, f)
-	end
-    score
+	atari_score(game, enco, reducer, cont, seed, max_frames)
 end
 
 # User-defined mutation function
@@ -152,7 +147,8 @@ function cstind_init(indtype::Type, config::NamedTuple)
 	game = Game(rom_name, seed)
     @inbounds for i in eachindex(cstinds)
 		IICGP.reset!(game)
-		push!(cstinds[i].fitnesses, my_fitness(cstinds[i], seed, game, config.max_frames))
+		score, _ = my_fitness(cstinds[i], seed, game, config.max_frames)
+		push!(cstinds[i].fitnesses, score)
     end
 	close!(game)
 	for ind in cstinds

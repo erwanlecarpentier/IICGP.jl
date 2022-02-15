@@ -347,7 +347,7 @@ end
 function add_pergen_lucie_data!(d::Dict{Any,Any}, df_gen::DataFrame)
     # TODO reached_frames
     # TODO validation fitness
-    ks = ["best_mean_fit", "best_best_fit", "all_n_eval",
+    ks = ["n_frames", "best_mean_fit", "best_best_fit", "all_n_eval",
         "best_mean_fit_ind_std", "best_mean_fit_ind_neval", "bound_scale",
         "epsilon", "total_n_eval", "gen_n_eval"]
     for k in ks
@@ -355,6 +355,8 @@ function add_pergen_lucie_data!(d::Dict{Any,Any}, df_gen::DataFrame)
             d[k] = Vector{Union{Int64,Float64,Vector{Int64}}}()
         end
     end
+    n_frames = df_gen.n_frames[1] # TODO check that it works
+    foo()
     epsilon = df_gen.epsilon[1]
     bound_scale = df_gen.bound_scale[1]
     total_n_eval = df_gen.total_n_eval[1]
@@ -369,6 +371,7 @@ function add_pergen_lucie_data!(d::Dict{Any,Any}, df_gen::DataFrame)
     stds = replace_nan([std(f) for f in fitnesses], 0.0)
     best_mean_fit_ind_index = argmax(means)
     best_best_fit_index = argmax(bests)
+    push!(d["n_frames"], n_frames)
     push!(d["best_mean_fit"], means[best_mean_fit_ind_index])
     push!(d["best_best_fit"], bests[best_best_fit_index])
     push!(d["best_mean_fit_ind_std"], stds[best_mean_fit_ind_index])

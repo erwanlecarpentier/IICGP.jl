@@ -35,6 +35,7 @@ mutable struct LUCIEEvo{T} <: AbstractEvolution
     fitness::Function
     gen::Int64 # current generation number
 	step::Int64 # current step (number of pairs of evals during this generation)
+	n_frames::Int64 # number of frames seen so far
 	gen_n_eval::Int64
 	total_n_eval::Int64
 	bound_scale::Float64
@@ -58,7 +59,7 @@ function LUCIEEvo{T}(
 	bound_scale = config.bound_scale
 	epsilon = config.epsilon
 	atari_games = [Game(rom_name, 0) for _ in 1:length(population)]
-    LUCIEEvo(config, population, fitness, 0, 0, 0, 0, bound_scale, epsilon,
+    LUCIEEvo(config, population, fitness, 0, 0, 0, 0, 0, bound_scale, epsilon,
 		resdir, atari_games)
 end
 
@@ -89,14 +90,28 @@ function get_seed(e::LUCIEEvo{T}) where T
 	Int64((e.gen - 1) * e.config.n_eval_max / 2 + 2 * e.step)
 end
 
+function get_new_ind_indexes(e::LUCIEEvo{T}) where T
+	new_ind_indexes = Vector{Int64}()
+	for i in eachindex(e.population)
+		if length(e.population[i].fitnesses) < 1
+			push!(new_ind_indexes, i)
+		end
+	end
+	new_ind_indexes
+end
+
 function evaluate_new_ind!(e::LUCIEEvo{T}, fitness::Function) where T
 	n_eval = sum([length(ind.fitnesses) < 1 for ind in e.population])
-	Threads.@threads for i in eachindex(e.population)
-		if length(e.population[i].fitnesses) < 1
-			seed = get_seed(e)
-			score = fitness(e.population[i], seed, e.atari_games[i], e.config.max_frames)
-			push!(e.population[i].fitnesses, score)
-		end
+	new_ind_indexes = get_new_ind_indexes(e)
+	Threads.@threads for i in new_ind_indexes
+		@assert length(e.population[i].fitnesses) < 1
+		seed = get_seed(e)
+		score, frames = fitness(e.population[i], seed, e.atari_games[i], e.config.max_frames)
+		push!(e.population[i].fitnesses, score)
+		push!(e.population[i].reached_frames, frames)
+	end
+	for i in new_ind_indexes
+		e.n_frames += e.population[i].reached_frames[end]
 	end
 	increment_lifetime!(e, n=n_eval)
 	increment_n_eval!(e, n=n_eval)
@@ -123,8 +138,8 @@ function validate(
 	validation_fitnesses = Vector{Float64}()
 	for i in 1:e.config.validation_size
 		seed = e.config.n_gen * e.config.n_eval_max + i + e.gen * e.config.validation_size
-		score = fitness(e.population[ind_index], seed, e.atari_games[ind_index],
-			e.config.validation_max_frames, is_validation=true)
+		score, _ = fitness(e.population[ind_index], seed, e.atari_games[ind_index],
+			e.config.validation_max_frames)
 		push!(validation_fitnesses, score)
 	end
 	validation_fitnesses
@@ -140,9 +155,12 @@ function evaluate_pair!(
 	Threads.@threads for i in [h_index, l_index]
 		seed = get_seed(e)
 		seed += i == h_index ? 1 : 0
-		score = fitness(e.population[i], seed, e.atari_games[i], e.config.max_frames)
+		score, frames = fitness(e.population[i], seed, e.atari_games[i], e.config.max_frames)
 		push!(e.population[i].fitnesses, score)
+		push!(e.population[i].reached_frames, frames)
 	end
+	n_frames = sum([e.population[i].reached_frames[end] for i in [h_index, l_index]])
+	e.n_frames += n_frames
 end
 
 function update_bounds!(e::LUCIEEvo{T}) where T
@@ -304,7 +322,7 @@ Logging
 function log_gen(e::LUCIEEvo{T}, do_validate::Bool) where T
 	logid = e.config.id
 	sep = ";"
-	logged_data_header = ["gen_number", "fitnesses", "reached_frames",
+	logged_data_header = ["gen_number", "fitnesses", "reached_frames", "n_frames",
 		"total_n_eval", "gen_n_eval", "epsilon", "bound_scale", "dna_id", "validation_fitnesses"]
     if e.gen == 1
         f = open(joinpath(e.resdir, logid, "logs/logs.csv"), "w+")
@@ -324,8 +342,8 @@ function log_gen(e::LUCIEEvo{T}, do_validate::Bool) where T
 		f = open(joinpath(e.resdir, logid, "logs/logs.csv"), "a+")
 		data = [
 			e.gen, e.population[i].fitnesses,
-			e.population[i].reached_frames, e.total_n_eval, e.gen_n_eval,
-			e.epsilon, e.bound_scale, dna_id, validation_fitnesses
+			e.population[i].reached_frames, e.n_frames, e.total_n_eval,
+			e.gen_n_eval, e.epsilon, e.bound_scale, dna_id, validation_fitnesses
 		]
         write(f, Formatting.format(to_csv_row(data, sep)))
         close(f)
