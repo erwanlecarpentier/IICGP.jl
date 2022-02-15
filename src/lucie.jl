@@ -312,12 +312,9 @@ function log_gen(e::LUCIEEvo{T}, do_validate::Bool) where T
         write(f, header)
         close(f)
     end
-	enco_path = joinpath(e.resdir, logid, Formatting.format("gens/encoder_{1:04d}", e.gen))
-    cont_path = joinpath(e.resdir, logid, Formatting.format("gens/controller_{1:04d}", e.gen))
-    mkpath(enco_path)
-    mkpath(cont_path)
     for i in eachindex(e.population)
-        dna_id = Formatting.format("{1:04d}", i)
+		do_save_gen = (e.gen == 1 || mod(e.gen, e.config.save_gen) == 0)
+        dna_id = do_save_gen ? Formatting.format("{1:04d}", i) : NaN
 		if do_validate
 			validation_fitnesses = validate(e, i, e.fitness)
 		else
@@ -333,16 +330,31 @@ function log_gen(e::LUCIEEvo{T}, do_validate::Bool) where T
         write(f, Formatting.format(to_csv_row(data, sep)))
         close(f)
 		# Log individuals
-		ind_fit = [mean_fitness(e.population[i])]
-		enco = IPCGPInd(e.config.e_config, e.population[i].e_chromosome)
-		enco.fitness .= ind_fit
-		f = open(string(enco_path, "/", dna_id, ".dna"), "w+")
-        write(f, string(enco))
-        close(f)
-        cont = CGPInd(e.config.c_config, e.population[i].c_chromosome)
-		cont.fitness .= ind_fit
-        f = open(string(cont_path, "/", dna_id, ".dna"), "w+")
-        write(f, string(cont))
-        close(f)
+		if do_save_gen
+			save_gen(e, i, dna_id, logid)
+		end
     end
+end
+
+function save_gen(
+	e::LUCIEEvo{T},
+	i::Int64,
+	dna_id::String,
+	logid::String
+) where T
+	enco_path = joinpath(e.resdir, logid, Formatting.format("gens/encoder_{1:04d}", e.gen))
+	cont_path = joinpath(e.resdir, logid, Formatting.format("gens/controller_{1:04d}", e.gen))
+	mkpath(enco_path)
+	mkpath(cont_path)
+	ind_fit = [mean_fitness(e.population[i])]
+	enco = IPCGPInd(e.config.e_config, e.population[i].e_chromosome)
+	enco.fitness .= ind_fit
+	f = open(string(enco_path, "/", dna_id, ".dna"), "w+")
+	write(f, string(enco))
+	close(f)
+	cont = CGPInd(e.config.c_config, e.population[i].c_chromosome)
+	cont.fitness .= ind_fit
+	f = open(string(cont_path, "/", dna_id, ".dna"), "w+")
+	write(f, string(cont))
+	close(f)
 end

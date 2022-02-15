@@ -11,22 +11,22 @@ using CSV
 using TimerOutputs
 
 BASELINES = Dict(
-    "assault"=>Dict("MTCGP"=>(890.4, 255), "A3C LSTM"=>14497.9),
+    "assault"=>Dict("MTCGP"=>(890.4, 255)), #, "A3C LSTM"=>14497.9),
     "asteroids"=>Dict("MTCGP"=>(9412,1818)),
-    "boxing"=>Dict("MTCGP"=>(38.4,4), "Dueling"=>77.3),
-    "breakout"=>Dict("MTCGP"=>(13.2,2), "A3C LSTM"=>766.8),
+    "boxing"=>Dict("MTCGP"=>(38.4,4)), #, "Dueling"=>77.3),
+    "breakout"=>Dict("MTCGP"=>(13.2,2)), #, "A3C LSTM"=>766.8),
     "defender"=>Dict("MTCGP"=>(993010,2739)),
-    "freeway"=>Dict("MTCGP"=>(28.2,0), "HyperNEAT"=>29),
-    "frostbite"=>Dict("MTCGP"=>(782,795), "TPG"=>8144.4),
+    "freeway"=>Dict("MTCGP"=>(28.2,0)), #, "HyperNEAT"=>29),
+    "frostbite"=>Dict("MTCGP"=>(782,795)), #, "TPG"=>8144.4),
     "gravitar"=>Dict("MTCGP"=>(2350,50)),
-    "private_eye"=>Dict("MTCGP"=>(12702.2,4337), "TPG"=>15028.3),
+    "private_eye"=>Dict("MTCGP"=>(12702.2,4337)), #, "TPG"=>15028.3),
     "pong"=>Dict("MTCGP"=>(20,0)),
-    "riverraid"=>Dict("MTCGP"=>(2914,90), "Prioritized"=>18184.4),
+    "riverraid"=>Dict("MTCGP"=>(2914,90)), #, "Prioritized"=>18184.4),
     "solaris"=>Dict("MTCGP"=>(8324,2250)),
-    "space_invaders"=>Dict("MTCGP"=>(1001,25), "A3C LSTM"=>23846)
+    "space_invaders"=>Dict("MTCGP"=>(1001,25)) #, "A3C LSTM"=>23846)
 )
 
-gamename_from_romname(rn::String) = titlecase(replace(rn, "_"=>" "))
+gamename_from_romname(n::String) = titlecase(replace(n, "_"=>" "))
 
 """
     function time_monocgp_ms(
@@ -382,7 +382,8 @@ end
 
 function fetch_lucie_data(
     exp_dirs::Vector{String};
-    verbose::Bool=true
+    verbose::Bool=true,
+    omit_last_gen::Bool=false
 )
     ind2data = Dict{Int64,Dict{Any,Any}}()
     for i in eachindex(exp_dirs)
@@ -393,8 +394,10 @@ function fetch_lucie_data(
         df = DataFrame(log)
         ind2data[i] = Dict()
         ind2data[i]["gen"] = Vector{Int64}()
+        last_gen = maximum(df.gen_number)
         for row in eachrow(df)
-            if row.gen_number ∉ ind2data[i]["gen"]
+            omitted = omit_last_gen && row.gen_number == last_gen
+            if (row.gen_number ∉ ind2data[i]["gen"]) && !omitted
                 push!(ind2data[i]["gen"], row.gen_number)
             end
         end
@@ -421,7 +424,8 @@ function process_lucie_results(
     savedir_index::Int64=1,
     do_display::Bool=true,
     do_save::Bool=true,
-    baseline::Bool=true
+    baseline::Bool=true,
+    omit_last_gen::Bool=false
 )
     @assert all([g == games[1] for g in games])
     game = games[1]
@@ -429,7 +433,7 @@ function process_lucie_results(
     # 1. Link cfgs and indexes to categories
     cfg2cat, ind2cat = group_by_cfg(exp_dirs)
     # 2. Fetch data
-    ind2data = fetch_lucie_data(exp_dirs)
+    ind2data = fetch_lucie_data(exp_dirs, omit_last_gen=omit_last_gen)
     # 3. Plot
     plt_dict = init_lucie_plots()
     fill_lucie_plots!(plt_dict, ind2data, game, baseline)

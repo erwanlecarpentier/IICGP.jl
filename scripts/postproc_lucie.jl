@@ -15,7 +15,7 @@ max_date = DateTime(2022, 02, 08, 14, 40)
 labels = Vector{String}()
 colors = Vector{Symbol}()
 rom_names = ["boxing", "gravitar", "freeway", "solaris", "space_invaders", "asteroids"]
-rom_names = ["freeway"]
+#rom_names = ["boxing"]
 reducers = ["pooling"]
 dotime = false
 dosave = true
@@ -28,5 +28,5 @@ for rom_name in rom_names
     exp_dirs, ids, games = get_exp_dir(resdir, min_date=min_date, max_date=max_date,
         games=[rom_name], reducers=reducers)
     process_lucie_results(exp_dirs, games, colors, labels, do_display=true,
-        do_save=true)
+        do_save=true, omit_last_gen=true)
 end

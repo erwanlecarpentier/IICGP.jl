@@ -1,14 +1,14 @@
 # General parameters
 optimizer: "lucie"
 seed: 0
-max_frames: 10000
+max_frames: 10 # TODO 10000
 stickiness: 0.25
 d_fitness: 1
-n_gen: 100000
+n_gen: 10 # TODO 100000
 validation: true
 validation_size: 10 # number of eval per individual
-validation_freq: 200
-validation_max_frames: 18000
+validation_freq: 10 # TODO 200 # evaluate each validation_freq generations
+validation_max_frames: 10 # TODO 18000
 n_eval_max: 120 # Max number of eval per gen
 n_population: 12
 n_elite: 3 # Number of elite pairs per generation
@@ -22,8 +22,8 @@ delta: 0.1
 bound_type: "lucie"
 bound_scale: 1.0 # Initial bound scale
 is_bound_scale_dynamic: true
-log_gen: 50
-save_gen: 50
+log_gen: 1 # TODO 50
+save_gen: 3 # TODO 250
 bootstrap: false
 grayscale: true
 downscale: true
