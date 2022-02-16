@@ -9,6 +9,7 @@ using BenchmarkTools
 using Statistics
 using CSV
 using TimerOutputs
+using Printf
 
 BASELINES = Dict(
     "assault"=>Dict("MTCGP"=>(890.4, 255)), #, "A3C LSTM"=>14497.9),
@@ -280,13 +281,13 @@ end
 
 replace_nan(v::Vector{T}, val::T) where T = map(x -> isnan(x) ? val : x, v)
 
-# LUCIE_PLOTS = []
-
 function init_lucie_plots()
     plt_dict = Dict()
     xl = "Generation / Number of frames"
     plt_dict["meanfit_vs_gen"] = plot(ylabel="Best mean fitness",
         xlabel=xl, legend=:bottomright)
+    plt_dict["validation_vs_gen"] = plot(ylabel="Best validation fitness",
+        xlabel="Generation", legend=:bottomright)
     plt_dict["maxfit_vs_gen"] = plot(ylabel="Best max fitness",
         xlabel=xl, legend=:bottomright)
     plt_dict["epsilon_vs_gen"] = plot(ylabel="Epsilon",
@@ -298,6 +299,19 @@ function init_lucie_plots()
     plt_dict["neval_vs_gen"] = plot(ylabel="Number of evaluations",
         xlabel=xl, legend=:bottomright)
     plt_dict
+end
+
+function get_gen_frames_xticks(
+    gen_vector::Vector{Int64},
+    frames_vector::AbstractArray;
+    n_ticks::Int64=5
+)
+    x_values = gen_vector
+    x_names = [string(gen_vector[i], "\n", @sprintf("%.1E", frames_vector[i])) for i in eachindex(gen_vector)]
+    interval = Int64(floor(length(x_values) / n_ticks))
+    #v = vcat(convert(Vector{Int64}, 1:interval:length(x_values)), x_values[end])
+    v = 1:interval:length(x_values)
+    (view(x_values, v), view(x_names, v))
 end
 
 function fill_lucie_plots!(
@@ -313,14 +327,13 @@ function fill_lucie_plots!(
     for k in keys(ind2data)
         x = ind2data[k]["gen"]
         l = string("run ", k)
-        xticks = (
-            ind2data[k]["gen"],
-            [string(ind2data[k]["gen"][i], "\n", ind2data[k]["n_frames"][i])
-            for i in eachindex(ind2data[k]["gen"])]
-        )
+        xticks = get_gen_frames_xticks(ind2data[k]["gen"], ind2data[k]["n_frames"])
         plot!(plt_dict["meanfit_vs_gen"], x, ind2data[k]["best_mean_fit"],
             ribbon=ind2data[k]["best_mean_fit_ind_std"],
             label=l, linewidth=lw, palette=p, xticks=xticks)
+        plot!(plt_dict["validation_vs_gen"], ind2data[k]["validation_gen"],
+            ind2data[k]["validation_score"], ribbon=ind2data[k]["validation_std"],
+            label=l, linewidth=lw, palette=p)
         plot!(plt_dict["maxfit_vs_gen"], x, ind2data[k]["best_best_fit"],
             label=l, linewidth=lw, palette=p, xticks=xticks)
         plot!(plt_dict["epsilon_vs_gen"], x, ind2data[k]["epsilon"],
@@ -344,7 +357,11 @@ function fill_lucie_plots!(
         push!(log_hms, heatmap(log_nevals))
     end
     if baseline
-        add_baselines!([plt_dict["meanfit_vs_gen"], plt_dict["maxfit_vs_gen"]], game)
+        add_baselines!([
+            plt_dict["meanfit_vs_gen"],
+            plt_dict["validation_vs_gen"],
+            plt_dict["maxfit_vs_gen"]
+        ], game)
     end
     plt_dict["nevalperind_vs_gen"] = plot(hms..., layout=(length(keys(ind2data)),1),
         ylabel="n_eval")
@@ -355,7 +372,8 @@ end
 function add_pergen_lucie_data!(d::Dict{Any,Any}, df_gen::DataFrame)
     # TODO reached_frames
     # TODO validation fitness
-    ks = ["n_frames", "best_mean_fit", "best_best_fit", "all_n_eval",
+    ks = ["n_frames", "best_mean_fit", "best_best_fit", "validation_gen",
+        "validation_score", "validation_std", "all_n_eval",
         "best_mean_fit_ind_std", "best_mean_fit_ind_neval", "bound_scale",
         "epsilon", "total_n_eval", "gen_n_eval"]
     for k in ks
@@ -388,6 +406,19 @@ function add_pergen_lucie_data!(d::Dict{Any,Any}, df_gen::DataFrame)
     push!(d["bound_scale"], bound_scale)
     push!(d["total_n_eval"], total_n_eval)
     push!(d["gen_n_eval"], gen_n_eval)
+
+    if !isnan_str(df_gen.validation_fitnesses[1])
+        val_fitnesses = [strvec2vec(f) for f in df_gen.validation_fitnesses]
+        val_means = [mean(f) for f in val_fitnesses]
+        val_stds = replace_nan([std(f) for f in val_fitnesses], 0.0)
+        best_index = argmax(val_means)
+        validation_score = val_means[best_index]
+        validation_std = val_stds[best_index]
+        validation_gen = df_gen.gen_number[1]
+        push!(d["validation_score"], validation_score)
+        push!(d["validation_std"], validation_std)
+        push!(d["validation_gen"], validation_gen)
+    end
 end
 
 function fetch_lucie_data(
@@ -448,8 +479,8 @@ function process_lucie_results(
     plt_dict = init_lucie_plots()
     fill_lucie_plots!(plt_dict, ind2data, game, baseline)
     # 4. Display
-    graphs = ["meanfit_vs_gen", "maxfit_vs_gen", "epsilon_vs_gen",
-        "bound_scale_vs_gen", "total_n_eval", "neval_vs_gen",
+    graphs = ["meanfit_vs_gen", "validation_vs_gen", "maxfit_vs_gen",
+        "epsilon_vs_gen", "bound_scale_vs_gen", "total_n_eval", "neval_vs_gen",
         "nevalperind_vs_gen", "log_nevalperind_vs_gen"]
     if do_display
         for g in graphs

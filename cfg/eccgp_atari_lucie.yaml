@@ -4,7 +4,7 @@ seed: 0
 max_frames: 10 # TODO 10000
 stickiness: 0.25
 d_fitness: 1
-n_gen: 10 # TODO 100000
+n_gen: 1000 # TODO 100000
 validation: true
 validation_size: 10 # number of eval per individual
 validation_freq: 3 # TODO 250 # evaluate each validation_freq generations
