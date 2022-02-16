@@ -101,8 +101,8 @@ function get_new_ind_indexes(e::LUCIEEvo{T}) where T
 end
 
 function evaluate_new_ind!(e::LUCIEEvo{T}, fitness::Function) where T
-	n_eval = sum([length(ind.fitnesses) < 1 for ind in e.population])
 	new_ind_indexes = get_new_ind_indexes(e)
+	n_eval = length(new_ind_indexes)
 	Threads.@threads for i in new_ind_indexes
 		@assert length(e.population[i].fitnesses) < 1
 		seed = get_seed(e)
@@ -238,10 +238,14 @@ end
 Main evaluation function for LUCIEEvo.
 """
 function fitness_evaluate(e::LUCIEEvo{T}, fitness::Function) where T
+	# 1. Re-init counters
 	e.gen_n_eval = 0
+	e.step = 0
+	# 2. Evaluate new individuals
 	n_init_eval = evaluate_new_ind!(e, fitness)
-	e.step = floor(Int64, n_init_eval / 2)
-	e.step = max(e.step, 1) # Domain check
+	# 3. Update step counter
+	e.step = max(floor(Int64, n_init_eval / 2), 1)
+	# 4. Evaluate remaining individuals
 	n_eval = e.config.n_eval_max - n_init_eval
 	pac_evaluation(e, fitness, n_eval)
 end

@@ -355,8 +355,10 @@ function add_pergen_lucie_data!(d::Dict{Any,Any}, df_gen::DataFrame)
             d[k] = Vector{Union{Int64,Float64,Vector{Int64}}}()
         end
     end
-    n_frames = df_gen.n_frames[1] # TODO check that it works
-    
+    n_frames = df_gen.n_frames[1]
+    println()
+    println(df_gen)
+    println(n_frames)
     foo()
     epsilon = df_gen.epsilon[1]
     bound_scale = df_gen.bound_scale[1]

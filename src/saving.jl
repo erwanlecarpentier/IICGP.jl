@@ -183,6 +183,9 @@ function get_exp_dir(
             end
         end
     end
+    if length(filtered_res) == 0
+        throw(ArgumentError("No experiment matching your criteria found."))
+    end
     filtered_res, filtered_id, filtered_games
 end
 
