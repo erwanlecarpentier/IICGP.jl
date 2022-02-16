@@ -80,7 +80,13 @@ function atari_score(
     stickiness::Float64=stickiness
 )
 	# TODO START TRM
-	return sum(encoder.chromosome), convert(Int64, ceil(20*rand()+100))
+	noise = 30 * (2*rand()-1)
+	if rand() < 0.8
+		noise *= 0.1
+	end
+	score = sum(encoder.chromosome) + noise
+	frames = convert(Int64, ceil(20*rand()+100))
+	return score, frames
 	# TODO END TRM
     Random.seed!(seed)
     mt = MersenneTwister(seed)

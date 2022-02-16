@@ -17,8 +17,8 @@ Postproc will only consider experiments with the following criteria:
 - Only roms in `rom_names` will be considered
 - Only experiments using the reducer in `reducers` will be considered
 =#
-min_date = DateTime(2022, 02, 16, 10)
-max_date = DateTime(2022, 02, 16, 18)
+min_date = DateTime(2022, 02, 16, 17, 06)
+max_date = DateTime(2022, 02, 16, 17, 08)
 rom_names = ["boxing", "gravitar", "freeway", "solaris", "space_invaders", "asteroids"]
 rom_names = ["boxing"]
 reducers = ["pooling"]

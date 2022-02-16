@@ -184,6 +184,9 @@ function confidence_bound(
 ) where T
 	cb = 0.0
 	u = Float64(length(e.population[i].fitnesses))
+	if e.config.bound_zeroer > 0 && u >= e.config.bound_zeroer
+		return 0.0
+	end
 	if e.config.bound_type == "lucb1"
 		l = Float64(e.population[i].lifetime)
 		cb = sqrt(log(1.25 * population_size * l^4 / e.config.delta) / (2.0 * u))
@@ -198,7 +201,7 @@ function confidence_bound(
 	else
 		error("Bound type ", e.config.bound_type, " not implemented.")
 	end
-	e.bound_scale * cb
+	e.config.bound_factor * e.bound_scale * cb
 end
 
 function sort_and_pick!(e::LUCIEEvo{T}) where T
@@ -222,7 +225,7 @@ function update_bound_scale!(e::LUCIEEvo{T}) where T
 	if e.config.is_bound_scale_dynamic
 		max_mean = maximum([mean_fitness(ind) for ind in e.population])
 		min_mean = minimum([mean_fitness(ind) for ind in e.population])
-		e.bound_scale = abs(max_mean - min_mean)
+		e.bound_scale = e.config.bound_scale_decay * abs(max_mean - min_mean) + (1.0-e.config.bound_scale_decay) * e.bound_scale
 		e.bound_scale = max(e.bound_scale, 1.0)
 	end
 end
@@ -327,8 +330,9 @@ Logging
 function log_gen(e::LUCIEEvo{T}, do_validate::Bool) where T
 	logid = e.config.id
 	sep = ";"
-	logged_data_header = ["gen_number", "fitnesses", "reached_frames", "n_frames",
-		"total_n_eval", "gen_n_eval", "epsilon", "bound_scale", "dna_id", "validation_fitnesses"]
+	logged_data_header = ["gen_number", "fitnesses", "reached_frames",
+		"n_frames", "total_n_eval", "gen_n_eval", "epsilon", "bound_scale",
+		"dna_id", "validation_fitnesses"]
     if e.gen == 1
         f = open(joinpath(e.resdir, logid, "logs/logs.csv"), "w+")
 		header = to_csv_row(logged_data_header, sep)
