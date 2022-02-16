@@ -356,6 +356,7 @@ function add_pergen_lucie_data!(d::Dict{Any,Any}, df_gen::DataFrame)
         end
     end
     n_frames = df_gen.n_frames[1] # TODO check that it works
+    
     foo()
     epsilon = df_gen.epsilon[1]
     bound_scale = df_gen.bound_scale[1]

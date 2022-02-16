@@ -79,6 +79,9 @@ function atari_score(
     downscale::Bool=downscale,
     stickiness::Float64=stickiness
 )
+	# TODO START TRM
+	return sum(encoder.chromosome), convert(Int64, ceil(20*rand()+100))
+	# TODO END TRM
     Random.seed!(seed)
     mt = MersenneTwister(seed)
     #game = Game(rom, seed, lck=lck)
