@@ -150,8 +150,9 @@ function cstind_init(indtype::Type, config::NamedTuple)
 	game = Game(rom_name, seed)
     @inbounds for i in eachindex(cstinds)
 		IICGP.reset!(game)
-		score, _ = my_fitness(cstinds[i], seed, game, config.max_frames)
+		score, frames = my_fitness(cstinds[i], seed, game, config.max_frames)
 		push!(cstinds[i].fitnesses, score)
+		push!(cstinds[i].reached_frames, frames)
     end
 	close!(game)
 	for ind in cstinds

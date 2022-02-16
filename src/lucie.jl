@@ -59,8 +59,9 @@ function LUCIEEvo{T}(
 	bound_scale = config.bound_scale
 	epsilon = config.epsilon
 	atari_games = [Game(rom_name, 0) for _ in 1:length(population)]
-    LUCIEEvo(config, population, fitness, 0, 0, 0, 0, 0, bound_scale, epsilon,
-		resdir, atari_games)
+	n_frames = sum([sum(ind.reached_frames) for ind in population])
+    LUCIEEvo(config, population, fitness, 0, 0, n_frames, 0, 0, bound_scale,
+		epsilon, resdir, atari_games)
 end
 
 evaluate(e::LUCIEEvo{T}) where T = fitness_evaluate(e, e.fitness)
@@ -102,6 +103,8 @@ end
 
 function evaluate_new_ind!(e::LUCIEEvo{T}, fitness::Function) where T
 	new_ind_indexes = get_new_ind_indexes(e)
+	println() # TODO remove
+	println(new_ind_indexes) # TODO remove
 	n_eval = length(new_ind_indexes)
 	Threads.@threads for i in new_ind_indexes
 		@assert length(e.population[i].fitnesses) < 1
@@ -109,6 +112,7 @@ function evaluate_new_ind!(e::LUCIEEvo{T}, fitness::Function) where T
 		score, frames = fitness(e.population[i], seed, e.atari_games[i], e.config.max_frames)
 		push!(e.population[i].fitnesses, score)
 		push!(e.population[i].reached_frames, frames)
+		println(score, " ", frames) # TODO remove
 	end
 	for i in new_ind_indexes
 		e.n_frames += e.population[i].reached_frames[end]
