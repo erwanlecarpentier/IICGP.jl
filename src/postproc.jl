@@ -284,18 +284,19 @@ replace_nan(v::Vector{T}, val::T) where T = map(x -> isnan(x) ? val : x, v)
 
 function init_lucie_plots()
     plt_dict = Dict()
+    xl = "Generation / Number of frames"
     plt_dict["meanfit_vs_gen"] = plot(ylabel="Best mean fitness",
-        xlabel="Generation", legend=:bottomright)
+        xlabel=xl, legend=:bottomright)
     plt_dict["maxfit_vs_gen"] = plot(ylabel="Best max fitness",
-        xlabel="Generation", legend=:bottomright)
+        xlabel=xl, legend=:bottomright)
     plt_dict["epsilon_vs_gen"] = plot(ylabel="Epsilon",
-        xlabel="Generation", legend=:bottomright)
+        xlabel=xl, legend=:bottomright)
     plt_dict["bound_scale_vs_gen"] = plot(ylabel="Scaling factor",
-        xlabel="Generation", legend=:bottomright)
+        xlabel=xl, legend=:bottomright)
     plt_dict["total_n_eval"] = plot(ylabel="Total number of evaluations",
-        xlabel="Generation", legend=:bottomright)
+        xlabel=xl, legend=:bottomright)
     plt_dict["neval_vs_gen"] = plot(ylabel="Number of evaluations",
-        xlabel="Generation", legend=:bottomright)
+        xlabel=xl, legend=:bottomright)
     plt_dict
 end
 
@@ -310,19 +311,26 @@ function fill_lucie_plots!(
     hms = Vector{Any}()
     log_hms = Vector{Any}()
     for k in keys(ind2data)
-        plot!(plt_dict["meanfit_vs_gen"], ind2data[k]["gen"], ind2data[k]["best_mean_fit"],
+        x = ind2data[k]["gen"]
+        l = string("run ", k)
+        xticks = (
+            ind2data[k]["gen"],
+            [string(ind2data[k]["gen"][i], "\n", ind2data[k]["n_frames"][i])
+            for i in eachindex(ind2data[k]["gen"])]
+        )
+        plot!(plt_dict["meanfit_vs_gen"], x, ind2data[k]["best_mean_fit"],
             ribbon=ind2data[k]["best_mean_fit_ind_std"],
-            label=string("run ", k), linewidth=lw, palette=p)
-        plot!(plt_dict["maxfit_vs_gen"], ind2data[k]["gen"], ind2data[k]["best_best_fit"],
-            label=string("run ", k), linewidth=lw, palette=p)
-        plot!(plt_dict["epsilon_vs_gen"], ind2data[k]["gen"], ind2data[k]["epsilon"],
-            label=string("run ", k), linewidth=lw, palette=p)
-        plot!(plt_dict["bound_scale_vs_gen"], ind2data[k]["gen"], ind2data[k]["bound_scale"],
-            label=string("run ", k), linewidth=lw, palette=p)
-        plot!(plt_dict["total_n_eval"], ind2data[k]["gen"], ind2data[k]["total_n_eval"],
-            label=string("run ", k), linewidth=lw, palette=p)
-        plot!(plt_dict["neval_vs_gen"], ind2data[k]["gen"], ind2data[k]["gen_n_eval"],
-            label=string("run ", k), linewidth=lw, palette=p)
+            label=l, linewidth=lw, palette=p, xticks=xticks)
+        plot!(plt_dict["maxfit_vs_gen"], x, ind2data[k]["best_best_fit"],
+            label=l, linewidth=lw, palette=p, xticks=xticks)
+        plot!(plt_dict["epsilon_vs_gen"], x, ind2data[k]["epsilon"],
+            label=l, linewidth=lw, palette=p, xticks=xticks)
+        plot!(plt_dict["bound_scale_vs_gen"], x, ind2data[k]["bound_scale"],
+            label=l, linewidth=lw, palette=p, xticks=xticks)
+        plot!(plt_dict["total_n_eval"], x, ind2data[k]["total_n_eval"],
+            label=l, linewidth=lw, palette=p, xticks=xticks)
+        plot!(plt_dict["neval_vs_gen"], x, ind2data[k]["gen_n_eval"],
+            label=l, linewidth=lw, palette=p, xticks=xticks)
         n_points = length(ind2data[k]["all_n_eval"])
         n_ind = length(ind2data[k]["all_n_eval"][1])
         nevals = zeros(Int64, (n_ind, n_points))
@@ -356,10 +364,6 @@ function add_pergen_lucie_data!(d::Dict{Any,Any}, df_gen::DataFrame)
         end
     end
     n_frames = df_gen.n_frames[1]
-    println()
-    println(df_gen)
-    println(n_frames)
-    foo()
     epsilon = df_gen.epsilon[1]
     bound_scale = df_gen.bound_scale[1]
     total_n_eval = df_gen.total_n_eval[1]

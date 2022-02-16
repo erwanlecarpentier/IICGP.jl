@@ -103,8 +103,6 @@ end
 
 function evaluate_new_ind!(e::LUCIEEvo{T}, fitness::Function) where T
 	new_ind_indexes = get_new_ind_indexes(e)
-	println() # TODO remove
-	println(new_ind_indexes) # TODO remove
 	n_eval = length(new_ind_indexes)
 	Threads.@threads for i in new_ind_indexes
 		@assert length(e.population[i].fitnesses) < 1
@@ -112,7 +110,6 @@ function evaluate_new_ind!(e::LUCIEEvo{T}, fitness::Function) where T
 		score, frames = fitness(e.population[i], seed, e.atari_games[i], e.config.max_frames)
 		push!(e.population[i].fitnesses, score)
 		push!(e.population[i].reached_frames, frames)
-		println(score, " ", frames) # TODO remove
 	end
 	for i in new_ind_indexes
 		e.n_frames += e.population[i].reached_frames[end]
