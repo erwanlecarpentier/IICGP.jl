@@ -12,8 +12,8 @@ import operator
 from pdf2image import convert_from_path
 
 # COMMANDS
-ONLYENCO = True
-ONLYCONT = False
+ONLYENCO = False
+ONLYCONT = True
 SHOWGRAPHS = True # Show separate graphs
 DOFRAMES = True
 SHOWFRAMES = False # Show canvas (full frame with assembled graphs)
@@ -79,6 +79,12 @@ Position "by type" apply to either all inputs or all outputs. Here are examples:
 	{"type": "squares", "pos": (0, 0)} # Only valid for controller input
 """
 POS = {
+	"2022-02-08T15:19:07.129_1_boxing" : {
+		"controller": {
+			"inputs": {"type": "squares", "origin": (0, 0), "innerspan": 1, "squarespan": 7},
+			"outputs": {"type": "column", "pos": (20, 0), "span": 1}
+		}
+	},
 	"2021-10-01T18:22:33.340_riverraid" : {
 		"encoder": {
 			"1": (0,0),
@@ -474,7 +480,8 @@ def columnpos(posdict, n_nodes, index):
 	
 def squarepos(gdict, posdict, n_nodes, index):
 	n_squares = gdict["encoder"]["n_out"]
-	nodes_per_square = gdict["controller"]["n_in"] / n_squares
+	n_noncst_in = gdict["controller"]["n_in"] - gdict["controller"]["n_cst_input"]
+	nodes_per_square = n_noncst_in / n_squares
 	size = math.sqrt(nodes_per_square)
 	assert float(size).is_integer(), "impossible square size: " + str(size)
 	in_square_index = (index-1) % nodes_per_square
@@ -643,7 +650,8 @@ def appendbackgroundnodes(ts, gdict, expdir, indtype):
 		): # reduced images as background
 			posdict = POS[expdir][indtype]["inputs"]
 			n_squares = gdict["encoder"]["n_out"]
-			nodes_per_square = gdict[indtype]["n_in"] / n_squares
+			n_noncst_in = gdict[indtype]["n_in"] - gdict[indtype]["n_cst_input"]
+			nodes_per_square = n_noncst_in / n_squares
 			size = math.sqrt(nodes_per_square)
 			assert float(size).is_integer(), "impossible square size: " + str(size)
 			width = posdict["innerspan"]*size
