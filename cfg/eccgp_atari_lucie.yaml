@@ -1,14 +1,14 @@
 # General parameters
 optimizer: "lucie"
 seed: 0
-max_frames: 10 # TODO 10000
+max_frames: 10000 # TODO 10000
 stickiness: 0.25
 d_fitness: 1
-n_gen: 200 # TODO 100000
+n_gen: 100000 # TODO 100000
 validation: true
 validation_size: 10 # number of eval per individual
-validation_freq: 3 # TODO 500 evaluate each validation_freq generations
-validation_max_frames: 10 # TODO 18000
+validation_freq: 500 # TODO 500 evaluate each validation_freq generations
+validation_max_frames: 18000 # TODO 18000
 n_eval_max: 120 # Max number of eval per gen
 n_population: 12
 n_elite: 3 # Number of elite pairs per generation
@@ -17,16 +17,16 @@ tournament_size: 3
 greedy_elitism: true
 is_epsilon_dynamic: true
 epsilon: 1.0 # Initial epsilon
-epsilon_ratio: 1.0 # epsilon = epsilon_ratio * bound_scale if is_epsilon_dynamic
+epsilon_ratio: 1.5 # epsilon = epsilon_ratio * bound_scale if is_epsilon_dynamic
 delta: 0.1
 bound_type: "lucie"
 is_bound_scale_dynamic: true # if true, bound_scale = max-min fitness of prev gen
 bound_scale: 1.0 # Initial bound scale
-bound_scale_decay: 0.1 # Exponential decay for bound_scale (set to 1.0 to cancel the effect)
-bound_factor: 0.5 # multiplicative factor on the bound
-bound_zeroer: 20 # TODO 100 bound set to 0 if ind.n_eval >= bound_zeroer (set to negative value to disable the effect)
-log_gen: 1 # TODO 50 log scores each log_gen generations
-save_gen: 3 # TODO 500 save genomes each save_gen generations
+bound_scale_decay: 1.0 # Exponential decay for bound_scale (set to 1.0 to cancel the effect)
+bound_factor: 1.0 # multiplicative factor on the bound
+bound_zeroer: 100 # TODO 100 bound set to 0 if ind.n_eval >= bound_zeroer (set to negative value to disable the effect)
+log_gen: 50 # TODO 50 log scores each log_gen generations
+save_gen: 500 # TODO 500 save genomes each save_gen generations
 bootstrap: false # unused
 grayscale: true
 downscale: true
