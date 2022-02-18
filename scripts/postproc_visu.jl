@@ -142,15 +142,19 @@ function find_activated_encoder_outputs(
     enco::CGPInd,
     redu::Reducer,
     cont::CGPInd,
-    c_activated::Vector{Int16}
+    c_activated::Vector{Int16},
+    ccfg::NamedTuple
 )
     @assert redu.parameters["type"] == "pooling"
     fsize = redu.parameters["size"]^2
     e_activated = Vector{Int16}()
     for node in c_activated
         if node < cont.n_in+1 # activated node is a controller input
-            activated_enco_output_index = convert(Int64, ceil(node/fsize))
-            push!(e_activated, enco.outputs[activated_enco_output_index])
+            is_cst_input = node >= cont.n_in - ccfg.n_cst_inputs
+            if !is_cst_input
+                activated_enco_output_index = convert(Int64, ceil(node/fsize))
+                push!(e_activated, enco.outputs[activated_enco_output_index])
+            end
         end
     end
     e_activated
@@ -210,7 +214,7 @@ function visu_dualcgp_ingame(
         # Scan which nodes were activated
         c_output = cont.outputs[chosen_output]
         c_activated = find_activated_nodes(cont, c_output)
-        e_output = find_activated_encoder_outputs(enco, redu, cont, c_activated)
+        e_output = find_activated_encoder_outputs(enco, redu, cont, c_activated, ccfg)
         e_activated = Vector{Int16}()
         for node in e_output
             push!(e_activated, find_activated_nodes(enco, node)...)
@@ -375,7 +379,6 @@ exp_dirs, ids, games = get_exp_dir(resdir, min_date=min_date, max_date=max_date,
 max_frames = 18000
 render_graph = false
 seed = 0
-
 
 for i in eachindex(exp_dirs)
     # Fetch individuals

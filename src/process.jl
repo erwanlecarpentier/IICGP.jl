@@ -30,6 +30,12 @@ end
 
 Process function chaining encoder, features projection and controller.
 Both the encoder and the controller are CGP individuals.
+
+If there are constant inputs (i.e. controller_config.n_cst_inputs > 1), then
+the constant inputs are concatenated at the end of the features vector.
+For instance, if the feature vector is [1.0, 2.0, 3.0] and if there are 3
+constant inputs, then the full feature vector will be
+[1.0, 2.0, 3.0, 0.0, 0.5, 1.0].
 """
 function process(
     encoder::CGPInd,
