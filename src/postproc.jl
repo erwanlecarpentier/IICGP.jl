@@ -260,14 +260,18 @@ end
 function set_graph_dir(
     exp_dirs::Vector{String},
     savedir_index::Int64,
-    game::String
+    game::String;
+    suffix::String=""
 )
     exp_dir = exp_dirs[savedir_index]
-    set_graph_dir(exp_dir, game)
+    set_graph_dir(exp_dir, game, suffix=suffix)
 end
 
-function set_graph_dir(exp_dir::String, game::String)
+function set_graph_dir(exp_dir::String, game::String; suffix::String="")
     exp_name = string(basename(exp_dir)[1:10], "_", game)
+    if suffix != ""
+        exp_name = string(exp_name, "_", suffix)
+    end
     graph_dir = joinpath(dirname(dirname(exp_dir)), "graphs", exp_name)
     mkpath(graph_dir)
     graph_dir
@@ -295,14 +299,25 @@ function init_lucie_plots()
     plt_dict["bound_scale_vs_gen"] = plot(ylabel="Scaling factor",
         xlabel=xl, legend=:bottomright)
     plt_dict["total_n_eval"] = plot(ylabel="Total number of evaluations",
-        xlabel=xl, legend=:bottomright)
+        xlabel=xl, legend=:topleft)
     plt_dict["neval_vs_gen"] = plot(ylabel="Number of evaluations",
         xlabel=xl, legend=:bottomright)
     plt_dict
 end
 
+function argmax_gen(ind2data::Dict{Int64, Dict{Any, Any}})
+    max_gen = ind2data[1]["gen"]
+    index = 1
+    for k in keys(ind2data)
+        if ind2data[k]["gen"] > max_gen
+            index = k
+        end
+    end
+    index
+end
+
 function get_gen_frames_xticks(
-    gen_vector::Vector{Int64},
+    gen_vector::AbstractArray,
     frames_vector::AbstractArray;
     n_ticks::Int64=5
 )
@@ -314,20 +329,39 @@ function get_gen_frames_xticks(
     (view(x_values, v), view(x_names, v))
 end
 
+function get_gen_frames_xticks(ind2data::Dict{Int64, Dict{Any, Any}})
+    k = argmax_gen(ind2data)
+    get_gen_frames_xticks(ind2data[k]["gen"], ind2data[k]["n_frames"])
+end
+
+function add_max_total_n_eval!(
+    plt_dict::Dict{Any,Any},
+    ind2data::Dict{Int64, Dict{Any, Any}},
+    cfg1::Dict{Any,Any}
+)
+    k = argmax_gen(ind2data)
+    x = ind2data[k]["gen"]
+    y = ind2data[k]["gen"] .* cfg1["n_eval_max"]
+    plot!(plt_dict["total_n_eval"], x, y, label="Maximum reachable",
+        linewidth=2, color=:red)
+end
+
 function fill_lucie_plots!(
     plt_dict::Dict{Any,Any},
     ind2data::Dict{Int64, Dict{Any, Any}},
     game::String,
-    baseline::Bool;
+    baseline::Bool,
+    cfg1::Dict{Any,Any};
     lw::Int64=2,
     p::Symbol=:tab20b
 )
-    hms = Vector{Any}()
+    hms = Vector{Any}() # heatmaps
     log_hms = Vector{Any}()
+    xticks = get_gen_frames_xticks(ind2data)
     for k in keys(ind2data)
         x = ind2data[k]["gen"]
         l = string("run ", k)
-        xticks = get_gen_frames_xticks(ind2data[k]["gen"], ind2data[k]["n_frames"])
+        #xticks = get_gen_frames_xticks(x, ind2data[k]["n_frames"])
         plot!(plt_dict["meanfit_vs_gen"], x, ind2data[k]["best_mean_fit"],
             ribbon=ind2data[k]["best_mean_fit_ind_std"],
             label=l, linewidth=lw, palette=p, xticks=xticks)
@@ -363,16 +397,16 @@ function fill_lucie_plots!(
             plt_dict["maxfit_vs_gen"]
         ], game)
     end
+    add_max_total_n_eval!(plt_dict, ind2data, cfg1)
     plt_dict["nevalperind_vs_gen"] = plot(hms..., layout=(length(keys(ind2data)),1),
         ylabel="n_eval")
     plt_dict["log_nevalperind_vs_gen"] = plot(log_hms..., layout=(length(keys(ind2data)),1),
         ylabel="log(n_eval)")
 end
 
-function add_pergen_lucie_data!(d::Dict{Any,Any}, df_gen::DataFrame)
-    # TODO reached_frames
-    # TODO validation fitness
-    ks = ["n_frames", "best_mean_fit", "best_best_fit", "validation_gen",
+function init_ind2data_i()
+    d = Dict()
+    ks = ["gen", "n_frames", "best_mean_fit", "best_best_fit", "validation_gen",
         "validation_score", "validation_std", "all_n_eval",
         "best_mean_fit_ind_std", "best_mean_fit_ind_neval", "bound_scale",
         "epsilon", "total_n_eval", "gen_n_eval"]
@@ -381,7 +415,20 @@ function add_pergen_lucie_data!(d::Dict{Any,Any}, df_gen::DataFrame)
             d[k] = Vector{Union{Int64,Float64,Vector{Int64}}}()
         end
     end
-    n_frames = df_gen.n_frames[1]
+    d
+end
+
+function add_pergen_lucie_data!(
+    cfg::Dict{Any,Any},
+    d::Dict{Any,Any},
+    df_gen::DataFrame
+)
+    gen = df_gen.gen_number[1]
+    if "n_frames" ∈ names(df_gen)
+        n_frames = df_gen.n_frames[1]
+    else
+        n_frames = gen * cfg["n_population"] * cfg["max_frames"]
+    end
     epsilon = df_gen.epsilon[1]
     bound_scale = df_gen.bound_scale[1]
     total_n_eval = df_gen.total_n_eval[1]
@@ -406,7 +453,7 @@ function add_pergen_lucie_data!(d::Dict{Any,Any}, df_gen::DataFrame)
     push!(d["bound_scale"], bound_scale)
     push!(d["total_n_eval"], total_n_eval)
     push!(d["gen_n_eval"], gen_n_eval)
-
+    # Log validation if this is a validation gen
     if !isnan_str(df_gen.validation_fitnesses[1])
         val_fitnesses = [strvec2vec(f) for f in df_gen.validation_fitnesses]
         val_means = [mean(f) for f in val_fitnesses]
@@ -429,12 +476,11 @@ function fetch_lucie_data(
     ind2data = Dict{Int64,Dict{Any,Any}}()
     for i in eachindex(exp_dirs)
         exp_dir = exp_dirs[i]
-        #cfg = cfg_from_exp_dir(exp_dir)
+        cfg = cfg_from_exp_dir(exp_dir)
         log = log_from_exp_dir(exp_dir, log_file="logs/logs.csv",
             header=1, sep=";")
         df = DataFrame(log)
-        ind2data[i] = Dict()
-        ind2data[i]["gen"] = Vector{Int64}()
+        ind2data[i] = init_ind2data_i()
         last_gen = maximum(df.gen_number)
         for row in eachrow(df)
             omitted = omit_last_gen && row.gen_number == last_gen
@@ -444,7 +490,7 @@ function fetch_lucie_data(
         end
         for gen in ind2data[i]["gen"]
             df_gen = filter(row -> row.gen_number == gen, df)
-            add_pergen_lucie_data!(ind2data[i], df_gen)
+            add_pergen_lucie_data!(cfg, ind2data[i], df_gen)
         end
         if verbose
             println()
@@ -466,7 +512,8 @@ function process_lucie_results(
     do_display::Bool=true,
     do_save::Bool=true,
     baseline::Bool=true,
-    omit_last_gen::Bool=false
+    omit_last_gen::Bool=false,
+    suffix::String=""
 )
     @assert all([g == games[1] for g in games])
     game = games[1]
@@ -477,7 +524,8 @@ function process_lucie_results(
     ind2data = fetch_lucie_data(exp_dirs, omit_last_gen=omit_last_gen)
     # 3. Plot
     plt_dict = init_lucie_plots()
-    fill_lucie_plots!(plt_dict, ind2data, game, baseline)
+    cfg1 = cfg_from_exp_dir(exp_dirs[1])
+    fill_lucie_plots!(plt_dict, ind2data, game, baseline, cfg1)
     # 4. Display
     graphs = ["meanfit_vs_gen", "validation_vs_gen", "maxfit_vs_gen",
         "epsilon_vs_gen", "bound_scale_vs_gen", "total_n_eval", "neval_vs_gen",
@@ -490,7 +538,7 @@ function process_lucie_results(
     # 5. Save
     if do_save
         for g in graphs
-            graph_dir = set_graph_dir(exp_dirs, savedir_index, game)
+            graph_dir = set_graph_dir(exp_dirs, savedir_index, game, suffix=suffix)
             graph_name = string(g, ".png")
             graph_path = joinpath(graph_dir, graph_name)
             savefig(plt_dict[g], graph_path)

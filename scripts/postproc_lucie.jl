@@ -7,7 +7,7 @@ using Plots
 Should be the same as `output directory`, specified in atari_lucie.jl arguments.
 =#
 rootdir = joinpath(homedir(), "Documents/git/ICGP-results/")
-rootdir = dirname(@__DIR__) # TODO comment this
+#rootdir = dirname(@__DIR__)
 resdir = joinpath(rootdir, "results/")
 
 #=
@@ -17,11 +17,12 @@ Postproc will only consider experiments with the following criteria:
 - Only roms in `rom_names` will be considered
 - Only experiments using the reducer in `reducers` will be considered
 =#
-min_date = DateTime(2022, 02, 16, 17, 06)
-max_date = DateTime(2022, 02, 16, 17, 08)
+min_date = DateTime(2022, 02, 08, 14, 40)
+max_date = DateTime(2022, 02, 08, 17, 00)
 rom_names = ["boxing", "gravitar", "freeway", "solaris", "space_invaders", "asteroids"]
-rom_names = ["boxing"]
+rom_names = ["asteroids"]
 reducers = ["pooling"]
+suffix="epsilon2"
 
 #=
 3. Some styling
@@ -40,5 +41,5 @@ for rom_name in rom_names
     exp_dirs, ids, games = get_exp_dir(resdir, min_date=min_date, max_date=max_date,
         games=[rom_name], reducers=reducers)
     process_lucie_results(exp_dirs, games, colors, labels, do_display=true,
-        do_save=true, omit_last_gen=true)
+        do_save=true, omit_last_gen=false, suffix=suffix)
 end
