@@ -81,7 +81,8 @@ Position "by type" apply to either all inputs or all outputs. Here are examples:
 POS = {
 	"2022-02-08T15:19:07.129_1_boxing" : {
 		"controller": {
-			"inputs": {"type": "squares", "origin": (0, 0), "innerspan": 1, "squarespan": 7},
+			"inputs": {"type": "squares", "origin": (0, 0), "innerspan": 1, "squarespan": 7,
+				"cst_in": True},
 			"outputs": {"type": "column", "pos": (20, 0), "span": 1}
 		}
 	},
@@ -495,6 +496,9 @@ def squarepos(gdict, posdict, n_nodes, index):
 	pos = tuple(map(operator.add, pos, sqshift)) # shift squares
 	return pos
 
+def cstpos(gdict, posdict, n_nodes, index):
+	print(posdict)
+
 def getpos(gdict, expdir, indtype):
 	pos = {}
 	g = gdict[indtype]
@@ -519,6 +523,12 @@ def getpos(gdict, expdir, indtype):
 						pos[nodename] = squarepos(gdict, input_pos_dict, n_inp, i)
 					else:
 						print("WARNING: input position type", input_pos_dict["type"], "unknown.")
+					if ("cst_in" in list(POS[expdir][indtype]["inputs"].keys())
+						and POS[expdir][indtype]["inputs"]["cst_in"]):
+						print("Hola")
+						print(pos)
+						cstpos(gdict, input_pos_dict, n_inp, i)
+						exit()
 	
 	# Position of inner nodes
 	for node in list(g["buffer"].keys()):
