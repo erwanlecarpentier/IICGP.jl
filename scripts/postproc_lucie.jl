@@ -17,12 +17,12 @@ Postproc will only consider experiments with the following criteria:
 - Only roms in `rom_names` will be considered
 - Only experiments using the reducer in `reducers` will be considered
 =#
-min_date = DateTime(2022, 02, 08, 14, 40)
-max_date = DateTime(2022, 02, 08, 17, 00)
+min_date = DateTime(2022, 02, 21)
+max_date = DateTime(2022, 02, 22)
 rom_names = ["boxing", "gravitar", "freeway", "solaris", "space_invaders", "asteroids"]
-rom_names = ["asteroids"]
+rom_names = ["space_invaders"]
 reducers = ["pooling"]
-suffix="epsilon2"
+suffix=""
 
 #=
 3. Some styling

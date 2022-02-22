@@ -1,6 +1,6 @@
-pre = "[[https://github.com/erwanlecarpentier/ICGP-results/blob/main/graphs/2022-02-08_"
+pre = "[[https://github.com/erwanlecarpentier/ICGP-results/blob/main/graphs/2022-02-21_"
 post = ".png]]"
-suffix = "_epsilon2"
+suffix = ""
 b = "|"
 rom_names = ["boxing", "gravitar", "freeway", "solaris", "space_invaders", "asteroids"]
 #rom_names = ["boxing"]
