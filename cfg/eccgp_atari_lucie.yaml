@@ -17,14 +17,14 @@ tournament_size: 3
 greedy_elitism: true
 is_epsilon_dynamic: true
 epsilon: 1.0 # Initial epsilon
-epsilon_ratio: 1.5 # epsilon = epsilon_ratio * bound_scale if is_epsilon_dynamic
+epsilon_ratio: 2 # epsilon = epsilon_ratio * bound_scale if is_epsilon_dynamic
 delta: 0.1
 bound_type: "lucie"
 is_bound_scale_dynamic: true # if true, bound_scale = max-min fitness of prev gen
-bound_scale: 1.0 # Initial bound scale
-bound_scale_decay: 1.0 # Exponential decay for bound_scale (set to 1.0 to cancel the effect)
+bound_scale: 1.0 # enitial bound scale
+bound_scale_decay: 1.0 # exponential decay for bound_scale (set to 1.0 to cancel the effect)
 bound_factor: 1.0 # multiplicative factor on the bound
-bound_zeroer: 100 # TODO 100 bound set to 0 if ind.n_eval >= bound_zeroer (set to negative value to disable the effect)
+bound_zeroer: -1 # TODO 100 bound set to 0 if ind.n_eval >= bound_zeroer (set to negative value to disable the effect)
 log_gen: 50 # TODO 50 log scores each log_gen generations
 save_gen: 500 # TODO 500 save genomes each save_gen generations
 bootstrap: false # unused
@@ -40,7 +40,7 @@ encoder:
   m_rate: 0.1
   out_m_rate: 0.2
   n_parameters: 1
-  n_out: 1
+  n_out: 2
   functions:
     - f_dilate
     - f_erode

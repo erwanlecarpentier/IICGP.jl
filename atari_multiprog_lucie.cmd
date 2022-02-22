@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH -J lucie-zero
+#SBATCH -J doubleenco
 #SBATCH -N 1
 #SBATCH -n 18
 #SBATCH --cpus-per-task=2
