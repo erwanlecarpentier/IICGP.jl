@@ -17,12 +17,13 @@ Postproc will only consider experiments with the following criteria:
 - Only roms in `rom_names` will be considered
 - Only experiments using the reducer in `reducers` will be considered
 =#
-min_date = DateTime(2022, 02, 21)
-max_date = DateTime(2022, 02, 22)
+min_date = DateTime(2022, 01, 20, 10)
+max_date = DateTime(2022, 01, 30, 12)
 rom_names = ["boxing", "gravitar", "freeway", "solaris", "space_invaders", "asteroids"]
-rom_names = ["space_invaders"]
+#rom_names = ["boxing"]
 reducers = ["pooling"]
 suffix=""
+omit_last_gen=true
 
 #=
 3. Some styling
@@ -41,5 +42,5 @@ for rom_name in rom_names
     exp_dirs, ids, games = get_exp_dir(resdir, min_date=min_date, max_date=max_date,
         games=[rom_name], reducers=reducers)
     process_lucie_results(exp_dirs, games, colors, labels, do_display=true,
-        do_save=true, omit_last_gen=false, suffix=suffix)
+        do_save=true, omit_last_gen=omit_last_gen, suffix=suffix)
 end
