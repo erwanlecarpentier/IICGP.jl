@@ -28,4 +28,4 @@ cd ~/IICGP.jl/
 echo running programs
 echo $SCRIPT
 
-srun --multi-prog atari_multiprog_lucie.config
+srun --multi-prog atari_multiprog_lucie_romset_2.config
