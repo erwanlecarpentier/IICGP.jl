@@ -132,6 +132,9 @@ function custom_fprocess(
 	dil = IICGP.CGPFunctions.f_dilate(mot, mot, p)
 	dil = IICGP.CGPFunctions.f_dilate(dil, dil, p)
 	dil = IICGP.CGPFunctions.f_dilate(dil, dil, p)
+	dil = IICGP.CGPFunctions.f_dilate(dil, dil, p)
+	dil = IICGP.CGPFunctions.f_dilate(dil, dil, p)
+	dil = IICGP.CGPFunctions.f_dilate(dil, dil, p)
 	out = mean_pool(dil, dil, p)
 	transpose_save(inp, path("input"))
 	transpose_save(mot, path("motion"))
@@ -142,9 +145,9 @@ end
 pmot = [0.5]
 
 rootdir = joinpath(homedir(), "Documents/git/ICGP-paper/img/atari/")
-rom_names = ["boxing"]#, "pong"]
+rom_names = ["breakout"]#, "pong"]
 seeds = [0]
-max_frames = 3
+max_frames = 10
 grayscale, downscale = true, false
 fprocess = custom_fprocess
 
