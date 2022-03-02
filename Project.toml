@@ -45,6 +45,7 @@ YAML = "ddb6d928-2868-570f-bddf-ab3f9cf99eb6"
 [compat]
 ArcadeLearningEnvironment = "0.2"
 ArgParse = "1.1"
+ArrayInterface = "5"
 BenchmarkTools = "1.0"
 Colors = "0.12"
 FileIO = "1.9"
