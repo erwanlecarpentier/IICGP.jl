@@ -4,7 +4,7 @@ module CGPFunctions
 
 using Images
 using ImageMorphology
-using ImageSegmentation
+#using ImageSegmentation
 using LinearAlgebra
 
 global arity = Dict()
@@ -67,11 +67,13 @@ function remove_details(x::ImgType, n_passes::Int64)::ImgType
     x
 end
 
+#=
 function felzenszwalb_segmentation(x::ImgType, p::Float64)::ImgType
     min_size = floor(Int64, 10 * p)
     segments = ImageSegmentation.felzenszwalb(x, 50, min_size)
     rescale_uint_img(segments.image_indexmap)
 end
+=#
 
 function components_segmentation(x::ImgType)::ImgType
     label = label_components(x)
@@ -235,7 +237,7 @@ fgen(:f_subtract, 2, :(x .- y), ImgType)
 fgen(:f_remove_details, 1, :(remove_details(x, p[1])), ImgType)
 fgen(:f_make_boxes, 1, :(make_boxes(x)), ImgType)
 # Segmentation
-fgen(:f_felzenszwalb_segmentation, 1, :(felzenszwalb_segmentation(x, p[1])), ImgType)
+#fgen(:f_felzenszwalb_segmentation, 1, :(felzenszwalb_segmentation(x, p[1])), ImgType)
 fgen(:f_components_segmentation, 1, :(components_segmentation(x)), ImgType)
 fgen(:f_box_segmentation, 1, :(box_segmentation(x)), ImgType)
 # Thresholds and values
