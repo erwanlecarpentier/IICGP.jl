@@ -376,7 +376,7 @@ ids = [1]
 reducers = ["pooling"]
 exp_dirs, ids, games = get_exp_dir(resdir, min_date=min_date, max_date=max_date,
     games=games, reducers=reducers, ids=ids)
-max_frames = 18000
+max_frames = 5 # 18000
 render_graph = false
 seed = 0
 
