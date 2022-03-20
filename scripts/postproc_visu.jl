@@ -372,11 +372,11 @@ min_date = DateTime(2022, 02, 08, 15)
 max_date = DateTime(2022, 02, 08, 16)
 games = ["boxing", "asteroids", "breakout", "freeway", "gravitar", "riverraid", "space_invaders"]
 games = ["boxing"]
-ids = [1]
+ids = [1,2,3]
 reducers = ["pooling"]
 exp_dirs, ids, games = get_exp_dir(resdir, min_date=min_date, max_date=max_date,
     games=games, reducers=reducers, ids=ids)
-max_frames = 5 # 18000
+max_frames = 3 # 18000
 render_graph = false
 seed = 0
 
