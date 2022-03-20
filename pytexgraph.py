@@ -12,8 +12,8 @@ import operator
 from pdf2image import convert_from_path
 
 # COMMANDS
-ONLYENCO = True
-ONLYCONT = False
+ONLYENCO = False
+ONLYCONT = True
 SHOWGRAPHS = True # Show separate graphs
 DOFRAMES = True
 SHOWFRAMES = False # Show canvas (full frame with assembled graphs)
@@ -92,6 +92,11 @@ POS = {
 			"13": (8,0),
 			"out17": (12,0),
 			"customedges": {(1, 2): {1: "bend left=20", 2: "bend right=20"}},
+		},
+		"controller": {
+			"inputs": {"type": "squares", "origin": (0, 0), "innerspan": 1, "squarespan": 7,
+				"cst_in": True, "cst_input_y": -5},
+			"outputs": {"type": "column", "pos": (20, 0), "span": 1}
 		}
 	},
 	"2022-02-08T15:19:07.129_1_boxing" : {
@@ -513,7 +518,13 @@ def squarepos(gdict, posdict, n_nodes, index):
 	return pos
 
 def cstpos(gdict, posdict, n_nodes, index):
-	print(posdict)
+	# TODO here
+	print("here")
+	print(gdict["controller"]["inputs"]["cst_input_y"])
+	print(gdict["controller"]["inputs"]["cst_input_y"])
+	n_noncst_in = gdict["controller"]["n_in"] - gdict["controller"]["n_cst_input"]
+	pos = (0,gdict["controller"]["inputs"]["cst_input_y"]+n_noncst_in-index)
+	return pos
 
 def getpos(gdict, expdir, indtype):
 	pos = {}
@@ -540,11 +551,9 @@ def getpos(gdict, expdir, indtype):
 					else:
 						print("WARNING: input position type", input_pos_dict["type"], "unknown.")
 					if ("cst_in" in list(POS[expdir][indtype]["inputs"].keys())
-						and POS[expdir][indtype]["inputs"]["cst_in"]):
-						print("Hola")
-						print(pos)
-						cstpos(gdict, input_pos_dict, n_inp, i)
-						exit()
+						and POS[expdir][indtype]["inputs"]["cst_in"]
+						and i > n_inp - gdict["controller"]["n_cst_input"]): # is cst node test
+						pos[nodename] = cstpos(gdict, input_pos_dict, n_inp, i)
 	
 	# Position of inner nodes
 	for node in list(g["buffer"].keys()):
@@ -724,13 +733,10 @@ def appendnodes(ts, gdict, expdir, indtype):
 	if BUFFERCLIP: ts.append("\\newsavebox{\\picbox}")
 	iscontout_selected = False
 	
-	print(g["edges"])#TRM
-	
 	# INPUT + INTERMEDIATE NODES
 	for node in g["buffer"].keys():
 		nodename = getnodename(node)
 		fname = fnamefromnodename(g, nodename)
-		print(nodename, " ", fname)#TRM
 		isinput = node <= g["n_in"]
 		p = pos[nodename]
 		isout = False
