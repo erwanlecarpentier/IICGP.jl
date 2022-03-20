@@ -381,17 +381,17 @@ render_graph = false
 seed = 0
 
 for i in eachindex(exp_dirs)
+    exp_dir = exp_dirs[i]
     # Fetch individuals
     #enco, redu, cont = get_last_dualcgp(exp_dirs[i])
-    enco, redu, cont = get_best_lucie_ind(exp_dirs[i])
+    enco, redu, cont = get_best_lucie_ind(exp_dir)
     # Generate images (may display / save)
-    visu_ingame(exp_dirs[i], games[i], enco, redu, cont, max_frames,
+    visu_ingame(exp_dir, games[i], enco, redu, cont, max_frames,
         do_save=true, do_display=false, seed=seed)
     #test_manyvis(exp_dirs[i], games[i], max_frames, do_save=true, do_display=false)
 
     # Launch python script
     if render_graph
-        exp_dir = exp_dirs[i]
         run(`python3.8 pytexgraph.py $exp_dir`)
     end
 end

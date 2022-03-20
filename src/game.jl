@@ -3,8 +3,8 @@
 
 using ArcadeLearningEnvironment
 using Colors
-using ImageCore
-using ImageTransformations
+# using ImageCore
+# using ImageTransformations
 using Interpolations
 export
     Game,

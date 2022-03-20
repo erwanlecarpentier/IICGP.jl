@@ -3,7 +3,7 @@ export process_lucie_results
 
 using DataFrames
 using Plots
-using ImageFiltering
+# using ImageFiltering
 using OffsetArrays
 using BenchmarkTools
 using Statistics
@@ -277,7 +277,7 @@ function set_graph_dir(exp_dir::String, game::String; suffix::String="")
     graph_dir
 end
 
-function strvec2vec(x::Union{CSV.InlineString,CSV.String31,String})
+function strvec2vec(x)#::Union{CSV.InlineString,CSV.String31,String})
     x = replace(x, "[" => "")
     x = replace(x, "]" => "")
     [parse(Float64, xi) for xi in split(x, ",")]
