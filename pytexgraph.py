@@ -12,8 +12,8 @@ import operator
 from pdf2image import convert_from_path
 
 # COMMANDS
-ONLYENCO = False
-ONLYCONT = True
+ONLYENCO = True
+ONLYCONT = False
 SHOWGRAPHS = True # Show separate graphs
 DOFRAMES = True
 SHOWFRAMES = False # Show canvas (full frame with assembled graphs)
@@ -31,12 +31,12 @@ IMG_EXT = ".png"
 TOPNG = True # convert pdf canvas to png
 DELETE_GRAPHS = True
 DELETE_CANVAS_PDF = True
-FPSS = [15, 60]
+FPSS = [60]
 
 # Graph layout
 GRAPHBACK = True
 BUFFERCLIP = True
-PRINTBUFFER = True
+PRINTBUFFER = True # False for positioning
 IMG_WIDTH = 1.5
 IMGOUT_WIDTH = 1.0
 WH_RATIO = 0.76
@@ -48,6 +48,7 @@ COLOR_BACKGROUND = "white"
 HALOEDGELABELS = False
 BACKGROUNDEDGELABELS = True
 ENABLE_MANUAL_POS = True
+LABEL_EDGES = False
 
 """
 Exp 1:
@@ -79,6 +80,20 @@ Position "by type" apply to either all inputs or all outputs. Here are examples:
 	{"type": "squares", "pos": (0, 0)} # Only valid for controller input
 """
 POS = {
+	"2022-02-08T15:19:07.234_2_boxing" : {
+		"encoder": {
+			"1": (0,0),
+			"2": (4,2),
+			"3": (4,0),
+			"5": (8,2),
+			"14": (4,-2),
+			"12": (4,-4),
+			"17": (8,-2),
+			"13": (8,0),
+			"out17": (12,0),
+			"customedges": {(1, 2): {1: "bend left=20", 2: "bend right=20"}},
+		}
+	},
 	"2022-02-08T15:19:07.129_1_boxing" : {
 		"controller": {
 			"inputs": {"type": "squares", "origin": (0, 0), "innerspan": 1, "squarespan": 7,
@@ -284,9 +299,10 @@ POS = {
 
 EDGELABELS = {
 	"f_binary": "Binary",
-	"f_bitwise_not": "Not",
-	"f_bitwise_and": "And",
-	"f_bitwise_xor": "Xor",
+	"f_bitwise_or": "OR",
+	"f_bitwise_not": "NOT",
+	"f_bitwise_and": "AND",
+	"f_bitwise_xor": "XOR",
 	"f_subtract": "Subtract",
 	"f_threshold": "Threshold",
 	"f_dilate": "Dilate"
@@ -677,12 +693,27 @@ def appendbackgroundnodes(ts, gdict, expdir, indtype):
 				pos = str(pos[0]) + "," + str(pos[1])
 				ts.append("\\node[] () at ("+pos+") {"+nodecontent+"};")
 
-def getnode(indtype, nodesettings, nodename, p, nodecontent):
+def getnode(indtype, nodesettings, nodename, p, nodecontent, fname=None):
 	if BUFFERCLIP and indtype == "encoder" and PRINTBUFFER:
 		#color = nodesettings.split("draw=")[1]
-		return "\\savebox{\\picbox}{"+nodecontent+"} \\node ["+nodesettings+", minimum width=\\wd\\picbox, minimum height=\\ht\\picbox, path picture={\\node at (path picture bounding box.center) {\\usebox{\\picbox}};}] ("+nodename+") at ("+p+") {};"	
+		'''
+		return "\\savebox{\\picbox}{"+nodecontent+"} \\node ["+nodesettings+", minimum width=\\wd\\picbox, minimum height=\\ht\\picbox, path picture={\\node at (path picture bounding box.center) {\\usebox{\\picbox}};}] ("+nodename+") at ("+p+") {};"
+		'''
+		if fname == None: # Input or Output node
+			return "\\node["+nodesettings+", draw, fill=white, align=center, rounded corners=2mm, shape=rectangle, inner sep=1mm, outer sep=0 ] ("+nodename+") at ("+p+") {"+nodecontent+"};"
+		else: # Intermediate node
+			return "\\node["+nodesettings+", draw, fill=white, align=center, rounded corners=2mm, shape=rectangle split, rectangle split parts=2, inner sep=1mm, outer sep=0 ] ("+nodename+") at ("+p+") {"+str(fname)+"\\nodepart{two}"+nodecontent+"};"
 	else:
 		return "\\node["+nodesettings+"] ("+nodename+") at ("+p+") {"+nodecontent+"};"
+
+def fnamefromnodename(g, nodename):
+	for edge in g["edges"]:
+		src, dst = str(edge[0]), str(edge[1])
+		if dst == nodename:
+			dstindex = g["nodes"].index(edge[1])
+			edgelabel = getedgelabel(g["fs"][dstindex])
+			return edgelabel
+	return None
 	
 def appendnodes(ts, gdict, expdir, indtype):
 	g = gdict[indtype]
@@ -692,15 +723,23 @@ def appendnodes(ts, gdict, expdir, indtype):
 	appendbackgroundnodes(ts, gdict, expdir, indtype)
 	if BUFFERCLIP: ts.append("\\newsavebox{\\picbox}")
 	iscontout_selected = False
+	
+	print(g["edges"])#TRM
+	
+	# INPUT + INTERMEDIATE NODES
 	for node in g["buffer"].keys():
 		nodename = getnodename(node)
+		fname = fnamefromnodename(g, nodename)
+		print(nodename, " ", fname)#TRM
 		isinput = node <= g["n_in"]
 		p = pos[nodename]
 		isout = False
 		nodecontent = getnodecontent(gdict, node, nodename, indtype, isout)
 		nodesettings, iscontout_selected = getnodesettings(gdict, expdir, node, nodename, activated, indtype, isout, iscontout_selected)
-		nd = getnode(indtype, nodesettings, nodename, p, nodecontent)
+		nd = getnode(indtype, nodesettings, nodename, p, nodecontent, fname=fname)
 		ts.append(nd)
+	
+	# OUTPUT NODES
 	for i in range(len(g["outputs"])):
 		node = g["outputs"][i]
 		nodename = getnodename(i, g, True)
@@ -710,6 +749,8 @@ def appendnodes(ts, gdict, expdir, indtype):
 		nodesettings, iscontout_selected = getnodesettings(gdict, expdir, node, nodename, outputs, indtype, isout, iscontout_selected)
 		nd = getnode(indtype, nodesettings, nodename, p, nodecontent)
 		ts.append(nd)
+	
+	# REPEAT ACTION NODE
 	if indtype == "controller":
 		is_sticky = gdict["metadata"]["is_sticky"]
 		color = COLOR_ACTIVE if is_sticky else COLOR_BACKGROUND
@@ -772,7 +813,10 @@ def appendedges(ts, gdict, expdir, indtype):
 		pathset += custompathset
 		if HALOEDGELABELS:
 			ts.append("\\path[->, color=white, ultra thick"+custompathset+"] ("+src+") edge["+loopopt+"] node[above] {"+edgelabel+"} ("+dst+");")
-		ts.append("\\path["+pathset+"] ("+src+") edge["+loopopt+"] node["+labelopt+"] {"+edgelabel+"} ("+dst+");")
+		if LABEL_EDGES:
+			ts.append("\\path["+pathset+"] ("+src+") edge["+loopopt+"] node["+labelopt+"] {"+edgelabel+"} ("+dst+");")
+		else:
+			ts.append("\\path["+pathset+"] ("+src+") edge["+loopopt+"] ("+dst+");")
 		seenedges.append(edge)
 	iscontoutedge_selected = False
 	for i in range(len(g["outputs"])):
@@ -795,14 +839,16 @@ def appendedges(ts, gdict, expdir, indtype):
 			ts.append("\\path[->, color=white, ultra thick"+custompathset+"] ("+src+") edge node {} ("+dst+");")
 		ts.append("\\path["+pathset+"] ("+src+") edge node {} ("+dst+");")
 
+""" Main tex-script method """
 def graph_texscript(gdict, paths, indtype, printtex=False):
 	expdir = paths["exp"]
 	ts = [] # texscript
 	ts.append("\\documentclass[crop,tikz]{standalone}")
 	ts.append("\\usepackage{graphicx}")
 	ts.append("\\usetikzlibrary{shapes,automata}")
+	ts.append("\\tikzset{>=stealth}")
 	ts.append("\\begin{document}")
-	ts.append("\\begin{tikzpicture}")
+	ts.append("\\begin{tikzpicture}[]")
 	appendnodes(ts, gdict, expdir, indtype)
 	appendedges(ts, gdict, expdir, indtype)
 	ts.append("\\end{tikzpicture}")
