@@ -14,8 +14,8 @@ from pdf2image import convert_from_path
 # COMMANDS
 ONLYENCO = False
 ONLYCONT = False
-SHOWENCO = True
-SHOWCONT = False
+SHOWENCO = False
+SHOWCONT = True
 DOFRAMES = True
 SHOWFRAMES = False # Show canvas (full frame with assembled graphs)
 DOVIDEO = False # Warning: set DOFRAMES andTOPNG to True
@@ -36,14 +36,15 @@ DELETE_CANVAS_PDF = True
 FPSS = [60]
 
 # Graph layout
+PRINTBUFFER = True # set to False for easy positioning
 GRAPHBACK = True
 BUFFERCLIP = True
-PRINTBUFFER = True # set to False for easy positioning
 IMG_WIDTH = 1.5
 IMGOUT_WIDTH = 1.0
 WH_RATIO = 0.76
-THICKNESS_ACTIVE = "thick"
-COLOR_ACTIVE = "red"
+THICKNESS_ACTIVE = ""#"thick" # TODO video
+THICKNESS_INACTIVE = ""
+COLOR_ACTIVE = "black"#"red" # TODO video
 COLOR_INACTIVE = "black"
 COLOR_INACTIVE_EDGE = "black!50"
 COLOR_BACKGROUND = "white"
@@ -89,9 +90,42 @@ POS = {
 			"backgroundnode": {"pos": (-1, 0.2), "width": (1.8, 10.2, 1.4), "height": 2.7},
 		},
 		"controller": {
-			"inputs": {"type": "squares", "origin": (0, 0), "innerspan": 1, "squarespan": 7,
+			"50": (4, 0.6), "75": (4.2, 2.1), "82": (7, 1.5),
+			"65": (4.1, 4),
+			"73": (6, -2),
+			"52": (6, -0.5),
+			"names": {"65": "C1", "75": "C2", "50": "C3", "82": "C4", "52": "C5", "73": "C6"},
+			"customndopt": { # last custom opt
+				"thick, draw=black": ["20"],
+				"thick, draw=orange": ["5", "out5"],
+				"thick, draw=red": ["8", "22", "24", "75", "50", "82", "out82"],
+				"thick, draw=teal": ["11", "20", "52", "out52"],
+				"thick, draw=purple": ["3", "out3"],
+				"thick, draw=yellow!80!orange": ["18", "73", "out73"],
+				"thick, draw=cyan": ["9", "65", "out65"]
+			},
+			"customedgeopt": { # last custom opt
+				"thick, color=orange": [(5,"out5")],
+				"thick, color=red": [(22,75), (24,50), (20,75), (8,50), (75,82), (50,82), (82,"out82")],
+				"thick, color=teal": [(11,52), (20,52), (52,"out52")],
+				"thick, color=purple": [(3,"out3")],
+				"thick, color=yellow!80!orange": [(18,73),(73,"out73")],
+				"thick, color=cyan": [(9,65),(65,65),(65,"out65")]
+			},
+			"avoided": ["26", "27", "28", "29", "30", "31", "32", "33", "34", "35"],
+			"inputs": {"type": "squares", "showcoord": True, "origin": (0, 0), "innerspan": 1, "squarespan": 7,
 				"cst_in": True, "cst_input_y": -5},
-			"outputs": {"type": "column", "pos": (20, 0), "span": 1}
+			"customedges": {
+				(5, "out5"): "bend left=22",
+				(3, "out3"): "bend left=6",
+				(20, 75): "bend left=5", (22, 75): "bend left=20",
+				(24, 50): "bend right=20", (8, 50): "bend right=20",
+				(9, 65): "bend left=12", (65, "out65"): "bend right=15",
+				(11, 52): "bend right=5",
+				(18, 73): "bend right=5"
+			},
+			"outputs": {"type": "column", "pos": (10, -0.5), "span": 1},
+			"sticky": (10, 3.3)
 		}
 	},
 	"2022-02-23T18:11:39.277_2_bowling" : { # Complexe encoder with 12 intermediate nodes. Its output seems to be a dilated motion capture version of the original input. Controller is a bit simpler and suggests a tendency to alternate between moving the ball towards the top or the bottom.
@@ -678,7 +712,7 @@ def getnodesettings(gdict, expdir, node, nodename, activated, indtype, isout, is
 			isactive = not iscontout_selected
 			iscontout_selected = True
 		nodecolor = COLOR_ACTIVE if isactive else COLOR_INACTIVE
-		thickness = THICKNESS_ACTIVE if isactive else ""
+		thickness = THICKNESS_ACTIVE if isactive else THICKNESS_INACTIVE
 		h = "0.6cm"
 		w = "2cm" if (indtype == "controller" and isout) else "1cm"
 		if not PRINTBUFFER and indtype == "encoder": # print nodes in same size as if images were there
@@ -737,24 +771,54 @@ def appendbackgroundnodes(ts, gdict, expdir, indtype):
 				pos = tuple(map(operator.add, pos, sqshift)) # shift squares
 				pos = str(pos[0]) + "," + str(pos[1])
 				ts.append("\\node[] () at ("+pos+") {"+nodecontent+"};")
+				# Add coordinates if required
+				if ("showcoord" in POS[expdir][indtype]["inputs"].keys()
+					and POS[expdir][indtype]["inputs"]["showcoord"]):
+					for i in range(1,1+int(size)):
+						for pos in [(-2.7,i-3), (i-3,-2.7)]:
+							pos = str(pos[0]) + "," + str(pos[1])
+							ts.append("\\node[] at ("+pos+") {"+str(i)+"};")
+
+def nodelabelfromfname(expdir, indtype, nodename, fname):
+	nodelabel = str(fname)
+	if ("names" in POS[expdir][indtype].keys()
+		and nodename in POS[expdir][indtype]["names"].keys()):
+		nodelabel = POS[expdir][indtype]["names"][nodename] + ": " + str(fname)
+	return nodelabel
+
+def getnodecustomopt(expdir, indtype, nodename):
+	if "customndopt" in POS[expdir][indtype].keys():
+		for customopt in POS[expdir][indtype]["customndopt"].keys():
+			if nodename in POS[expdir][indtype]["customndopt"][customopt]:
+				return customopt
+	return ""
+
+def getedgecustomopt(expdir, indtype, edge):
+	if "customedgeopt" in POS[expdir][indtype].keys():
+		for customopt in POS[expdir][indtype]["customedgeopt"].keys():
+			if edge in POS[expdir][indtype]["customedgeopt"][customopt]:
+				return customopt
+	return ""	
 
 def getnode(expdir, indtype, nodesettings, nodename, p, nodecontent, fname=None):
+	if "avoided" in POS[expdir][indtype].keys() and nodename in POS[expdir][indtype]["avoided"]:
+		return ""
 	if BUFFERCLIP and indtype == "encoder" and PRINTBUFFER:
 		#color = nodesettings.split("draw=")[1]
 		#return "\\savebox{\\picbox}{"+nodecontent+"} \\node ["+nodesettings+", minimum width=\\wd\\picbox, minimum height=\\ht\\picbox, path picture={\\node at (path picture bounding box.center) {\\usebox{\\picbox}};}] ("+nodename+") at ("+p+") {};"
 		if fname == None: # Encoder Input or Output node
 			return "\\node["+nodesettings+", draw, fill=white, align=center, rounded corners=2mm, shape=rectangle, inner sep=1mm, outer sep=0] ("+nodename+") at ("+p+") {"+nodecontent+"};"
 		else: # Encoder  Intermediate node
-			nodelabel = str(fname)
-			if ("names" in POS[expdir]["encoder"].keys()
-				and nodename in POS[expdir]["encoder"]["names"].keys()):
-				nodelabel = POS[expdir]["encoder"]["names"][nodename] + ": " + str(fname)
-			return "\\node["+nodesettings+", draw, fill=white, align=center, rounded corners=2mm, shape=rectangle split, rectangle split parts=2, inner sep=1mm, outer sep=0] ("+nodename+") at ("+p+") {"+nodelabel+"\\nodepart{two}"+nodecontent+"};"
+			nodelabel = nodelabelfromfname(expdir, indtype, nodename, fname)
+			nodecustomopt = getnodecustomopt(expdir, indtype, nodename)
+			return "\\node["+nodesettings+","+nodecustomopt+", draw, fill=white, align=center, rounded corners=2mm, shape=rectangle split, rectangle split parts=2, inner sep=1mm, outer sep=0] ("+nodename+") at ("+p+") {"+nodelabel+"\\nodepart{two}"+nodecontent+"};"
 	elif indtype == "controller" and fname != None: # controller intermediate node
-		nodelabel = str(fname)
-		return "\\node["+nodesettings+", shape=rectangle split, rectangle split parts=2] ("+nodename+") at ("+p+") {"+nodelabel+"\\nodepart{two}"+nodecontent+"};"
+		nodelabel = nodelabelfromfname(expdir, indtype, nodename, fname)
+		nodecustomopt = getnodecustomopt(expdir, indtype, nodename)
+		return "\\node["+nodesettings+","+nodecustomopt+", shape=rectangle split, rectangle split parts=2] ("+nodename+") at ("+p+") {"+nodelabel+"\\nodepart{two}"+nodecontent+"};"
 	else:
-		return "\\node["+nodesettings+"] ("+nodename+") at ("+p+") {"+nodecontent+"};"
+		nodecustomopt = getnodecustomopt(expdir, indtype, nodename)
+		return "\\node["+nodesettings+","+nodecustomopt+"] ("+nodename+") at ("+p+") {"+nodecontent+"};"
 
 def fnamefromnodename(g, nodename):
 	for edge in g["edges"]:
@@ -854,10 +918,10 @@ def appendedges(ts, gdict, expdir, indtype):
 		isactive = (edge[1] in activated) and (not gdict["metadata"]["is_sticky"])
 		edgecolor = COLOR_ACTIVE if isactive else COLOR_INACTIVE_EDGE
 		pathset = "->, color="+edgecolor
-		if isactive:
-			pathset += ", " + THICKNESS_ACTIVE
+		pathset += ", " + THICKNESS_ACTIVE if isactive else ", " + THICKNESS_INACTIVE
 		custompathset = getcustompathset(expdir, indtype, edge, seenedges)
 		pathset += custompathset
+		pathset += ", " + getedgecustomopt(expdir, indtype, edge)
 		if HALOEDGELABELS:
 			ts.append("\\path[->, color=white, ultra thick"+custompathset+"] ("+src+") edge["+loopopt+"] node[above] {"+edgelabel+"} ("+dst+");")
 		if LABEL_EDGES:
@@ -866,7 +930,7 @@ def appendedges(ts, gdict, expdir, indtype):
 			ts.append("\\path["+pathset+"] ("+src+") edge["+loopopt+"] ("+dst+");")
 		seenedges.append(edge)
 	iscontoutedge_selected = False
-	for i in range(len(g["outputs"])):
+	for i in range(len(g["outputs"])): # Output edges
 		output = g["outputs"][i]
 		src = str(output)
 		dst = getnodename(i, g, True)
@@ -878,10 +942,12 @@ def appendedges(ts, gdict, expdir, indtype):
 			pathset += THICKNESS_ACTIVE
 			if indtype == "controller": iscontoutedge_selected = True
 		else:
+			pathset += THICKNESS_INACTIVE
 			edgecolor = COLOR_INACTIVE_EDGE
 		pathset += ", ->, color="+edgecolor
 		custompathset = getcustompathset(expdir, indtype, edge, seenedges)
 		pathset += custompathset
+		pathset += ", " + getedgecustomopt(expdir, indtype, edge)
 		if HALOEDGELABELS:
 			ts.append("\\path[->, color=white, ultra thick"+custompathset+"] ("+src+") edge node {} ("+dst+");")
 		ts.append("\\path["+pathset+"] ("+src+") edge node {} ("+dst+");")
