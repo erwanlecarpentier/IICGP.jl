@@ -14,8 +14,8 @@ from pdf2image import convert_from_path
 # COMMANDS
 ONLYENCO = False
 ONLYCONT = False
-SHOWENCO = True
-SHOWCONT = False
+SHOWENCO = False
+SHOWCONT = True
 DOFRAMES = True
 SHOWFRAMES = False # Show canvas (full frame with assembled graphs)
 DOVIDEO = False
@@ -24,7 +24,7 @@ PRINTPDFLATEXOUT = False
 
 # Meta parameters
 SEED = 0
-MAX_FRAME = 3 # None # None implies finding max_frame
+MAX_FRAME = 1 # None implies finding max_frame
 DIR_PATH = os.path.dirname(os.path.realpath(__file__))
 HOME_DIR = os.path.expanduser("~")
 ICGPRES_DIR = HOME_DIR + "/Documents/git/ICGP-results"
@@ -83,15 +83,9 @@ Position "by type" apply to either all inputs or all outputs. Here are examples:
 POS = {
 	"2022-02-08T15:19:07.234_2_boxing" : { # Complex encoder with many logical operators
 		"encoder": {
-			"1": (0,0),
-			"2": (4,2),
-			"3": (4,0),
-			"5": (8,2),
-			"14": (4,-2),
-			"12": (4,-4),
-			"17": (8,-2),
-			"13": (8,0),
-			"out17": (12,0),
+			"1": (0,0), "2": (4,2), "3": (4,0),
+			"5": (8,2), "14": (4,-2), "12": (4,-4),
+			"17": (8,-2), "13": (8,0), "out17": (12,0),
 			"customedges": {(1, 2): {1: "bend left=20", 2: "bend right=20"}},
 		},
 		"controller": {
@@ -309,9 +303,19 @@ EDGELABELS = {
 	"f_bitwise_not": "NOT",
 	"f_bitwise_and": "AND",
 	"f_bitwise_xor": "XOR",
-	"f_subtract": "Subtract",
+	"f_subtract": "$-$", # "Subtract",
 	"f_threshold": "Threshold",
-	"f_dilate": "Dilate"
+	"f_dilate": "Dilate",
+	"f_add": "$+$",
+	"f_mult": "$\\times$",
+	"f_lt": "$\\leq$",
+	"f_gt": "$\\geq$",
+	"f_div": "$\\div$",
+	"f_sqrt": "$\\sqrt{\cdot}$",
+	"f_and": "AND",
+	"f_or": "OR",
+	"f_xor": "XOR",
+	"f_not": "NOT"
 }
 
 ACTIONLABELS = {
@@ -702,13 +706,13 @@ def appendbackgroundnodes(ts, gdict, expdir, indtype):
 def getnode(indtype, nodesettings, nodename, p, nodecontent, fname=None):
 	if BUFFERCLIP and indtype == "encoder" and PRINTBUFFER:
 		#color = nodesettings.split("draw=")[1]
-		'''
-		return "\\savebox{\\picbox}{"+nodecontent+"} \\node ["+nodesettings+", minimum width=\\wd\\picbox, minimum height=\\ht\\picbox, path picture={\\node at (path picture bounding box.center) {\\usebox{\\picbox}};}] ("+nodename+") at ("+p+") {};"
-		'''
+		#return "\\savebox{\\picbox}{"+nodecontent+"} \\node ["+nodesettings+", minimum width=\\wd\\picbox, minimum height=\\ht\\picbox, path picture={\\node at (path picture bounding box.center) {\\usebox{\\picbox}};}] ("+nodename+") at ("+p+") {};"
 		if fname == None: # Input or Output node
-			return "\\node["+nodesettings+", draw, fill=white, align=center, rounded corners=2mm, shape=rectangle, inner sep=1mm, outer sep=0 ] ("+nodename+") at ("+p+") {"+nodecontent+"};"
+			return "\\node["+nodesettings+", draw, fill=white, align=center, rounded corners=2mm, shape=rectangle, inner sep=1mm, outer sep=0] ("+nodename+") at ("+p+") {"+nodecontent+"};"
 		else: # Intermediate node
-			return "\\node["+nodesettings+", draw, fill=white, align=center, rounded corners=2mm, shape=rectangle split, rectangle split parts=2, inner sep=1mm, outer sep=0 ] ("+nodename+") at ("+p+") {"+str(fname)+"\\nodepart{two}"+nodecontent+"};"
+			return "\\node["+nodesettings+", draw, fill=white, align=center, rounded corners=2mm, shape=rectangle split, rectangle split parts=2, inner sep=1mm, outer sep=0] ("+nodename+") at ("+p+") {"+str(fname)+"\\nodepart{two}"+nodecontent+"};"
+	elif indtype == "controller" and fname != None: # controller intermediate node
+		return "\\node["+nodesettings+", shape=rectangle split, rectangle split parts=2] ("+nodename+") at ("+p+") {"+str(fname)+"\\nodepart{two}"+nodecontent+"};"
 	else:
 		return "\\node["+nodesettings+"] ("+nodename+") at ("+p+") {"+nodecontent+"};"
 
