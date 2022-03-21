@@ -13,7 +13,7 @@ from pdf2image import convert_from_path
 
 # COMMANDS
 ONLYENCO = False
-ONLYCONT = True
+ONLYCONT = False
 SHOWGRAPHS = True # Show separate graphs
 DOFRAMES = True
 SHOWFRAMES = False # Show canvas (full frame with assembled graphs)
@@ -23,7 +23,7 @@ PRINTPDFLATEXOUT = False
 
 # Meta parameters
 SEED = 0
-MAX_FRAME = None # None implies finding max_frame
+MAX_FRAME = 3 # None # None implies finding max_frame
 DIR_PATH = os.path.dirname(os.path.realpath(__file__))
 HOME_DIR = os.path.expanduser("~")
 ICGPRES_DIR = HOME_DIR + "/Documents/git/ICGP-results"
@@ -80,7 +80,7 @@ Position "by type" apply to either all inputs or all outputs. Here are examples:
 	{"type": "squares", "pos": (0, 0)} # Only valid for controller input
 """
 POS = {
-	"2022-02-08T15:19:07.234_2_boxing" : {
+	"2022-02-08T15:19:07.234_2_boxing" : { # Complex encoder with many logical operators
 		"encoder": {
 			"1": (0,0),
 			"2": (4,2),
@@ -102,7 +102,7 @@ POS = {
 	"2022-02-08T15:19:07.129_1_boxing" : {
 		"controller": {
 			"inputs": {"type": "squares", "origin": (0, 0), "innerspan": 1, "squarespan": 7,
-				"cst_in": True},
+				"cst_in": True, "cst_input_y": -5},
 			"outputs": {"type": "column", "pos": (20, 0), "span": 1}
 		}
 	},
@@ -517,13 +517,9 @@ def squarepos(gdict, posdict, n_nodes, index):
 	pos = tuple(map(operator.add, pos, sqshift)) # shift squares
 	return pos
 
-def cstpos(gdict, posdict, n_nodes, index):
-	# TODO here
-	print("here")
-	print(gdict["controller"]["inputs"]["cst_input_y"])
-	print(gdict["controller"]["inputs"]["cst_input_y"])
+def cstpos(gdict, posdict, n_nodes, index, expdir):
 	n_noncst_in = gdict["controller"]["n_in"] - gdict["controller"]["n_cst_input"]
-	pos = (0,gdict["controller"]["inputs"]["cst_input_y"]+n_noncst_in-index)
+	pos = (0,POS[expdir]["controller"]["inputs"]["cst_input_y"]+n_noncst_in-index)
 	return pos
 
 def getpos(gdict, expdir, indtype):
@@ -553,7 +549,7 @@ def getpos(gdict, expdir, indtype):
 					if ("cst_in" in list(POS[expdir][indtype]["inputs"].keys())
 						and POS[expdir][indtype]["inputs"]["cst_in"]
 						and i > n_inp - gdict["controller"]["n_cst_input"]): # is cst node test
-						pos[nodename] = cstpos(gdict, input_pos_dict, n_inp, i)
+						pos[nodename] = cstpos(gdict, input_pos_dict, n_inp, i, expdir)
 	
 	# Position of inner nodes
 	for node in list(g["buffer"].keys()):
