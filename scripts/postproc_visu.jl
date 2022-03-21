@@ -371,7 +371,7 @@ resdir = joinpath(rootdir, "results/")
 min_date = DateTime(2022, 02, 23) # DateTime(2022, 02, 08, 15)
 max_date = DateTime(2022, 02, 24) # DateTime(2022, 02, 08, 16)
 games = ["boxing", "asteroids", "breakout", "freeway", "gravitar", "riverraid", "space_invaders"]
-games = ["boxing"]
+games = ["bowling"]
 ids = [1,2,3]
 reducers = ["pooling"]
 exp_dirs, ids, games = get_exp_dir(resdir, min_date=min_date, max_date=max_date,
