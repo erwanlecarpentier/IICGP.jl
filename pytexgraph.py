@@ -14,22 +14,23 @@ from pdf2image import convert_from_path
 # COMMANDS
 ONLYENCO = False
 ONLYCONT = False
-SHOWENCO = False
-SHOWCONT = True
+SHOWENCO = True
+SHOWCONT = False
 DOFRAMES = True
 SHOWFRAMES = False # Show canvas (full frame with assembled graphs)
-DOVIDEO = False
+DOVIDEO = False # Warning: set DOFRAMES andTOPNG to True
 
 PRINTPDFLATEXOUT = False
 
 # Meta parameters
-SEED = 22
-MAX_FRAME = 10 # None implies finding max_frame
+SEED = 19681965
+RANDOM_POS_MAG = 15
+MAX_FRAME = 1 # None implies finding max_frame
 DIR_PATH = os.path.dirname(os.path.realpath(__file__))
 HOME_DIR = os.path.expanduser("~")
 ICGPRES_DIR = HOME_DIR + "/Documents/git/ICGP-results"
 IMG_EXT = ".png"
-TOPNG = True # convert pdf canvas to png
+TOPNG = False # convert pdf canvas to png
 DELETE_GRAPHS = True
 DELETE_CANVAS_PDF = True
 FPSS = [60]
@@ -37,7 +38,7 @@ FPSS = [60]
 # Graph layout
 GRAPHBACK = True
 BUFFERCLIP = True
-PRINTBUFFER = True # False for positioning
+PRINTBUFFER = True # set to False for easy positioning
 IMG_WIDTH = 1.5
 IMGOUT_WIDTH = 1.0
 WH_RATIO = 0.76
@@ -81,9 +82,32 @@ Position "by type" apply to either all inputs or all outputs. Here are examples:
 	{"type": "squares", "pos": (0, 0)} # Only valid for controller input
 """
 POS = {
-	"2022-02-23T18:11:39.288_1_bowling" : {},
-	"2022-02-23T18:11:39.277_2_bowling" : {},
-	"2022-02-23T18:11:39.278_3_bowling" : {},
+	"2022-02-23T18:11:39.288_1_bowling" : { # Super simple encoder: erode + motion + motion. Controller makes some weird strategy where it sort of pushes the ball towards the bottom constantly unless it reaches the middle/end of the bowling alley where it pushes the ball towards the top. No cst actions use.
+		"encoder": {
+			"1": (0,0), "7": (2.3,0), "17": (5.5,0), "19": (9.5,0), "out19": (12.3,0),
+			"names": {"7": "E1", "17": "E2", "19": "E3"},
+			"backgroundnode": {"pos": (-1, 0.2), "width": (1.8, 10.2, 1.4), "height": 2.7},
+		},
+		"controller": {
+			"inputs": {"type": "squares", "origin": (0, 0), "innerspan": 1, "squarespan": 7,
+				"cst_in": True, "cst_input_y": -5},
+			"outputs": {"type": "column", "pos": (20, 0), "span": 1}
+		}
+	},
+	"2022-02-23T18:11:39.277_2_bowling" : { # Complexe encoder with 12 intermediate nodes. Its output seems to be a dilated motion capture version of the original input. Controller is a bit simpler and suggests a tendency to alternate between moving the ball towards the top or the bottom.
+		"controller": {
+			"inputs": {"type": "squares", "origin": (0, 0), "innerspan": 1, "squarespan": 7,
+				"cst_in": True, "cst_input_y": -5},
+			"outputs": {"type": "column", "pos": (20, 0), "span": 1}
+		}
+	},
+	"2022-02-23T18:11:39.278_3_bowling" : { # Average complex encoder with 7 intermediate nodes. The output of the encoder seems hard to interprete as the ultimate operation is an AND between two non-binary images. The controller seems also hard to understand, there seems to be a persistent control towards the bottom at the begining and I am not sure about the mechanism that brings the ball upwards. Things get tricky as the encoder output are hard to understand.
+		"controller": {
+			"inputs": {"type": "squares", "origin": (0, 0), "innerspan": 1, "squarespan": 7,
+				"cst_in": True, "cst_input_y": -5},
+			"outputs": {"type": "column", "pos": (20, 0), "span": 1}
+		}
+	},
 	"2022-02-08T15:19:07.129_1_boxing" : { # Simple encoder alternating between positive and negative view of the opponent. Controller simply runs towards the top right corner and hits when one of the two regions where the boxers are supposed to be is bright.
 		"controller": {
 			"inputs": {"type": "squares", "origin": (0, 0), "innerspan": 1, "squarespan": 7,
@@ -316,6 +340,8 @@ EDGELABELS = {
 	"f_subtract": "$-$", # "Subtract",
 	"f_threshold": "Threshold",
 	"f_dilate": "Dilate",
+	"f_erode": "Erode",
+	"f_motion_capture": "Motion Capture",
 	"f_add": "$+$",
 	"f_mult": "$\\times$",
 	"f_lt": "$\\leq$",
@@ -479,8 +505,7 @@ def getnodename(node, g=None, isout=False):
 		return str(node)
 	
 def randompos():
-	mag = 10
-	return (mag*random.random(), mag*random.random())
+	return (RANDOM_POS_MAG*random.random(), RANDOM_POS_MAG*random.random())
 	
 def postostr(pos):
 	for k, v in pos.items():
@@ -713,16 +738,21 @@ def appendbackgroundnodes(ts, gdict, expdir, indtype):
 				pos = str(pos[0]) + "," + str(pos[1])
 				ts.append("\\node[] () at ("+pos+") {"+nodecontent+"};")
 
-def getnode(indtype, nodesettings, nodename, p, nodecontent, fname=None):
+def getnode(expdir, indtype, nodesettings, nodename, p, nodecontent, fname=None):
 	if BUFFERCLIP and indtype == "encoder" and PRINTBUFFER:
 		#color = nodesettings.split("draw=")[1]
 		#return "\\savebox{\\picbox}{"+nodecontent+"} \\node ["+nodesettings+", minimum width=\\wd\\picbox, minimum height=\\ht\\picbox, path picture={\\node at (path picture bounding box.center) {\\usebox{\\picbox}};}] ("+nodename+") at ("+p+") {};"
-		if fname == None: # Input or Output node
+		if fname == None: # Encoder Input or Output node
 			return "\\node["+nodesettings+", draw, fill=white, align=center, rounded corners=2mm, shape=rectangle, inner sep=1mm, outer sep=0] ("+nodename+") at ("+p+") {"+nodecontent+"};"
-		else: # Intermediate node
-			return "\\node["+nodesettings+", draw, fill=white, align=center, rounded corners=2mm, shape=rectangle split, rectangle split parts=2, inner sep=1mm, outer sep=0] ("+nodename+") at ("+p+") {"+str(fname)+"\\nodepart{two}"+nodecontent+"};"
+		else: # Encoder  Intermediate node
+			nodelabel = str(fname)
+			if ("names" in POS[expdir]["encoder"].keys()
+				and nodename in POS[expdir]["encoder"]["names"].keys()):
+				nodelabel = POS[expdir]["encoder"]["names"][nodename] + ": " + str(fname)
+			return "\\node["+nodesettings+", draw, fill=white, align=center, rounded corners=2mm, shape=rectangle split, rectangle split parts=2, inner sep=1mm, outer sep=0] ("+nodename+") at ("+p+") {"+nodelabel+"\\nodepart{two}"+nodecontent+"};"
 	elif indtype == "controller" and fname != None: # controller intermediate node
-		return "\\node["+nodesettings+", shape=rectangle split, rectangle split parts=2] ("+nodename+") at ("+p+") {"+str(fname)+"\\nodepart{two}"+nodecontent+"};"
+		nodelabel = str(fname)
+		return "\\node["+nodesettings+", shape=rectangle split, rectangle split parts=2] ("+nodename+") at ("+p+") {"+nodelabel+"\\nodepart{two}"+nodecontent+"};"
 	else:
 		return "\\node["+nodesettings+"] ("+nodename+") at ("+p+") {"+nodecontent+"};"
 
@@ -753,7 +783,7 @@ def appendnodes(ts, gdict, expdir, indtype):
 		isout = False
 		nodecontent = getnodecontent(gdict, node, nodename, indtype, isout)
 		nodesettings, iscontout_selected = getnodesettings(gdict, expdir, node, nodename, activated, indtype, isout, iscontout_selected)
-		nd = getnode(indtype, nodesettings, nodename, p, nodecontent, fname=fname)
+		nd = getnode(expdir, indtype, nodesettings, nodename, p, nodecontent, fname=fname)
 		ts.append(nd)
 	
 	# OUTPUT NODES
@@ -764,7 +794,7 @@ def appendnodes(ts, gdict, expdir, indtype):
 		isout = True
 		nodecontent = getnodecontent(gdict, node, nodename, indtype, isout, i)
 		nodesettings, iscontout_selected = getnodesettings(gdict, expdir, node, nodename, outputs, indtype, isout, iscontout_selected)
-		nd = getnode(indtype, nodesettings, nodename, p, nodecontent)
+		nd = getnode(expdir, indtype, nodesettings, nodename, p, nodecontent)
 		ts.append(nd)
 	
 	# REPEAT ACTION NODE
