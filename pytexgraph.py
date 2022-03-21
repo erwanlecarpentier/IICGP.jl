@@ -23,8 +23,8 @@ DOVIDEO = False
 PRINTPDFLATEXOUT = False
 
 # Meta parameters
-SEED = 0
-MAX_FRAME = 1 # None implies finding max_frame
+SEED = 22
+MAX_FRAME = 10 # None implies finding max_frame
 DIR_PATH = os.path.dirname(os.path.realpath(__file__))
 HOME_DIR = os.path.expanduser("~")
 ICGPRES_DIR = HOME_DIR + "/Documents/git/ICGP-results"
@@ -81,6 +81,13 @@ Position "by type" apply to either all inputs or all outputs. Here are examples:
 	{"type": "squares", "pos": (0, 0)} # Only valid for controller input
 """
 POS = {
+	"2022-02-08T15:19:07.129_1_boxing" : { # Simple encoder alternating between positive and negative view of the opponent. Controller simply runs towards the top right corner and hits when one of the two regions where the boxers are supposed to be is bright.
+		"controller": {
+			"inputs": {"type": "squares", "origin": (0, 0), "innerspan": 1, "squarespan": 7,
+				"cst_in": True, "cst_input_y": -5},
+			"outputs": {"type": "column", "pos": (20, 0), "span": 1}
+		}
+	},
 	"2022-02-08T15:19:07.234_2_boxing" : { # Complex encoder with many logical operators
 		"encoder": {
 			"1": (0,0), "2": (4,2), "3": (4,0),
@@ -94,7 +101,7 @@ POS = {
 			"outputs": {"type": "column", "pos": (20, 0), "span": 1}
 		}
 	},
-	"2022-02-08T15:19:07.129_1_boxing" : {
+	"2022-02-08T15:19:07.173_3_boxing" : { # Simple encoder alternating between positive and negative view of the opponent. Interesting rythm that is found by playing with this alternating scheme. Same strategy going up and hitting most of the time.
 		"controller": {
 			"inputs": {"type": "squares", "origin": (0, 0), "innerspan": 1, "squarespan": 7,
 				"cst_in": True, "cst_input_y": -5},
