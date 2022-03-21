@@ -14,7 +14,8 @@ from pdf2image import convert_from_path
 # COMMANDS
 ONLYENCO = False
 ONLYCONT = False
-SHOWGRAPHS = True # Show separate graphs
+SHOWENCO = True
+SHOWCONT = False
 DOFRAMES = True
 SHOWFRAMES = False # Show canvas (full frame with assembled graphs)
 DOVIDEO = False
@@ -897,7 +898,7 @@ def canvas_texscript(paths, frame, score, printtex=False):
 		print(100*"-")
 	return ts
 	
-def runtex(fname, savedir, texsavepath, iscanvas=False):
+def runtex(fname, savedir, texsavepath, iscanvas=False, indtype=None):
 	f = sys.stdout if PRINTPDFLATEXOUT else open('/dev/null', 'w')
 	subprocess.run(
 		["pdflatex", "-interaction", "nonstopmode",
@@ -908,9 +909,9 @@ def runtex(fname, savedir, texsavepath, iscanvas=False):
 	for ext in [".tex", ".aux", ".log"]:
 		os.remove(savedir + fname + ext)
 	# evince
-	if (iscanvas and SHOWFRAMES) or ((not iscanvas) and SHOWGRAPHS):
+	if (iscanvas and SHOWFRAMES) or ((not iscanvas) and (SHOWENCO and indtype=="encoder") or (SHOWCONT and indtype=="controller")):
 		subprocess.run(["evince", savedir + fname + ".pdf"])
-	
+
 def canvastopng(fname, savedir):
 	pdffile = savedir + fname + ".pdf"
 	pngfile = savedir + fname + ".png"
@@ -924,7 +925,7 @@ def build_graph(texscript, paths, frame, indtype):
 	fname = graphfname(frame, indtype)
 	texsavepath = savedir + fname + ".tex"
 	writeat(texsavepath, texscript)
-	runtex(fname, savedir, texsavepath)
+	runtex(fname, savedir, texsavepath, indtype=indtype)
 	
 def build_canvas(texscript, paths, frame):
 	savedir = paths["metadata"]
