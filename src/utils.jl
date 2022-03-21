@@ -1,10 +1,11 @@
 export load_img, save_img, split_rgb, to_csv_row
-export int2dnaid, dict2namedtuple, namedtuple2dict
+export to_dna_id, dict2namedtuple, namedtuple2dict
 export isnan_str
 
 using Images
 
-int2dnaid(i::Int64) = Formatting.format("{1:04d}", i)
+to_dna_id(i::Int64) = Formatting.format("{1:04d}", i)
+to_dna_id(i::Float64) = to_dna_id(convert(Int64, i))
 
 dict2namedtuple(d::Dict) = (; (Symbol(k)=>v for (k, v) in d)...)
 namedtuple2dict(nt::NamedTuple) = Dict(pairs(nt))

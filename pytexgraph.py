@@ -81,6 +81,9 @@ Position "by type" apply to either all inputs or all outputs. Here are examples:
 	{"type": "squares", "pos": (0, 0)} # Only valid for controller input
 """
 POS = {
+	"2022-02-23T18:11:39.288_1_bowling" : {},
+	"2022-02-23T18:11:39.277_2_bowling" : {},
+	"2022-02-23T18:11:39.278_3_bowling" : {},
 	"2022-02-08T15:19:07.129_1_boxing" : { # Simple encoder alternating between positive and negative view of the opponent. Controller simply runs towards the top right corner and hits when one of the two regions where the boxers are supposed to be is bright.
 		"controller": {
 			"inputs": {"type": "squares", "origin": (0, 0), "innerspan": 1, "squarespan": 7,

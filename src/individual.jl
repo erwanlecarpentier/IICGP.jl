@@ -229,13 +229,16 @@ function get_best_lucie_ind(
     log = log_from_exp_dir(exp_dir, log_file="logs/logs.csv",
         header=1, sep=";")
     df = DataFrame(log)
-    gen = gen == 0 ? df.gen_number[end] : gen
+    if gen == 0 # If no specified gen, get the generation of the last logged gen
+        last_logged_ind_index = findlast(df.dna_id .== 1.0)
+        gen = df[last_logged_ind_index,:].gen_number
+    end
     df = filter(row -> row.gen_number == gen, df)
     fitnesses = [strvec2vec(row.fitnesses) for row in eachrow(df)]
     mean_fitnesses = [Statistics.mean(f) for f in fitnesses]
     best_ind_index = argmax(mean_fitnesses)
     best_ind_mean_fitness = mean_fitnesses[best_ind_index]
-    best_ind_dna_id = int2dnaid(df[best_ind_index,:].dna_id)
+    best_ind_dna_id = to_dna_id(df[best_ind_index,:].dna_id)
     best_ind_n_eval = length(fitnesses[best_ind_index])
     if verbose
         println(string("\nBest individual, generation ", gen, ":"))
@@ -246,7 +249,7 @@ function get_best_lucie_ind(
             fitnesses = strvec2vec(row.fitnesses)
             n_eval = length(fitnesses)
             mean = Statistics.mean(fitnesses)
-            dna_id = int2dnaid(row.dna_id)
+            dna_id = to_dna_id(row.dna_id)
             println(string("dna_id: ", dna_id, " mean: ", mean, " n_eval: ",
                 n_eval))
         end

@@ -368,8 +368,8 @@ end
 
 rootdir = joinpath(homedir(), "Documents/git/ICGP-results/")
 resdir = joinpath(rootdir, "results/")
-min_date = DateTime(2022, 02, 08, 15)
-max_date = DateTime(2022, 02, 08, 16)
+min_date = DateTime(2022, 02, 23) # DateTime(2022, 02, 08, 15)
+max_date = DateTime(2022, 02, 24) # DateTime(2022, 02, 08, 16)
 games = ["boxing", "asteroids", "breakout", "freeway", "gravitar", "riverraid", "space_invaders"]
 games = ["boxing"]
 ids = [1,2,3]
