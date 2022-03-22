@@ -23,3 +23,5 @@ cd ~/IICGP.jl/
 source pyvenv/bin/activate
 
 python pytexgraph.py /home/wahara/Documents/git/ICGP-results/results/2022-02-23T18:11:39.288_1_bowling
+
+deactivate
