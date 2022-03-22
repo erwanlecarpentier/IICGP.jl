@@ -776,7 +776,7 @@ def appendbackgroundnodes(ts, gdict, expdir, indtype):
 				if ("showcoord" in POS[expdir][indtype]["inputs"].keys()
 					and POS[expdir][indtype]["inputs"]["showcoord"]):
 					for i in range(1,1+int(size)):
-						for pos in [(-2.7,i-3), (i-3,-2.7)]:
+						for pos in [(-2.7,3-i), (i-3,+2.7)]:
 							pos = str(pos[0]) + "," + str(pos[1])
 							ts.append("\\node[] at ("+pos+") {"+str(i)+"};")
 
