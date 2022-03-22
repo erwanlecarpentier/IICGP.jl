@@ -2,9 +2,9 @@
 #SBATCH -J doubleenco
 #SBATCH -N 1
 #SBATCH -n 1
+#SBATCH --time=00:10:00
 # SBATCH -o /tmpdir/%u/logs/job.%j.atarilucie.out
 # SBATCH -e /tmpdir/%u/logs/job.%j.atarilucie.log
-#SBATCH --time=1-00:00:00
 # SBATCH --mail-user=erwanlecarpentier@mailbox.org
 
 echo start
@@ -22,6 +22,6 @@ cd ~/IICGP.jl/
 
 source pyvenv/bin/activate
 
-python pytexgraph.py /home/wahara/Documents/git/ICGP-results/results/2022-02-23T18:11:39.288_1_bowling
+python pytexgraph.py /tmpdir/p21049le/ICGP-results/results/2022-02-23T18:11:39.288_1_bowling
 
 deactivate
