@@ -18,22 +18,22 @@ SHOWENCO = False
 SHOWCONT = False
 DOFRAMES = True
 SHOWFRAMES = False # Show canvas (full frame with assembled graphs)
-DOVIDEO = False # Warning: set DOFRAMES andTOPNG to True
+DOVIDEO = True # Warning: set DOFRAMES and TOPNG to True
 
 PRINTPDFLATEXOUT = False
 
 # Meta parameters
-SEED = 19681965
+SEED = 0
 RANDOM_POS_MAG = 15
 MAX_FRAME = None # None implies finding max_frame
 DIR_PATH = os.path.dirname(os.path.realpath(__file__))
 HOME_DIR = os.path.expanduser("~")
-ICGPRES_DIR = HOME_DIR + "/Documents/git/ICGP-results"
+ICGPRES_DIR = HOME_DIR #+ "/Documents/git/ICGP-results"
 IMG_EXT = ".png"
-TOPNG = False # convert pdf canvas to png
-DELETE_GRAPHS_PDF = False
+TOPNG = True # convert pdf canvas to png TODO video: True
+DELETE_GRAPHS_PDF = True
 DELETE_CANVAS_PDF = True
-FPSS = [60]
+FPSS = [2] # TODO video: 60
 
 # Graph layout
 PRINTBUFFER = True # set to False for easy positioning
@@ -42,9 +42,9 @@ BUFFERCLIP = True
 IMG_WIDTH = 1.5
 IMGOUT_WIDTH = 1.0
 WH_RATIO = 0.76
-THICKNESS_ACTIVE = ""#"thick" # TODO video
+THICKNESS_ACTIVE = "thick" # TODO video: thick
 THICKNESS_INACTIVE = ""
-COLOR_ACTIVE = "black"#"red" # TODO video
+COLOR_ACTIVE = "red" # TODO video: red
 COLOR_INACTIVE = "black"
 COLOR_INACTIVE_EDGE = "black!50"
 COLOR_BACKGROUND = "white"
@@ -95,23 +95,23 @@ POS = {
 			"73": (6, -2),
 			"52": (6, -0.5),
 			"names": {"65": "C1", "75": "C2", "50": "C3", "82": "C4", "52": "C5", "73": "C6"},
-			"customndopt": { # last custom opt
-				"thick, draw=black": ["20"],
-				"thick, draw=orange": ["5", "out5"],
-				"thick, draw=red": ["8", "22", "24", "75", "50", "82", "out82"],
-				"thick, draw=teal": ["11", "20", "52", "out52"],
-				"thick, draw=purple": ["3", "out3"],
-				"thick, draw=yellow!80!orange": ["18", "73", "out73"],
-				"thick, draw=cyan": ["9", "65", "out65"]
-			},
-			"customedgeopt": { # last custom opt
-				"thick, color=orange": [(5,"out5")],
-				"thick, color=red": [(22,75), (24,50), (20,75), (8,50), (75,82), (50,82), (82,"out82")],
-				"thick, color=teal": [(11,52), (20,52), (52,"out52")],
-				"thick, color=purple": [(3,"out3")],
-				"thick, color=yellow!80!orange": [(18,73),(73,"out73")],
-				"thick, color=cyan": [(9,65),(65,65),(65,"out65")]
-			},
+#			"customndopt": { # last custom opt
+#				"thick, draw=black": ["20"],
+#				"thick, draw=orange": ["5", "out5"],
+#				"thick, draw=red": ["8", "22", "24", "75", "50", "82", "out82"],
+#				"thick, draw=teal": ["11", "20", "52", "out52"],
+#				"thick, draw=purple": ["3", "out3"],
+#				"thick, draw=yellow!80!orange": ["18", "73", "out73"],
+#				"thick, draw=cyan": ["9", "65", "out65"]
+#			},
+#			"customedgeopt": { # last custom opt
+#				"thick, color=orange": [(5,"out5")],
+#				"thick, color=red": [(22,75), (24,50), (20,75), (8,50), (75,82), (50,82), (82,"out82")],
+#				"thick, color=teal": [(11,52), (20,52), (52,"out52")],
+#				"thick, color=purple": [(3,"out3")],
+#				"thick, color=yellow!80!orange": [(18,73),(73,"out73")],
+#				"thick, color=cyan": [(9,65),(65,65),(65,"out65")]
+#			},
 			"avoided": ["26", "27", "28", "29", "30", "31", "32", "33", "34", "35"],
 			"inputs": {"type": "squares", "showcoord": True, "origin": (0, 0), "innerspan": 1, "squarespan": 7,
 				"cst_in": True, "cst_input_y": -5},
@@ -127,6 +127,11 @@ POS = {
 			"outputs": {"type": "column", "pos": (10, -0.5), "span": 1},
 			"sticky": (10, 3.3),
 			"backgroundnode": {"pos": (-2.9, 0.8), "width": (5.3, 5.9, 2.1), "height": 7.6}
+		},
+		"canvas": {
+			"rgbpos": (0.03, 0.5), "hrgbpos": (0.1, 1.12), "scorepos": (0.1, 0.52),
+			"epos": (0, 0.05), "hepos": (0.1, 0.41),
+			"cpos": (1.1, 0.4), "hcpos": (1.2, 1.13)
 		}
 	},
 	"2022-02-23T18:11:39.277_2_bowling" : { # Complexe encoder with 12 intermediate nodes. Its output seems to be a dilated motion capture version of the original input. Controller is a bit simpler and suggests a tendency to alternate between moving the ball towards the top or the bottom.
