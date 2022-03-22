@@ -15,7 +15,7 @@ from pdf2image import convert_from_path
 ONLYENCO = False
 ONLYCONT = False
 SHOWENCO = False
-SHOWCONT = True
+SHOWCONT = False
 DOFRAMES = True
 SHOWFRAMES = False # Show canvas (full frame with assembled graphs)
 DOVIDEO = False # Warning: set DOFRAMES andTOPNG to True
@@ -25,13 +25,13 @@ PRINTPDFLATEXOUT = False
 # Meta parameters
 SEED = 19681965
 RANDOM_POS_MAG = 15
-MAX_FRAME = 1 # None implies finding max_frame
+MAX_FRAME = None # None implies finding max_frame
 DIR_PATH = os.path.dirname(os.path.realpath(__file__))
 HOME_DIR = os.path.expanduser("~")
 ICGPRES_DIR = HOME_DIR + "/Documents/git/ICGP-results"
 IMG_EXT = ".png"
 TOPNG = False # convert pdf canvas to png
-DELETE_GRAPHS = True
+DELETE_GRAPHS_PDF = False
 DELETE_CANVAS_PDF = True
 FPSS = [60]
 
@@ -87,7 +87,7 @@ POS = {
 		"encoder": {
 			"1": (0,0), "7": (2.3,0), "17": (5.5,0), "19": (9.5,0), "out19": (12.3,0),
 			"names": {"7": "E1", "17": "E2", "19": "E3"},
-			"backgroundnode": {"pos": (-1, 0.2), "width": (1.8, 10.2, 1.4), "height": 2.7},
+			"backgroundnode": {"pos": (-1, 0.2), "width": (1.8, 10.2, 1.4), "height": 2.7}
 		},
 		"controller": {
 			"50": (4, 0.6), "75": (4.2, 2.1), "82": (7, 1.5),
@@ -125,7 +125,8 @@ POS = {
 				(18, 73): "bend right=5"
 			},
 			"outputs": {"type": "column", "pos": (10, -0.5), "span": 1},
-			"sticky": (10, 3.3)
+			"sticky": (10, 3.3),
+			"backgroundnode": {"pos": (-2.9, 0.8), "width": (5.3, 5.9, 2.1), "height": 7.6}
 		}
 	},
 	"2022-02-23T18:11:39.277_2_bowling" : { # Complexe encoder with 12 intermediate nodes. Its output seems to be a dilated motion capture version of the original input. Controller is a bit simpler and suggests a tendency to alternate between moving the ball towards the top or the bottom.
@@ -1067,7 +1068,7 @@ def delete_graphs(paths, frame):
 def make_canvas(paths, frame, score):
 	texscript = canvas_texscript(paths, frame, score)
 	build_canvas(texscript, paths, frame)
-	if DELETE_GRAPHS: delete_graphs(paths, frame)
+	if DELETE_GRAPHS_PDF: delete_graphs(paths, frame)
 		
 def make_video(paths, max_frame, fps, verbose=True):
 	bufferdir = paths["metadata"]
