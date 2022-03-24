@@ -25,7 +25,7 @@ PRINTPDFLATEXOUT = False
 # Meta parameters
 SEED = 0
 RANDOM_POS_MAG = 15
-MAX_FRAME = None # None implies finding max_frame
+MAX_FRAME = 3 # None implies finding max_frame
 DIR_PATH = os.path.dirname(os.path.realpath(__file__))
 HOME_DIR = os.path.expanduser("~")
 ICGPRES_DIR = HOME_DIR #+ "/Documents/git/ICGP-results"
@@ -33,7 +33,7 @@ IMG_EXT = ".png"
 TOPNG = True # convert pdf canvas to png TODO video: True
 DELETE_GRAPHS_PDF = True
 DELETE_CANVAS_PDF = True
-FPSS = [2] # TODO video: 60
+FPSS = [1] # TODO video: 60
 
 # Graph layout
 PRINTBUFFER = True # set to False for easy positioning
