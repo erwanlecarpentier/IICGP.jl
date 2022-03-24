@@ -19,15 +19,10 @@ SCRIPT="$(pwd)/scripts/atari_lucie.jl"
 
 cd ~/IICGP.jl/
 
-# module add $HOME/IICGP.jl/pyvenv/bin/python3.8
-# module add Python/3.8.5
-# source $HOME/IICGP.jl/pyvenv/bin/activate
 source $HOME/venvs/py3.6/bin/activate
-
 python --version
-
 which python
 
-#python pytexgraph.py /tmpdir/p21049le/ICGP-results/results/2022-02-23T18:11:39.288_1_bowling
+python pytexgraph.py /tmpdir/p21049le/ICGP-results/results/2022-02-23T18:11:39.288_1_bowling
 
 #deactivate
