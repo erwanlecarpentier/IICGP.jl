@@ -189,6 +189,11 @@ function visu_dualcgp_ingame(
     prev_chosen_output = 1
     features = Vector{Matrix{Float64}}()
     active = [enco.nodes[i].active for i in eachindex(enco.nodes)]
+    action_freq = Dict()
+    action_freq["repeat"] = 0
+    for i in eachindex(g.actions)
+        action_freq[g.actions[i]] = 0
+    end
     # Init rendering buffer
     if do_display
         visu = []
@@ -207,9 +212,11 @@ function visu_dualcgp_ingame(
             features, output = IICGP.process_f(enco, redu, cont, ccfg, o)
             chosen_output = argmax(output)
             action = g.actions[chosen_output]
+            action_freq[action] += 1
         else
             chosen_output = prev_chosen_output
             action = prev_action
+            action_freq["repeat"] += 1
         end
         # Scan which nodes were activated
         c_output = cont.outputs[chosen_output]
@@ -252,12 +259,17 @@ function visu_dualcgp_ingame(
     end
     if verbose
         println()
-        println("-"^20)
-        println("Game             : ", game)
-        println("Seed             : ", seed)
-        println("Total return     : ", reward)
-        println("Number of frames : ", frames)
-        println("-"^20)
+        println("-"^40)
+        println("Game                : ", game)
+        println("Seed                : ", seed)
+        println("Total return        : ", reward)
+        println("Number of frames    : ", frames)
+        println("Actions frequencies : ")
+        for k in keys(action_freq)
+            spacing = k == "repeat" ? "" : (k > 9 ? "    " : "     ")
+            println("  ", k, spacing, " : ", action_freq[k])
+        end
+        println("-"^40)
     end
     reward
 end
@@ -372,11 +384,11 @@ min_date = DateTime(2022, 02, 23) # DateTime(2022, 02, 08, 15)
 max_date = DateTime(2022, 02, 24) # DateTime(2022, 02, 08, 16)
 games = ["boxing", "asteroids", "breakout", "freeway", "gravitar", "riverraid", "space_invaders"]
 games = ["bowling"]
-ids = [1,2,3]
+ids = [1]
 reducers = ["pooling"]
 exp_dirs, ids, games = get_exp_dir(resdir, min_date=min_date, max_date=max_date,
     games=games, reducers=reducers, ids=ids)
-max_frames = 10 # 18000
+max_frames = 18000 # 18000
 render_graph = false
 seed = 0
 
