@@ -1019,7 +1019,7 @@ def runtex(fname, savedir, texsavepath, iscanvas=False, indtype=None):
 	subprocess.run(
 		["pdflatex", "-interaction", "nonstopmode",
 		"-output-directory", savedir, texsavepath],
-		stdout=f, stderr=f, capture_output=False
+		stdout=f, stderr=f # , capture_output=False # TODO check
 	)
 	# clean
 	for ext in [".tex", ".aux", ".log"]:
