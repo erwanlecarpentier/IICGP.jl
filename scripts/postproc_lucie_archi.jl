@@ -64,7 +64,7 @@ function plot_histograms(
         end
     end
     #legend = plot([0 0], showaxis=false, grid=false, label=["Encoder operators" "Controller operators"])
-    plot(hs...) #, legend)
+    #plot(hs..., layout = (2, 6)) #, legend)
 end
 
 function recur_count_operation!(
@@ -165,7 +165,7 @@ rootdir = joinpath(homedir(), "Documents/git/ICGP-results/")
 resdir = joinpath(rootdir, "results/")
 exp_dirs, ids, rom_names = get_exp3_dirs(rootdir, resdir)
 
-
+#=
 min_date = DateTime(2022, 02, 23) # DateTime(2022, 02, 08, 15)
 max_date = DateTime(2022, 02, 24) # DateTime(2022, 02, 08, 16)
 games = ["pong", "enduro"]
@@ -173,7 +173,7 @@ ids = [1,2,3]
 reducers = ["pooling"]
 exp_dirs, ids, rom_names = get_exp_dir(resdir, min_date=min_date, max_date=max_date,
     games=games, reducers=reducers, ids=ids)
-
+=#
 
 d = Dict() # Contains all the data
 for g in rom_names
@@ -194,11 +194,3 @@ end
 
 # 2. Plot data
 plot_histograms(d)
-
-
-
-##
-
-legend = plot([0 0], showaxis=false, grid=false, label=["Encoder operators" "Controller operators"])
-plt = plot(legend)
-display(legend)
