@@ -52,7 +52,7 @@ function plot_histograms(
             histogram!(h, elt[1], bins=bins, label=elt[2], color=elt[3],
                 linecolor=linecolor, linewidth=linewidth, legend=legend,
                 xtickfontsize=xtickfontsize, ytickfontsize=ytickfontsize,
-                xticks=xticks, yticks=yticks, title=title)
+                xticks=xticks, yticks=yticks)#, title=title)
         end
         push!(hs, h)
         if do_display
