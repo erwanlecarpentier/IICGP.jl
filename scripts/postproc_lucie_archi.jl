@@ -10,8 +10,8 @@ IType = Union{Int16,Int32,Int64}
 
 function plot_histograms(
     d::Dict{Any,Any};
-    bins::UnitRange{Int64}=0:15,
-    xticks::Vector{Int64}=[0,15],
+    bins::UnitRange{Int64}=0:20,
+    xticks::Vector{Int64}=[0,20],
     yticks::Vector{Int64}=[0,8],
     noop_color::Symbol=:black,
     enco_color::Symbol=:firebrick1,
@@ -50,6 +50,7 @@ function plot_histograms(
                 n_enco_op_a = n_op_per_action[a]["enco"]
                 n_cont_op_a = n_op_per_action[a]["cont"]
                 n_op = n_enco_op_a + n_cont_op_a
+                #println(id, "  ", a, "  ", n_op)
                 if n_op == 0
                     for _ in 1:l
                         push!(n_noop, 0)
@@ -72,7 +73,7 @@ function plot_histograms(
         for n in 0:max_n_op
             max_freq = max(max_freq, count(==(n), n_enco_op)+count(==(n), n_cont_op))
         end
-        h = histogram(yformatter=y->round(1000*y))
+        h = histogram()#yformatter=y->round(1000*y))
         for elt in [
             [n_noop, "noop", noop_color],
             [n_cont_op, "cont", cont_color],
@@ -82,10 +83,10 @@ function plot_histograms(
             yticks = :sparse # ([0,max_freq], [0,max_freq])
             freq = elt[2]=="cont" ? cat(elt[1], n_enco_op, dims=1) : elt[1]
             histogram!(h, freq, bins=bins, label=elt[2], color=elt[3],
+                fillcolor=elt[3], seriescolor=elt[3], fill=true,
                 linecolor=linecolor, linewidth=linewidth, legend=legend,
                 xtickfontsize=xtickfontsize, ytickfontsize=ytickfontsize,
-                xticks=xticks, yticks=yticks, fontfamily="Computer Modern",
-                yformatter=y->round(1000*y))#, title=title)
+                xticks=xticks, yticks=yticks, fontfamily="Computer Modern")
         end
         push!(hs, h)
         if do_display
@@ -155,9 +156,11 @@ function scrap_data!(
         outenc_node_index = enco.outputs[1]
         n_op_per_action[a] = Dict([("cont", 0), ("enco", 0), ("reached_enco_out", false)])
         seen_node_indexes = []
-        recur_count_operation!(n_op_per_action, "cont", cfg, cont, a, output_node_index, seen_node_indexes)
+        recur_count_operation!(n_op_per_action, "cont", cfg, cont, a,
+            output_node_index, seen_node_indexes)
         if n_op_per_action[a]["reached_enco_out"]
-            recur_count_operation!(n_op_per_action, "enco", cfg, enco, a, outenc_node_index, seen_node_indexes)
+            recur_count_operation!(n_op_per_action, "enco", cfg, enco, a,
+                outenc_node_index, seen_node_indexes)
         end
     end
     d[rom_name][id] = Dict("n_op_per_action"=>n_op_per_action)
@@ -180,11 +183,12 @@ function get_exp3_dirs(rootdir::String, resdir::String)
     min_date = DateTime(2022, 02, 23)
     max_date = DateTime(2022, 02, 24)
     games = ["alien", "bowling", "enduro", "pong", "riverraid", "seaquest"]
-    exp_dirs, ids, rom_names = get_exp_dir(resdir, min_date=min_date, max_date=max_date,
-        games=games, reducers=reducers, ids=ids)
+    exp_dirs, ids, rom_names = get_exp_dir(resdir, min_date=min_date,
+        max_date=max_date, games=games, reducers=reducers, ids=ids)
     min_date = DateTime(2022, 02, 08, 15)
     max_date = DateTime(2022, 02, 08, 17)
-    games = ["boxing", "asteroids", "solaris", "freeway", "gravitar", "space_invaders"]
+    games = ["boxing", "asteroids", "solaris", "freeway", "gravitar",
+        "space_invaders"]
     e, i, r = get_exp_dir(resdir, min_date=min_date, max_date=max_date,
         games=games, reducers=reducers, ids=ids)
     push!(exp_dirs, e...)
@@ -197,15 +201,17 @@ rootdir = joinpath(homedir(), "Documents/git/ICGP-results/")
 resdir = joinpath(rootdir, "results/")
 exp_dirs, ids, rom_names = get_exp3_dirs(rootdir, resdir)
 
-#=
-min_date = DateTime(2022, 02, 23) # DateTime(2022, 02, 08, 15)
-max_date = DateTime(2022, 02, 24) # DateTime(2022, 02, 08, 16)
-games = ["pong"]
+
+min_date = DateTime(2022, 02, 23)
+max_date = DateTime(2022, 02, 24)
+min_date = DateTime(2022, 02, 08, 15)
+max_date = DateTime(2022, 02, 08, 16)
+games = ["boxing"]
 ids = [1,2,3]
 reducers = ["pooling"]
-exp_dirs, ids, rom_names = get_exp_dir(resdir, min_date=min_date, max_date=max_date,
-    games=games, reducers=reducers, ids=ids)
-=#
+exp_dirs, ids, rom_names = get_exp_dir(resdir, min_date=min_date,
+    max_date=max_date, games=games, reducers=reducers, ids=ids)
+
 
 d = Dict() # Contains all the data
 for g in rom_names
@@ -221,7 +227,7 @@ for i in eachindex(exp_dirs)
     cfg = cfg_from_exp_dir(exp_dir)
     enco, redu, cont = get_best_lucie_ind(exp_dir)
     # Get analysis
-    scrap_data!(d, rom_name, id, enco, redu, cont, cfg, verbose=false)
+    scrap_data!(d, rom_name, id, enco, redu, cont, cfg, verbose=true)
 end
 
 # 2. Plot data
