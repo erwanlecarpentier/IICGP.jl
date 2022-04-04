@@ -8,11 +8,26 @@ using Plots; pgfplotsx()
 
 IType = Union{Int16,Int32,Int64}
 
+custom_yticks = Dict(
+    "alien"=>([0, 200000, 400000], ["0", "20", "40"]),
+    "asteroids"=>([0, 4000, 8000], ["0", "4", "8"]),
+    "bowling"=>([0, 25000, 50000], ["0", "25", "50"]),
+    "boxing"=>([0, 80000, 160000, 250000], ["0", "8", "16", "25"]),
+    "enduro"=>([0, 5000, 10000, 15000], ["0", "5", "10", "15"]),
+    "freeway"=>([0, 400, 800], ["0", "4", "8"]),
+    "gravitar"=>([0, 50000, 100000], ["0", "5", "10"]),
+    "pong"=>([0, 25000, 50000], ["0", "25", "50"]),
+    "riverraid"=>([0, 20000, 40000], ["0", "20", "40"]),
+    "seaquest"=>([0, 100000, 200000], ["0", "10", "20"]),
+    "solaris"=>([0, 300000, 600000], ["0", "30", "60"]),
+    "space_invaders"=>([0, 2000, 4000], ["0", "20", "40"])
+)
+
 function plot_histograms(
     d::Dict{Any,Any};
     bins::UnitRange{Int64}=0:20,
     xticks::Vector{Int64}=[0,20],
-    yticks::Vector{Int64}=[0,8],
+    yticks::Union{Symbol,Vector{Int64}}=:custom, # [1, 10, 20] :sparse :custom
     noop_color::Symbol=:black,
     enco_color::Symbol=:firebrick1,
     cont_color::Symbol=:paleturquoise3,
@@ -80,8 +95,10 @@ function plot_histograms(
             [n_enco_op, "enco", enco_color]
         ]
             title = titlecase(replace(g,"_"=>" "))
-            yticks = :sparse # ([0,max_freq], [0,max_freq])
             freq = elt[2]=="cont" ? cat(elt[1], n_enco_op, dims=1) : elt[1]
+            if yticks == :custom
+                yticks = custom_yticks[g]
+            end
             histogram!(h, freq, bins=bins, label=elt[2], color=elt[3],
                 fillcolor=elt[3], seriescolor=elt[3], fill=true,
                 linecolor=linecolor, linewidth=linewidth, legend=legend,
@@ -202,11 +219,9 @@ resdir = joinpath(rootdir, "results/")
 exp_dirs, ids, rom_names = get_exp3_dirs(rootdir, resdir)
 
 
-min_date = DateTime(2022, 02, 23)
-max_date = DateTime(2022, 02, 24)
-min_date = DateTime(2022, 02, 08, 15)
-max_date = DateTime(2022, 02, 08, 16)
-games = ["boxing"]
+min_date, max_date = DateTime(2022, 02, 08, 15), DateTime(2022, 02, 08, 16)
+min_date, max_date = DateTime(2022, 02, 23), DateTime(2022, 02, 24)
+games = ["enduro"]
 ids = [1,2,3]
 reducers = ["pooling"]
 exp_dirs, ids, rom_names = get_exp_dir(resdir, min_date=min_date,
