@@ -33,9 +33,10 @@ function plot_histograms(
     cont_color::Symbol=:paleturquoise3,
     linecolor::Symbol=:white,
     linewidth::Int64=2,
-    legend::Bool=false,
-    xtickfontsize::Int64=20,
-    ytickfontsize::Int64=20,
+    legend::Union{Bool,Symbol}=:topright, # false
+    legendfontsize::Int64=25,
+    xtickfontsize::Int64=25,
+    ytickfontsize::Int64=25,
     do_display::Bool=true,
     do_save::Bool=true
 )
@@ -89,20 +90,24 @@ function plot_histograms(
             max_freq = max(max_freq, count(==(n), n_enco_op)+count(==(n), n_cont_op))
         end
         h = histogram()#yformatter=y->round(1000*y))
+        n_op = length(n_noop) + length(n_cont_op) + length(n_enco_op)
         for elt in [
             [n_noop, "noop", noop_color],
             [n_cont_op, "cont", cont_color],
             [n_enco_op, "enco", enco_color]
         ]
             title = titlecase(replace(g,"_"=>" "))
+            perc = convert(Int64, round(100*length(elt[1]) / n_op; digits=0))
+            label = string(perc, "%") # elt[2]
             freq = elt[2]=="cont" ? cat(elt[1], n_enco_op, dims=1) : elt[1]
             if yticks == :custom
                 yticks = custom_yticks[g]
             end
-            histogram!(h, freq, bins=bins, label=elt[2], color=elt[3],
+            histogram!(h, freq, bins=bins, label=label, color=elt[3],
                 fillcolor=elt[3], seriescolor=elt[3], fill=true,
                 linecolor=linecolor, linewidth=linewidth, legend=legend,
                 xtickfontsize=xtickfontsize, ytickfontsize=ytickfontsize,
+                legendfontsize=legendfontsize,
                 xticks=xticks, yticks=yticks, fontfamily="Computer Modern")
         end
         push!(hs, h)
@@ -218,15 +223,15 @@ rootdir = joinpath(homedir(), "Documents/git/ICGP-results/")
 resdir = joinpath(rootdir, "results/")
 exp_dirs, ids, rom_names = get_exp3_dirs(rootdir, resdir)
 
-
-min_date, max_date = DateTime(2022, 02, 08, 15), DateTime(2022, 02, 08, 16)
-min_date, max_date = DateTime(2022, 02, 23), DateTime(2022, 02, 24)
-games = ["enduro"]
-ids = [1,2,3]
-reducers = ["pooling"]
-exp_dirs, ids, rom_names = get_exp_dir(resdir, min_date=min_date,
-    max_date=max_date, games=games, reducers=reducers, ids=ids)
-
+if false # test
+    min_date, max_date = DateTime(2022, 02, 08, 15), DateTime(2022, 02, 08, 16)
+    min_date, max_date = DateTime(2022, 02, 23), DateTime(2022, 02, 24)
+    games = ["bowling"]
+    ids = [1,2,3]
+    reducers = ["pooling"]
+    exp_dirs, ids, rom_names = get_exp_dir(resdir, min_date=min_date,
+        max_date=max_date, games=games, reducers=reducers, ids=ids)
+end
 
 d = Dict() # Contains all the data
 for g in rom_names
