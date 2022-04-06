@@ -34,9 +34,9 @@ function plot_histograms(
     linecolor::Symbol=:white,
     linewidth::Int64=2,
     legend::Union{Bool,Symbol}=:topright, # false
-    legendfontsize::Int64=25,
-    xtickfontsize::Int64=25,
-    ytickfontsize::Int64=25,
+    legendfontsize::Int64=30,
+    xtickfontsize::Int64=30,
+    ytickfontsize::Int64=30,
     do_display::Bool=true,
     do_save::Bool=true
 )
@@ -223,10 +223,10 @@ rootdir = joinpath(homedir(), "Documents/git/ICGP-results/")
 resdir = joinpath(rootdir, "results/")
 exp_dirs, ids, rom_names = get_exp3_dirs(rootdir, resdir)
 
-if false # test
+if true # test
     min_date, max_date = DateTime(2022, 02, 08, 15), DateTime(2022, 02, 08, 16)
     min_date, max_date = DateTime(2022, 02, 23), DateTime(2022, 02, 24)
-    games = ["bowling"]
+    games = ["enduro"]
     ids = [1,2,3]
     reducers = ["pooling"]
     exp_dirs, ids, rom_names = get_exp_dir(resdir, min_date=min_date,
