@@ -15,17 +15,17 @@ from pdf2image import convert_from_path
 ONLYENCO = False
 ONLYCONT = False
 SHOWENCO = False
-SHOWCONT = False
+SHOWCONT = True
 DOFRAMES = True
 SHOWFRAMES = False # Show canvas (full frame with assembled graphs)
-DOVIDEO = True # Warning: set DOFRAMES and TOPNG to True
+DOVIDEO = False # Warning: set DOFRAMES and TOPNG to True
 
 PRINTPDFLATEXOUT = False
 
 # Meta parameters
 SEED = 0
 RANDOM_POS_MAG = 15
-MAX_FRAME = 3 # None implies finding max_frame
+MAX_FRAME = 1 # None implies finding max_frame
 DIR_PATH = os.path.dirname(os.path.realpath(__file__))
 HOME_DIR = os.path.expanduser("~")
 ICGPRES_DIR = HOME_DIR #+ "/Documents/git/ICGP-results"
@@ -149,10 +149,101 @@ POS = {
 		}
 	},
 	"2022-02-08T15:19:07.129_1_boxing" : { # Simple encoder alternating between positive and negative view of the opponent. Controller simply runs towards the top right corner and hits when one of the two regions where the boxers are supposed to be is bright.
-		"controller": {
+		"encoder": {
+			"1": (0,0), "2": (2.4,-1.1), "5": (2.4,1.1), "6": (4.6,0), "9": (6.9,0), "out9": (4.6,0),
+			"names": {"5": "E1", "2": "E2"},
+			"avoided": ["6", "9"],
+			"extra_edges": [("5", "out9")],
+			"backgroundnode": {"pos": (-1, 0), "width": (1.8, 2.5, 1.4), "height": 4.4}
+		},
+		"controller": { # TODO here
+			"34": (2,8),
+			"32": (2,6),
+			"29": (2,5),
+			"35": (2,3),
+			"27": (2,-3),
+			"30": (2,-5),
+			"26": (2,-7),
+			"77": (11,9), "46": (8,9),
+			"48": (11,8),
+			"86": (11,7), "57": (8,7), "45": (5,7),
+			"69": (11,5),
+			"47": (11,0),
+			"68": (8,-1),
+			"38": (11,-4), "37": (8,-4),
+			"76": (11,-6), "55": (8,-6), "36": (5,-6),
+			"94": (8,-8),
+			"sticky": (14, 10),
+			"customndopt": { # last custom opt
+				"thick, draw=black": ["14", "34"],
+				"thick, draw=orange": [
+					"9", "46", "77", "out77",
+					"2", "20", "94", "out94"
+				],
+				"thick, draw=red!80!yellow": ["13", "48", "out48"],
+				"thick, draw=teal": ["10", "21", "45", "57", "86", "out86"],
+				"thick, draw=purple": [
+					"29", "17", "69", "out69",
+					"7", "6", "55", "76", "out76"
+				],
+				"thick, draw=green!50!cyan!80!black": ["4", "out4"],
+				"thick, text=black, draw=yellow!80!orange": [
+					"35", "out35", "out41",
+					"25", "30", "37", "38", "out38"
+				],
+				"thick, draw=cyan": ["8", "18", "47", "out47", "out47'"],
+				"thick, draw=red": ["15", "68", "out68"],
+				"thick, draw=black": ["36", "14", "16"],
+				"thick, draw=black!50!white": [
+					"32", "out32",
+					"23", "out23",
+					"37", "out27",
+					"5", "out5",
+					"26", "out81"
+				]
+			},
+			"customedgeopt": { # last custom opt
+				"thick, color=orange": [
+					(9,46), (36,77), (34,46), (46,77), (77,"out77"),
+					(2,94), (20,94), (94,"out94")
+				],
+				"thick, color=red!80!yellow": [(13,48), (14,48), (48,"out48")],
+				"thick, color=teal": [(10,57), (21,86), (34,45), (45,57), (57,86), (86,"out86")],
+				"thick, color=black!50!white": [
+					(32,"out32"),
+					(27,"out27"),
+					(23,"out23"),
+					(5,"out5"),
+					(26,"out81")
+				],
+				"thick, color=purple": [
+					(29,69), (17,69), (69,"out69"),
+					(7,55),(6,76),(36,55),(55,76),(76,"out76")
+				],
+				"thick, color=green!50!cyan!80!black": [(4,"out4")],
+				"thick, color=yellow!80!orange": [
+					(35,"out35"), (35,"out41"),
+					(16,37), (25,37), (30,38), (37,38), (38,"out38")
+				],
+				"thick, color=cyan": [(8,47),(18,47),(47,"out47"),(47,"out47'")],
+				"thick, color=red": [(15,68),(36,68),(68,"out68")],
+				"thick, color=black": [(14,36),(16,36)],
+			},
+			"customedges": {
+				(4, "out4"): "bend left=10",
+				(27, "out27"): "bend left=20",
+				(23, "out23"): "bend right=20",
+				(2, 94): "bend right=120"
+			},
 			"inputs": {"type": "squares", "origin": (0, 0), "innerspan": 1, "squarespan": 7,
 				"cst_in": True, "cst_input_y": -5},
-			"outputs": {"type": "column", "pos": (20, 0), "span": 1}
+			"avoided": [
+				"41", "42", "81",
+				"1", "3", "11", "12", "19", "22", "24",
+				"28", "31", "33"
+			],
+			"extra_edges": [(13,48), ("26","out81"), ("35","out41")],
+			"outputs": {"type": "column", "pos": (14, 0), "span": 1}
 		}
 	},
 	"2022-02-08T15:19:07.234_2_boxing" : { # Complex encoder with many logical operators
@@ -889,6 +980,14 @@ def getcustomlabelopt(expdir, indtype, edge, seenedges):
 			out += ""
 	return out
 
+'''
+def isedgein(edge, l):
+	for e in l:
+		if (str(edge[0]), str(edge[1])) == (str(e[0]), str(e[1])):
+			return True
+	return False
+'''
+
 def getcustompathset(expdir, indtype, edge, seenedges):
 	out = ""
 	if expdir in POS.keys() and indtype in POS[expdir].keys() and "customedges" in POS[expdir][indtype].keys() and edge in POS[expdir][indtype]["customedges"]:
@@ -902,13 +1001,30 @@ def getcustompathset(expdir, indtype, edge, seenedges):
 			out += ""
 	return out
 
+def add_extra_edges(gdict, expdir, indtype):
+	if expdir in POS.keys() and indtype in POS[expdir].keys() and "extra_edges" in POS[expdir][indtype]:
+		for e in POS[expdir][indtype]["extra_edges"]:
+			isout = False
+			for i in range(2):
+				if type(e[i]) == str and e[i][0:3] == "out": # avoid output edges
+					isout = True
+			if not isout:
+				gdict["edges"].append(e)
+
 def appendedges(ts, gdict, expdir, indtype):
 	g = gdict[indtype]
 	activated = gdict["metadata"][indtype]["activated"]
 	outputs = gdict["metadata"][indtype]["outputs"]
 	seenedges = []
+	add_extra_edges(g, expdir, indtype)
+	
+	# 1. Non-output edges
 	for edge in g["edges"]:
 		src, dst = str(edge[0]), str(edge[1])
+		# Check is node is avoided
+		if expdir in POS.keys() and indtype in POS[expdir].keys() and "avoided" in POS[expdir][indtype]:
+			if src in POS[expdir][indtype]["avoided"] or dst in POS[expdir][indtype]["avoided"]:
+				continue
 		dstindex = g["nodes"].index(edge[1])
 		edgelabel = getedgelabel(g["fs"][dstindex])
 		loopopt = "loop left" if edge[0] == edge[1] else "" # self-loop
@@ -936,11 +1052,25 @@ def appendedges(ts, gdict, expdir, indtype):
 			ts.append("\\path["+pathset+"] ("+src+") edge["+loopopt+"] ("+dst+");")
 		seenedges.append(edge)
 	iscontoutedge_selected = False
-	for i in range(len(g["outputs"])): # Output edges
+	
+	# 2. Output edges
+	for i in range(len(g["outputs"])):
 		output = g["outputs"][i]
 		src = str(output)
 		dst = getnodename(i, g, True)
-		edge = (output, dst)
+		
+		# Check is node is avoided
+		if expdir in POS.keys() and indtype in POS[expdir].keys() and "avoided" in POS[expdir][indtype]:
+			if src in POS[expdir][indtype]["avoided"] or dst in POS[expdir][indtype]["avoided"]:
+				# Check if another edge is added in "extra_edges" before really avoiding it
+				if expdir in POS.keys() and indtype in POS[expdir].keys() and "extra_edges" in POS[expdir][indtype] and dst in [e[1] for e in POS[expdir][indtype]["extra_edges"]]:
+					for e in POS[expdir][indtype]["extra_edges"]:
+						if dst == e[1]:
+							src = e[0]
+				else:
+					continue
+
+		edge = (int(src), dst) # (output, dst)
 		isactive = (output in outputs) and (not gdict["metadata"]["is_sticky"])
 		pathset = ""
 		if isactive and not iscontoutedge_selected:
