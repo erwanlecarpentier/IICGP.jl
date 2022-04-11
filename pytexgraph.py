@@ -14,7 +14,7 @@ from pdf2image import convert_from_path
 # COMMANDS
 ONLYENCO = False
 ONLYCONT = False
-SHOWENCO = False
+SHOWENCO = True
 SHOWCONT = False
 DOFRAMES = True
 SHOWFRAMES = False # Show canvas (full frame with assembled graphs)
@@ -25,7 +25,7 @@ PRINTPDFLATEXOUT = False
 # Meta parameters
 SEED = 0
 RANDOM_POS_MAG = 15
-MAX_FRAME = 9 # None implies finding max_frame
+MAX_FRAME = 1 # None implies finding max_frame
 DIR_PATH = os.path.dirname(os.path.realpath(__file__))
 HOME_DIR = os.path.expanduser("~")
 ICGPRES_DIR = HOME_DIR #+ "/Documents/git/ICGP-results"
@@ -42,8 +42,8 @@ BUFFERCLIP = True
 IMG_WIDTH = 1.5
 IMGOUT_WIDTH = 1.0
 WH_RATIO = 0.76
-THICKNESS_ACTIVE = "very thick" # TODO video: "thick"
-THICKNESS_INACTIVE = "very thick" # TODO video: ""
+THICKNESS_ACTIVE = "" # TODO video: "thick"
+THICKNESS_INACTIVE = "" # TODO video: ""
 COLOR_ACTIVE = "black" # TODO video: red
 COLOR_INACTIVE = "black" # TODO video: "black"
 COLOR_INACTIVE_EDGE = "black" # TODO video: "black!50"
@@ -55,7 +55,7 @@ LABEL_EDGES = False
 
 # Macros
 T="thick,"
-UT="very thick,"
+UT="thick,"
 
 """
 Exp 1:
