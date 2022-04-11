@@ -36,7 +36,7 @@ DELETE_CANVAS_PDF = True
 FPSS = [1] # TODO video: 60
 
 # Graph layout
-PRINTBUFFER = True # set to False for easy positioning
+PRINTBUFFER = False # set to False for easy positioning
 GRAPHBACK = True
 BUFFERCLIP = True
 IMG_WIDTH = 1.5
@@ -186,7 +186,6 @@ POS = {
 					"29", "17", "69", "out69",
 					"7", "6", "55", "76", "out76"
 				],
-				"thick, draw=green!50!cyan!80!black": ["4", "out4"],
 				"thick, text=black, draw=yellow!80!orange": [
 					"35", "out35", "out41",
 					"25", "30", "37", "38", "out38"
@@ -195,6 +194,7 @@ POS = {
 				"thick, draw=red": ["15", "68", "out68"],
 				"thick, draw=black": ["36", "14", "16"],
 				"thick, draw=black!50!white": [
+					"4", "out4",
 					"32", "out32",
 					"23", "out23",
 					"37", "out27",
@@ -210,6 +210,7 @@ POS = {
 				"thick, color=red!80!yellow": [(13,48), (14,48), (48,"out48")],
 				"thick, color=teal": [(10,57), (21,86), (34,45), (45,57), (57,86), (86,"out86")],
 				"thick, color=black!50!white": [
+					(4, "out4"),
 					(32,"out32"),
 					(27,"out27"),
 					(23,"out23"),
@@ -220,7 +221,6 @@ POS = {
 					(29,69), (17,69), (69,"out69"),
 					(7,55),(6,76),(36,55),(55,76),(76,"out76")
 				],
-				"thick, color=green!50!cyan!80!black": [(4,"out4")],
 				"thick, color=yellow!80!orange": [
 					(35,"out35"), (35,"out41"),
 					(16,37), (25,37), (30,38), (37,38), (38,"out38")
@@ -233,7 +233,10 @@ POS = {
 				(4, "out4"): "bend left=10",
 				(27, "out27"): "bend left=20",
 				(23, "out23"): "bend right=20",
-				(2, 94): "bend right=120"
+				(2, 94): "bend right=90"
+			},
+			"customedgesanchors": {
+				("2", "94"): ("west", "west")
 			},
 			"inputs": {"type": "squares", "origin": (0, 0), "innerspan": 1, "squarespan": 7,
 				"cst_in": True, "cst_input_y": -5},
@@ -1011,6 +1014,16 @@ def add_extra_edges(gdict, expdir, indtype):
 			if not isout:
 				gdict["edges"].append(e)
 
+def anchoredfromsrcdst(src, dst, expdir, indtype):
+	if expdir in POS.keys() and indtype in POS[expdir].keys() and "customedgesanchors" in POS[expdir][indtype]:
+		if (src, dst) in POS[expdir][indtype]["customedgesanchors"]:
+			src_a, dst_a = POS[expdir][indtype]["customedgesanchors"][(src, dst)]
+			if not (src_a is None):
+				src += "." + src_a
+			if not (dst_a is None):
+				dst += "." + dst_a
+	return src, dst
+
 def appendedges(ts, gdict, expdir, indtype):
 	g = gdict[indtype]
 	activated = gdict["metadata"][indtype]["activated"]
@@ -1044,12 +1057,13 @@ def appendedges(ts, gdict, expdir, indtype):
 		custompathset = getcustompathset(expdir, indtype, edge, seenedges)
 		pathset += custompathset
 		pathset += ", " + getedgecustomopt(expdir, indtype, edge)
+		anchored_src, anchored_dst = anchoredfromsrcdst(src, dst, expdir, indtype)
 		if HALOEDGELABELS:
-			ts.append("\\path[->, color=white, ultra thick"+custompathset+"] ("+src+") edge["+loopopt+"] node[above] {"+edgelabel+"} ("+dst+");")
+			ts.append("\\path[->, color=white, ultra thick"+custompathset+"] ("+anchored_src+") edge["+loopopt+"] node[above] {"+edgelabel+"} ("+anchored_dst+");")
 		if LABEL_EDGES:
-			ts.append("\\path["+pathset+"] ("+src+") edge["+loopopt+"] node["+labelopt+"] {"+edgelabel+"} ("+dst+");")
+			ts.append("\\path["+pathset+"] ("+anchored_src+") edge["+loopopt+"] node["+labelopt+"] {"+edgelabel+"} ("+anchored_dst+");")
 		else:
-			ts.append("\\path["+pathset+"] ("+src+") edge["+loopopt+"] ("+dst+");")
+			ts.append("\\path["+pathset+"] ("+anchored_src+") edge["+loopopt+"] ("+anchored_dst+");")
 		seenedges.append(edge)
 	iscontoutedge_selected = False
 	
@@ -1084,9 +1098,10 @@ def appendedges(ts, gdict, expdir, indtype):
 		custompathset = getcustompathset(expdir, indtype, edge, seenedges)
 		pathset += custompathset
 		pathset += ", " + getedgecustomopt(expdir, indtype, edge)
+		anchored_src, anchored_dst = anchoredfromsrcdst(src, dst, expdir, indtype)
 		if HALOEDGELABELS:
-			ts.append("\\path[->, color=white, ultra thick"+custompathset+"] ("+src+") edge node {} ("+dst+");")
-		ts.append("\\path["+pathset+"] ("+src+") edge node {} ("+dst+");")
+			ts.append("\\path[->, color=white, ultra thick"+custompathset+"] ("+anchored_src+") edge node {} ("+anchored_dst+");")
+		ts.append("\\path["+pathset+"] ("+anchored_src+") edge node {} ("+anchored_dst+");")
 
 """ Main tex-script method """
 def graph_texscript(gdict, paths, indtype, printtex=False):
