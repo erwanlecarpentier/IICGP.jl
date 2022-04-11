@@ -15,7 +15,7 @@ from pdf2image import convert_from_path
 ONLYENCO = False
 ONLYCONT = False
 SHOWENCO = False
-SHOWCONT = True
+SHOWCONT = False
 DOFRAMES = True
 SHOWFRAMES = False # Show canvas (full frame with assembled graphs)
 DOVIDEO = False # Warning: set DOFRAMES and TOPNG to True
@@ -25,33 +25,37 @@ PRINTPDFLATEXOUT = False
 # Meta parameters
 SEED = 0
 RANDOM_POS_MAG = 15
-MAX_FRAME = 1 # None implies finding max_frame
+MAX_FRAME = 9 # None implies finding max_frame
 DIR_PATH = os.path.dirname(os.path.realpath(__file__))
 HOME_DIR = os.path.expanduser("~")
 ICGPRES_DIR = HOME_DIR #+ "/Documents/git/ICGP-results"
 IMG_EXT = ".png"
 TOPNG = True # convert pdf canvas to png TODO video: True
-DELETE_GRAPHS_PDF = True
-DELETE_CANVAS_PDF = True
+DELETE_GRAPHS_PDF = False # TODO video: True
+DELETE_CANVAS_PDF = True # TODO video: True
 FPSS = [1] # TODO video: 60
 
 # Graph layout
-PRINTBUFFER = False # set to False for easy positioning
+PRINTBUFFER = True # set to False for easy positioning
 GRAPHBACK = True
 BUFFERCLIP = True
 IMG_WIDTH = 1.5
 IMGOUT_WIDTH = 1.0
 WH_RATIO = 0.76
-THICKNESS_ACTIVE = "thick" # TODO video: thick
-THICKNESS_INACTIVE = ""
-COLOR_ACTIVE = "red" # TODO video: red
-COLOR_INACTIVE = "black"
-COLOR_INACTIVE_EDGE = "black!50"
+THICKNESS_ACTIVE = "very thick" # TODO video: "thick"
+THICKNESS_INACTIVE = "very thick" # TODO video: ""
+COLOR_ACTIVE = "black" # TODO video: red
+COLOR_INACTIVE = "black" # TODO video: "black"
+COLOR_INACTIVE_EDGE = "black" # TODO video: "black!50"
 COLOR_BACKGROUND = "white"
 HALOEDGELABELS = False
 BACKGROUNDEDGELABELS = True
 ENABLE_MANUAL_POS = True
 LABEL_EDGES = False
+
+# Macros
+T="thick,"
+UT="very thick,"
 
 """
 Exp 1:
@@ -90,37 +94,42 @@ POS = {
 			"backgroundnode": {"pos": (-1, 0.2), "width": (1.8, 10.2, 1.4), "height": 2.7}
 		},
 		"controller": {
-			"50": (4, 0.6), "75": (4.2, 2.1), "82": (7, 1.5),
+			"50": (4.1, 2.1), "75": (4.1, 0.6), "82": (7, 1.5),
 			"65": (4.1, 4),
 			"73": (6, -2),
 			"52": (6, -0.5),
-			"names": {"65": "C1", "75": "C2", "50": "C3", "82": "C4", "52": "C5", "73": "C6"},
-#			"customndopt": { # last custom opt
-#				"thick, draw=black": ["20"],
-#				"thick, draw=orange": ["5", "out5"],
-#				"thick, draw=red": ["8", "22", "24", "75", "50", "82", "out82"],
-#				"thick, draw=teal": ["11", "20", "52", "out52"],
-#				"thick, draw=purple": ["3", "out3"],
-#				"thick, draw=yellow!80!orange": ["18", "73", "out73"],
-#				"thick, draw=cyan": ["9", "65", "out65"]
-#			},
-#			"customedgeopt": { # last custom opt
-#				"thick, color=orange": [(5,"out5")],
-#				"thick, color=red": [(22,75), (24,50), (20,75), (8,50), (75,82), (50,82), (82,"out82")],
-#				"thick, color=teal": [(11,52), (20,52), (52,"out52")],
-#				"thick, color=purple": [(3,"out3")],
-#				"thick, color=yellow!80!orange": [(18,73),(73,"out73")],
-#				"thick, color=cyan": [(9,65),(65,65),(65,"out65")]
-#			},
-			"avoided": ["26", "27", "28", "29", "30", "31", "32", "33", "34", "35"],
+			"names": {"65": "C1", "75": "C3", "50": "C2", "82": "C4", "52": "C5", "73": "C6"},
+			"loopopt": {(65,65): "loop right"},
+			"customndopt": { # last custom opt
+				"thick, draw=black": ["20"],
+				"thick, draw=orange": ["5", "out5"],
+				"thick, draw=red": ["8", "22", "24", "75", "50", "82", "out82"],
+				"thick, draw=teal": ["11", "20", "52", "out52"],
+				"thick, draw=purple": ["3", "out3"],
+				"thick, draw=yellow!50!orange": ["18", "73", "out73"],
+				"thick, draw=cyan": ["9", "65", "out65"]
+			},
+			"customedgeopt": { # last custom opt
+				"thick, color=orange": [(5,"out5")],
+				"thick, color=red": [(22,75), (24,50), (20,75), (8,50), (75,82), (50,82), (82,"out82")],
+				"thick, color=teal": [(11,52), (20,52), (52,"out52")],
+				"thick, color=purple": [(3,"out3")],
+				"thick, color=yellow!50!orange": [(18,73),(73,"out73")],
+				"thick, color=cyan": [(9,65),(65,65),(65,"out65")]
+			},
+			"avoided": ["1", "2", "4", "6", "7", "10", "12", "13", "14", "15", "16", "17", "19", "21", "23", "25", "26", "27", "28", "29", "30", "31", "32", "33", "34", "35"],
 			"inputs": {"type": "squares", "showcoord": True, "origin": (0, 0), "innerspan": 1, "squarespan": 7,
 				"cst_in": True, "cst_input_y": -5},
 			"customedges": {
 				(5, "out5"): "bend left=22",
 				(3, "out3"): "bend left=6",
-				(20, 75): "bend left=5", (22, 75): "bend left=20",
-				(24, 50): "bend right=20", (8, 50): "bend right=20",
-				(9, 65): "bend left=12", (65, "out65"): "bend right=15",
+				(22, 75): "out=-90, in=-90",
+				(20, 75): "out=90, in=-90",
+				(8, 50): "out=-45, in=180, looseness=1.3",
+				(24, 50): "out=90, in=180, looseness=0.9",
+				(50,82): "out=0, in=180",
+				(75,82): "out=0, in=180",
+				(9, 65): "out=90, in=180", (65, "out65"): "bend right=15",
 				(11, 52): "bend right=5",
 				(18, 73): "bend right=5"
 			},
@@ -154,100 +163,137 @@ POS = {
 			"names": {"5": "E1", "2": "E2"},
 			"avoided": ["6", "9"],
 			"extra_edges": [("5", "out9")],
-			"backgroundnode": {"pos": (-1, 0), "width": (1.8, 2.5, 1.4), "height": 4.4}
+			"backgroundnode": {"pos": (-1, 0), "width": (1.8, 2.5, 1.4), "height": 4.2}
 		},
-		"controller": { # TODO here
-			"34": (2,8),
-			"32": (2,6),
-			"29": (2,5),
-			"35": (2,3),
-			"27": (2,-3),
+		"controller": {
+			"35": (2,8.5),
+			"34": (2,3.5), "45": (5,4), "57": (8,4), "86": (11,4),
+			"32": (2,7),
+			"27": (2,-6.5),
 			"30": (2,-5),
-			"26": (2,-6),
-			"77": (11,9), "46": (8,9),
-			"48": (11,8),
-			"86": (11,7), "57": (8,7), "45": (5,7),
-			"69": (11,5),
-			"47": (11,0),
-			"68": (8,-1),
+			"26": (2,-7.5),
+			"46": (8,2.75), "77": (11,2.75),
+			"48": (7,1.5),
+			"47": (11,0.5),
 			"38": (11,-4), "37": (8,-4),
-			"76": (11,-6), "55": (8,-6), "36": (5,-6),
-			"94": (8,-8),
-			"names": {"46": "C1", "77": "C2", "48": "C3", "45": "C4", "57": "C5", "86": "C6", "69": "C7", "47": "C8", "68": "C9", "37": "C10", "38": "C11", "36": "C12", "55": "C13", "76": "C14", "94": "C15"},
+			"94": (10,-1),
+			"68": (5,-2),
+			"36": (5,-3.5), "55": (8,-4), "76": (11,-4),
+			"29": (2,-5), "69": (4.5,-5),
+			"out35": (14,9),
+			"out41": (14,8),
+			"out32": (14,7),
+			"out4": (14,6),
+			"out5": (14,5),
+			"out86": (14,4),
+			"out77": (14,3),
+			"out48": (14,2),
+			"out47": (14,1),
+			"out47'": (14,0),
+			"out94": (14,-1),
+			"out68": (14,-2),
+			"out23": (14,-3),
+			"out76": (14,-4),
+			"out69": (14,-5),
+			"out27": (14,-6),
+			"out38": (14,-7),
+			"out81": (14,-8),
+			"names": {"46": "C4", "77": "C5", "48": "C6", "45": "C1", "57": "C2", "86": "C3", "69": "C13", "47": "C7", "68": "C9", "37": "C10", "38": "C11", "36": "C10", "55": "C11", "76": "C12", "94": "C8"},
 			"sticky": (-1,6), #(14, 10),
 			"customndopt": { # last custom opt
-				"thick, draw=orange": [
-					"9", "46", "77", "out77",
-					"2", "20", "94", "out94"
+				UT+"draw=orange": [
+					"9", "46", "77", "out77"
 				],
-				"thick, draw=red!80!yellow": ["13", "48", "out48"],
-				"thick, draw=teal": ["10", "21", "45", "57", "86", "out86"],
-				"thick, draw=purple": [
-					"29", "17", "69", "out69",
+				UT+"draw=yellow!50!orange": [
+					"15", "68", "out68"
+				],
+				UT+"draw=teal": ["10", "21", "45", "57", "86", "out86"],
+				UT+"draw=purple": [
+					"2", "20", "94", "out94",
 					"7", "6", "55", "76", "out76"
 				],
-				"thick, text=black, draw=yellow!70!orange": [
-					"35", "out35", "out41",
-					"25", "30", "37", "38"
-				],
-				"thick, draw=cyan": ["8", "18", "47", "out47", "out47'"],
-				"thick, draw=red": ["15", "68", "out68"],
-				"thick, draw=black": ["34", "36", "14", "16"],
-				"thick, draw=black!50!white": [
+				UT+"text=black, draw=lightgray": [
 					"4", "out4",
 					"32", "out32",
 					"23", "out23",
 					"27", "out27",
 					"5", "out5",
 					"26", "out81",
-					"out38"
-				]
+					"out38",
+					"35", "out35", "out41",
+					"25", "30", "37", "38"
+				],
+				UT+"draw=cyan": [
+					"8", "18", "47", "out47", "out47'",
+					"29", "17", "69", "out69"
+				],
+				UT+"draw=red": [
+					"13", "48", "out48"
+				],
+				UT+"draw=black": ["34", "36", "14", "16"],
 			},
 			"customedgeopt": { # last custom opt
-				"thick, color=orange": [
-					(9,46), (36,77), (34,46), (46,77), (77,"out77"),
-					(20,94), (94,"out94")
+				UT+"color=orange": [
+					(9,46), (36,77), (34,46), (46,77), (77,"out77")
 				],
-				"thick, color=orange, out=-120, in=-120": [
-					(2,94)
+				UT+"color=teal": [(10,57), (21,86), (34,45), (45,57), (57,86), (86,"out86")],
+				UT+"color=black!50!white": [
 				],
-				"thick, color=red!80!yellow": [(13,48), (14,48), (48,"out48")],
-				"thick, color=teal": [(10,57), (21,86), (34,45), (45,57), (57,86), (86,"out86")],
-				"thick, color=black!50!white": [
+				UT+"color=yellow!50!orange": [
+					(15,68),(36,68),(68,"out68")
+				],
+				UT+"color=purple": [
+					(20,94), (94,"out94"), (2,94),
+					(7,55),(6,76),(36,55),(55,76),(76,"out76")
+				],
+				UT+"color=lightgray": [
 					(4, "out4"),
 					(32,"out32"),
 					(27,"out27"),
 					(23,"out23"),
 					(5,"out5"),
 					(26,"out81"),
-					(26, "out38")
-				],
-				"thick, color=purple": [
-					(29,69), (17,69), (69,"out69"),
-					(7,55),(6,76),(36,55),(55,76),(76,"out76")
-				],
-				"thick, color=yellow!70!orange": [
+					(26, "out38"),
 					(35,"out35"), (35,"out41")
-					#(25,37), (30,38), (37,38), (38,"out38")
 				],
-				#"thick, color=yellow!70!orange, out=-40, in=-168": [(16,37)],
-				"thick, color=cyan": [(8,47),(18,47),(47,"out47"),(47,"out47'")],
-				"thick, color=red": [(15,68),(36,68),(68,"out68")],
-				"thick, color=black": [(14,36),(16,36)],
+				UT+"color=cyan": [
+					(8,47),(18,47),(47,"out47"),(47,"out47'"),
+					(29,69), (17,69), (69,"out69")
+				],
+				UT+"color=red": [
+					(13,48), (14,48), (48,"out48")
+				],
+				UT+"color=black": [(14,36),(16,36)],
 			},
 			"customedges": {
-				(4,"out4"): "bend left=10",
-				(27,"out27"): "bend left=20",
-				(23,"out23"): "bend right=20",
-				(26,"out38"): "bend left=8",
-				(26,"out81"): "bend right=12", # (30,38): "bend right=10",
+				(4,"out4"): "out=120, in=180, looseness=1.2",
+				(5,"out5"): "out=120, in=180, looseness=1.2",
+				(21,86): "out=135, in=160, looseness=1.1",
+				(10,57): "out=0, in=180",
+				(34,45): "out=0, in=180",
+				(34,46): "out=0, in=180",
+				(77,"out77"): "out=0, in=180",
+				(9,46): "out=25, in=180",
+				(13,48): "out=25, in=180, looseness=0.3",
+				(14,48): "out=25, in=180, looseness=0.5",
+				(8,47): "out=-30, in=180, looseness=0.3",
+				(18,47): "out=20, in=180, looseness=0.7",
+				(2,94): "out=-8, in=180, looseness=1.5",
+				(47,"out47"): "out=0, in=180",
+				(47,"out47'"): "out=0, in=180",
 				(16,36): "bend right=5",
-				(2, 94): "bend right=90, looseness=1.2"
+				(6,76): "out=-150, in=-140, looseness=1.3",
+				(7,55): "out=-150, in=-140, looseness=1.5",
+				(17,69): "out=-90, in=180, looseness=0.7",
+				(14,36): "out=-90, in=180",
+				(16,36): "out=-45, in=180",
+				(36,55): "out=0, in=180",
+				(36,77): "out=0, in=180, looseness=0.5",
+				(23,"out23"): "out=-20, in=180, looseness=0.5",
+				(15,68): "out=0, in=180"
 			},
-			"customedgesanchors": {
-				("2", "94"): ("west", "west")
-			},
-			"inputs": {"type": "squares", "origin": (0, 0), "innerspan": 1, "squarespan": 7,
+			#"customedgesanchors": {("2", "94"): ("west", "west")},
+			"inputs": {"type": "squares", "showcoord": True, "origin": (0, 0), "innerspan": 1, "squarespan": 7,
 				"cst_in": True, "cst_input_y": -5},
 			"avoided": [
 				"25", "30", "37", "38",
@@ -257,7 +303,7 @@ POS = {
 			],
 			"extra_edges": [(13,48), ("26","out81"), ("35","out41"), ("26", "out38")],
 			"outputs": {"type": "column", "pos": (14, 0), "span": 1},
-			"backgroundnode": {"pos": (-2.8, 0.7), "width": (5.3, 9.8, 2.1), "height": 18.5}
+			"backgroundnode": {"pos": (-2.9, 0.7), "width": (5.4, 9.7, 2.2), "height": 18.5}
 		}
 	},
 	"2022-02-08T15:19:07.234_2_boxing" : { # Complex encoder with many logical operators
