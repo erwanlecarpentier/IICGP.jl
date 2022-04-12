@@ -507,13 +507,13 @@ function fetch_lucie_data(
             println("n points                : ", length(ind2data[i]["gen"]))
             println("reached gen             : ", ind2data[i]["gen"][end])
             println("keys                    : ", keys(ind2data[i]))
-            println("Final test score        : ", ind2data[i]["best_mean_fit"][end],
-                " ± ", ind2data[i]["best_mean_fit_ind_std"][end])
-            println("Final validation score  : ", ind2data[i]["validation_score"][end],
-                " ± ", ind2data[i]["validation_std"][end])
-            println("Best validation score  : ", ind2data[i]["validation_score"][index_best_val_score],
-                " ± ", ind2data[i]["validation_std"][index_best_val_score])
-            println("Best score ever reached : ", best_score)
+            println("Final test score        : ", round(ind2data[i]["best_mean_fit"][end], digits=1),
+                " \$\\pm\$ ", round(ind2data[i]["best_mean_fit_ind_std"][end], digits=1))
+            println("Final validation score  : ", round(ind2data[i]["validation_score"][end], digits=1),
+                " \$\\pm\$ ", round(ind2data[i]["validation_std"][end], digits=1))
+            println("Best validation score   : ", round(ind2data[i]["validation_score"][index_best_val_score], digits=1),
+                " \$\\pm\$ ", round(ind2data[i]["validation_std"][index_best_val_score], digits=1))
+            println("Best score ever reached : ", round(best_score, digits=1))
         end
     end
     if verbose

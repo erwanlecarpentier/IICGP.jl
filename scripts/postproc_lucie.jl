@@ -39,10 +39,10 @@ Postproc will only consider experiments with the following criteria:
 - Only experiments using the reducer in `reducers` will be considered
 =#
 min_date, max_date = DateTime(2022, 02, 08, 15), DateTime(2022, 02, 08, 17)
-min_date, max_date = DateTime(2022, 02, 23), DateTime(2022, 02, 24)
+#min_date, max_date = DateTime(2022, 02, 23), DateTime(2022, 02, 24)
 rom_names = ["boxing", "gravitar", "freeway", "solaris", "space_invaders", "asteroids"]
-#rom_names = ["alien", "bowling", "enduro", "pong", "riverraid", "seaquest"]
-rom_names = ["bowling"]
+rom_names = ["alien", "bowling", "enduro", "pong", "riverraid", "seaquest"]
+rom_names = ["space_invaders"]
 reducers = ["pooling"]
 suffix=""
 omit_last_gen=true
