@@ -2,6 +2,27 @@ using IICGP
 using Dates
 using Plots
 
+
+function get_exp3_dirs(rootdir::String, resdir::String)
+    ids = [1,2,3]
+    reducers = ["pooling"]
+    min_date = DateTime(2022, 02, 23)
+    max_date = DateTime(2022, 02, 24)
+    games = ["alien", "bowling", "enduro", "pong", "riverraid", "seaquest"]
+    exp_dirs, ids, rom_names = get_exp_dir(resdir, min_date=min_date,
+        max_date=max_date, games=games, reducers=reducers, ids=ids)
+    min_date = DateTime(2022, 02, 08, 15)
+    max_date = DateTime(2022, 02, 08, 17)
+    games = ["boxing", "asteroids", "solaris", "freeway", "gravitar",
+        "space_invaders"]
+    e, i, r = get_exp_dir(resdir, min_date=min_date, max_date=max_date,
+        games=games, reducers=reducers, ids=ids)
+    push!(exp_dirs, e...)
+    push!(ids, i...)
+    push!(rom_names, r...)
+    exp_dirs, ids, rom_names
+end
+
 #=
 1. Specify where results are saved
 Should be the same as `output directory`, specified in atari_lucie.jl arguments.
@@ -17,10 +38,11 @@ Postproc will only consider experiments with the following criteria:
 - Only roms in `rom_names` will be considered
 - Only experiments using the reducer in `reducers` will be considered
 =#
-min_date = DateTime(2022, 01, 20, 10)
-max_date = DateTime(2022, 01, 30, 12)
+min_date, max_date = DateTime(2022, 02, 08, 15), DateTime(2022, 02, 08, 17)
+min_date, max_date = DateTime(2022, 02, 23), DateTime(2022, 02, 24)
 rom_names = ["boxing", "gravitar", "freeway", "solaris", "space_invaders", "asteroids"]
-#rom_names = ["boxing"]
+#rom_names = ["alien", "bowling", "enduro", "pong", "riverraid", "seaquest"]
+rom_names = ["bowling"]
 reducers = ["pooling"]
 suffix=""
 omit_last_gen=true
@@ -34,6 +56,8 @@ colors = Vector{Symbol}()
 #colors = [:skyblue3]
 #labels = ["LUCIE"]
 #savedir_index = 1
+
+#exp_dirs, ids, games = get_exp3_dirs(rootdir, resdir)
 
 #=
 4. Run postproc for all selected exp_dir

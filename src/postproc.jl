@@ -469,11 +469,17 @@ function add_pergen_lucie_data!(
 end
 
 function fetch_lucie_data(
-    exp_dirs::Vector{String};
+    exp_dirs::Vector{String},
+    rom_name::String;
     verbose::Bool=true,
     omit_last_gen::Bool=false
 )
+    if verbose
+        println("\n\ngame : ", rom_name)
+    end
+    best_scores = Vector{Float64}()
     ind2data = Dict{Int64,Dict{Any,Any}}()
+    n_ids = length(exp_dirs)
     for i in eachindex(exp_dirs)
         exp_dir = exp_dirs[i]
         cfg = cfg_from_exp_dir(exp_dir)
@@ -492,13 +498,29 @@ function fetch_lucie_data(
             df_gen = filter(row -> row.gen_number == gen, df)
             add_pergen_lucie_data!(cfg, ind2data[i], df_gen)
         end
+        best_score = maximum(ind2data[i]["best_best_fit"])
+        push!(best_scores, best_score)
         if verbose
+            index_best_val_score = argmax(ind2data[i]["validation_score"])
             println()
-            println("index       : ", i)
-            println("n points    : ", length(ind2data[i]["gen"]))
-            println("reached gen : ", ind2data[i]["gen"][end])
-            println("keys        : ", keys(ind2data[i]))
+            println("index                   : ", i)
+            println("n points                : ", length(ind2data[i]["gen"]))
+            println("reached gen             : ", ind2data[i]["gen"][end])
+            println("keys                    : ", keys(ind2data[i]))
+            println("Final test score        : ", ind2data[i]["best_mean_fit"][end],
+                " ± ", ind2data[i]["best_mean_fit_ind_std"][end])
+            println("Final validation score  : ", ind2data[i]["validation_score"][end],
+                " ± ", ind2data[i]["validation_std"][end])
+            println("Best validation score  : ", ind2data[i]["validation_score"][index_best_val_score],
+                " ± ", ind2data[i]["validation_std"][index_best_val_score])
+            println("Best score ever reached : ", best_score)
         end
+    end
+    if verbose
+        println()
+        println(rom_name)
+        println("Mean best score ever reached (", length(best_scores),
+            " runs) : ", mean(best_scores), " ± ", std(best_scores))
     end
     ind2data
 end
@@ -521,7 +543,7 @@ function process_lucie_results(
     # 1. Link cfgs and indexes to categories
     cfg2cat, ind2cat = group_by_cfg(exp_dirs)
     # 2. Fetch data
-    ind2data = fetch_lucie_data(exp_dirs, omit_last_gen=omit_last_gen)
+    ind2data = fetch_lucie_data(exp_dirs, game, omit_last_gen=omit_last_gen)
     # 3. Plot
     plt_dict = init_lucie_plots()
     cfg1 = cfg_from_exp_dir(exp_dirs[1])
