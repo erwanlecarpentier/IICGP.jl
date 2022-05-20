@@ -6,7 +6,6 @@ using Images
 using Random
 using YAML
 
-
 function fill_width_with_zeros(x::Matrix{UInt8}, width::Int64)
     if size(x)[2] < width
         x = cat(x, zeros(UInt8, size(x)[1], width-size(x)[2]), dims=2)
@@ -380,16 +379,16 @@ end
 
 rootdir = joinpath(homedir(), "Documents/git/ICGP-results/")
 resdir = joinpath(rootdir, "results/")
-min_date = DateTime(2022, 02, 23) # DateTime(2022, 02, 08, 15)
-max_date = DateTime(2022, 02, 24) # DateTime(2022, 02, 08, 16)
+min_date, max_date = DateTime(2022, 02, 23), DateTime(2022, 02, 24)
+#min_date, max_date = DateTime(2022, 02, 08, 15), DateTime(2022, 02, 08, 16)
+
 games = ["boxing", "asteroids", "breakout", "freeway", "gravitar", "riverraid", "space_invaders"]
 games = ["bowling"]
 ids = [1]
 reducers = ["pooling"]
 exp_dirs, ids, games = get_exp_dir(resdir, min_date=min_date, max_date=max_date,
     games=games, reducers=reducers, ids=ids)
-max_frames = 18000 # 18000
-render_graph = false
+max_frames = 18000
 seed = 0
 
 for i in eachindex(exp_dirs)
@@ -403,7 +402,5 @@ for i in eachindex(exp_dirs)
     #test_manyvis(exp_dirs[i], games[i], max_frames, do_save=true, do_display=false)
 
     # Launch python script
-    if render_graph
-        run(`python3.8 pytexgraph.py $exp_dir`)
-    end
+    #run(`python3.8 pytexgraph.py $exp_dir`)
 end
