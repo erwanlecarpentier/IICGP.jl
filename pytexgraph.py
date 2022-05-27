@@ -13,9 +13,9 @@ from pdf2image import convert_from_path
 
 # COMMANDS
 ONLYENCO = False
-ONLYCONT = False
-SHOWENCO = True
-SHOWCONT = False
+ONLYCONT = True
+SHOWENCO = False
+SHOWCONT = True
 DOFRAMES = True
 SHOWFRAMES = False # Show canvas (full frame with assembled graphs)
 DOVIDEO = False # Warning: set DOFRAMES and TOPNG to True
@@ -30,10 +30,10 @@ DIR_PATH = os.path.dirname(os.path.realpath(__file__))
 HOME_DIR = os.path.expanduser("~")
 ICGPRES_DIR = HOME_DIR #+ "/Documents/git/ICGP-results"
 IMG_EXT = ".png"
-TOPNG = True # convert pdf canvas to png TODO video: True
-DELETE_GRAPHS_PDF = False # TODO video: True
-DELETE_CANVAS_PDF = True # TODO video: True
-FPSS = [1] # TODO video: 60
+TOPNG = True # convert pdf canvas to png TODO video:True screen:True
+DELETE_GRAPHS_PDF = True # TODO video:True screen:False
+DELETE_CANVAS_PDF = True # TODO video:True screen:True
+FPSS = [60, 5] # TODO video:60
 
 # Graph layout
 PRINTBUFFER = True # set to False for easy positioning
@@ -42,16 +42,17 @@ BUFFERCLIP = True
 IMG_WIDTH = 1.5
 IMGOUT_WIDTH = 1.0
 WH_RATIO = 0.76
-THICKNESS_ACTIVE = "" # TODO video: "thick"
-THICKNESS_INACTIVE = "" # TODO video: ""
-COLOR_ACTIVE = "black" # TODO video: red
-COLOR_INACTIVE = "black" # TODO video: "black"
-COLOR_INACTIVE_EDGE = "black" # TODO video: "black!50"
+THICKNESS_ACTIVE = "thick"
+THICKNESS_INACTIVE = "thick"
+COLOR_ACTIVE = "red" # TODO video:red screen:black
+COLOR_INACTIVE = "black" # TODO video:"black" screen:"black"
+COLOR_INACTIVE_EDGE = "black!50" # TODO video:"black!50" screen:"black"
 COLOR_BACKGROUND = "white"
 HALOEDGELABELS = False
 BACKGROUNDEDGELABELS = True
 ENABLE_MANUAL_POS = True
 LABEL_EDGES = False
+FONT_FAMILY = "sf" # rm:serif sf:sans-serif tt:mono-space
 
 # Macros
 T="thick,"
@@ -100,7 +101,7 @@ POS = {
 			"52": (6, -0.5),
 			"names": {"65": "C1", "75": "C3", "50": "C2", "82": "C4", "52": "C5", "73": "C6"},
 			"loopopt": {(65,65): "loop right"},
-			"customndopt": { # last custom opt
+			'''"customndopt": { # last custom opt
 				"thick, draw=black": ["20"],
 				"thick, draw=orange": ["5", "out5"],
 				"thick, draw=red": ["8", "22", "24", "75", "50", "82", "out82"],
@@ -108,7 +109,7 @@ POS = {
 				"thick, draw=purple": ["3", "out3"],
 				"thick, draw=yellow!50!orange": ["18", "73", "out73"],
 				"thick, draw=cyan": ["9", "65", "out65"]
-			},
+			},'''
 			"customedgeopt": { # last custom opt
 				"thick, color=orange": [(5,"out5")],
 				"thick, color=red": [(22,75), (24,50), (20,75), (8,50), (75,82), (50,82), (82,"out82")],
@@ -123,7 +124,7 @@ POS = {
 			"customedges": {
 				(5, "out5"): "bend left=22",
 				(3, "out3"): "bend left=6",
-				(22, 75): "out=-90, in=-90",
+				(22, 75): "out=-90, in=-90, looseness=0.9",
 				(20, 75): "out=90, in=-90",
 				(8, 50): "out=-45, in=180, looseness=1.3",
 				(24, 50): "out=90, in=180, looseness=0.9",
@@ -138,9 +139,11 @@ POS = {
 			"backgroundnode": {"pos": (-2.9, 0.8), "width": (5.3, 5.9, 2.1), "height": 7.6}
 		},
 		"canvas": {
-			"rgbpos": (0.03, 0.5), "hrgbpos": (0.1, 1.12), "scorepos": (0.1, 0.52),
-			"epos": (0, 0.05), "hepos": (0.1, 0.41),
-			"cpos": (1.1, 0.4), "hcpos": (1.2, 1.13)
+			"rgbpos": (0, 0.35), "hrgbpos": (0, 0.69), "scorepos": (0, 0.31),
+			"epos": (0, 0), "hepos": (0, 0.22),
+			"cpos": (1.05, 0), "hcpos": (1.05, 0.69),
+			"scoresc":0.1, "rgbsc":0.5, "esc":1.0, "csc":1.0,
+			"hrgbsc":0.1, "hesc":0.1, "hcsc":0.1
 		}
 	},
 	"2022-02-23T18:11:39.277_2_bowling" : { # Complexe encoder with 12 intermediate nodes. Its output seems to be a dilated motion capture version of the original input. Controller is a bit simpler and suggests a tendency to alternate between moving the ball towards the top or the bottom.
@@ -726,6 +729,26 @@ def getcanvaspos(expdir):
 			hcpos = twopletostr(POS[expdir]["canvas"]["hcpos"])
 	return scorepos, rgbpos, hrgbpos, epos, hepos, cpos, hcpos
 	
+def getcanvasscales(expdir):
+	scoresc, rgbsc, esc, csc = "0.1", "0.8", "1.0", "1.0"
+	hrgbsc, hesc, hcsc = "0.1", "0.1", "0.1"
+	if expdir in list(POS.keys()) and "canvas" in list(POS[expdir].keys()):
+		if "scoresc" in list(POS[expdir]["canvas"].keys()):
+			scoresc = str(POS[expdir]["canvas"]["scoresc"])
+		if "rgbsc" in list(POS[expdir]["canvas"].keys()):
+			rgbsc = str(POS[expdir]["canvas"]["rgbsc"])
+		if "hrgbsc" in list(POS[expdir]["canvas"].keys()):
+			hrgbsc = str(POS[expdir]["canvas"]["hrgbsc"])
+		if "esc" in list(POS[expdir]["canvas"].keys()):
+			esc = str(POS[expdir]["canvas"]["esc"])
+		if "hesc" in list(POS[expdir]["canvas"].keys()):
+			hesc = str(POS[expdir]["canvas"]["hesc"])
+		if "csc" in list(POS[expdir]["canvas"].keys()):
+			csc = str(POS[expdir]["canvas"]["csc"])
+		if "hcsc" in list(POS[expdir]["canvas"].keys()):
+			hcsc = str(POS[expdir]["canvas"]["hcsc"])
+	return scoresc, rgbsc, hrgbsc, esc, hesc, csc, hcsc
+	
 def columnpos(posdict, n_nodes, index):
 	orig = posdict["pos"]
 	span = posdict["span"]
@@ -900,12 +923,15 @@ def appendbackgroundnodes(ts, gdict, expdir, indtype):
 			d = POS[expdir][indtype]["backgroundnode"]
 			pos = d["pos"]
 			w, h = d["width"], d["height"]
+			pos_upper = (pos[0]+sum(w), pos[1]+h)
 			nodesettings = "anchor=west, text centered, rectangle split, rectangle split horizontal, rectangle split parts=3, draw, rectangle split draw splits=false, color=black, fill=white, rounded corners=0.1cm, minimum height="+str(h)+"cm"
 			splitsettings = "dashed"
 			pos = str(pos[0]) + "," + str(pos[1])
 			ts.append("\\node["+nodesettings+"] (A) at ("+pos+") {\\nodepart[text width="+str(w[0])+"cm]{one}\\begin{minipage}[t]["+str(h)+"cm]{"+str(w[0])+"cm}\centering \\textbf{Input}\\end{minipage} \\nodepart[text width="+str(w[1])+"cm]{two} \\nodepart[text width="+str(w[2])+"cm]{three} \\begin{minipage}[t]["+str(h)+"cm]{"+str(w[2])+"cm}\centering \\textbf{Output}\\end{minipage}};")
 			ts.append("\\draw["+splitsettings+"] (A.one split south) -- (A.one split north);")
 			ts.append("\\draw["+splitsettings+"] (A.two split south) -- (A.two split north);")
+			#ts.append("\\fill ("+pos+") rectangle ("+pos_upper+");")
+			#ts.append("\\clip ("+pos+") rectangle ("+pos_upper+");")
 		if (indtype == "controller"
 			and "inputs" in list(POS[expdir][indtype].keys())
 			and POS[expdir][indtype]["inputs"]["type"] == "squares"
@@ -1160,6 +1186,9 @@ def appendedges(ts, gdict, expdir, indtype):
 			ts.append("\\path[->, color=white, ultra thick"+custompathset+"] ("+anchored_src+") edge node {} ("+anchored_dst+");")
 		ts.append("\\path["+pathset+"] ("+anchored_src+") edge node {} ("+anchored_dst+");")
 
+def set_font():
+	return "\\renewcommand{\\familydefault}{\\" + FONT_FAMILY + "default}"
+
 """ Main tex-script method """
 def graph_texscript(gdict, paths, indtype, printtex=False):
 	expdir = paths["exp"]
@@ -1168,6 +1197,7 @@ def graph_texscript(gdict, paths, indtype, printtex=False):
 	ts.append("\\usepackage{graphicx}")
 	ts.append("\\usetikzlibrary{shapes,automata}")
 	ts.append("\\tikzset{>=stealth}")
+	ts.append(set_font())
 	ts.append("\\begin{document}")
 	ts.append("\\begin{tikzpicture}[]")
 	appendnodes(ts, gdict, expdir, indtype)
@@ -1193,19 +1223,22 @@ def canvas_texscript(paths, frame, score, printtex=False):
 	e_content = "\includegraphics[width=1cm]{"+e_gpath+"}"
 	c_content = "\includegraphics[width=1cm]{"+c_gpath+"}"
 	scorepos, rgbpos, hrgbpos, epos, hepos, cpos, hcpos = getcanvaspos(expdir)
-	anch = "anchor=south west, "
+	scoresc, rgbsc, hrgbsc, esc, hesc, csc, hcsc = getcanvasscales(expdir)	
+	anch = "anchor=south west,"
+	sep = "inner sep=0cm,outer sep=0cm,"
 	ts = []
 	ts.append("\\documentclass[crop,tikz]{standalone}")
 	ts.append("\\usepackage{graphicx}")
+	ts.append(set_font())
 	ts.append("\\begin{document}")
 	ts.append("\\begin{tikzpicture}")
-	ts.append("\\node["+anch+"scale=0.2] () at "+hrgbpos+" {1. RGB Image};")
-	ts.append("\\node["+anch+"scale=0.8] () at "+rgbpos+" {"+rgb_content+"};")
-	ts.append("\\node["+anch+"scale=0.15] () at "+scorepos+" {Score: "+str(score)+"};")
-	ts.append("\\node["+anch+"scale=0.2] () at "+hepos+" {2. CGP Encoder};")
-	ts.append("\\node["+anch+"] () at "+epos+" {"+e_content+"};")
-	ts.append("\\node["+anch+"scale=0.2] () at "+hcpos+" {3. CGP Controller};")
-	ts.append("\\node["+anch+"] () at "+cpos+" {"+c_content+"};")
+	ts.append("\\node["+sep+anch+"scale="+hrgbsc+"] () at "+hrgbpos+" {(1) RGB Image};")
+	ts.append("\\node["+sep+anch+"scale="+rgbsc+"] () at "+rgbpos+" {"+rgb_content+"};")
+	ts.append("\\node["+sep+anch+"scale="+scoresc+"] () at "+scorepos+" {Score: "+str(score)+"};")
+	ts.append("\\node["+sep+anch+"scale="+hesc+"] () at "+hepos+" {(2) CGP Encoder};")
+	ts.append("\\node["+sep+anch+"scale="+esc+"] () at "+epos+" {"+e_content+"};")
+	ts.append("\\node["+sep+anch+"scale="+hcsc+"] () at "+hcpos+" {(3) CGP Controller};")
+	ts.append("\\node["+sep+anch+"scale="+csc+",fill=orange] () at "+cpos+" {"+c_content+"};")
 	ts.append("\\end{tikzpicture}")
 	ts.append("\\end{document}")
 	if printtex:
