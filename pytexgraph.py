@@ -139,12 +139,13 @@ POS = {
 			"backgroundnode": {"pos": (-2.9, 0.8), "width": (5.3, 5.9, 2.1), "height": 7.6}
 		},
 		"canvas": {
-			"rgbpos": (0, 0.35), "hrgbpos": (0, 0.69), "scorepos": (0, 0.31),
+			"rgbpos": (0, 0.29), "hrgbpos": (0, 0.63), "scorepos": (0.52, 0.58),
 			"epos": (0, 0), "hepos": (0, 0.22),
-			"cpos": (1.05, 0), "hcpos": (1.05, 0.69),
-			"scoresc":0.1, "rgbsc":0.5, "esc":1.0, "csc":1.0,
+			"cpos": (1.01, 0), "hcpos": (1.01, 0.63),
+			"scoresc":0.1, "rgbsc":0.5, "esc":1.0, "csc":1.1,
 			"hrgbsc":0.1, "hesc":0.1, "hcsc":0.1,
-			"ctrim":"0cm 1.1cm 0cm 0cm"
+			"ctrim":"0cm 1.08cm 0cm 0cm",
+			"background": {"color":"white","sw":(0,0),"ne":(2.11,0.67), "hsep":0.2, "vsep":0.01}
 		}
 	},
 	"2022-02-23T18:11:39.277_2_bowling" : { # Complexe encoder with 12 intermediate nodes. Its output seems to be a dilated motion capture version of the original input. Controller is a bit simpler and suggests a tendency to alternate between moving the ball towards the top or the bottom.
@@ -758,6 +759,19 @@ def getcanvasscales(expdir):
 		if "hcsc" in list(POS[expdir]["canvas"].keys()):
 			hcsc = str(POS[expdir]["canvas"]["hcsc"])
 	return scoresc, rgbsc, hrgbsc, esc, hesc, csc, hcsc
+
+def getcanvasbackground(expdir):
+	out = ""
+	if expdir in list(POS.keys()) and "canvas" in list(POS[expdir].keys()) and "background" in list(POS[expdir]["canvas"].keys()):
+		c = POS[expdir]["canvas"]["background"]["color"]
+		s = POS[expdir]["canvas"]["background"]["sw"]
+		n = POS[expdir]["canvas"]["background"]["ne"]
+		hsep = POS[expdir]["canvas"]["background"]["hsep"]
+		vsep = POS[expdir]["canvas"]["background"]["vsep"]
+		s = (s[0]-vsep, s[1]-hsep)
+		n = (n[0]+vsep, n[1]+hsep)
+		out = "\\fill["+c+"] "+twopletostr(s)+" rectangle "+twopletostr(n)+";"
+	return out
 	
 def columnpos(posdict, n_nodes, index):
 	orig = posdict["pos"]
@@ -1243,13 +1257,14 @@ def canvas_texscript(paths, frame, score, printtex=False):
 	ts.append(set_font())
 	ts.append("\\begin{document}")
 	ts.append("\\begin{tikzpicture}")
+	ts.append(getcanvasbackground(expdir))
 	ts.append("\\node["+sep+anch+"scale="+hrgbsc+"] () at "+hrgbpos+" {(1) RGB Image};")
 	ts.append("\\node["+sep+anch+"scale="+rgbsc+"] () at "+rgbpos+" {"+rgb_content+"};")
 	ts.append("\\node["+sep+anch+"scale="+scoresc+"] () at "+scorepos+" {Score: "+str(score)+"};")
 	ts.append("\\node["+sep+anch+"scale="+hesc+"] () at "+hepos+" {(2) CGP Encoder};")
 	ts.append("\\node["+sep+anch+"scale="+esc+"] () at "+epos+" {"+e_content+"};")
 	ts.append("\\node["+sep+anch+"scale="+hcsc+"] () at "+hcpos+" {(3) CGP Controller};")
-	ts.append("\\node["+sep+anch+"scale="+csc+",fill=orange] () at "+cpos+" {"+c_content+"};")
+	ts.append("\\node["+sep+anch+"scale="+csc+"] () at "+cpos+" {"+c_content+"};")
 	ts.append("\\end{tikzpicture}")
 	ts.append("\\end{document}")
 	if printtex:

@@ -380,17 +380,17 @@ end
 rootdir = joinpath(homedir(), "Documents/git/ICGP-results/")
 resdir = joinpath(rootdir, "results/")
 min_date, max_date = DateTime(2022, 02, 23), DateTime(2022, 02, 24)
-#min_date, max_date = DateTime(2022, 02, 08, 15), DateTime(2022, 02, 08, 16)
+min_date, max_date = DateTime(2022, 02, 08, 15), DateTime(2022, 02, 08, 16)
 
 games = ["boxing", "asteroids", "breakout", "freeway", "gravitar", "riverraid", "space_invaders"]
-games = ["bowling"]
+games = ["boxing"]
 ids = [1]
 reducers = ["pooling"]
 exp_dirs, ids, games = get_exp_dir(resdir, min_date=min_date, max_date=max_date,
     games=games, reducers=reducers, ids=ids)
 max_frames = 18000
 seed = 0
-
+##
 for i in eachindex(exp_dirs)
     exp_dir = exp_dirs[i]
     # Fetch individuals

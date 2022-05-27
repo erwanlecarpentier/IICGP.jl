@@ -2,7 +2,7 @@
 #run(`ls /tmpdir/p21049le/ICGP-results/results`)
 
 resdirs = readdir("/tmpdir/p21049le/ICGP-results/results")
-prefix = "2022-02-23"
+prefix = "2022-02-08"
 
 for resdir in resdirs
 	if startswith(resdir, prefix)
