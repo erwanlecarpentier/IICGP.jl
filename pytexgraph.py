@@ -17,15 +17,15 @@ ONLYCONT = False
 SHOWENCO = False
 SHOWCONT = False
 DOFRAMES = True
-SHOWFRAMES = True # Show canvas (full frame with assembled graphs)
-DOVIDEO = False # Warning: set DOFRAMES and TOPNG to True
+SHOWFRAMES = False # Show canvas (full frame with assembled graphs)
+DOVIDEO = True # Warning: set DOFRAMES and TOPNG to True
 
 PRINTPDFLATEXOUT = False
 
 # Meta parameters
 SEED = 0
 RANDOM_POS_MAG = 15
-MAX_FRAME = 1 # None implies finding max_frame
+MAX_FRAME = None # None implies finding max_frame
 DIR_PATH = os.path.dirname(os.path.realpath(__file__))
 HOME_DIR = os.path.expanduser("~")
 ICGPRES_DIR = HOME_DIR #+ "/Documents/git/ICGP-results"
@@ -33,7 +33,7 @@ IMG_EXT = ".png"
 TOPNG = True # convert pdf canvas to png TODO video:True screen:True
 DELETE_GRAPHS_PDF = True # TODO video:True screen:False
 DELETE_CANVAS_PDF = True # TODO video:True screen:True
-FPSS = [60, 5] # TODO video:60
+FPSS = [60,15] # TODO video:60
 
 # Graph layout
 PRINTBUFFER = True # set to False for easy positioning
@@ -204,8 +204,8 @@ POS = {
 			"out38": (14,-7),
 			"out81": (14,-8),
 			"names": {"46": "C4", "77": "C5", "48": "C6", "45": "C1", "57": "C2", "86": "C3", "69": "C13", "47": "C7", "68": "C9", "37": "C10", "38": "C11", "36": "C10", "55": "C11", "76": "C12", "94": "C8"},
-			"sticky": (-1,6), #(14, 10),
-			"customndopt": { # last custom opt
+			"sticky": (14, 9.6),
+			'''"customndopt": { # last custom opt
 				UT+"draw=orange": [
 					"9", "46", "77", "out77"
 				],
@@ -236,7 +236,7 @@ POS = {
 					"13", "48", "out48"
 				],
 				UT+"draw=black": ["34", "36", "14", "16"],
-			},
+			},'''
 			"customedgeopt": { # last custom opt
 				UT+"color=orange": [
 					(9,46), (36,77), (34,46), (46,77), (77,"out77")
@@ -308,7 +308,16 @@ POS = {
 			],
 			"extra_edges": [(13,48), ("26","out81"), ("35","out41"), ("26", "out38")],
 			"outputs": {"type": "column", "pos": (14, 0), "span": 1},
-			"backgroundnode": {"pos": (-2.9, 0.7), "width": (5.4, 9.7, 2.2), "height": 18.5}
+			"backgroundnode": {"pos": (-2.9, 1.05), "width": (5.4, 9.7, 2.2), "height": 18.8}
+		},
+		"canvas": {
+			"hrgbpos": (0, 1.5), "rgbpos": (0, 1.16), "scorepos": (0, 1.12),
+			"hepos": (0, 0.36), "epos": (0, 0),
+			"cpos": (0.6, 0), "hcpos": (0.69, 1.5),
+			"scoresc":0.1, "rgbsc":0.5, "esc":0.5, "csc":1.5,
+			"hrgbsc":0.1, "hesc":0.1, "hcsc":0.1,
+			"ctrim":"4.5cm 0.575cm 0cm 0cm",
+			"background": {"color":"white","sw":(0,0),"ne":(2.1,1.54), "hsep":0.01, "vsep":0.1}
 		}
 	},
 	"2022-02-08T15:19:07.234_2_boxing" : { # Complex encoder with many logical operators

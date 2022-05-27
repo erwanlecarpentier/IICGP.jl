@@ -390,7 +390,7 @@ exp_dirs, ids, games = get_exp_dir(resdir, min_date=min_date, max_date=max_date,
     games=games, reducers=reducers, ids=ids)
 max_frames = 18000
 seed = 0
-##
+
 for i in eachindex(exp_dirs)
     exp_dir = exp_dirs[i]
     # Fetch individuals
