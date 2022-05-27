@@ -13,11 +13,11 @@ from pdf2image import convert_from_path
 
 # COMMANDS
 ONLYENCO = False
-ONLYCONT = True
+ONLYCONT = False
 SHOWENCO = False
-SHOWCONT = True
+SHOWCONT = False
 DOFRAMES = True
-SHOWFRAMES = False # Show canvas (full frame with assembled graphs)
+SHOWFRAMES = True # Show canvas (full frame with assembled graphs)
 DOVIDEO = False # Warning: set DOFRAMES and TOPNG to True
 
 PRINTPDFLATEXOUT = False
@@ -143,7 +143,8 @@ POS = {
 			"epos": (0, 0), "hepos": (0, 0.22),
 			"cpos": (1.05, 0), "hcpos": (1.05, 0.69),
 			"scoresc":0.1, "rgbsc":0.5, "esc":1.0, "csc":1.0,
-			"hrgbsc":0.1, "hesc":0.1, "hcsc":0.1
+			"hrgbsc":0.1, "hesc":0.1, "hcsc":0.1,
+			"ctrim":"0cm 1.1cm 0cm 0cm"
 		}
 	},
 	"2022-02-23T18:11:39.277_2_bowling" : { # Complexe encoder with 12 intermediate nodes. Its output seems to be a dilated motion capture version of the original input. Controller is a bit simpler and suggests a tendency to alternate between moving the ball towards the top or the bottom.
@@ -708,6 +709,15 @@ def postostr(pos):
 	
 def twopletostr(t):
 	return "(" + str(t[0]) + ", " + str(t[1]) + ")"
+	
+def getcanvastrim(expdir):
+	etrim, ctrim = "", ""
+	if expdir in list(POS.keys()) and "canvas" in list(POS[expdir].keys()):
+		if "etrim" in list(POS[expdir]["canvas"].keys()):
+			etrim = ",clip,trim={" + POS[expdir]["canvas"]["etrim"] + "}"
+		if "ctrim" in list(POS[expdir]["canvas"].keys()):
+			ctrim = ",clip,trim={" + POS[expdir]["canvas"]["ctrim"] + "}"
+	return etrim, ctrim
 
 def getcanvaspos(expdir):
 	scorepos, rgbpos, epos, cpos = "(0, -1)", "(0, 0)", "(1, 0)", "(2, 0)"
@@ -1219,9 +1229,10 @@ def canvas_texscript(paths, frame, score, printtex=False):
 	rgb_path = savedir + rgbfname(frame)
 	e_gpath = savedir + graphfname(frame, "encoder") + ".pdf"
 	c_gpath = savedir + graphfname(frame, "controller") + ".pdf"
+	etrim, ctrim = getcanvastrim(expdir)
 	rgb_content = "\includegraphics[width=1cm]{"+rgb_path+"}"
-	e_content = "\includegraphics[width=1cm]{"+e_gpath+"}"
-	c_content = "\includegraphics[width=1cm]{"+c_gpath+"}"
+	e_content = "\includegraphics[width=1cm"+etrim+"]{"+e_gpath+"}"
+	c_content = "\includegraphics[width=1cm"+ctrim+"]{"+c_gpath+"}"
 	scorepos, rgbpos, hrgbpos, epos, hepos, cpos, hcpos = getcanvaspos(expdir)
 	scoresc, rgbsc, hrgbsc, esc, hesc, csc, hcsc = getcanvasscales(expdir)	
 	anch = "anchor=south west,"
